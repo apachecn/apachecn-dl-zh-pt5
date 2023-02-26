@@ -1,0 +1,255 @@
+<html><head/><body>
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><div><h1 id="_idParaDest-61"><em class="italic"> <a id="_idTextAnchor060"/>第五章</em>:在不同环境下运行DL管道</h1>
+			<p>在不同的执行环境中，如本地或远程、内部或云中，灵活地运行<strong class="bold">深度学习</strong> ( <strong class="bold"> DL </strong>)管道至关重要。这是因为，在DL开发的不同阶段，可能存在不同的约束或偏好，以提高开发速度或确保安全合规性。例如，在本地或笔记本电脑环境中进行小规模模型实验是可取的，而对于完整的超参数调优，我们需要在云托管的GPU集群上运行模型，以获得快速的周转时间。考虑到硬件和软件配置中的不同执行环境，在单一框架中实现这种灵活性曾经是一个挑战。MLflow提供了一个易于使用的框架，可以在不同的环境中大规模运行DL管道。我们将在本章中学习如何做到这一点。</p>
+			<p>在本章中，我们将首先了解不同的DL管道执行场景及其执行环境。我们还将学习如何在不同的执行环境中运行DL管道的不同步骤。具体来说，我们将涵盖以下主题:</p>
+			<ul>
+				<li>不同执行场景和环境的概述</li>
+				<li>使用本地代码在本地运行</li>
+				<li>本地运行GitHub中的远程代码</li>
+				<li>在云中远程运行本地代码</li>
+				<li>使用GitHub中的远程代码在云中远程运行</li>
+			</ul>
+			<p>在本章结束时，您将能够轻松地设置DL管道，以便在不同的执行环境下本地或远程运行。</p>
+			<h1 id="_idParaDest-62"><a id="_idTextAnchor061"/>技术要求</h1>
+			<p>完成本章的学习需要以下技术要求:</p>
+			<ul>
+				<li>本章的代码可以在以下GitHub网址找到:<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow/tree/main/chapter05">https://GitHub . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow/tree/main/chapter 05</a>。</li>
+				<li>安装Databricks <strong class="bold">命令行界面</strong> ( <strong class="bold"> CLI </strong>)工具，访问Databricks平台远程执行DL管线:<a href="https://github.com/databricks/databricks-cli">https://github.com/databricks/databricks-cli</a>。</li>
+				<li>访问Databricks实例(必须是企业版，因为社区版不支持远程执行),了解如何在Databricks中的集群上远程运行DL管道。</li>
+				<li>在本地运行时，这是一个成熟的MLflow跟踪服务器。此MLflow跟踪服务器设置与前面章节中的设置相同。</li>
+			</ul>
+			<h1 id="_idParaDest-63"><a id="_idTextAnchor062"/>不同执行场景和环境的概述</h1>
+			<p>在前面的章节中，我们主要学习了如何使用MLflow的跟踪功能来跟踪DL管道。我们的大多数执行环境都是在本地环境中，比如本地笔记本电脑或台式机环境。然而，正如我们已经知道的，DL的整个生命周期由不同的阶段组成，在这些阶段中，我们可能需要在不同的执行环境中完整地、部分地或者作为一个单独的步骤来运行DL管道。这里有两个典型的例子:</p>
+			<ul>
+				<li>当出于模型训练目的访问数据时，要求数据驻留在符合企业安全和隐私的环境中是很常见的，在这种环境中，计算和存储都不能离开符合要求的边界。</li>
+				<li>在训练DL模型时，通常需要使用远程GPU集群来最大化模型训练的效率，而本地笔记本电脑通常不具备所需的硬件能力。</li>
+			</ul>
+			<p>这两种情况都需要一个精心定义的<a id="_idIndexMarker222"/>执行环境，在DL生命周期的一个或多个阶段都可能需要这个环境。请注意，当从开发阶段转移到生产环境时，这不仅仅是灵活性的要求，在生产环境中，执行硬件和软件配置可以理解地不同。还需要能够在开发阶段或不同的生产环境中切换运行环境，而无需对DL管道进行重大更改。</p>
+			<p>这里，我们根据DL管道源代码的<a id="_idIndexMarker224"/>位置和<a id="_idIndexMarker225"/>目标执行环境的不同组合，将不同的<a id="_idIndexMarker223"/>场景和执行环境分为以下四种场景，如下表所示:</p>
+			<div><div><img src="img/B18120_05_01.jpg" alt="Figure 5.1 – Four different scenarios of DL pipeline source codes and target execution environments&#13;&#10;" width="1475" height="432"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.1–DL管道源代码和目标执行环境的四种不同场景</p>
+			<p><em class="italic">图5.1 </em>描述了在开发或生产环境中，我们如何能够使用本地或远程代码在不同的执行环境中运行。让我们按如下方式逐一检查它们:</p>
+			<ul>
+				<li><strong class="bold">在本地目标环境中运行的本地源代码</strong>:这通常发生在<a id="_idIndexMarker226"/>开发阶段，在这个阶段，本地环境中适度的计算能力足以支持现有管道中的小变化的快速原型开发或测试运行。在学习如何跟踪管道时，这是我们在前面章节的MLflow实验中经常使用的场景。</li>
+				<li><strong class="bold">在远程目标环境中运行的本地源代码</strong>:这通常发生在现有DL模型的开发阶段或重新训练阶段，其中<a id="_idIndexMarker227"/> GPU或其他类型的硬件加速器，如<strong class="bold">张量处理单元</strong> ( <strong class="bold"> TPUs </strong>)或<strong class="bold">现场可编程门阵列</strong>(<strong class="bold">FPGA</strong>)<a id="_idIndexMarker228"/>需要在合并GitHub库之前执行计算和数据密集型模型训练或调试(首先使用本地代码更改)。</li>
+				<li><strong class="bold">在本地目标环境中运行的远程源代码</strong>:这通常发生在我们没有对代码进行任何修改，但是数据已经发生了变化的时候，无论是在开发阶段还是在生产阶段。例如，在DL开发阶段，我们可以通过一些数据扩充技术(例如，使用<strong class="bold"> AugLy </strong>来扩充现有的训练数据:<a href="https://github.com/facebookresearch/AugLy">https://github.com/facebookresearch/AugLy</a>)或新注释的训练数据，用新扩充的训练数据<a id="_idIndexMarker229"/>来更改数据。在生产部署步骤中，我们通常需要运行回归测试，以根据保留的回归测试数据集评估将要部署的DL管道，这样，如果模型性能准确性指标不符合标准，我们就不会部署降级的模型。在这种情况下，拒不接受的测试数据集通常不大，因此可以在本地部署服务器上执行，而不是在Databricks服务器中启动到远程集群。</li>
+				<li><strong class="bold">在远程目标环境中运行的远程源代码</strong>:这可能发生在开发阶段或生产阶段，我们希望使用GitHub的DL管道代码的固定版本在远程GPU集群中运行，以进行模型训练、超参数调整或重新训练。如此大规模的执行可能是<a id="_idIndexMarker230"/>耗时的，远程GPU集群可能非常有用。</li>
+			</ul>
+			<p>给定四种不同的场景，在这些条件下，希望有一个框架能够以最小的配置改变运行相同的DL流水线。在MLflow出现之前，需要相当多的工程和人工工作来支持这些场景。MLflow <a id="_idIndexMarker231"/>提供了一个MLproject框架，通过以下三种可配置机制支持所有这四种场景:</p>
+			<ol>
+				<li><strong class="bold">入口点</strong>:我们<a id="_idIndexMarker232"/>可以定义一个或多个入口点来执行DL管道的不同<a id="_idIndexMarker233"/>步骤。例如，下面是一个定义主入口点的例子:<pre>entry_points:   <strong class="bold">main</strong>:     parameters:       <strong class="bold">pipeline_steps</strong>: { type: str, default: all }     command: "python main.py –pipeline_steps {pipeline_steps}"</pre></li>
+			</ol>
+			<p>入口点的名称是<code>main</code>，默认情况下，在没有为MLproject指定入口点的情况下执行MLflow运行时将使用该名称。在这个<code>main</code>入口点下，有一个参数列表。我们可以使用简短的语法来定义参数的类型和默认值，如下所示:</p>
+			<pre>parameter_name: {type: data_type, default: value}</pre>
+			<p>我们也可以使用长语法，如下所示:</p>
+			<pre>parameter_name:
+  type: data_type
+  default: value</pre>
+			<p>这里，我们只定义<a id="_idIndexMarker234"/>一个参数，称为<code>pipeline_steps</code>，使用<a id="_idIndexMarker235"/>短语法格式，类型为<code>str</code>，默认值为<code>all</code>。</p>
+			<ol>
+				<li value="2"><code>yaml</code>配置文件或<a id="_idIndexMarker236"/> Docker映像，用于定义MLproject入口点可以使用的软件和库依赖关系。请注意，单个MLproject可以使用conda <code>yaml</code>文件或Docker图像，但不能同时使用两者。根据DL管道的依赖性，有时使用conda。<code>yaml</code>文件优先于Docker映像，因为它更轻量级，更容易进行更改，而不需要额外的Docker映像存储位置，也不需要在资源有限的环境中将大的Docker映像加载到内存中。然而，如果运行时需要任何Java包(<code>.jar</code>)，Docker映像有时确实有优势。如果没有这样的JAR依赖，那么最好有一个conda。<code>yaml</code>指定依赖关系的文件。此外，从MLflow版本1.22.0开始，MLflow命令行还不支持在Databricks上运行基于Docker的项目。如果确实有任何Java包依赖，可以使用本书中定义执行环境依赖的<code>yaml</code>配置文件<a id="_idIndexMarker237"/>安装。</li>
+				<li><strong class="bold">硬件依赖</strong>:我们可以<a id="_idIndexMarker238"/>使用集群配置JSON文件来定义执行目标后端环境，无论是GPU、CPU还是其他类型的集群。只有当目标后端执行环境<a id="_idIndexMarker239"/>是非本地的，或者在Databricks服务器或者在Kubernetes  ( <strong class="bold"> K8s </strong>)集群中时，才需要这样做。</li>
+			</ol>
+			<p>之前，我们在<a href="B18120_04_ePub.xhtml#_idTextAnchor050"> <em class="italic">第4章</em> </a>、<em class="italic">跟踪代码和数据版本</em>中学习了如何使用MLproject创建一个在本地环境中运行的多步DL管道，用于跟踪目的。现在，我们<a id="_idIndexMarker240"/>将学习如何使用MLproject来支持之前概述的不同运行场景。</p>
+			<h1 id="_idParaDest-64"><a id="_idTextAnchor063"/>使用本地代码在本地运行</h1>
+			<p>让我们从使用相同的<strong class="bold">自然语言处理(NLP) </strong>文本情感分类示例作为驱动<a id="_idIndexMarker242"/>用例的第一个运行<a id="_idIndexMarker241"/>场景开始。建议您从GitHub位置查看<a id="_idIndexMarker243"/>以下版本的源代码，以了解相关步骤和知识:<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow/tree/26119e984e52dadd04b99e6f7e95f8dda8b59238/chapter05">https://GitHub . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow/tree/26119 e 984 e 52 dad 04 b 99 e 6 f 7 e 95 f 8 DDA 8b 59238/chapter 05</a>。注意，这需要一个特定的Git hash提交版本，如URL路径所示。这意味着我们要求您检查一个特定的提交版本，而不是主分支。</p>
+			<p>让我们从DL管道开始，它将评审数据下载到本地存储，作为第一个执行练习。检查完本章的代码后，您可以键入以下命令行来执行DL管道的第一步:</p>
+			<pre>mlflow run . --experiment-name='dl_model_chapter05' -P pipeline_steps='download_data'</pre>
+			<p>如果我们不指定入口点，它默认为<code>main</code>。在这种情况下，这是我们想要的行为，因为我们想要运行<code>main</code>入口点来启动父DL管道。</p>
+			<p><em class="italic">点</em>表示当前本地目录。这告诉MLflow使用当前目录中的代码作为执行项目的源。如果该命令行运行成功，您应该能够在控制台中看到如下所示的前两行输出，这也揭示了目标执行环境的位置:</p>
+			<pre>2022/01/01 19:15:37 INFO mlflow.projects.utils: === Created directory /var/folders/51/whxjy4r92dx18788yp11ycyr0000gp/T/tmp3qj2kws2 for downloading remote URIs passed to arguments of type 'path' ===
+2022/01/01 19:15:37 INFO <strong class="bold">mlflow.projects.backend.local</strong>: === Running command 'source /Users/yongliu/opt/miniconda3/bin/../etc/profile.d/conda.sh &amp;&amp; conda activate mlflow-95353930ddb7b60101df80a5d64ef8bf6204a808 1&gt;&amp;2 &amp;&amp; python main.py --pipeline_steps download_data' in run with ID 'f7133b916a004c508e227f00d534e136' ===</pre>
+			<p>注意，第二个输出行显示了<code>mlflow.projects.backend.local</code>，这意味着目标运行环境是本地的。您可能想知道我们在初始命令行的什么地方定义本地执行环境。原来，默认情况下，名为<code>--backend</code>(或<code>-b</code>)的参数值是<code>local</code>。因此，如果我们拼出默认值，<code>mlflow run</code>命令行将如下所示:</p>
+			<pre>mlflow run . -e main -b local --<strong class="bold">experiment-name</strong>='dl_model_chapter05' -P pipeline_steps='download_data'</pre>
+			<p>注意我们<a id="_idIndexMarker244"/>还需要在<a id="_idIndexMarker245"/>命令行中指定<code>experiment-name</code>或者通过一个名为<code>MLFLOW_EXPERIMENT_NAME</code>的环境变量来定义这个项目将要运行的实验。或者，您可以指定一个<code>experiment-id</code>参数，或者一个名为<code>MLFLOW_EXPERIMENT_ID</code>的环境变量，来定义已经存在的实验整数ID。您只需要定义环境的ID或名称，而不是两者都定义。通常定义一个人类可读的实验名称，然后在代码的其他部分查询该实验的实验ID，这样它们就不会不同步。</p>
+			<p class="callout-heading">运行MLproject的MLflow实验名称或ID</p>
+			<p class="callout">要使用CLI或<code>mlflow.run</code> Python API运行<a id="_idIndexMarker246"/> MLproject，如果我们没有通过环境变量或参数赋值来指定<code>experiment-name</code>或<code>experiment-id</code>，它将默认为<code>Default</code> MLflow实验。这是不可取的，因为我们想把我们的实验组织成明显分开的实验。此外，一旦MLproject开始运行，任何子运行都将无法切换到不同的实验名称或ID。因此，最佳实践总是在启动MLflow项目运行之前指定一个实验名称或ID。</p>
+			<p>完成运行后，您将看到如下输出:</p>
+			<pre>2022-01-01 19:15:48,249 &lt;Run: data=&lt;RunData: metrics={}, params={'download_url': 'https://pl-flash-data.s3.amazonaws.com/imdb.zip',
+ 'local_folder': './data',
+ 'mlflow run id': 'f9f74ebd80f246d58a5f7a3bfb3fc635',
+ 'pipeline_run_name': 'chapter05'}, tags={'mlflow.gitRepoURL': 'git@github.com:PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow.git',
+ 'mlflow.parentRunId': 'f7133b916a004c508e227f00d534e136',</pre>
+			<p>请注意，这是一个嵌套的MLflow运行，因为我们首先启动一个启动整个管道的<code>main</code>入口点<a id="_idIndexMarker248"/>(这就是为什么有<code>mlflow.parentRunId</code>)，然后在这个管道下，我们运行一个或多个步骤。这里，我们运行的步骤被称为<code>download_data</code>，它是MLproject中定义的另一个入口点，但是使用<code>mlflow.run</code> Python API调用，如下所示，在<code>main.py</code>文件中:</p>
+			<pre class="source-code">download_run = mlflow.run(".", "download_data", parameters={})</pre>
+			<p>注意，这也指定了使用哪个代码源(<code>local</code>，因为我们指定了一个<em class="italic">点</em>)，默认情况下，是一个本地执行环境。这就是为什么您应该能够在控制台输出中看到以下几行:</p>
+			<pre> 'mlflow.project.backend': 'local',
+ 'mlflow.project.entryPoint': 'download_data',</pre>
+			<p>您还应该看到这个入口点的运行参数的一些其他细节。命令行输出的最后两行应该如下所示:</p>
+			<pre>2022-01-01 19:15:48,269 finished mlflow pipeline run with a run_id = f7133b916a004c508e227f00d534e136
+2022/01/01 19:15:48 INFO mlflow.projects: === Run (ID 'f7133b916a004c508e227f00d534e136') succeeded ===</pre>
+			<p>如果您看到了这一点，您应该为自己成功地运行了一个一步到位的管道而感到自豪。</p>
+			<p>虽然这是<a id="_idIndexMarker249"/>我们以前在不知道一些细节的情况下做过的事情，但下一节将允许我们在本地环境中运行远程代码，在这里您将看到MLproject不断增加的灵活性和功能。</p>
+			<h1 id="_idParaDest-65"><a id="_idTextAnchor064"/>本地运行GitHub中的远程代码</h1>
+			<p>现在，让我们看看<a id="_idIndexMarker251"/>我们如何在<a id="_idIndexMarker253"/>本地执行环境上从GitHub库运行远程代码<a id="_idIndexMarker252"/>。这允许我们使用提交散列精确地运行已经登记到GitHub存储库中的特定版本。让我们使用与前面相同的例子，运行我们在本章中使用的DL管道的单个<code>download_data</code>步骤。在命令行提示符下，运行以下命令:</p>
+			<pre>mlflow run https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow#chapter05 -v 26119e984e52dadd04b99e6f7e95f8dda8b59238  --experiment-name='dl_model_chapter05' -P pipeline_steps='download_data'</pre>
+			<p>请注意这个命令行和上一节中的命令行之间的区别。我们没有用<em class="italic">点</em>来引用代码的本地副本，而是指向一个远程GitHub存储库(<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow">https://GitHub . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow</a>)和包含我们想要引用的MLproject文件的文件夹名称(<code>chapter05</code>)。根据MLflow的约定，<code>#</code>符号表示根文件夹的相对路径(详见本网站MLflow文档:<a href="https://www.mlflow.org/docs/latest/projects.html#running-projects">https://www . ml flow . org/docs/latest/projects . html # running-projects</a>)。然后，我们通过使用<code>-v</code>参数指定Git提交散列来定义版本号。在这种情况下，它是我们在GitHub存储库中的这个版本:</p>
+			<p><a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow/tree/26119e984e52dadd04b99e6f7e95f8dda8b59238/chapter05">https://github . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow/tree/26119 e 984 e 52 add 04 b 99 E6 f 7 e 95 f 8d da8 b 59238/chapter 05</a></p>
+			<p class="callout-heading">用GitHub主分支运行MLflow项目的隐藏Bug</p>
+			<p class="callout">当我们<a id="_idIndexMarker254"/>在MLflow运行中省略<code>-v</code>参数时，MLflow将假设我们想要使用GitHub项目的默认<code>main</code>分支。然而，MLflow的源代码有一个对GitHub项目的<code>main</code>分支的硬编码引用，称为<code>origin.refs.master</code>，要求GitHub项目中存在一个<code>master</code>分支。这在较新的GitHub项目中不起作用，比如这本书的项目，因为默认的分支被称为<code>main</code>，不再是<code>master</code>，这是由于GitHub最近引入的变化(详见这里:<a href="https://github.com/github/renaming">https://github.com/github/renaming</a>)。所以，在写这本书的时候，在ml flow 1 . 22 . 0版本中，没有办法运行一个GitHub项目的默认<code>main</code>分支。在GitHub存储库中运行MLflow项目时，我们需要专门声明Git commit hash版本。</p>
+			<p>那么，当您在运行MLflow项目时使用<a id="_idIndexMarker256"/>远程GitHub项目<a id="_idIndexMarker257"/>存储库中的代码时<a id="_idIndexMarker255"/>会发生什么呢？当您看到以下控制台输出的第一行时，就清楚了:</p>
+			<pre>2021/12/30 18:57:32 INFO mlflow.projects.utils: === Fetching project from https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow#chapter05 into <strong class="bold">/var/folders/51/whxjy4r92dx18788yp11ycyr0000gp/T/tmpdyzaa1ye</strong> ===</pre>
+			<p>这意味着MLflow代表用户开始将远程项目克隆到名为<code>/var/folders/51/whxjy4r92dx18788yp11ycyr0000gp/T/tmpdyzaa1ye</code>的本地临时文件夹中。</p>
+			<p>如果您导航到这个临时文件夹，您将看到来自GitHub的整个项目内容已经被克隆到这个文件夹中，而不仅仅是包含您想要运行的ML项目的文件夹。</p>
+			<p>控制台输出的其余部分与我们在使用本地代码时看到的一样。一旦您完成了运行<code>download_data</code>步骤，您应该能够在<code>chapter05</code>下的临时文件夹中找到下载的数据，因为我们在ML项目文件中将本地目标文件夹定义为<code>./data</code>相对路径:</p>
+			<pre>local_folder: { type: str, default: ./data }</pre>
+			<p>MLflow自动将其转换为绝对路径，并成为<code>chapter05</code>下的克隆项目文件夹的相对路径，因为这是MLproject文件所在的位置。</p>
+			<p>这种引用远程GitHub项目并在本地环境中运行它的能力非常强大，无论这个本地环境是您的笔记本电脑还是云中的虚拟机。这通过<strong class="bold">持续集成和持续部署</strong> ( <strong class="bold"> CI/CD </strong>)实现了自动化，因为<a id="_idIndexMarker258"/>这可以在命令行中直接调用，然后可以编写成CI/CD脚本。跟踪部分也是精确的，因为我们在MLflow跟踪服务器中记录了Git提交散列，这允许我们确切地知道执行了哪个版本的代码。</p>
+			<p>注意，在我们刚刚讨论的两个场景中，执行环境都是发出MLflow run命令的本地机器。MLflow项目同步运行到完成<em class="italic"/>，这意味着它是一个阻塞调用，它将运行到完成，并在控制台输出中实时显示进度。</p>
+			<p>然而，我们需要<a id="_idIndexMarker261"/>支持<a id="_idIndexMarker259"/>额外的运行<a id="_idIndexMarker260"/>场景。例如，有时我们发出MLflow项目运行命令的机器不够强大，无法支持我们需要的计算，例如训练一个具有许多纪元的DL模型。另一种情况是，如果要下载或访问用于培训的数据有数千兆字节，而您不想将其下载到本地笔记本电脑上用于模型开发。这要求我们能够在远程集群中运行代码。让我们在下一节看看如何做到这一点。</p>
+			<h1 id="_idParaDest-66"><a id="_idTextAnchor065"/>在云中远程运行本地代码</h1>
+			<p>在前面的章节中，我们在本地笔记本电脑环境中运行了所有代码，由于笔记本电脑的功率有限，我们将DL微调步骤限制在三个时期。这是为了让代码在本地环境中快速运行和测试，而不是为了构建一个实际的高性能DL模型。我们确实需要在远程GPU集群中运行微调步骤。理想情况下，我们应该只更改一些配置，并且仍然在本地笔记本电脑控制台中发出MLflow run命令行，但是实际的管道将被提交到云中的远程集群。让我们看看如何为我们的DL管道做到这一点。</p>
+			<p>让我们从<a id="_idIndexMarker265"/>提交在Databricks服务器上运行的代码开始。有三个先决条件:</p>
+			<ul>
+				<li><strong class="bold">企业Databricks服务器</strong>:您<a id="_idIndexMarker266"/>需要能够访问企业许可的Databricks服务器或云中的免费试用版Databricks服务器(<a href="https://docs.databricks.com/getting-started/try-databricks.html#sign-up-for-a-databricks-free-trial">https://docs . data bricks . com/getting-started/try-data bricks . html # sign-up-for-a-data bricks-free-trial</a>)。Databricks的<a id="_idIndexMarker267"/>社区<a id="_idIndexMarker268"/>版本不支持这种<a id="_idIndexMarker269"/>远程执行。</li>
+				<li>Databricks CLI :你<a id="_idIndexMarker270"/>需要设置Databricks CLI，在那里你发出MLflow项目运行命令。要安装它，只需运行以下命令:<pre><strong class="bold">pip install databricks-cli</strong></pre></li>
+			</ul>
+			<p>当你检查本章的代码时，我们也在<code>chapter05</code>的<code>requirements.txt</code>文件中包含了这个依赖。</p>
+			<ul>
+				<li><code>.databrickscfg</code>本地个人文件夹中的文件。您不需要两者都有，但是如果您有两者，当被Databricks命令行选中时，使用环境变量定义的那个将具有更高的优先级。使用环境变量和生成访问令牌的方法在第1章 、<em class="italic">深度学习生命周期和MLOps挑战</em>的<em class="italic">设置MLflow与远程MLflow服务器</em>部分中有所描述。注意这些环境变量可以直接在命令行中设置，或者如果你使用的是macOS或Linux机器，可以放入你的<code>.bash_profile</code>文件中。</li>
+			</ul>
+			<p>这里，我们描述如何使用Databricks命令行工具来生成一个<code>.databrickscfg</code>文件:</p>
+			<ol>
+				<li value="1">运行下面的<a id="_idIndexMarker273"/>命令来设置令牌配置:<pre><strong class="bold">databricks configure --token</strong></pre></li>
+				<li>按照提示填写远程数据块主机URL和访问令牌:<pre><strong class="bold">Databricks Host (should begin with https://): https://????</strong> <strong class="bold">Token: dapi??????????</strong></pre></li>
+				<li>现在，如果您检查您的<a id="_idIndexMarker274"/>本地<a id="_idIndexMarker275"/>主文件夹，您<a id="_idIndexMarker276"/>应该会找到一个名为<code>.databrickscfg</code>的隐藏文件。</li>
+			</ol>
+			<p>如果您打开这个<a id="_idIndexMarker277"/>文件，您应该能够看到如下内容:</p>
+			<pre>[DEFAULT]
+host = https://??????
+token = dapi???????
+jobs-api-version = 2.0 </pre>
+			<p>请注意，最后一行表示Databricks服务器正在使用的远程作业提交和执行API版本。</p>
+			<p>现在您已经正确设置了访问，让我们看看如何使用以下步骤在远程Databricks服务器中远程运行DL管道:</p>
+			<ol>
+				<li value="1">由于我们要使用远程数据块服务器，我们之前设置的本地MLflow服务器不再工作。这意味着我们需要禁用并注释掉<code>main.py</code>文件中的以下行，这些行只对本地MLflow服务器设置有用(从GitHub查看最新版本的<code>chapter05</code>代码以遵循这些步骤，位于<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow.git">https://GitHub . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow . git</a>):<pre>os.environ["MLFLOW_TRACKING_URI"] = http://localhost os.environ["MLFLOW_S3_ENDPOINT_URL"] = http://localhost:9000 os.environ["AWS_ACCESS_KEY_ID"] = "minio" os.environ["AWS_SECRET_ACCESS_KEY"] = "minio123"</pre></li>
+			</ol>
+			<p>相反，我们<a id="_idIndexMarker279"/>应该使用下面的环境变量，它可以在<code>.bash_profile</code>文件中定义或者直接在命令行中执行:</p>
+			<pre><strong class="bold">export MLFLOW_TRACKING_URI="databricks"</strong></pre>
+			<p>这将使用<a id="_idIndexMarker282"/>Databricks服务器上的<a id="_idIndexMarker280"/> MLflow <a id="_idIndexMarker281"/>跟踪服务器。如果不指定，它将默认为localhost，但会失败，因为远程Databricks服务器上没有MLflow的localhost版本。因此，请确保您已经正确设置了这一点。现在，我们已经准备好远程运行本地代码了。</p>
+			<ol>
+				<li value="2">现在，运行下面的命令行，将本地代码提交给远程Databricks服务器运行。我们将从<code>download_data</code>步骤开始，如下:<pre><strong class="bold">mlflow run . -b databricks --backend-config cluster_spec.json --experiment-name='/Shared/dl_model_chapter05' -P pipeline_steps ='download_data'</strong></pre></li>
+			</ol>
+			<p>这次您将看到命令行有两个新参数:<code>-b databricks</code>，它将后端指定为Databricks服务器，以及<code>--backend-config cluster_spec.json</code>，它详细说明了集群规范。这个<code>cluster_spec.json</code>文件的内容如下:</p>
+			<pre>{
+    "new_cluster": {
+        "spark_version": "9.1.x-gpu-ml-scala2.12",
+        "num_workers": 1,
+        "node_type_id": "g4dn.xlarge"
+    }
+}</pre>
+			<p>这个<code>cluster_spec.json</code>文件通常位于MLproject <a id="_idIndexMarker283"/>文件所在的同一个文件夹中，并且<a id="_idIndexMarker284"/>需要被预定义<a id="_idIndexMarker285"/>，以便<a id="_idIndexMarker286"/> MLflow run命令可以拾取它。我们在此给出的示例仅定义了使用AWS的GPU虚拟机作为单个节点在Databricks上创建作业集群所需的最小参数集，但是如果需要，您可以创建更丰富的集群规范(有关更多详细信息，请参见下面的<em class="italic">data bricks集群规范</em>框)。</p>
+			<p class="callout-heading">数据块的群集规范</p>
+			<p class="callout">向Databricks提交<a id="_idIndexMarker287"/>作业时，需要创建一个新的作业集群，该集群不同于您已有的交互式集群，您可以通过连接笔记本来运行交互式作业。集群规范是通过最低限度地指定Databricks运行时版本来定义的，在我们当前的示例中是<code>9.1.x-gpu-ml-scala2.12</code>、工作节点的数量和节点类型ID，如我们的示例所示。建议使用<code>g4dn.xlarge</code>进行学习。您可以在<a id="_idIndexMarker291"/>这个集群<a id="_idIndexMarker292"/>规范中定义<a id="_idIndexMarker290"/>许多其他配置，包括存储和访问权限，以及<code>init</code>脚本。生成有效的<a id="_idIndexMarker293"/>集群规范JSON文件的最简单方法是使用Databricks门户UI创建一个新的集群，在这里您可以选择Databricks <a id="_idIndexMarker294"/>运行时版本、集群节点类型和其他参数(<a href="https://docs.databricks.com/clusters/create.html">https://docs.databricks.com/clusters/create.html</a>)。然后，您可以通过点击<strong class="bold">创建集群</strong> UI页面右上角的JSON链接获得集群的JSON表示(参见<em class="italic">图5.2 </em>)。</p>
+			<div><div><img src="img/B18120_05_02.jpg" alt="Figure 5.2 - An example of creating a cluster on Databricks &#13;&#10;" width="1079" height="795"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.2 -在数据块上创建集群的示例</p>
+			<p>还要注意，前面命令中的<code>experiment-name</code>参数不再只接受实验名称字符串，而是需要包含Databricks工作区中的绝对路径。这与本地MLflow跟踪服务器不同。必须遵循这个约定才能使这个远程作业提交工作。请注意，如果您希望拥有多层子文件夹结构，如下所示，则每个子文件夹必须已经存在于Databricks服务器中:</p>
+			<pre>/rootPath/subfolder1/subfolder2/<strong class="bold">my_experiment_name</strong></pre>
+			<p>这意味着<code>rootPath</code>、<code>subfolder1,</code>和<code>subfolder2</code>文件夹必须已经存在。否则，命令行将失败，因为它无法在Databricks服务器上自动创建父文件夹。如果最后一个字符串<code>my_experiment_name</code>还不存在，那么可以自动创建它，因为这是实际的实验名称，它将托管所有的实验运行。请注意，在本例中，我们使用命令行参数来指定实验名称，但是也可以使用环境变量来指定它，如下所示:</p>
+			<pre><strong class="bold">export MLFLOW_EXPERIMENT_NAME=/Shared/dl_model_chapter05</strong></pre>
+			<ol>
+				<li value="3">一旦这个<a id="_idIndexMarker295"/>命令被<a id="_idIndexMarker296"/>执行，您将会看到<a id="_idIndexMarker297"/>一个比之前在本地环境中运行时短得多的控制台输出消息。这是因为当以这种方式执行代码时，它运行<em class="italic">异步</em>，这意味着作业被提交到远程<a id="_idIndexMarker298"/> Databricks服务器，并立即返回到控制台，而无需等待。让我们看看输出的前三行:<pre><strong class="bold">INFO: '/Shared/dl_model_chapter05' does not exist. Creating a new experiment</strong> <strong class="bold">2022/01/06 17:35:32 INFO mlflow.projects.databricks: === Uploading project to DBFS path /dbfs/mlflow-experiments/427565/projects-code/f1cbec57b21eabfca52f417f8482054bbea22be 9205b5bbde461780d809924c2.tar.gz ===</strong> <strong class="bold">2022/01/06 17:35:32 INFO mlflow.projects.databricks: === Finished uploading project to /dbfs/mlflow-experiments/427565/projects-code/f1cbec57b21eabfca52f417f8482054bbea22be 9205b5bbde461780d809924c2.tar.gz ===</strong></pre></li>
+			</ol>
+			<p>第一行<a id="_idIndexMarker299"/>表示该实验在Databricks服务器中不存在，因此它正在被创建。如果您再次运行此程序，它将不会显示。第二行和第三行<a id="_idIndexMarker300"/>描述了MLflow <a id="_idIndexMarker301"/>将MLproject打包成一个<code>.tar.gz</code>文件并上传到Databricks文件服务器的过程。注意，不像GitHub项目需要从资源库中签出整个项目，在这里，它只需要打包<code>chapter05</code>文件夹，因为那是我们的MLproject所在的位置。这可以通过查看Databricks集群中的作业运行日志<a id="_idIndexMarker302"/>来确认，我们将在接下来的几段中解释(从哪里获取作业URL以及如何查找日志)。</p>
+			<p class="callout-heading">MLproject的同步和异步运行</p>
+			<p class="callout">官方MLflow <a id="_idIndexMarker303"/>运行CLI不支持指定<a id="_idIndexMarker304"/>以异步或同步模式运行MLflow项目的参数。但是，MLflow run Python API确实有一个名为<code>synchronous</code>的参数，默认设置为<code>True</code>。当使用MLflow的CLI以Databricks作为后端运行MLflow作业时，默认行为是异步的。有时，在CI/CD自动化过程中，当您需要确保MLflow运行在进入下一步之前成功完成时，CLI run命令的同步行为是可取的。这无法通过官方的MLflow run CLI来完成，但您可以编写一个包装器CLI Python函数，在同步模式设置为<code>True</code>的情况下调用MLflow的Python API，然后使用您自己的CLI Python命令在同步模式下运行MLflow作业。另外，注意<code>mlflow.run()</code>是<code>mlflow.projects.run()</code> API的高级fluent(面向对象)API。为了保持一致性，我们在本书中广泛使用了<code>mlflow.run()</code> API。关于<a id="_idIndexMarker305"/> MLflow运行Python API的详细信息，请参见官方文档页面:<a href="https://www.mlflow.org/docs/latest/python_api/mlflow.projects.html#mlflow.projects.run">https://www . ml flow . org/docs/latest/Python _ API/ml flow . projects . html # ml flow . projects . run</a>。</p>
+			<p>接下来的几行输出如下所示:</p>
+			<pre>2022/01/06 17:48:31 INFO mlflow.projects.databricks: === Running entry point main of project . on Databricks ===
+2022/01/06 17:48:31 INFO mlflow.projects.databricks: === Launched MLflow run as Databricks job run with ID <strong class="bold">279456</strong>. Getting run status page URL... ===
+2022/01/06 17:48:31 INFO mlflow.projects.databricks: === Check the run's status at https://???.cloud.databricks.com#job/<strong class="bold">168339</strong>/run/1 ===</pre>
+			<p>这些<a id="_idIndexMarker306"/>行描述了<a id="_idIndexMarker307"/>作业已经<a id="_idIndexMarker308"/>提交到<a id="_idIndexMarker309"/> Databricks服务器，作业运行ID和作业URL显示在最后一行(用您实际的Databricks URL替换<code>???</code>以便为您工作)。请注意，MLflow运行ID是<code>279456</code>，它不同于您在作业URL中看到的ID(<code>168339</code>)。这是因为作业URL由Databricks作业管理系统管理，并以不同的方式生成和跟踪每个实际作业。</p>
+			<ol>
+				<li value="4">点击作业URL链接(<code>https://???.cloud.databricks.com#job/168339/run/1</code>)并检查该作业的状态，这将显示进度和标准输出以及错误日志(参见<em class="italic">图5.3 </em>)。通常，该<a id="_idIndexMarker310"/>页面将<a id="_idIndexMarker311"/>花费<a id="_idIndexMarker312"/>几分钟时间来<a id="_idIndexMarker313"/>开始显示运行进度，因为它需要在开始运行作业之前基于<code>cluster_spec.json</code>创建一个全新的集群。</li>
+			</ol>
+			<div><div><img src="img/B18120_05_03.jpg" alt="Figure 5.3 – MLflow run job status page with standard output&#13;&#10;" width="643" height="874"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.3–具有标准输出的MLflow运行作业状态页面</p>
+			<p><em class="italic">图5.3 </em>显示作业已成功完成(<code>chapter05</code>文件夹已上传并提取到<a id="_idIndexMarker314"/>数据块文件系统 ( <strong class="bold"> DBFS </strong>)。如前所述，在DBFS中，只有我们想要运行的MLproject被打包、上传和提取，而不是整个项目存储库。</p>
+			<p>在同一个作业状态页面上，您还会发现标准错误部分，它显示了描述我们想要运行的管道步骤的日志:<code>download_data</code>。这些不是错误，只是信息性消息。所有Python日志都聚集在这里。详见<em class="italic">图5.4 </em>:</p>
+			<div><div><img src="img/B18120_05_04.jpg" alt="Figure 5.4 – MLflow job information logged on the job status page&#13;&#10;" width="1262" height="377"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.4–作业状态页面上记录的MLflow作业信息</p>
+			<p><em class="italic">图5.4 </em>显示的<a id="_idIndexMarker315"/>日志与我们在<a id="_idIndexMarker317"/>本地交互<a id="_idIndexMarker318"/>环境中运行时看到的<a id="_idIndexMarker316"/>日志非常相似，但现在这些运行是在我们提交作业时指定的集群中执行的。注意<em class="italic">图5.4 </em>中的管道实验ID为<code>427565</code>。使用以下URL模式中的实验ID <code>427565</code>，您应该能够在Databricks服务器上的集成MLflow跟踪服务器中找到成功完成的MLflow DL管道运行:</p>
+			<p><code>https://[your databricks hostname]/#mlflow/experiments/427565</code></p>
+			<p>如果您看到我们在前面章节中看到的熟悉的跟踪结果，请给自己一个大大的拥抱，因为您刚刚完成了在远程Databricks集群中运行本地代码的重要学习里程碑！</p>
+			<p>此外，我们可以使用这种方法运行DL管道的多个步骤，而无需更改单个步骤实现中的任何代码。例如，如果我们想要运行DL管道的<code>download_data</code>和<code>fine_tuning_model</code>步骤，我们可以发出以下命令:</p>
+			<pre>mlflow run . -b databricks --backend-config cluster_spec.json --experiment-name='/Shared/dl_model_chapter05' -P pipeline_steps='download_data,fine_tuning_model'</pre>
+			<p>输出控制台将显示以下短消息:</p>
+			<pre>2022/01/07 15:22:39 INFO mlflow.projects.databricks: === Uploading project to DBFS path /dbfs/mlflow-experiments/427565/projects-code/743cadfec82a55b8c76e9f27754cfdd516545b155254e990c2cc62650b8af959.tar.gz ===
+2022/01/07 15:22:40 INFO mlflow.projects.databricks: === Finished uploading project to /dbfs/mlflow-experiments/427565/projects-code/743cadfec82a55b8c76e9f27754cfdd516545b155254e990c2cc62650b8af959.tar.gz ===
+2022/01/07 15:22:40 INFO mlflow.projects.databricks: === Running entry point main of project . on Databricks ===
+2022/01/07 15:22:40 INFO mlflow.projects.databricks: === Launched MLflow run as Databricks job run with ID 279540. Getting run status page URL... ===
+2022/01/07 15:22:40 INFO mlflow.projects.databricks: === Check the run's status at https://?????.cloud.databricks.com#job/168429/run/1 ===</pre>
+			<p>然后，您可以<a id="_idIndexMarker319"/>转到控制台<a id="_idIndexMarker321"/>输出的最后一行中显示的作业URL页面<a id="_idIndexMarker320"/>，等待<a id="_idIndexMarker322"/>创建一个新集群并完成这两个步骤。然后，您应该能够使用相同的实验URL(因为我们使用相同的实验名称)在MLflow跟踪服务器中记录的实验文件夹中找到这两个步骤:</p>
+			<p><code>https://[your databricks hostname]/#mlflow/experiments/427565</code></p>
+			<p>现在我们知道了如何在远程Databricks集群中运行本地代码，我们将学习如何在远程Databricks集群中运行GitHub存储库中的代码。</p>
+			<h1 id="_idParaDest-67"><a id="_idTextAnchor066"/>使用GitHub中的远程代码在云中远程运行</h1>
+			<p>最可靠的<a id="_idIndexMarker323"/>复制DL <a id="_idIndexMarker325"/>管道的方式是将<a id="_idIndexMarker326"/>指向GitHub中项目代码的特定版本，然后在云中运行它，而不调用任何本地资源。这样，我们知道了代码的确切版本，并且使用了项目中定义的相同运行环境。让我们看看这是如何与我们的DL管道一起工作的。</p>
+			<p>作为先决条件和提醒，在发出MLflow run命令完成本部分学习之前，需要设置以下三个环境变量:</p>
+			<pre>export MLFLOW_TRACKING_URI=databricks
+export DATABRICKS_TOKEN=[databricks_token]
+export DATABRICKS_HOST='https://[your databricks host name/'</pre>
+			<p>从上一节我们已经知道了如何设置这些环境变量。可能还需要一个设置，即允许您的Databricks服务器访问您的非公共GitHub存储库(参见下面的<em class="italic"> GitHub令牌，用于Databricks访问非公共或企业项目存储库</em>框)。</p>
+			<p class="callout-heading">用于数据块访问非公共或企业项目存储库的GitHub令牌</p>
+			<p class="callout">为了允许Databricks<a id="_idIndexMarker327"/>访问GitHub中的项目存储库，还需要另一个令牌。这可以通过转到您的个人GitHub页面(https://github.com/settings/tokens)并遵循该页面上描述的步骤来生成(<a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token">https://docs . GitHub . com/en/authentic ation/keeping-your-account-and-data-secure/creating-a-personal-access-token</a>)。然后<a id="_idIndexMarker328"/>可以按照Databricks <a id="_idIndexMarker329"/>文档网站上的说明进行设置:<a href="https://docs.databricks.com/repos.html#configure-your-git-integration-with-databricks">https://docs . data bricks . com/repos . html # configure-your-git-integration-with-data bricks</a>。</p>
+			<p>现在，让我们使用GitHub存储库中的特定版本在远程数据块集群上运行项目:</p>
+			<pre>mlflow run https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow#chapter05 -v 395c33858a53bcd8ac217a962ab81e148d9f1d9a -b databricks --backend-config cluster_spec.json --experiment-name='/Shared/dl_model_chapter05' -P pipeline_steps='all'</pre>
+			<p>然后我们会看到只有六行的输出。让我们看看每行显示的重要信息及其工作原理:</p>
+			<ol>
+				<li value="1">第一行显示了项目存储库的内容下载到本地的位置:<pre><strong class="bold">2022/01/07 17:36:54 INFO mlflow.projects.utils: === Fetching project from https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow#chapter05 into</strong> <strong class="bold">/var/folders/51/whxjy4r92dx18788yp11ycyr0000gp/T/tmpzcepn5h5</strong> ===</pre></li>
+			</ol>
+			<p>如果我们在本地机器上执行这个命令时，转到这个消息中显示的临时目录，我们会看到整个存储库已经下载到这个文件夹:<code>/var/folders/51/whxjy4r92dx18788yp11ycyr0000gp/T/tmpzcepn5h5</code>。</p>
+			<ol>
+				<li value="2">接下来的两行显示项目内容被压缩并上传到Databricks服务器上的DBFS文件夹:<pre><strong class="bold">2022/01/07 17:36:57 INFO mlflow.projects.databricks: === Uploading project to DBFS path /dbfs/mlflow-experiments/427565/projects-code/fba3d31e1895b78f40227b5965461faddb 61ec9df906fb09b161f74efaa90aa2.tar.gz ===</strong> <strong class="bold">2022/01/07 17:36:57 INFO mlflow.projects.databricks: === Finished uploading project to /dbfs/mlflow-experiments/427565/projects-code/fba3d31e1895b78f40227b5965461faddb61ec 9df906fb09b161f74efaa90aa2.tar.gz ===</strong></pre></li>
+			</ol>
+			<p>如果我们<a id="_idIndexMarker334"/>使用Databricks的<a id="_idIndexMarker335"/> local <a id="_idIndexMarker336"/>命令行<a id="_idIndexMarker337"/>工具，我们可以列出这个<code>.tar.gz</code>文件，就好像它是一个本地文件一样(但实际上，它位于Databricks服务器的远程位置):</p>
+			<pre><strong class="bold">databricks fs ls -l dbfs:/mlflow-experiments/427565/projects-code/fba3d31e1895b78f40227b5965461faddb61ec 9df906fb09b161f74efaa90aa2.tar.gz</strong></pre>
+			<p>您应该会看到类似下面的输出，它描述了文件的属性(大小、所有者/组ID以及它是文件还是目录):</p>
+			<pre><strong class="bold">file  3070  fba3d31e1895b78f40227b5965461faddb61ec 9df906fb09b161f74efaa90aa2.tar.gz  1641605818000</strong></pre>
+			<ol>
+				<li value="3">下一行显示它开始运行这个GitHub项目的<code>main</code>入口点:<pre><strong class="bold">2022/01/07 17:36:57 INFO mlflow.projects.databricks: === Running entry point main of project https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow#chapter05 on Databricks ===</strong></pre></li>
+			</ol>
+			<p>请注意我们运行本地代码时的区别(它是项目后面的一个<em class="italic">点</em>，这意味着本地系统上的当前目录)。现在，它列出了GitHub存储库位置的完整路径。</p>
+			<ol>
+				<li value="4">最后两行类似于前一部分的输出，其中列出了工作URL: <pre><strong class="bold">2022/01/07 17:36:57 INFO mlflow.projects.databricks: === Launched MLflow run as Databricks job run with ID 279660. Getting run status page URL... ===</strong> <strong class="bold">2022/01/07 17:36:57 INFO mlflow.projects.databricks: === Check the run's status at https://????.cloud.databricks.com#job/168527/run/1 ===</strong></pre></li>
+				<li>如果我们<a id="_idIndexMarker338"/>单击控制台输出的最后一行<a id="_idIndexMarker340"/>中的作业<a id="_idIndexMarker339"/> URL，我们将能够在该网站上看到以下内容(<em class="italic">图5.5 </em>):</li>
+			</ol>
+			<div><div><img src="img/B18120_05_05.jpg" alt="Figure 5.5 – MLflow run job status page using the code from the GitHub repository&#13;&#10;" width="1266" height="319"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.5–使用来自GitHub存储库的代码的MLflow运行作业状态页面</p>
+			<p><em class="italic">图5.5 </em>显示了该作业的结束状态。注意，现在页面的标题是<strong class="bold">ml flow Run for https://github . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow # chapter 05</strong>，而不是<strong class="bold"> MLflow Run for。</strong>如前一节所示当使用本地代码运行时。</p>
+			<p>作业的状态显示该作业已成功运行，您还将看到结果像以前一样记录在实验页面中，所有三个步骤都已完成。该模型还按照预期在模型注册中心注册，注册在Databricks服务器中的以下URL下:</p>
+			<p><code>https://[your_databricks_hostname]/#mlflow/models/dl_finetuned_model</code></p>
+			<p>总之，这种方法的工作机制如下图所示(<em class="italic">图5.6 </em>):</p>
+			<div><div><img src="img/B18120_05_06.jpg" alt="Figure 5.6 – Summary view of running remote GitHub code in a remote Databricks cluster server&#13;&#10;" width="1346" height="622"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.6–在远程Databricks集群服务器中运行远程GitHub代码的概要视图</p>
+			<p><em class="italic">图5.6 </em>显示了<a id="_idIndexMarker342"/>有三个<a id="_idIndexMarker344"/>不同的<a id="_idIndexMarker345"/>位置(一个我们发出MLflow运行命令的机器，一个远程Databricks服务器，和一个远程GitHub项目)。当发出MLflow run命令时，远程GitHub项目源代码被克隆到发出MLflow run命令的机器上，然后被上传到远程Databricks服务器，并提交一个作业来执行DL管道的多个步骤。这是一个异步执行，需要根据创建的作业URL监控作业的状态。</p>
+			<p class="callout-heading">在其他后端上运行MLflow项目</p>
+			<p class="callout">现在，Databricks <a id="_idIndexMarker346"/>支持两种类型的远程运行<a id="_idIndexMarker347"/>后端环境:Databricks和K8s。不过，截至MLflow 1 . 22 . 0版本(<a href="https://www.mlflow.org/docs/latest/projects.html#run-an-mlflow-project-on-kubernetes-experimental">https://www . ml flow . org/docs/latest/projects . html # run-an-ml flow-project-on-kubernetes-experimental</a>)，在K8s上运行ml flow项目仍处于实验模式，可能会有变化。如果您有兴趣了解这方面的更多信息，请参考<em class="italic">进一步阅读</em>部分中的参考资料，探究提供的示例。还有其他<a id="_idIndexMarker348"/>第三方提供的后端(也叫社区插件)比如<code>hadoop-yarn</code>(<a href="https://github.com/criteo/mlflow-yarn">https://github.com/criteo/mlflow-yarn</a>)。由于Databricks在所有主要云提供商中的可用性及其在支持符合企业安全的生产场景方面的成熟性，本书目前主要关注学习如何在Databricks服务器中远程运行MLflow项目。</p>
+			<h1 id="_idParaDest-68"><a id="_idTextAnchor067"/>总结</h1>
+			<p>在本章中，我们学习了如何使用本地源代码或GitHub项目存储库代码在不同的执行环境(本地或远程数据块集群)中运行DL管道。这不仅对执行DL流水线的再现性和灵活性至关重要，而且还能提供更高的生产率和未来使用CI/CD工具实现自动化的可能性。在资源丰富的远程环境中运行DL管道的一个或多个步骤的能力使我们能够快速执行大规模计算和数据密集型作业，这些作业通常在生产质量的DL模型培训和微调中出现。这允许我们在必要时对DL模型进行超参数调整或交叉验证。我们将在下一章开始学习如何运行大规模超参数调优，这是我们自然的下一步。</p>
+			<h1 id="_idParaDest-69"><a id="_idTextAnchor068"/>延伸阅读</h1>
+			<ul>
+				<li>MLflow运行项目参数(针对命令行和Python API):<a href="https://www.mlflow.org/docs/latest/projects.html#running-projects">https://www . ml flow . org/docs/latest/projects . html # running-projects</a></li>
+				<li>MLflow运行命令行(CLI)文档:<a href="https://www.mlflow.org/docs/latest/cli.html#mlflow-run">https://www.mlflow.org/docs/latest/cli.html#mlflow-run</a></li>
+				<li>MLflow在数据块上运行项目:<a href="https://www.mlflow.org/docs/latest/projects.html#run-an-mlflow-project-on-databricks">https://www . ml flow . org/docs/latest/projects . html # run-an-ml flow-project-on-data bricks</a></li>
+				<li>在K8s上运行MLflow项目的例子:<a href="https://github.com/SameeraGrandhi/mlflow-on-k8s/tree/master/examples/LogisticRegression">https://github . com/sameeragandhi/ml flow-on-K8s/tree/master/examples/LogisticRegression</a></li>
+				<li>在Azure上运行MLflow项目:<a href="https://docs.microsoft.com/en-us/azure/machine-learning/how-to-train-mlflow-projects">https://docs . Microsoft . com/en-us/Azure/machine-learning/how-to-train-ml flow-projects</a></li>
+			</ul>
+		</div>
+	</div>
+</body></html>

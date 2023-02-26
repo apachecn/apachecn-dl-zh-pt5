@@ -1,0 +1,281 @@
+<html><head/><body>
+
+
+
+
+
+	
+
+		<title>B18522_11</title>
+
+		
+
+	
+
+	
+
+		<div><h1 id="_idParaDest-215" class="chapter-number"><a id="_idTextAnchor227"/> 11</h1>
+
+			<h1 id="_idParaDest-216"><a id="_idTextAnchor228"/>移动设备上的深度学习</h1>
+
+			<p>在本章中，我们将介绍如何分别使用<strong class="bold">tensor flow Lite</strong>(<strong class="bold">TF Lite</strong>)和<strong class="bold"> PyTorch Mobile </strong>在移动设备上部署使用<strong class="bold"> TensorFlow </strong> ( <strong class="bold"> TF </strong>)和<strong class="bold"> PyTorch </strong>开发的<strong class="bold">深度学习</strong> ( <strong class="bold"> DL </strong>)模型。首先，我们将讨论如何将TF模型转换为TF Lite模型。然后，我们将解释如何将PyTorch模型转换成PyTorch Mobile可以使用的TorchScript模型。最后，本章的最后两节将介绍如何将转换后的模型集成到Android和iOS应用程序(apps)中。</p>
+
+			<p>在本章中，我们将讨论以下主要话题:</p>
+
+			<ul>
+
+				<li>为移动设备准备DL模型</li>
+
+				<li>使用DL模型创建iOS应用程序</li>
+
+				<li>使用DL模型创建Android应用程序</li>
+
+			</ul>
+
+			<h1 id="_idParaDest-217"><a id="_idTextAnchor229"/>为移动设备准备DL模型</h1>
+
+			<p>移动设备通过让人们能够轻松<a id="_idIndexMarker1054"/>访问互联网，重塑了我们的日常生活方式；我们的许多日常任务严重依赖于移动设备。因此，如果我们能够在移动应用程序上部署DL模型，我们应该能够实现更高水平的便利性。常见的用例包括不同语言之间的翻译、对象检测和数字识别等。</p>
+
+			<p>以下截图提供了一些使用案例示例:</p>
+
+			<div><div><img src="img/B18522_11_011_Merged.jpg" alt="Figure 11.1 – From left to right, the listed apps handle plant identification, &#13;&#10;object detection, and machine translation, exploiting the flexibility of DL&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图11.1–从左到右，列出的应用处理植物识别、物体检测和机器翻译，充分利用了DL的灵活性</p>
+
+			<p>移动设备有许多<strong class="bold">操作系统</strong>(<strong class="bold">OS</strong>)。然而，目前有两种操作系统主导着移动市场:iOS和Android。iOS是苹果设备的操作系统，比如iPhone和iPad。同样，Android是三星和谷歌等公司生产的设备的标准操作系统。在这一章中，我们主要关注针对两种主流操作系统的部署。</p>
+
+			<p>不幸的是，TF和PyTorch模型不能以其原始格式部署在移动设备上。我们需要将它们转换成可以在移动设备上运行推理逻辑的格式。在TF的情况下，我们需要一个TF Lite模型；我们将首先讨论如何使用<code>tensorflow</code>库将TF模型转换成TF Lite模型。另一方面，PyTorch涉及PyTorch移动框架，它只能使用TorchScript模型。在TF Lite转换之后，我们将学习如何将PyTorch模型转换为TorchScript模型。此外，我们将解释如何针对目标移动环境优化PyTorch模型的某些层。</p>
+
+			<p>值得注意的是，一个TF模型或者PyTorch模型可以转换成<strong class="bold">开放神经网络交换</strong> ( <strong class="bold"> ONNX </strong>)运行时<a id="_idIndexMarker1057"/>并部署在移动(<a href="https://onnxruntime.ai/docs/tutorials/mobile">https://onnxruntime.ai/docs/tutorials/mobile</a>)上。此外，SageMaker为将DL模型加载到edge <a id="_idIndexMarker1059"/>设备上提供了内置支持:sage maker Edge Manager(<a href="https://docs.aws.amazon.com/sagemaker/latest/dg/edge-getting-started-step4.html">https://docs . AWS . Amazon . com/sage maker/latest/DG/Edge-getting-started-step 4 . html</a>)。</p>
+
+			<h2 id="_idParaDest-218"><a id="_idTextAnchor230"/>生成一个TF Lite模型</h2>
+
+			<p>TF Lite是一个用于在移动<a id="_idIndexMarker1060"/>设备、微控制器和其他边缘设备(<a href="https://www.tensorflow.org/lite">https://www.tensorflow.org/lite</a>)上部署模型的库。一个经过训练的TF模型<a id="_idIndexMarker1061"/>需要被转换成一个TF Lite模型才能在edge <a id="_idIndexMarker1062"/>设备上运行。如下面的代码片段所示，<code>tensorflow</code>库具有将TF模型转换为TF Lite模型的内置支持(一个<code>.tflite</code>文件):</p>
+
+			<pre class="source-code">
+
+import tensorflow as tf
+
+# path to the trained TF model
+
+trained_model_dir = "s3://mybucket/tf_model"
+
+# TFLiteConverter class is necessary for the conversion
+
+converter = tf.lite.TFLiteConverter.from_saved_model(trained_model_dir)
+
+tfl_model = converter.convert()
+
+# save the converted model to TF Lite format 
+
+with open('model_name.tflite', 'wb') as f:
+
+  f.write(tfl_model)</pre>
+
+			<p>在前面的Python代码中，<code>tf.lite.TFLiteConverter</code>类的<code>from_saved_model</code>函数加载一个经过训练的TF模型文件。这个类的<code>convert</code>方法将加载的TF模型转换成TF Lite模型。</p>
+
+			<p>正如第10章<em class="italic">提高推理效率</em>中所讨论的，TF Lite对模型压缩技术有着多样的支持。TF Lite提供的流行技术包括网络修剪和<a id="_idIndexMarker1063"/>网络量化。</p>
+
+			<p>接下来，让我们看看如何<a id="_idIndexMarker1064"/>将PyTorch模型转换成PyTorch Mobile的TorchScript模型。</p>
+
+			<h2 id="_idParaDest-219"><a id="_idTextAnchor231"/>生成TorchScript模型</h2>
+
+			<p>在移动<a id="_idIndexMarker1065"/>设备上运行PyTorch模型可以通过使用<a id="_idIndexMarker1067"/>py torch移动框架<a href="https://pytorch.org/mobile/home/">https://pytorch.org/mobile/home/</a>来<a id="_idIndexMarker1066"/>实现。与TF的情况类似，为了使用PyTorch Mobile(<a href="https://pytorch.org/docs/master/jit.html">https://pytorch.org/docs/master/jit.html</a>)运行模型，必须将训练好的py torch模型转换成TorchScript模型。为TorchScript开发的<code>torch.jit</code>模块的主要优势是能够在Python环境之外运行PyTorch模块，比如C++环境。这在将DL模型部署到移动设备时非常重要，因为它们不支持Python，但支持C++。<code>torch.jit.script</code>方法将给定DL模型的图形导出到一个可以在C++环境中执行的低级表示中。有关跨语言支持的完整详细信息，请访问<a href="https://pytorch.org/docs/stable/jit_language_reference.html#language-reference">https://py torch . org/docs/stable/JIT _ language _ reference . html # language-reference</a>。请注意，TorchScript仍处于测试阶段。</p>
+
+			<p>为了从PyTorch模型获得TorchScript模型，您需要将训练好的模型传递给<code>torch.jit.script</code>函数，如下面的代码片段所示。通过使用<code>torch.utils.mobile_optimizer</code>模块的<code>optimize_for_mobile</code>方法(<a href="https://pytorch.org/docs/stable/mobile_optimizer.html">https://pytorch.org/docs/stable/mobile_optimizer.html</a>)融合<code>Conv2D</code>和<code>BatchNorm</code>层或者移除不必要的<code>Dropout</code>层，TorchScript模型可以进一步针对移动环境进行优化。请记住，<code>mobile_optimizer</code>方法也处于测试状态:</p>
+
+			<pre class="source-code">
+
+import torch
+
+from torch.utils.mobile_optimizer import optimize_for_mobile
+
+# load a trained PyTorch model
+
+saved_model_file = "model.pt"
+
+model = torch.load(saved_model_file)
+
+# the model should be in evaluate mode for dropout and batch normalization layers
+
+model.eval()
+
+# convert the model into a TorchScript model and apply optimization for mobile environment
+
+torchscript_model = torch.jit.script(model)
+
+torchscript_model_optimized = optimize_for_mobile(torchscript_model)
+
+# save the optimized TorchScript model into a .pt file 
+
+torch.jit.save(torchscript_model_optimized, "mobile_optimized.pt")</pre>
+
+			<p>在前面的例子中，我们首先在内存(<code>torch.load("model.pt")</code>)中加载<a id="_idIndexMarker1068"/>训练好的模型。转换时，模型应处于<code>eval</code>模式。在下一行中，我们使用<code>torch.jit.script</code>函数将PyTorch模型转换成TorchScript模型(<code>torchscript_model</code>)。TorchScript模型使用<code>optimize_for_mobile</code>方法针对<a id="_idIndexMarker1069"/>移动环境进行了进一步优化；它生成一个优化的TorchScript模型(<code>torch_script_model_optimized</code>)。优化的TorchScript模型可以使用<code>torch.jit.save</code>方法保存为独立的<code>.pt</code>文件(<code>mobile_optimized.pt</code>)。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.在移动设备上运行TF模型涉及到TF Lite框架。需要将训练好的模型转换成TF Lite模型。来自<code>tensorflow.lite</code>库的<code>TFLiteCoverter</code>类用于转换。</p>
+
+			<p class="callout">b.在移动设备上运行PyTorch模型涉及PyTorch移动框架。鉴于PyTorch Mobile只支持TorchScript模型，需要使用torch.jit库将训练好的模型转换成<a id="_idIndexMarker1070"/> <code>TorchScript</code>模型。</p>
+
+			<p>接下来，我们将学习如何<a id="_idIndexMarker1071"/>将TF Lite和TorchScript模型集成到一个iOS应用程序中。</p>
+
+			<h1 id="_idParaDest-220"><a id="_idTextAnchor232"/>使用DL模型创建iOS应用</h1>
+
+			<p>在本节中，我们将<a id="_idIndexMarker1072"/>介绍如何为iOS应用程序的TF Lite和TorchScript模型编写推理代码。虽然Swift和Objective-C是iOS的本地语言<a id="_idIndexMarker1073"/>并且可以在单个项目中一起使用，但我们将主要关注Swift用例，因为它现在比Objective-C更受欢迎。</p>
+
+			<p>如果我们解释iOS应用程序开发的每一步，这一章会很长。因此，我们将基础知识归入苹果提供的官方教程:<a href="https://developer.apple.com/tutorials/app-dev-training">https://developer.apple.com/tutorials/app-dev-training</a>。</p>
+
+			<h2 id="_idParaDest-221"><a id="_idTextAnchor233"/>在iOS上运行TF Lite模型推理</h2>
+
+			<p>在本节中，我们将展示如何使用TF Lite的原生iOS库<code>TensorFlowLiteSwift</code>(<a href="https://github.com/tensorflow/tensorflow/tree/master/tensorflow/lite/swift">https://github . com/tensor flow/tensor flow/tree/master/tensor flow/Lite/swift</a>)将<a id="_idIndexMarker1074"/> TF Lite模型加载到iOS应用程序中。安装<code>TensorFlowLiteSwift</code>可以通过CocoaPods来实现，cocoa pods是iOS <a id="_idIndexMarker1075"/> app开发的标准包管理器(<a href="https://cocoapods.org">https://cocoapods.org</a>)。要在macOS上下载CocoaPods，可以在终端上运行<code>brew install cocoapods</code>命令。每个iOS应用程序开发都涉及一个Podfile，其中列出了应用程序开发所依赖的库，必须将<code>TensorFlowLiteSwift</code>库添加到该文件中，如以下代码片段所示:</p>
+
+			<pre class="source-code">
+
+pod 'TensorFlowLiteSwift'</pre>
+
+			<p>要在Podfile中安装所有的库，可以运行<code>pod install</code>命令。</p>
+
+			<p>以下步骤描述了如何为您的iOS应用程序加载TF Lite模型并运行推理逻辑。有关执行的完整详细信息，请访问<a href="https://www.tensorflow.org/lite/guide/inference#load_and_run_a_model_in_swift">https://www . tensor flow . org/lite/guide/inference # load _ and _ run _ a _ model _ in _ swift</a>:</p>
+
+			<ol>
+
+				<li>可以使用<code>import</code>关键字:<pre>import TensorFlowLite</pre>加载已安装的库</li>
+
+				<li>通过提供输入TF Lite模型的路径来初始化一个<code>Interpreter</code>类:<pre>let interpreter = try Interpreter(modelPath: modelPath) </pre></li>
+
+				<li>为了将输入数据传递给模型，您需要使用<code>self.interpreter.copy</code>方法将输入数据复制到索引<code>0</code> : <pre>let inputData: Data inputData = ... try self.interpreter.copy(inputData, toInputAt: 0)</pre>处的输入<code>Tensor</code>对象中</li>
+
+				<li>一旦输入的<code>Tensor</code>对象准备好了，就可以使用<code>self.interpreter.invoke</code>方法<a id="_idIndexMarker1076"/>运行推理逻辑:<pre>try self.interpreter.invoke()</pre></li>
+
+				<li>生成的输出可以使用<code>self.interpreter.output</code>作为<code>Tensor</code>对象进行检索，该对象可以使用<code>UnsafeMutableBufferPointer</code>类进一步反序列化为数组:<pre>let outputTensor = try self.interpreter.output(at: 0) let outputSize = outputTensor.shape.dimensions.reduce(1, {x, y in x * y}) let outputData = UnsafeMutableBufferPointer&lt;Float32&gt;.allocate(capacity: outputSize) outputTensor.data.copyBytes(to: outputData)</pre></li>
+
+			</ol>
+
+			<p>在本节中，我们学习了如何在iOS应用程序中运行TF Lite模型推理。接下来，我们将介绍如何在一个iOS应用程序中运行TorchScript模型推理。</p>
+
+			<h2 id="_idParaDest-222"><a id="_idTextAnchor234"/>在iOS上运行TorchScript模型推理</h2>
+
+			<p>在本节中，我们将学习如何使用PyTorch Mobile在iOS应用程序上部署TorchScript模型。我们将从一个Swift代码片段开始，<a id="_idIndexMarker1079"/>使用<code>TorchModule</code>模块加载一个经过训练的TorchScript模型。PyTorch Mobile需要的库叫做<code>LibTorch_Lite</code>。这个库也可以通过CocoaPods获得。您需要做的就是将下面一行添加到Podfile中:</p>
+
+			<pre class="source-code">
+
+pod 'LibTorch_Lite', '~&gt;1.10.0'</pre>
+
+			<p>如上一节所述，您可以运行<code>pod install</code>命令来安装库。</p>
+
+			<p>鉴于TorchScript模型是为C++设计的，Swift代码不能直接运行模型推理。为了弥补这个差距，有了<code>TorchModule</code>类，一个用于<code>torch::jit::mobile::Module</code>的Objective-C包装器。要在您的应用程序中使用该功能，需要在项目下创建一个名为<code>TorchBridge</code>的文件夹，其中包含<code>TorchModule.mm</code> (Objective-C实施文件)、<code>TorchModule.h</code>(头文件)和一个带有<code>-Bridging-Header.h</code>后缀命名约定的桥接头文件(允许Swift加载Objective-C库)。完整的示例设置可以在<a href="https://github.com/pytorch/ios-demo-app/tree/master/HelloWorld/HelloWorld/HelloWorld/TorchBridge">https://github . com/py torch/IOs-demo-app/tree/master/hello world/hello world/hello world/torch bridge</a>找到。</p>
+
+			<p>在以下步骤中，我们将展示如何加载TorchScript模型并触发模型预测:</p>
+
+			<ol>
+
+				<li value="1">首先，您需要将<code>TorchModule</code>类导入到项目:<pre>#include "TorchModule.h"</pre></li>
+
+				<li>接下来，通过提供TorchScript模型文件的路径来实例化<code>TorchModule</code>:<pre>let modelPath = "model_dir/torchscript_model.pt" let module = TorchModule(modelPath: modelPath)</pre></li>
+
+				<li><code>TorchModule</code>类的<code>predict</code>方法处理模型推理。需要向<code>predict</code>方法提供一个输入，输出将被返回。在<a id="_idIndexMarker1080"/>罩下，<code>predict</code>方法<a id="_idIndexMarker1081"/>会通过Objective-C包装器调用模型的<code>forward</code>函数。代码如下面的代码片段所示:<pre>let inputData: Data inputData = ... let outputs = module.predict(input: UnsafeMutableRawPointer(&amp;inputData))</pre></li>
+
+			</ol>
+
+			<p>如果你对推理实际上如何在幕后工作感到好奇，我们建议你阅读<a href="https://pytorch.org/mobile/ios/">https://pytorch.org/mobile/ios/</a>的<em class="italic">运行推理</em>部分。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.Swift和Objective-C是开发iOS应用的标准语言。一个项目可以包含用两种语言编写的文件。</p>
+
+			<p class="callout">b.<code>TensorFlowSwift</code>库是Swift的TF库。<code>Interpreter</code>类支持iOS上的TF Lite模型推断。</p>
+
+			<p class="callout">c.<code>LibTorch_Lite</code>库通过<code>TorchModule</code>类支持iOS应用上的TorchScript模型推断。</p>
+
+			<p>接下来，我们将介绍如何在Android上为<a id="_idIndexMarker1083"/> TF Lite和TorchScript模型运行<a id="_idIndexMarker1082"/>推理。</p>
+
+			<h1 id="_idParaDest-223"><a id="_idTextAnchor235"/>使用DL模型创建Android应用程序</h1>
+
+			<p>在本节中，我们将<a id="_idIndexMarker1084"/>讨论Android <a id="_idIndexMarker1085"/>如何支持TF Lite和PyTorch Mobile。基于Java和<strong class="bold"> Java虚拟机</strong> ( <strong class="bold"> JVM </strong>)的语言(例如Kotlin)是Android应用的首选<a id="_idIndexMarker1086"/>语言。在本节中，我们将使用Java。Android应用程序开发的基础知识可以在https://developer.android.com<a href="https://developer.android.com">找到。</a></p>
+
+			<p>我们首先关注使用<code>org.tensorflow:tensorflow-lite-support</code>库在Android上运行TF Lite模型推理。然后，我们讨论如何使用<code>org.pytorch:pytorch_android_lite</code>库运行TorchScript模型推断。</p>
+
+			<h2 id="_idParaDest-224"><a id="_idTextAnchor236"/>在Android上运行TF Lite模型推理</h2>
+
+			<p>首先，让我们看看如何使用Java在Android上运行一个TF Lite模型。<code>org.tensorflow:tensorflow-lite-support</code>库用于在Android应用程序上部署<a id="_idIndexMarker1088"/> TF Lite模型。该库支持Java、C++(测试版)和Swift(测试版)。支持环境的完整列表可以在https://github.com/tensorflow/tflite-support<a href="https://github.com/tensorflow/tflite-support">找到。</a></p>
+
+			<p>Android应用程序开发涉及Gradle，一个管理依赖关系的构建<a id="_idIndexMarker1089"/>自动化工具(<a href="https://gradle.org">https://gradle.org</a>)。每个项目都有一个<code>.gradle</code>文件，它用基于JVM的语言(比如Groovy或Kotlin)指定项目规范。在下面的代码片段中，我们在<code>dependencies</code>部分列出了项目所依赖的库:</p>
+
+			<pre class="source-code">
+
+dependencies {
+
+     implementation 'org.tensorflow:tensorflow-lite-support:0.3.1'
+
+}</pre>
+
+			<p>在前面的Groovy Gradle代码中，我们指定了<code>org.tensorflow:tensorflow-lite-support</code>库作为我们的依赖项之一。在<a href="https://docs.gradle.org/current/samples/sample_building_java_applications.html">https://docs . Gradle . org/current/samples/sample _ building _ Java _ applications . html</a>中可以找到一个grad le示例文件。</p>
+
+			<p>在下面的步骤中，我们<a id="_idIndexMarker1090"/>将看看如何加载一个TF Lite模型<a id="_idIndexMarker1091"/>并运行推理逻辑。您可以在<a href="https://www.tensorflow.org/lite/api_docs/java/org/tensorflow/lite/Interpreter">https://www . tensor flow . org/lite/API _ docs/Java/org/tensor flow/lite/Interpreter</a>中找到关于此过程的完整详细信息:</p>
+
+			<ol>
+
+				<li value="1">首先是导入<code>org.tensorflow.lite</code>库，其中包含用于TF Lite模型推断的<code>Interpreter</code>类:<pre>import org.tensorflow.lite.Interpreter;</pre></li>
+
+				<li>然后，我们可以通过提供一个模型路径来实例化<code>Interpreter</code>类:<pre>let tensorflowlite_model_path = "tflitemodel.tflite"; Interpreter = new Interpreter(tensorflowlite_model_path);</pre></li>
+
+				<li><code>Interpreter</code>类实例的<code>run</code>方法用于运行推理逻辑。它只接受类型<code>HashMap</code>的一个<code>input</code>实例，并且只提供<code>HashMap</code> : <pre>Map&lt;&gt; input = new HashMap&lt;&gt;(); Input = ... Map&lt;&gt; output = new HashMap&lt;&gt;(); interpreter.run(input, output);</pre>的一个<code>output</code>实例</li>
+
+			</ol>
+
+			<p>在下一节中，我们将<a id="_idIndexMarker1092"/>学习如何将TorchScript模型<a id="_idIndexMarker1093"/>加载到Android应用程序中。</p>
+
+			<h2 id="_idParaDest-225"><a id="_idTextAnchor237"/>在Android上运行TorchScript模型推理</h2>
+
+			<p>在这一节中，我们将解释如何在Android应用程序中运行TorchScript模型。要在Android应用中运行TorchScript模型推理，您需要一个由<code>org.pytorch:pytorch_android_lite</code>库提供的Java <a id="_idIndexMarker1095"/>包装器。同样，您可以在<code>.gradle</code>文件中指定必要的库，如下面的代码片段所示:</p>
+
+			<pre class="source-code">
+
+dependencies {
+
+    implementation 'org.pytorch:pytorch_android_lite:1.11'
+
+}</pre>
+
+			<p>在Android应用程序中运行TorchScript模型推理可以通过以下步骤实现。关键是使用来自<code>org.pytorch</code>库的<code>Module</code>类，该类调用一个C++函数在后台进行推理(<a href="https://pytorch.org/javadoc/1.9.0/org/pytorch/Module.html">https://pytorch.org/javadoc/1.9.0/org/pytorch/Module.html</a>):</p>
+
+			<ol>
+
+				<li value="1">首先，你需要导入<code>Module</code>类:<pre>import org.pytorch.Module;</pre></li>
+
+				<li><code>Module</code>类提供了一个<code>load</code>函数，通过加载提供的模型文件<pre>let torchscript_model_path = "model_dir/torchscript_model.pt"; Module = Module.load(torchscript_model_path);</pre>来创建一个模块实例</li>
+
+				<li><code>Module</code>实例的<code>forward</code>方法用于运行推理逻辑并生成<code>org.pytorch.Tensor</code> : <pre>Tensor outputTensor = module.forward(IValue.from(inputTensor)).toTensor();</pre>类型的输出</li>
+
+			</ol>
+
+			<p>虽然前面的步骤<a id="_idIndexMarker1096"/>涵盖了<code>org.pytorch</code>模块的基本<a id="_idIndexMarker1097"/>用法，但是您可以从它们的官方文档中找到其他细节:<a href="https://pytorch.org/mobile/android">https://pytorch.org/mobile/android</a>。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.基于Java和JVM的语言(例如Kotlin)是Android应用程序的本地语言。</p>
+
+			<p class="callout">b.<code>org.tensorflow:tensorflow-lite-support</code>库用于在Android上部署一个TF Lite模型。<code>Interpreter</code>类实例的<code>run</code>方法处理模型推理。</p>
+
+			<p class="callout">c.<code>org.pytorch:pytorch_android_lite</code>库是为在Android应用中运行TorchScript模型而设计的。来自<code>Module</code>类的<code>forward</code>方法处理推理逻辑。</p>
+
+			<p>这就完成了DL模型在Android上的部署。现在，您应该能够将任何TF和PyTorch模型集成到一个Android应用程序中。</p>
+
+			<h1 id="_idParaDest-226"><a id="_idTextAnchor238"/>总结</h1>
+
+			<p>在本章中，我们介绍了如何将TF和PyTorch模型集成到iOS和Android应用程序中。本章一开始，我们描述了从TF模型到TF Lite模型以及从PyTorch模型到TorchScript模型的必要转换。接下来，我们提供了加载TF Lite和TorchScript模型以及在iOS和Android上使用加载的模型运行推理的完整示例。</p>
+
+			<p>在下一章，我们将学习如何关注已部署的模型。我们将看看为模型监控开发的一套工具，并描述如何有效地监控部署在<strong class="bold">亚马逊弹性Kubernetes服务</strong> ( <strong class="bold">亚马逊EKS </strong>)和亚马逊SageMaker上的模型。</p>
+
+		</div>
+
+	
+
+
+
+</body></html>

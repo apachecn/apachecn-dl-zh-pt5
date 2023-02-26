@@ -1,0 +1,949 @@
+<html><head/><body>
+
+
+    
+        <title>Working with Convolutional Neural Networks</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">使用卷积神经网络</h1>
+                
+            
+            
+                
+<p><strong>卷积神经网络</strong>(<strong>CNN</strong>)是计算机视觉问题中最流行、应用最广泛的深度神经网络。它们用于各种应用，包括图像分类、人脸识别、文档分析、医学图像分析、动作识别和自然语言处理。在本章中，我们将重点学习卷积运算，以及填充和步长等概念，以优化CNN。这一章背后的想法是让你精通CNN的功能，并学习数据扩充和批量标准化等技术，以微调你的网络，防止过度拟合。我们还将简要讨论如何利用迁移学习来提高模型性能。</p>
+<p>在本章中，我们将介绍以下配方:</p>
+<ul>
+<li>卷积运算简介</li>
+<li>了解步幅和衬垫</li>
+<li>熟悉池层</li>
+<li>实施迁移学习</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Introduction to convolutional operations</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">卷积运算简介</h1>
+                
+            
+            
+                
+<p>CNN的通用架构由卷积层和全连接层组成。像其他神经网络一样，CNN也包含输入层、隐藏层和输出层，但它的工作方式是将数据重组为由图像以及图像的宽度和高度组成的张量。在CNN中，一层中的每个体积仅连接到下一层中的空间相关区域，以确保当层数增加时，每个神经元对其特定位置具有局部影响。CNN也可以包含池层以及几个完全连接的层。</p>
+<p>下面是一个简单的CNN与卷积和池层的例子。在这个食谱中，我们将使用卷积层。我们将在本章的<em>熟悉池层</em>方法中介绍池层的概念:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1077 image-border" src="img/ae96e1d2-97f6-4912-b11e-f83d95e2f2e3.png" style="width:57.58em;height:14.08em;"/></p>
+<p>卷积运算是输入矩阵和所用滤波器之间的逐元素乘法和求和。以下是卷积运算的一个示例:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1078 image-border" src="img/a2aeffff-5201-4a97-9aba-5ef47d71cfc4.png" style="width:60.92em;height:15.50em;"/></p>
+<p>现在我们了解了卷积层的工作原理。让我们继续构建一个卷积神经网络来对服装和配饰进行分类。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Getting ready</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">做好准备</h1>
+                
+            
+            
+                
+<p>让我们从导入<kbd>keras</kbd>库开始:</p>
+<pre>library(keras)</pre>
+<p>在这个食谱中，我们将使用时尚MNIST数据集，它可以直接从keras导入。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How to do it...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">怎么做...</h1>
+                
+            
+            
+                
+<p>时尚-MNIST数据集包含10种不同类型的服装和配饰的图像。它由训练集中的60，000个示例和测试数据集中的10，000个示例组成。每个示例都是28 × 28灰度图像，与10个类别的标签相关联。</p>
+<ol>
+<li>我们在我们的环境中导入时尚-MNIST数据集:<br/></li>
+</ol>
+<pre style="padding-left: 60px">fashion &lt;- dataset_fashion_mnist()<br/>x_train &lt;- fashion$train$x<br/>y_train &lt;- fashion$train$y<br/>x_test &lt;- fashion$test$x<br/>y_test &lt;- fashion$test$y</pre>
+<p style="padding-left: 60px">我们可以使用命令检查训练和测试数据集的维度:<br/></p>
+<pre style="padding-left: 60px">dim(x_train)<br/>dim(x_test)</pre>
+<p style="padding-left: 60px">现在让我们来看看一个示例图像的数据:</p>
+<pre style="padding-left: 60px"> x_test[1,,]</pre>
+<p style="padding-left: 60px">在下面的截图中，我们可以看到样本图像数据是以矩阵的形式:<br/></p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/954d9211-3917-4e41-9364-915955071a67.png" style="width:23.00em;height:24.08em;"/></p>
+<p style="padding-left: 60px">我们使用以下代码检查前面截图的标签:</p>
+<pre style="padding-left: 60px">paste("label of first image is:  " ,y_train[1])</pre>
+<p style="padding-left: 60px">在下面的截图中，我们可以看到样本图像属于类别9:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/42cb9964-5eaa-45de-aabf-714825b85191.png"/></p>
+<p style="padding-left: 60px" class="CDPAlignLeft CDPAlign">现在，我们为数据中的不同类别定义标签名称:</p>
+<pre style="padding-left: 60px">label_names = c('T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',  'Sandal',<br/> 'Shirt', 'Sneaker', 'Bag', 'Ankle boot')</pre>
+<p>如果您正在使用Jupyter笔记本，您可以使用以下代码使用<kbd>repr</kbd>库来设置绘图窗口大小:<kbd>options(repr.plot.width=5, repr.plot.height=3)</kbd></p>
+<p style="padding-left: 60px">让我们来看一些来自不同类别的示例图像:</p>
+<pre style="padding-left: 60px"># Visualize images<br/><br/>par(mfcol=c(3,3))<br/>par(mar=c(2,2,2,2),xaxs = "i",yaxs = "i")<br/>for (idx in 1:9) { <br/> img &lt;- x_train[idx,,]<br/> img &lt;- t(apply(img, 2, rev)) <br/> image(1:28,1:28,img, main=paste(label_names[y_train[idx]+1]),xaxt = 'n',yaxt = 'n',col= gray((0:255)/255))<br/>}</pre>
+<p style="padding-left: 60px">在下面的屏幕截图中，我们可以看到示例图像及其标签名称:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1079 image-border" src="img/d6cae505-e580-4aac-bee0-e02c568451d2.png" style="width:27.00em;height:16.17em;"/></p>
+<ol start="2">
+<li class="CDPAlignLeft CDPAlign">接下来，我们对数据进行整形、规范化，并将目标标签转换为二进制类矩阵:</li>
+</ol>
+<pre style="padding-left: 60px"># Resize the shape of inputs<br/>x_train &lt;- array_reshape(x_train, c(nrow(x_train), 28, 28, 1))<br/>x_test &lt;- array_reshape(x_test, c(nrow(x_test), 28, 28, 1))<br/><br/># Transform RGB values into [0,1] range<br/>x_train &lt;- x_train / 255<br/>x_test &lt;- x_test / 255<br/><br/># Convert class vectors to binary class matrices<br/>y_train &lt;- to_categorical(y_train, 10)<br/>y_test &lt;- to_categorical(y_test, 10)</pre>
+<ol start="3">
+<li>一旦我们完成了数据准备，我们就构建、编译和训练我们的CNN模型:</li>
+</ol>
+<pre style="padding-left: 60px"># Define model<br/>cnn_model &lt;- keras_model_sequential() %&gt;%<br/> layer_conv_2d(filters = 8, kernel_size = c(4,4), activation = 'relu',<br/> input_shape = c(28,28,1)) %&gt;% <br/> layer_conv_2d(filters = 16, kernel_size = c(3,3), activation = 'relu') %&gt;% <br/> layer_flatten() %&gt;% <br/> layer_dense(units = 16, activation = 'relu') %&gt;% <br/> layer_dense(units = 10, activation = 'softmax')</pre>
+<p style="padding-left: 60px">我们来看一下模型的总结:</p>
+<pre style="padding-left: 60px">cnn_model %&gt;% summary()</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了该模型的详细信息:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1080 image-border" src="img/abe9fa29-00f1-4062-bed4-2a1a40ddfc45.png" style="width:33.50em;height:15.25em;"/></p>
+<div><p style="padding-left: 60px">在编译模型之前，让我们定义它的损失函数:</p>
+</div>
+<pre style="padding-left: 60px">loss_entropy &lt;- function(y_pred, y_true) {<br/> loss_categorical_crossentropy(y_pred, y_true)<br/> }</pre>
+<p style="padding-left: 60px">现在我们编译这个模型:</p>
+<pre style="padding-left: 60px"># Compile model<br/>cnn_model %&gt;% compile(<br/> loss = loss_entropy,<br/> optimizer = optimizer_sgd(),<br/> metrics = c('accuracy')<br/>)</pre>
+<p style="padding-left: 60px">在编译模型之后，我们使用128的批量大小、设置为5的时期数以及20%的验证分割对其进行训练:</p>
+<pre style="padding-left: 60px"># train the model<br/>cnn_model %&gt;% fit(<br/> x_train, y_train,<br/> batch_size = 128,<br/> epochs = 5,<br/> validation_split = 0.2<br/>)</pre>
+<ol start="4">
+<li>最后，我们评估已训练模型的性能，并打印评估指标:</li>
+</ol>
+<pre style="padding-left: 60px">scores &lt;- cnn_model %&gt;% evaluate(x_test,<br/> y_test,<br/> verbose = 0<br/> )<br/># Output metrics<br/>paste('Test loss:', scores[[1]])<br/>paste('Test accuracy:', scores[[2]])</pre>
+<p style="padding-left: 60px">在下面的截图中，我们可以看到模型对测试数据的评估指标:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1081 image-border" src="img/b5e46bea-6c73-4a68-89b3-90d2ca7ea56b.png" style="width:13.67em;height:3.33em;"/></p>
+<p style="padding-left: 60px">一旦我们对模型的准确性感到满意，我们就可以使用它来预测测试数据集的类:</p>
+<pre style="padding-left: 60px">#prediction<br/>predicted_label &lt;- cnn_model %&gt;% predict_classes(x_test)</pre>
+<p>在前面的截图中，我们可以看到我们的模型在测试数据上取得了81.63%的良好准确率。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How it works...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">它是如何工作的...</h1>
+                
+            
+            
+                
+<p>R中的<kbd>keras</kbd>库提供了各种数据集，利用这些数据集我们可以开发深度学习模型。在<em>步骤1 </em>中，我们使用<kbd>dataset_fashion_mnist()</kbd>函数导入了时尚-MNIST数据集，并检查了其训练和测试分区的大小。我们还查看了样本图像的数据和标签。接下来，我们为数据定义了标签名称，并为每个标签可视化了一个示例图像。</p>
+<p>Base R图形提供了绘制有趣图形的功能。<kbd>par()</kbd>功能用于设置各种图形参数，<kbd>image()</kbd>功能创建一个彩色或灰度矩形网格，其颜色对应于图像矩阵中的值。</p>
+<p>在<em>步骤2 </em>中，我们对数据进行了整形，并在0到1的范围内进行了标准化。我们还使用<kbd>to_categorical()</kbd>函数对目标标签矩阵进行了一次性编码。在我们完成数据准备之后，在<em>步骤3 </em>中，我们配置了我们的CNN模型并查看了它的摘要。在模型配置中，我们增加了两个卷积层，分别有8个和16个大小为4 × 4和3 × 3的滤波器，每一层都使用了<strong> ReLU </strong>激活函数。</p>
+<p>接下来，我们使用<kbd>layer_flatten()</kbd>将卷积层的输出矩阵转换为线性阵列，该阵列作为输入馈入我们密集神经网络的节点。我们的密集网络包含16个单元的隐藏层和10个单元的输出层，因为我们有10个目标标签。接下来，我们看了模型的总结；它为我们提供了关于输出形状和每层参数数量的信息。以下是卷积层的计算公式:</p>
+<ul>
+<li class="mce-root CDPAlignLeft CDPAlign">每层的输出形状:如果我们卷积层的输入是<img class="fm-editor-equation" src="img/b40a6bba-bdf8-4879-b1ef-835345eef9a7.png" style="width:5.17em;height:0.83em;"/>并且我们应用<img class="fm-editor-equation" src="img/aee96643-e028-45ac-9696-15a9deff1786.png" style="width:6.33em;height:1.17em;"/>的<img class="fm-editor-equation" src="img/8044bd1b-6dd8-4408-8940-12cf81694d4f.png" style="width:1.33em;height:0.92em;"/>滤波器，那么输出形状由下面的公式给出:<br/> <img class="fm-editor-equation" src="img/cbceb8f8-69f6-494c-8b67-839a15c75657.png" style="width:15.83em;height:1.25em;"/></li>
+<li class="mce-root CDPAlignLeft CDPAlign">每层的参数个数可以通过下面的公式计算:<br/> <img style="font-size: 1em;text-align: center;color: #333333;width:14.75em;height:1.33em;" class="fm-editor-equation" src="img/d431a66b-0a68-4eeb-b6bc-f6928a751c5c.png"/></li>
+</ul>
+<p>在模型配置之后，我们使用随机梯度下降优化器和分类交叉熵损失函数来编译模型。接下来，我们训练模型。最后，在<em>步骤4 </em>中，我们评估了模型在测试数据集上的性能，并打印了评估指标，为测试数据集生成了预测。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>There's more...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">还有更多...</h1>
+                
+            
+            
+                
+<p>到目前为止，我们主要使用二维卷积层。除了二维卷积，根据所用输入数据的类型，CNN还有一维和三维实现。</p>
+<p>一维CNN广泛用于文本数据分析，例如，对客户评论进行分类。与本质上大多是二维的图像不同，文本数据具有一维的输入数据。你可以参考下面这个一维卷积的例子，可以在<a href="https://keras.rstudio.com/articles/examples/imdb_cnn.html">https://keras.rstudio.com/articles/examples/imdb_cnn.html</a>这里找到。<a href="https://keras.rstudio.com/articles/examples/imdb_cnn.html"/></p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>See also</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">请参见</h1>
+                
+            
+            
+                
+<ul>
+<li>关于三维卷积层的更多细节，你可以参考https://keras.rstudio.com/reference/layer_conv_3d.html<a href="https://keras.rstudio.com/reference/layer_conv_3d.html">的Keras文档</a></li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Understanding strides and padding</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">了解步幅和衬垫</h1>
+                
+            
+            
+                
+<p>在本食谱中，我们将了解CNN的两个关键配置超参数，即步幅和填充。跨距主要用于减小输出音量的大小。填充是另一种技术，它允许我们在输出体积中保留输入体积的尺寸，从而使我们能够有效地提取低级特征。</p>
+<p><strong>步距:</strong>步距，简单来说，就是卷积运算的步距。跨距指定滤波器围绕输入进行卷积的数量。例如，如果我们指定stride参数的值为<kbd>1</kbd>，这意味着过滤器将在输入矩阵上一次移动一个单位。</p>
+<p>步幅可用于多种目的，主要如下:</p>
+<ul>
+<li>为了避免特征重叠</li>
+<li>为了实现输出体积的较小空间维度</li>
+</ul>
+<p>在下图中，您可以看到一个对7 × 7输入数据进行卷积运算的示例，滤波器大小为3 × 3，步长为1:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-1531 image-border" src="img/6e75d62b-adb6-4348-a857-ef0ee6c9b1bb.png" style="width:20.58em;height:11.58em;"/></p>
+<p><strong>填充:</strong>为了获得更好的建模性能，我们需要在网络的早期层中保留关于输入音量的低级特征的信息。随着我们不断应用卷积层，输出卷的大小下降得更快。此外，与输入矩阵中间的像素相比，输入矩阵角落处的像素被遍历的次数较少，这导致丢弃了图像边缘附近的大量信息。为了避免这种情况，我们使用零填充。零填充在边界周围对称地用零填充输入体积。</p>
+<p>有两种类型的填充:</p>
+<ul>
+<li>
+<p><strong>有效</strong>:如果我们指定有效的填充，我们的卷积层不会填充输入矩阵周围的任何东西，并且输出音量的大小将随着层的增加而不断减小。</p>
+</li>
+<li>
+<p><strong> Same </strong>:在卷积之前，在输入矩阵的边缘用零填充原始输入，这样输出大小与输入大小相同。</p>
+</li>
+</ul>
+<p>在下面的屏幕截图中，我们可以看到零填充的图示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1083 image-border" src="img/4a56ef46-dcd1-423b-8f3f-2cfdf04df26f.png" style="width:28.25em;height:20.50em;"/></p>
+<p>现在，我们已经了解了跨距和填充的概念，让我们进一步了解实现部分。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How to do it...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">怎么做...</h1>
+                
+            
+            
+                
+<div><div><div><p>在这一节中，我们将使用与本章前面的简介<em>和<em>卷积运算</em>中使用的相同的时尚-MNIST数据集。数据探索和转换将保持不变，因此我们直接跳到模型配置:</em></p>
+<ol>
+<li>让我们用步幅和填充来定义我们的模型:</li>
+</ol>
+</div>
+</div>
+</div>
+<pre style="padding-left: 60px">cnn_model_sp &lt;- keras_model_sequential() %&gt;% <br/> layer_conv_2d(filters = 8, kernel_size = c(4,4), activation = 'relu',<br/> input_shape = c(28,28,1),<br/> strides = c(2L, 2L),,padding = "same") %&gt;% <br/> layer_conv_2d(filters = 16, kernel_size = c(3,3), activation = 'relu') %&gt;% <br/> layer_flatten() %&gt;% <br/> layer_dense(units = 16, activation = 'relu') %&gt;% <br/> layer_dense(units = 10, activation = 'softmax')</pre>
+<p style="padding-left: 60px">我们来看一下模型的总结:</p>
+<pre style="padding-left: 60px">cnn_model_sp %&gt;% summary()</pre>
+<p style="padding-left: 60px">以下屏幕截图显示了所创建模型的详细信息:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/c2540b9b-bcbc-481e-9859-e9d2cd12e38b.png" style="width:41.33em;height:18.83em;"/></p>
+<div><div><div><ol start="2">
+<li>在配置我们的模型之后，我们定义它的目标损失函数，然后编译和训练它:</li>
+</ol>
+</div>
+</div>
+</div>
+<pre style="padding-left: 60px"># loss function<br/>loss_entropy &lt;- function(y_pred, y_true) {<br/> loss_categorical_crossentropy(y_pred, y_true)<br/> }<br/><br/># Compile model<br/>cnn_model_sp %&gt;% compile(<br/> loss = loss_entropy,<br/> optimizer = optimizer_sgd(),<br/> metrics = c('accuracy')<br/>)<br/><br/># Train model<br/>cnn_model_sp %&gt;% fit(<br/> x_train, y_train,<br/> batch_size = 128,<br/> epochs = 5,<br/> validation_split = 0.2<br/>)</pre>
+<p style="padding-left: 60px">让我们根据测试数据评估模型的性能，并打印评估指标:</p>
+<pre>scores &lt;- cnn_model_sp %&gt;% evaluate(x_test,<br/> y_test,<br/> verbose = 0<br/> )</pre>
+<p style="padding-left: 60px">现在我们在测试数据上打印模型损失和准确性:</p>
+<pre style="padding-left: 60px"># Output metrics<br/>paste('Test loss:', scores[[1]], '\n')<br/>paste('Test accuracy:', scores[[2]], '\n')</pre>
+<p style="padding-left: 60px" class="mce-root">我们可以看到，模型对测试数据的准确率在78%左右:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1084 image-border" src="img/32bcc46f-c321-44e8-8521-d5db9b76647e.png" style="width:13.17em;height:2.92em;"/></p>
+<p>我们可以看到，模型在分类任务中做得很好。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How it works...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">它是如何工作的...</h1>
+                
+            
+            
+                
+<p>在之前的菜谱<em>卷积运算简介</em>中，我们搭建了一个简单的CNN模型。除了<strong>滤波器尺寸</strong>和<strong>滤波器数量</strong>之外，卷积层还有两个参数可以配置，以便更好地提取特征，它们是<strong>步长</strong>和<strong>填充</strong>。在<em>步骤1 </em>中，我们传递了两个整数(宽度和高度)的向量，指定了卷积沿宽度和高度的步长。填充参数取两个值，<strong>有效</strong>和<strong>相同</strong>，其中<strong>有效</strong>表示没有填充，<strong>相同</strong>表示输入和输出大小保持不变。接下来，我们打印了模型的摘要。</p>
+<p>卷积层的输出形状和可训练参数的数量可以由下面的公式给出:</p>
+<ul>
+<li>输出形状:如果我们的卷积层的输入是<img style="font-size: 1em;color: black;width:5.67em;height:0.92em;" class="fm-editor-equation" src="img/9ccaf607-a743-4c18-a3ba-7c5b665b5619.png"/>，并且我们应用了<img style="font-size: 1em;color: black;width:7.25em;height:1.33em;" class="fm-editor-equation" src="img/f9c8cccf-c855-482e-bf56-f8c306a07d3c.png"/>和<img style="font-size: 1em;color: black;width:0.67em;height:0.75em;" class="fm-editor-equation" src="img/c60180ca-4961-4f16-b5ab-af3753daf935.png"/>步长和<img style="font-size: 1em;color: black;width:0.58em;height:1.00em;" class="fm-editor-equation" src="img/243e1691-2ce1-4bd6-a75c-d189b335621c.png"/>填充的<img style="font-size: 1em;color: black;width:1.33em;height:0.92em;" class="fm-editor-equation" src="img/69171dae-e73e-46f2-b453-51b030a6d3d7.png"/>滤波器，则输出形状由以下公式给出:</li>
+</ul>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/b31e903d-5488-474b-8137-f1f1976f0611.png" style="width:21.33em;height:2.42em;"/></p>
+<ul>
+<li class="CDPAlignLeft CDPAlign">每层中的参数数量计算如下:</li>
+</ul>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/334aa27c-5148-41df-b9c8-a816b346a2c8.png" style="width:15.67em;height:1.42em;"/></p>
+<p>在<em>步骤2 </em>中，我们定义了我们模型的损失函数，然后对其进行编译和训练。然后，我们在测试数据集上测试了模型的性能，并打印了模型的损失和准确性。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Getting familiar with pooling layers</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">熟悉池层</h1>
+                
+            
+            
+                
+<p>CNN使用池层来减小表示的大小，加速网络的计算，并确保稳健的特征提取。汇集层主要堆叠在卷积层的顶部，并且该层极大地缩小了输入维度，以减少网络中的计算，并且还减少过拟合。</p>
+<p class="mce-root">有两种最常用的池技术:</p>
+<ul>
+<li class="mce-root"><strong>最大汇集</strong>:这种类型的汇集通过将输入矩阵分成汇集区域，然后计算每个区域的最大值来进行缩减采样。</li>
+</ul>
+<p style="padding-left: 60px" class="mce-root">这里有一个例子:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1085 image-border" src="img/0ca9ae92-9a6d-4d3b-931c-b2e53bea13f6.png" style="width:29.00em;height:6.08em;"/></p>
+<p class="mce-root"/>
+<ul>
+<li><strong>平均汇集</strong>:这种类型的汇集通过将输入矩阵分成汇集区域，然后计算每个区域的平均值来进行下采样。</li>
+</ul>
+<p style="padding-left: 60px">这里有一个例子:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1086 image-border" src="img/f2c60243-952a-421b-88f4-6d8bcfa5133e.png" style="width:28.75em;height:5.83em;"/></p>
+<p>在这个菜谱中，我们将学习如何在CNN模型架构中安装池层。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Getting ready</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">做好准备</h1>
+                
+            
+            
+                
+<p>在本例中，我们将使用Fruits 360数据集的一个样本。该数据集归功于Horea Muresan和Mihai Oltean。在他们的论文<em>使用深度学习从图像中识别水果</em>中介绍了该数据集，该论文展示了用于训练神经网络检测水果的数值实验结果。数据集可以从https://www.kaggle.com/moltean/fruits<a href="https://www.kaggle.com/moltean/fruits">的Kaggle下载。水果360数据集包含大小为100 × 100的103个水果的彩色图像，但在我们的示例中，我们将只处理23个水果的图像。它有两个子集:一个训练集和一个测试集，每个水果的样本放在对应于水果名称的目录中。</a></p>
+<p>我们将从加载<kbd>keras</kbd>库开始:</p>
+<pre>library(keras)</pre>
+<p>我们在当前工作目录中名为<kbd>fruits</kbd>的文件夹中有我们的数据集。该文件夹包含<kbd>train</kbd>和<kbd>test</kbd>子文件夹，这些子文件夹包含以特定水果命名的文件夹中的水果图像。让我们将训练和测试数据的路径存储到变量中:</p>
+<pre># path to train and test directories<br/>train_path &lt;- "fruits/train/"<br/>test_path &lt;- "fruits/test/"</pre>
+<p>让我们创建一个数据中水果名称的向量:</p>
+<pre>class_label &lt;- list.dirs(path = train_path, full.names = FALSE, recursive = TRUE)[-1]</pre>
+<p>现在我们打印数据的水果名称(类标签):</p>
+<pre>class_label</pre>
+<p>以下截图显示了我们数据中的水果名称:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/5f950395-821a-4637-8962-94e5939cbac4.png" style="width:68.00em;height:3.17em;"/></p>
+<p>为了查看水果类的数量，可以使用下面的代码:</p>
+<pre>length(class_label)</pre>
+<p>现在让我们设置图像的宽度和高度，我们将把图像的尺寸从100 × 100缩小到20 × 20:</p>
+<pre>img_width = 20<br/>img_height = 20<br/>img_size = c(img_width,img_height)</pre>
+<p>我们现在已经熟悉了数据集和我们想要做的转换。让我们继续实现这些转换。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How to do it...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">怎么做...</h1>
+                
+            
+            
+                
+<div><div><div><p>我们将使用keras的<kbd>flow_images_from_directory()</kbd>函数动态读取和操作数据。</p>
+<ol>
+<li>让我们从train和test目录中读取图像，并进行所需的转换:</li>
+</ol>
+</div>
+</div>
+</div>
+<pre style="padding-left: 60px"># Reading train data<br/>train_data &lt;- flow_images_from_directory(directory = train_path,<br/> target_size = img_size,<br/> color_mode = "rgb",<br/> class_mode = "categorical",<br/> classes = class_label,<br/> batch_size = 20)<br/><br/># Reading  test data<br/>test_data &lt;- flow_images_from_directory(directory = test_path,<br/> target_size = img_size,<br/> color_mode = "rgb",<br/> class_mode = "categorical",<br/> classes = class_label,<br/> batch_size = 20)</pre>
+<p style="padding-left: 60px">让我们看看在训练集和测试集中有多少图像:</p>
+<pre style="padding-left: 60px">print(paste("Number of images in train and test is",train_data$n,"and ",test_data$n,"repectively"))</pre>
+<p style="padding-left: 60px">我们可以看到，训练数据集包含11，397幅图像，测试数据包含3，829幅图像:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1087 image-border" src="img/1ab976a8-3569-4384-a870-d65c60925edf.png" style="width:35.25em;height:1.67em;"/></p>
+<p style="padding-left: 60px">现在让我们看看训练和测试数据中每个类的图像数量:</p>
+<pre style="padding-left: 60px">table(factor(train_data$classes))</pre>
+<p style="padding-left: 60px">这是训练数据中每个类别的图像分布:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1088 image-border" src="img/7204117a-fbea-44d0-834d-56b608f982da.png" style="width:28.00em;height:2.58em;"/></p>
+<pre style="padding-left: 60px">table(factor(test_data$classes))</pre>
+<p style="padding-left: 60px">这是测试数据中每个类别的图像分布:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1089 image-border" src="img/3526897c-2eaf-4e48-9c94-60f5aa993ca3.png" style="width:28.25em;height:2.75em;"/></p>
+<p style="padding-left: 60px">请注意，类别标签是数字的。让我们看看类标签和类标签名称的映射。这些对于训练和测试数据来说是相同的:</p>
+<pre style="padding-left: 60px">train_data$class_indices</pre>
+<p style="padding-left: 60px">屏幕截图显示了数据中的类别标签:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1090 image-border" src="img/9331d769-6bf7-41ad-a176-ef47871d7d57.png" style="width:7.75em;height:41.00em;"/></p>
+<p style="padding-left: 60px">类似地，我们可以查看测试标签和标签名称。现在让我们打印加载到环境中的图像的形状:</p>
+<pre style="padding-left: 60px">train_data$image_shape</pre>
+<p style="padding-left: 60px">该屏幕截图显示了加载图像的尺寸:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1091 image-border" src="img/2bee194d-946f-4196-bfe1-6f7267bcb7fd.png" style="width:3.08em;height:3.92em;"/></p>
+<ol start="2">
+<li>接下来，我们定义带有池层的Keras模型:</li>
+</ol>
+<pre style="padding-left: 60px">cnn_model_pool &lt;- keras_model_sequential() %&gt;% <br/> layer_conv_2d(filters = 32, kernel_size = c(3,3), activation = 'relu',<br/> input_shape = c(img_width,img_height,3),padding = "same") %&gt;% <br/> layer_conv_2d(filters = 16, kernel_size = c(3,3), activation = 'relu',padding = "same") %&gt;%<br/> layer_max_pooling_2d(pool_size = c(2,2)) %&gt;%<br/> layer_flatten() %&gt;% <br/> layer_dense(units = 50, activation = 'relu') %&gt;% <br/> layer_dense(units = 23, activation = 'softmax')</pre>
+<p style="padding-left: 60px">让我们来看看模型总结:</p>
+<pre style="padding-left: 60px">cnn_model_pool %&gt;% summary()</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了模型的概要:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1092 image-border" src="img/cb8c80ca-4dd7-4ab1-90e7-7e1925a461fd.png" style="width:37.42em;height:19.75em;"/></p>
+<ol start="3">
+<li>在定义了我们的模型之后，我们编译并训练它。</li>
+</ol>
+<p style="padding-left: 60px">在编译模型时，我们设置优化器的损失函数、模型度量、学习率和衰减率:</p>
+<pre style="padding-left: 60px">cnn_model_pool %&gt;% compile(<br/> loss = "categorical_crossentropy",<br/> optimizer = optimizer_rmsprop(lr = 0.0001,decay = 1e-6),<br/> metrics = c('accuracy')<br/>)</pre>
+<p style="padding-left: 60px">现在我们训练模型:</p>
+<pre style="padding-left: 60px">cnn_model_pool %&gt;% fit_generator(generator = train_data,<br/> steps_per_epoch = 20,<br/> epochs = 5)</pre>
+<p style="padding-left: 60px">在训练模型之后，我们评估它在测试数据上的性能并打印性能指标:</p>
+<pre style="padding-left: 60px">scores &lt;- cnn_model_pool %&gt;% evaluate_generator(generator = test_data,steps = 20)<br/><br/># Output metrics<br/>paste('Test loss:', scores[[1]], '\n')<br/>paste('Test accuracy:', scores[[2]], '\n')</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了模型在测试数据上的性能:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1093 image-border" src="img/dafc9544-150b-485a-9c9a-8e907ba27a27.png" style="width:14.42em;height:3.58em;"/></p>
+<p>我们可以看到，模型对测试数据的准确率在79%左右。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How it works...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">它是如何工作的...</h1>
+                
+            
+            
+                
+<p>在<em>步骤1 </em>中，我们使用了<kbd>flow_images_from_directory()</kbd>函数从一个目录中加载图像。要使用此功能，我们必须像构建Fruits 360数据集一样构建数据。这个函数为我们提供了在r中加载图像时转换图像的灵活性。在我们的实现中，我们将每个图像的大小调整为20 × 20，并将颜色模式更改为RGB通道。接下来，我们研究了数据，并查看了图像在训练和测试数据集中的分布。</p>
+<p>在下一步中，我们定义了我们的模型。在此模型中，我们安装了一个最大池层，后跟两个密集层。网络的最后一层激活了23个单位的<strong> softmax </strong>，因为我们有23个输出标签。接下来，我们查看了该模型的摘要，我们观察到池层中可训练参数的数量为零，因为它没有要训练的权重和偏差。池层的输出形状可以由:<em> floor(输入大小/池大小)</em>决定。</p>
+<p>在最后一步中，我们编译并训练了模型。为了训练模型，我们使用了<kbd>fit_generator()</kbd>函数，因为我们必须在<kbd>flow_images_from_directory()</kbd>返回的生成器对象上训练我们的模型。接下来，我们在测试数据集上评估了模型的性能，并打印了评估指标。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>There's more...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">还有更多...</h1>
+                
+            
+            
+                
+<div><div><div><p>在我们只有少量数据样本可以学习的情况下，过度拟合是一个常见的挑战。这阻止了我们的模型在看不见的数据上稳健地执行。有一些技巧可以帮助我们处理这个问题:</p>
+<p><strong>数据扩充</strong>:这是一种技术，通过从数据中的现有样本生成更多的训练数据，并通过几次随机变换来扩充样本，从而产生看起来可信的图像，从而减少过拟合。它通过应用移动、翻转、缩放等操作来创建修改后的版本。它还丰富了我们的数据，这有助于推广我们的模型，使其更加稳健。数据扩充仅在训练集上完成。</p>
+</div>
+</div>
+</div>
+<div><div><div><p>R中的<kbd>keras</kbd>库提供了<kbd>image_data_generator()</kbd>函数，实现实时批量数据扩充。以下示例显示了我们如何从Fruits 360数据集扩充数据。增强图像将随机旋转0到50度，其宽度/高度将在总宽度/高度的0%到10%之间变化。我们指定了0.2的缩放范围:</p>
+</div>
+<pre>train_data_generator &lt;- image_data_generator(rotation_range = 50,<br/> width_shift_range = 0.1,<br/> height_shift_range = 0.1,<br/> zoom_range = 0.2,<br/> horizontal_flip = TRUE,<br/> fill_mode = "nearest")</pre></div>
+</div>
+<p>以下代码块演示了如何通过动态数据扩充从目录中加载图像:</p>
+<pre>train_data &lt;- flow_images_from_directory(directory = train_path,<br/> generator = train_data_generator,<br/> target_size = img_size,<br/> color_mode = "rgb",<br/> class_mode = "categorical",<br/> classes = class_label,<br/> batch_size = 20)</pre>
+<p>注意，我们使用了<kbd>rgb</kbd>颜色模式；其他颜色模式包括<kbd>grayscale</kbd>。</p>
+<p><strong>批量标准化</strong> : <strong> </strong>在训练深度神经网络时，每层输入的分布会发生变化，从而降低训练速度，因为我们需要保持较低的学习速率，并进行仔细的参数初始化，以正确训练模型。这种现象被称为<strong>内部协变量偏移</strong>，通过对每个训练小批量进行标准化来解决。批次标准化通过均值和方差参考对每个批次进行标准化，允许我们使用更高的学习率。它还起到了规范作用，在某些情况下消除了辍学的必要性。批量标准化使权重初始化变得容易。有关<kbd>layer_batch_normalization()</kbd>函数及其参数的更多详细信息，请参考<a href="https://keras.rstudio.com/reference/layer_batch_normalization.html">https://keras . r studio . com/reference/layer _ batch _ normalization . html</a>。<a href="https://keras.rstudio.com/reference/layer_batch_normalization.html"> <br/> </a></p>
+<p>如果我们要在CNN模型中使用批量标准化，我们可以这样做:<br/></p>
+<pre>cnn_model_batch_norm &lt;- keras_model_sequential() %&gt;% <br/> layer_conv_2d(filters = 32, kernel_size = c(4,4),input_shape = c(img_width,img_height,3),padding = "same") %&gt;% <br/> layer_batch_normalization()%&gt;%<br/> layer_activation("relu") %&gt;%<br/> layer_conv_2d(filters = 16, kernel_size = c(3,3))%&gt;%<br/> layer_batch_normalization()%&gt;%<br/> layer_activation("relu")%&gt;%<br/> layer_max_pooling_2d(pool_size = c(2,2)) %&gt;%<br/> layer_flatten() %&gt;% <br/> layer_dense(units = 50, activation = 'relu') %&gt;% <br/> layer_dense(units = 23, activation = 'softmax')<br/><br/></pre>
+<p>让我们来看看批量标准化模型的总结:</p>
+<pre>summary(cnn_model_batch_norm)</pre>
+<p>该屏幕截图显示了批量标准化模型的描述:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1094 image-border" src="img/80e5abb7-f7c2-4956-813f-b302b5bc0796.png" style="width:24.17em;height:16.08em;"/></p>
+<p class="CDPAlignLeft CDPAlign">因此，在这个配方中，我们关注最大池和平均池。另一个著名的池技术被称为<strong>全球平均池</strong>，它执行极端的维度缩减。在本配方的<em>另请参见</em>部分，提供了有关全球平均池的更多信息的链接。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>See also</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">请参见</h1>
+                
+            
+            
+                
+<ul>
+<li>有时，我们也使用全局平均池层来防止过度拟合。keras库提供了这些层的实现。如需了解更多信息，请点击<a href="https://keras.rstudio.com/reference/layer_global_max_pooling_2d.html">https://keras . r studio . com/reference/layer _ global _ max _ pooling _ 2d . html</a>。</li>
+<li>要了解如何为我们的优化器设置自定义学习率衰减，请参考在<a href="https://tensorflow.rstudio.com/tfestimators/articles/examples/iris_custom_decay_dnn.html">https://tensor flow . r studio . com/TF estimates/articles/examples/iris _ custom _ decay _ dnn . html</a>实现的示例。</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Implementing transfer learning</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">实施迁移学习</h1>
+                
+            
+            
+                
+<p>迁移学习通过使用从解决其他相关任务中获得的信息，帮助我们用较少的例子解决一个新问题。这是一种技术，其中我们重用在不同数据集上训练的学习模型来解决类似但不同的问题。在迁移学习中，我们在我们的网络中扩展预训练模型的学习，并建立新的模型来解决新的学习问题。R中的keras库提供了许多预先训练好的模型；我们将使用一个名为<strong> VGG16 </strong>的模型来训练我们的网络。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Getting ready</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">做好准备</h1>
+                
+            
+            
+                
+<div><div><div><div><div><div><div><div><div><p class="CodeMirror-line">我们首先将<kbd>keras</kbd>库导入到我们的环境中:<br/></p>
+<pre class="CodeMirror-line">library(keras)</pre>
+<p>在这个例子中，我们将使用ka ggle(<a href="https://www.kaggle.com/c/dogs-vs-cats">https://www.kaggle.com/c/dogs-vs-cats</a>)的狗与猫数据集的子集，其中包含不同大小的狗和猫的图像。这个数据集是由Petfinder和微软合作开发的。我们已经将数据分成了训练集、测试集和验证集，每一个都在各自的文件夹中包含了猫和狗的图像。我们的训练和测试数据各有1，000张猫和狗的图片，测试和验证集各有500张狗和猫的图片。</p>
+</div>
+<div><p>让我们定义数据的训练、测试和验证路径:</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div><div><div><div><div><div><div><div><div><div><div><pre class="CodeMirror-line">train_path &lt;- "dogs_cats_small/train/"<br/>test_path &lt;- "dogs_cats_small/test/"<br/>validation_path &lt;- "dogs_cats_small/validation/"</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p>我们已经设置了数据集的路径。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How to do it...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">怎么做...</h1>
+                
+            
+            
+                
+<div><div><div><p>现在让我们进行数据处理:</p>
+</div>
+</div>
+</div>
+<ol>
+<li>我们首先为训练和测试数据定义一个生成器。我们将在将数据加载到我们的环境中时使用这些生成器，并执行实时数据扩充:</li>
+</ol>
+<pre style="padding-left: 60px"># train generator<br/>train_augmentor = image_data_generator(<br/> rescale = 1/255,<br/> rotation_range = 300,<br/> width_shift_range = 0.15,<br/> height_shift_range = 0.15,<br/> shear_range = 0.2,<br/> zoom_range = 0.2,<br/> horizontal_flip = TRUE,<br/> fill_mode = "nearest"<br/>)<br/><br/># test generator<br/>test_augmentor &lt;- image_data_generator(rescale = 1/255)</pre>
+<p style="padding-left: 60px">现在，让我们将培训、测试和验证数据加载到我们的环境中:</p>
+<pre style="padding-left: 60px"># load train data<br/>train_data &lt;- flow_images_from_directory(<br/> train_path,<br/> train_augmentor,<br/> target_size = c(150, 150),<br/> batch_size = 20,<br/> class_mode = "binary")<br/><br/># load test data<br/>test_data &lt;- test_generator &lt;- flow_images_from_directory(<br/> test_path,<br/> test_augmentor,<br/> target_size = c(150, 150),<br/> batch_size = 20,<br/> class_mode = "binary")<br/><br/># load validation data<br/>validation_data &lt;- flow_images_from_directory(<br/> validation_path,<br/> test_augmentor,<br/> target_size = c(150, 150),<br/> batch_size = 20,<br/> class_mode = "binary"<br/>)</pre>
+<p style="padding-left: 60px">我们可以使用以下代码打印重新缩放后的图像的形状:</p>
+<pre style="padding-left: 60px">train_data$image_shape</pre>
+<ol start="2">
+<li>加载完我们的数据后，让我们实例化一个预训练的VGG16模型。更进一步，我们将此模型称为基础模型:</li>
+</ol>
+<pre style="padding-left: 60px">pre_trained_base &lt;- application_vgg16(<br/> weights = "imagenet",<br/> include_top = FALSE,<br/> input_shape = c(150, 150, 3)<br/>)</pre>
+<p style="padding-left: 60px">现在让我们来看看基本模型的总结:</p>
+<pre style="padding-left: 60px">summary(pre_trained_base)</pre>
+<p style="padding-left: 60px">以下是基本模型的描述:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1095 image-border" src="img/6dd8e487-69c7-4fa0-ae4a-ec8ca6aeac17.png" style="width:32.17em;height:38.25em;"/></p>
+<p style="padding-left: 60px">在实例化基础模型后，我们向其添加密集层并构建整体模型:</p>
+<pre style="padding-left: 60px">model_with_pretrained &lt;- keras_model_sequential() %&gt;% <br/> pre_trained_base %&gt;% <br/> layer_flatten() %&gt;% <br/> layer_dense(units = 8, activation = "relu") %&gt;%<br/> layer_dense(units = 16, activation = "relu") %&gt;%<br/> layer_dense(units = 1, activation = "sigmoid")</pre>
+<p style="padding-left: 60px">现在我们将模型的概要可视化:</p>
+<pre style="padding-left: 60px">summary(model_with_pretrained)</pre>
+<p style="padding-left: 60px">该屏幕截图显示了整体模型的摘要:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/ae26d738-5e6f-4b62-af05-55244a3e2a0f.png" style="width:32.83em;height:15.08em;"/></p>
+<p style="padding-left: 60px">我们可以使用以下代码打印模型中可训练内核和偏差的数量:</p>
+<pre style="padding-left: 60px">length(model_with_pretrained$trainable_weights)</pre>
+<p style="padding-left: 60px">让我们冻结基本模型的预实现重量:</p>
+<pre style="padding-left: 60px">freeze_weights(pre_trained_base)</pre>
+<p style="padding-left: 60px">通过执行以下代码，我们可以检查在冻结基础模型后我们有多少可训练重量:</p>
+<pre style="padding-left: 60px">length(model_with_pretrained$trainable_weights)</pre>
+<ol start="3">
+<li>在配置模型之后，我们接着编译和训练它。</li>
+</ol>
+<p style="padding-left: 60px">让我们使用二进制交叉熵作为损失函数，使用<kbd>RMSprop()</kbd>作为优化器来编译模型:</p>
+<pre style="padding-left: 60px">model_with_pretrained %&gt;% compile(<br/> loss = "binary_crossentropy",<br/> optimizer = optimizer_rmsprop(lr = 0.0001),<br/> metrics = c('accuracy')<br/>)</pre>
+<p style="padding-left: 60px">编译后，我们现在训练模型:</p>
+<pre style="padding-left: 60px">model_with_pretrained %&gt;% fit_generator(generator = train_data,<br/> steps_per_epoch = 20,<br/> epochs = 10,<br/> validation_data = validation_data)</pre>
+<p style="padding-left: 60px">接下来，我们评估训练模型在测试数据上的性能，并打印评估指标:</p>
+<pre style="padding-left: 60px">scores &lt;- model_with_pretrained %&gt;% evaluate_generator(generator = test_data,steps = 20)<br/><br/># Output metrics<br/>paste('Test loss:', scores[[1]], '\n')<br/>paste('Test accuracy:', scores[[2]], '\n')</pre>
+<p style="padding-left: 60px">屏幕截图显示了模型在测试数据上的性能:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1096 image-border" src="img/87926ffb-cca6-47b9-bce4-b8b201d90ab5.png" style="width:14.83em;height:3.58em;"/></p>
+<p>测试准确率在83%左右。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How it works...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">它是如何工作的...</h1>
+                
+            
+            
+                
+<p>在<em>步骤1 </em>中，我们定义了我们的训练和测试生成器来设置数据扩充的参数。然后，我们将数据集加载到我们的环境中，同时执行实时数据扩充，同时将图像大小调整为150 × 150。</p>
+<p>在下一步中，我们实例化了一个预训练的基础模型<strong> VGG16 </strong>，其权重是根据ImageNet数据训练的。ImageNet是一个大型可视化数据库，包含1，000种不同类别的图像。注意，我们已经将<kbd>include_top</kbd>的值设置为<kbd>FALSE</kbd>。将其设置为false不包括VGG16网络的默认密集连接层，这些层对应于1，000类ImageNet数据。此外，我们定义了一个顺序Keras模型，它包含基本模型以及一些定制的密集层，以构建二进制分类器。接下来，我们打印出了模型的概要，以及模型中的核和偏差的数量。然后我们冻结了基础模型的层，因为我们不想在数据集上训练时修改它的权重。</p>
+<p>在最后一步中，我们使用<kbd>binary_crossentropy</kbd>作为损失函数来编译我们的模型，并使用RMSprop优化器来训练它。一旦我们训练了我们的模型，我们就在测试数据上打印它的性能指标。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>There's more...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">还有更多...</h1>
+                
+            
+            
+                
+<p>实现迁移学习主要有三种方式:</p>
+<ul>
+<li>使用预先训练好的模型，预先实现权重和偏差；也就是说，完全冻结网络的预训练模型，并在新的数据集上进行训练。</li>
+<li>部分冻结我们的网络的预训练模型的几个层，并在新的数据集上训练它。</li>
+<li>仅保留预训练模型的架构，并针对新的权重和偏差训练您的完整网络。</li>
+</ul>
+<div><div><div><p>下面的代码片段演示了如何部分冻结网络的预训练部分。在解冻预训练网络的选定层之前，我们必须定义整体模型并冻结预训练部分:</p>
+</div>
+<pre>unfreeze_weights(pre_trained_base, from = "block5_conv1", to = "block5_conv3")</pre></div>
+</div>
+<p><kbd>unfreeze_weights()</kbd>函数的<kbd>from</kbd>和<kbd>to</kbd>参数让我们定义想要解冻权重的层。请注意，<kbd>from</kbd>和<kbd>to</kbd>层都是包含的。</p>
+<div><div><p>当我们在新的数据集上调整预训练模型的层时，我们应该使用非常低的学习率。建议采用较低的学习速率，因为在我们微调的层上，我们应该限制对表示进行修改的幅度。</p>
+</div>
+</div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>See also</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">请参见</h1>
+                
+            
+            
+                
+<p>我们可以利用其他预先训练好的模型来解决各种深度学习问题，Keras提供了许多这样的模型。欲了解更多信息，请访问页面<a href="https://tensorflow.rstudio.com/keras/reference/#section-applications">https://tensor flow . r studio . com/keras/reference/# section-applications</a>。</p>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>

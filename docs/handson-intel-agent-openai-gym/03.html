@@ -1,0 +1,535 @@
+<html><head/><body>
+
+  
+    <title>Getting Started with OpenAI Gym and Deep Reinforcement Learning</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">OpenAI健身房和深度强化学习入门</h1>
+                
+            
+            
+                
+<p class="calibre2">介绍章节让你对OpenAI Gym工具包和强化学习有了很好的了解。在本章中，我们将直接让您和您的计算机做好开始开发代理所需的所有准备、安装和配置。更重要的是，您还将找到访问本书代码库的说明，其中包含完整阅读本书所需的所有代码，以及其他几个代码示例、有用的说明和更新。</p>
+<p class="calibre2">在本章中，我们将讨论以下主题:</p>
+<ul class="calibre10">
+<li class="calibre11">访问这本书的代码库</li>
+<li class="calibre11">创建一个Anaconda环境来完成这本书</li>
+<li class="calibre11">如何在您的系统上安装和配置OpenAI Gym和依赖项</li>
+<li class="calibre11">为深度强化学习安装工具、库和依赖项</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+  
+    <title>Code repository, setup, and configuration</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">代码库、设置和配置</h1>
+                
+            
+            
+                
+<p class="calibre2">首先，让我们确保您拥有访问本书代码库的所有信息。源代码为您提供了我们将在本书中讨论的所有必要的代码示例，并提供了关于如何为每一章专门设置和运行培训或测试脚本的附加细节。首先，请访问GitHub上的代码库，链接如下:<a href="https://github.com/PacktPublishing/Hands-On-Intelligent-Agents-with-OpenAI-Gym" class="calibre9">https://GitHub . com/packt publishing/Hands-On-Intelligent-Agents-with-open ai-Gym</a>。</p>
+<p class="calibre2">创建一个GitHub帐户(如果你还没有的话),然后将这个库添加到你自己的GitHub帐户中。这是值得推荐的，因为它允许你在阅读过程中对你喜欢的代码进行任何修改，并且当你有一些很酷的东西要展示并在书的博客上出现时，还允许你发送一个拉请求！</p>
+<p class="calibre2">您可以使用以下命令将存储库克隆到主目录中名为<kbd class="calibre12">HOIAWOG</kbd>的文件夹中:</p>
+<pre class="calibre17"><strong class="calibre1">git clone https://github.com/PacktPublishing/Hands-On-Intelligent-Agents-with-OpenAI-Gym.git ~/HOIAWOG</strong></pre>
+<p class="calibre2">注意，这本书假设您已经在这个特定的位置建立了代码库:<kbd class="calibre12">~/HOIAWOG</kbd>。如果你碰巧因为某种原因改变了它，一定要记住它，并相应地改变书中的一些命令。</p>
+<p class="calibre2">如果你想知道为什么目录名被选为<kbd class="calibre12">HOIAWOG</kbd>，不要再想了。是这本书书名的首字母缩写:<strong class="calibre4">Hands On Intelligent Agents With open ai Gym</strong>(<strong class="calibre4">HOIAWOG</strong>)！</p>
+<p class="calibre2">该书的代码库将保持最新，以处理外部库或其他软件中的任何变化，以便智能代理实现代码和其他代码样本能够正常工作。偶尔，还会添加新代码和更新，以帮助您进一步探索开发智能代理。为了掌握最新的变化并获得更新通知，建议您从您的GitHub帐户启动本书的代码库。</p>
+<p class="calibre2">在<a href="part0021.html#K0RQ0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第一章</a>、<em class="calibre13">智能代理和学习环境介绍</em>快结束的时候，我们做了一个OpenAI Gym的快速安装，以便偷偷进入健身房。这是一个最小的安装，让我们快速开始。在下一节中，我们将一步一步地检查安装，并确保使用Gym开发代理所需的一切都已正确安装和配置。我们将在这里讨论不同的安装级别和方法，这样您就可以大致了解安装过程。你可能会修改你的系统，或者在家里或工作中使用另一个系统，或者彻底更换你的电脑。这一部分将确保你能以正确的方式设置好一切。请随意选择适合您的用例的安装方法。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+  
+    <title>Prerequisites</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">先决条件</h1>
+                
+            
+            
+                
+<p class="calibre2">使用OpenAI Gym的唯一主要前提是Python 3.5+。为了使进一步的开发变得容易和有组织，我们将使用Anaconda Python发行版。对于那些不熟悉Anaconda的人来说，这是一个Python发行版(虽然也有R语言的发行版)，它包括数百个流行的机器学习和数据科学包，并附带一个易于使用的包和虚拟环境管理器，名为<em class="calibre13"> conda。好消息是Anaconda Python发行版可用于Linux、macOS和Windows！使用Anaconda发行版的另一个主要原因是，它有助于轻松创建、安装、管理和升级独立的Python虚拟环境。这确保了我们在本书中学习和开发的代码产生相同的结果，不管我们使用的是什么操作系统。这将使您从解决依赖性问题或库版本不匹配问题中解脱出来，如果您没有使用Python发行版(如Anaconda ),您将不得不手动处理这些问题。你会发现它只是工作，这很好，很酷。让我们开始安装Anaconda Python发行版。</em></p>
+<p class="calibre2">打开命令提示符或终端，输入以下内容:</p>
+<pre class="calibre17"><strong class="calibre1">praveen@ubuntu:~$wget http://repo.continuum.io/archive/Anaconda3-4.3.0-Linux-x86_64.sh -O ~/anaconda.sh</strong></pre>
+<p class="calibre2">该命令使用<kbd class="calibre12">wget</kbd>工具来获取/下载Anaconda版的安装脚本，并将其作为<kbd class="calibre12">anaconda.sh</kbd>保存在您的主目录中。这个命令应该可以在macOS和Linux (Ubuntu，Kubuntu，等等)上运行，它们预装了<kbd class="calibre12">wget</kbd>工具。请注意，我们正在下载一个特定版本的Anaconda (3-4.3)。这将确保我们在本书中使用相同的配置。如果这不是可用的最新版本，请不要担心。您可以随时使用以下命令升级发行版:</p>
+<pre class="calibre17"><strong class="calibre1">conda update conda</strong></pre>
+<p class="calibre2"><kbd class="calibre12">anaconda.sh</kbd>是一个shell脚本，拥有在您的系统上安装Anaconda所需的所有东西！如果您感兴趣，您可以使用您最喜欢的文本编辑器打开它，看看二进制文件、安装过程指令和shell命令是如何巧妙地集中到一个文件中的。</p>
+<p class="calibre2">现在让我们在您的主目录下安装Anaconda Python发行版。下面的安装过程是精心安排的，以确保它在Linux和macOS系统上都可以工作。在输入命令之前，您应该注意一件事。以下命令将在<em class="calibre13">静默模式</em>下运行安装程序。这意味着它将使用默认的安装参数并继续安装，而不会对每个配置都询问您是/否。这也意味着您同意Anaconda发行版的许可条款。如果您想一步一步地手动完成安装过程，请运行以下不带参数<kbd class="calibre12">-b</kbd>和<kbd class="calibre12">-f</kbd>的命令:</p>
+<pre class="calibre17"><strong class="calibre1">praveen@ubuntu:~$bash ~/anaconda.sh -b -f -p $HOME/anaconda</strong></pre>
+<p class="calibre2">等待安装过程完成，然后我们就完成了！</p>
+<p class="calibre2">为了开始使用<em class="calibre13"> conda </em>和Anaconda Python发行版中的其他优点，我们应该确保您的系统知道在哪里可以找到Anaconda工具。让我们通过将Anaconda二进制文件目录的路径附加到<kbd class="calibre12">PATH</kbd>环境变量来添加它，如下所示:</p>
+<pre class="calibre17"><strong class="calibre1">praveen@ubuntu:~$export PATH=$HOME/anaconda/bin:$PATH</strong></pre>
+<p class="calibre2">我强烈建议您将这一行添加到您的<kbd class="calibre12">~/.bashrc</kbd>文件的末尾，这样无论何时您打开一个新的bash终端，都可以访问Anaconda工具。</p>
+<p class="calibre2">您可以键入以下命令以确保安装成功:</p>
+<pre class="calibre17"><strong class="calibre1">praveen@ubuntu:~$conda list</strong></pre>
+<p class="calibre2">该命令将只打印默认环境中可用的软件包列表。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+  
+    <title>Creating the conda environment</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">创造康达环境</h1>
+                
+            
+            
+                
+<p class="calibre2">现在我们已经设置了Anaconda，让我们使用conda创建一个Python虚拟环境，我们将在本书中通篇使用它。</p>
+<p>如果您更喜欢一键安装设置，而不想一步一步地完成安装，那么创建安装了所有必需软件包的环境的一个非常简单的方法是使用本书代码库中的<kbd class="calibre28">conda_env.yaml</kbd> conda环境配置文件。您可以简单地从本书的代码库目录(<kbd class="calibre28">HOIAWOG</kbd>)中运行以下命令，该目录是我们在上一节中创建的:<br class="calibre42"/> <kbd class="calibre28">praveen@ubuntu:~/HOIAWOG$ conda create -f conda_env.yaml -n rl_gym_book</kbd></p>
+<p class="calibre2">此时，我们将创建一个新的最小环境来继续。在终端中输入以下命令:</p>
+<pre class="calibre17"><strong class="calibre1">praveen@ubuntu:~$conda create --name rl_gym_book python=3.5</strong></pre>
+<p class="calibre2">这将使用Python3解释器创建一个名为<kbd class="calibre12">rl_gym_book</kbd>的conda环境。它将打印一些关于将要下载的内容和将要安装的包的信息。可能会提示您一个是/否问题，询问您是否要继续。键入<kbd class="calibre12">y</kbd>并点击<em class="calibre13">进入</em>。环境创建过程完成后，您可以使用以下命令激活该环境:</p>
+<pre class="calibre17"><strong class="calibre1">praveen@ubuntu:~$source activate rl_gym_book</strong></pre>
+<p class="calibre2">您现在会看到您的命令提示符的前缀变成这样，表示您在<kbd class="calibre12">rl_gym_book</kbd>虚拟环境中:</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~$</strong></pre>
+<p class="calibre2">当您阅读这些章节时，您可以将此作为一个指标，以了解何时必须在该环境中输入命令，何时可以在该环境外输入命令。要退出或停用环境，只需键入以下内容:</p>
+<pre class="calibre17"><strong class="calibre1">praveen@ubuntu:~$source deactivate</strong></pre>
+
+
+            
+
+            
+        
+    
+
+
+
+  
+    <title>Minimal install – the quick and easy way</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">最小安装–快速简单的方法</h1>
+                
+            
+            
+                
+<p class="calibre2">OpenAI Gym是一个Python包，可以在<strong class="calibre4"> Python包索引</strong> ( <strong class="calibre4"> PyPI </strong>)存储库中获得。您可以使用<kbd class="calibre12">easy_install</kbd>或<kbd class="calibre12">pip</kbd>从PyPI存储库中获取和安装软件包。<kbd class="calibre12">Pip</kbd>是一个用于Python的包管理工具，如果您有使用Python编写脚本的经验，您可能对它很熟悉:</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~$pip install gym</strong></pre>
+<p class="calibre2">就是这样！</p>
+<p class="calibre2">让我们通过运行下面的代码来快速检查安装是否正常。在<kbd class="calibre12">~/rl_gym_book</kbd>目录下创建一个<kbd class="calibre12">gym_install_test.py</kbd>文件，输入/复制以下代码，保存。您也可以从本书的代码库中下载<kbd class="calibre12">gym_quick_install_test.py</kbd>文件:</p>
+<pre class="calibre17">#! /usr/bin/env python  <br class="title-page-name"/>import gym<br class="title-page-name"/>env = gym.make("MountainCar-v0") # Create a MountainCar environment<br class="title-page-name"/>env.reset()<br class="title-page-name"/>for _ in range(2000): # Run for 2000 steps<br class="title-page-name"/>    env.render()<br class="title-page-name"/>    env.step(env.action_space.sample()) # Send a random action</pre>
+<p class="calibre2">让我们试着运行这个脚本:</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~/HOIAWOG$python gym_quick_install_test.py</strong></pre>
+<p class="calibre2">这应该会弹出一个新窗口，显示一辆汽车/纸箱和一座v形山，你应该会看到汽车随机左右移动。山地车车窗看起来应该是这样的截图:</p>
+<div><img src="img/00106.jpeg" class="calibre43"/></div>
+<p class="calibre2">您还会看到一些输出到控制台/终端的值，如下所示:</p>
+<div><img src="img/00107.jpeg" class="calibre44"/></div>
+<p class="calibre2">如果你看到了这一切的发生，那就高兴吧！你现在有了一个(最小的)开放健身房的设置！</p>
+
+
+            
+
+            
+        
+    
+
+
+
+  
+    <title>Complete install of OpenAI Gym learning environments</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">完成OpenAI健身房学习环境的安装</h1>
+                
+            
+            
+                
+<p class="calibre2">并非所有环境都可以通过最小安装来使用。为了能够使用健身房中大多数或所有可用的环境，我们将完成依赖项的安装，并从master分支上的最新源代码构建OpenAI健身房。</p>
+<p class="calibre2">首先，我们需要安装所需的系统包。接下来，你会找到Ubuntu和macOS的说明。根据您的开发平台选择指令集。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+  
+    <title>Instructions for Ubuntu </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">Ubuntu的说明</h1>
+                
+            
+            
+                
+<p class="calibre2">以下命令已在Ubuntu 14.04 LTS版和Ubuntu 16.04 LTS版上测试过，但应该也能在其他/未来的Ubuntu版本中运行。</p>
+<p class="calibre2">让我们通过在终端/控制台上运行以下命令来安装所需的系统软件包:</p>
+<pre class="calibre17"><strong class="calibre1">sudo apt-get update</strong><br class="title-page-name"/><br class="title-page-name"/><strong class="calibre1">sudo apt-get install -y build-essential cmake python-dev python-numpy python-opengl libboost-all-dev zlib1g-dev libsdl2-dev libav-tools xorg-dev libjpeg-dev swig</strong></pre>
+<p class="calibre2">此命令将安装必备的系统软件包。请注意，<kbd class="calibre12">-y</kbd>标志会自动说yes以确认软件包的安装，而不需要您手动确认。如果您出于某种原因想要查看将要安装的软件包，您可以运行不带标志的命令。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+  
+    <title>Instructions for macOS</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">macOS的说明</h1>
+                
+            
+            
+                
+<p class="calibre2">在macOS上，需要安装的额外系统包的数量少于Ubuntu系统。</p>
+<p class="calibre2">从终端运行以下命令:</p>
+<pre class="calibre17"><strong class="calibre1">brew install cmake boost sdl2 swig wget</strong><br class="title-page-name"/><br class="title-page-name"/><strong class="calibre1">brew install boost-python --with-python3</strong></pre>
+<p class="calibre2">这些命令将安装必备的系统软件包。</p>
+<p>OpenAI Gym中的机器人和控制环境利用<strong class="calibre27">带接触的多关节动力学</strong> ( <strong class="calibre27"> MuJoCo </strong>)作为物理引擎来模拟刚体动力学和其他特性。在第1章、<em class="calibre46">智能代理和学习环境介绍</em>中，我们简要介绍了MuJoCo环境，并了解到您可以使用MuJoCo环境开发算法，使2D机器人行走、奔跑、游泳或跳跃，或者使3D多足机器人行走或奔跑。MuJoCo是一个专有引擎，因此需要许可证。幸运的是，我们可以获得30天的免费许可证！<br class="calibre42"/>还有，如果你是学生，他们提供1年免费MuJoCo Pro个人授权，那就更好了！对于其他人来说，30天后，可悲的是，一年的许可证要花一大笔钱(约500美元)。我们不会在本书中使用MuJoCo环境，因为不是每个人都能获得许可。如果你有许可证，你可以将你在本书中学到的关于其他环境的知识应用到MuJoCo环境中。如果您计划使用这些环境，您将不得不遵循MuJoCo安装部分的说明。如果没有，可以跳过，进入下一节设置OpenAI健身房。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+  
+    <title>MuJoCo installation</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">MuJoCo装置</h1>
+                
+            
+            
+                
+<p class="calibre2">希望你看了前面的信息框。MuJoCo是我们将在本书中遇到的一个奇怪的库，因为与我们在本书中使用的其他库和软件不同，MuJoCo需要许可证才能使用。Gym库中提供的用于MuJoCo的Python接口仅与编写本章时的MuJoCo版本1.31兼容，即使最新的可用MuJoCo版本更高(编写本章时为1.50)。按照以下两个步骤来设置MuJoCo以用于OpenAI健身房环境:</p>
+<ol class="calibre14">
+<li value="1" class="calibre11">从以下网址下载适用于您的平台(Linux/macOS)的MuJoCo 1.31:<a href="https://www.roboti.us/index.html" class="calibre9">https://www.roboti.us/index.html</a></li>
+<li value="2" class="calibre11">从以下网址获取MuJoCo Pro许可证:<a href="https://www.roboti.us/license.html" class="calibre9">https://www.roboti.us/license.html</a></li>
+</ol>
+<p class="calibre2"> </p>
+
+
+            
+
+            
+        
+    
+
+
+
+  
+    <title>Completing the OpenAI Gym setup</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">完成OpenAI健身房设置</h1>
+                
+            
+            
+                
+<p class="calibre2">让我们先更新一下我们的pip版本:</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~$ pip install --ignore-installed pip</strong></pre>
+<p class="calibre2">然后，让我们将OpenAI Gym的源代码从GitHub资源库下载到我们的主文件夹中:</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~$cd ~</strong><br class="title-page-name"/><br class="title-page-name"/><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~$git clone https://github.com/openai/gym.git</strong><br class="title-page-name"/><br class="title-page-name"/><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~$cd gym</strong></pre>
+<p>如果您得到一个错误，说<kbd class="calibre28">git command not found</kbd>或类似的话，您可能必须安装Git。在Ubuntu系统上，可以通过运行这个命令<kbd class="calibre28">sudo apt-get install git</kbd>来安装它。在macOS上，如果你还没有安装Git，当你运行<kbd class="calibre28">git clone</kbd>命令时，它会提示你安装它。</p>
+<p class="calibre2">我们现在处于一个完整的健身房安装的最后阶段！如果您获得了MuJoCo许可证并成功遵循了MuJoCo安装说明，那么您可以通过运行以下命令来完成完整安装:</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~/gym$pip install -e '.[all]'</strong></pre>
+<p class="calibre2">如果您没有安装MuJoCo，那么这个命令将返回错误。我们将安装我们将使用的健身房环境，除了MuJoCo(需要许可证才能使用)。确保您仍然在您的<kbd class="calibre12">home</kbd>文件夹下的<kbd class="calibre12">gym</kbd> <em class="calibre13"> </em>目录中，并且还确保您仍然在<kbd class="calibre12">rl_gym_book</kbd> conda环境中。您的提示应该包括如下的<kbd class="calibre12">rl_gym_book</kbd> <strong class="calibre4"> </strong>前缀，其中<kbd class="calibre12">~/gym</kbd>表示提示位于主文件夹下的健身房目录中:</p>
+<pre class="calibre17">(rl_gym_book) praveen@ubuntu:~/gym$<br class="title-page-name"/></pre>
+<p class="calibre2">下表总结了在<a href="part0021.html#K0RQ0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第1章</a>、<em class="calibre13">智能代理和学习环境介绍</em>中讨论的安装环境的安装命令。</p>
+<table border="1" class="calibre47">
+<tbody class="calibre36">
+<tr class="calibre37">
+<td class="calibre48"><strong class="calibre1">环境</strong></td>
+<td class="calibre48"><strong class="calibre1">安装命令</strong></td>
+</tr>
+<tr class="calibre37">
+<td class="calibre48">雅达利</td>
+<td class="calibre48"><kbd class="calibre12">pip install -e '.[atari]'</kbd></td>
+</tr>
+<tr class="calibre37">
+<td class="calibre48">Box2D</td>
+<td class="calibre48">
+<p class="calibre2"><kbd class="calibre12">pip install -e '.[box2d]'</kbd></p>
+<p class="calibre2"><kbd class="calibre12">conda install -c https://conda.anaconda.org/kne pybox2d</kbd></p>
+</td>
+</tr>
+<tr class="calibre37">
+<td class="calibre48">经典控件</td>
+<td class="calibre48">
+<p class="calibre2"><kbd class="calibre12">pip install -e '.[classic_control]'</kbd></p>
+</td>
+</tr>
+<tr class="calibre37">
+<td class="calibre48">MuJoCo(需要许可证)</td>
+<td class="calibre48"><kbd class="calibre12">pip install -e '.[mujoco]'</kbd></td>
+</tr>
+<tr class="calibre37">
+<td class="calibre48">机器人(需要许可证)</td>
+<td class="calibre48">
+<p class="calibre2"><kbd class="calibre12">pip install -e '.[robotics]'</kbd></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="calibre2">让我们继续安装我们不需要许可证就能使用的环境。运行以下命令安装Atarti、Box2D和classic控制环境:</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~/gym$pip install -e '.[atari]'</strong><br class="title-page-name"/><br class="title-page-name"/><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~/gym$pip install -e '.[box2d]'</strong><br class="title-page-name"/><br class="title-page-name"/><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~/gym$conda install -c https://conda.anaconda.org/kne pybox2d</strong><br class="title-page-name"/><br class="title-page-name"/><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~/gym$pip install -e '.[classic_control]'</strong>
+test_box2d.py<strong class="calibre4"> </strong>under the <kbd class="calibre12">~/rl_gym_book</kbd> directory:</pre>
+<pre class="calibre17">#!/usr/bin/env python<br class="title-page-name"/>import gym<br class="title-page-name"/>env = gym.make('BipedalWalker-v2')<br class="title-page-name"/>env.reset()<br class="title-page-name"/>for _ in range(1000):<br class="title-page-name"/>    env.render()<br class="title-page-name"/>    env.step(env.action_space.sample())</pre>
+<p class="calibre2">使用以下命令运行该代码:</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~/gym$cd ~/rl_gym_book</strong><br class="title-page-name"/><br class="title-page-name"/><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~/rl_gym_book$python test_box2d.py</strong></pre>
+<p class="calibre2">您将看到一个弹出窗口，显示BipedalWalker-v2环境和Walker尝试随机执行一些动作:</p>
+<div><img src="img/00108.jpeg" class="calibre49"/></div>
+<p class="calibre2">我们已经设置好了健身房环境。你可能会问，接下来是什么？在下一节中，我们将设置开发深度强化学习代理所需的工具和库，以便在这些环境中进行培训！</p>
+
+
+            
+
+            
+        
+    
+
+
+
+  
+    <title>Installing tools and libraries needed for deep reinforcement learning</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">安装深度强化学习所需的工具和库</h1>
+                
+            
+            
+                
+<p class="calibre2"><a href="part0033.html#VF2I0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第2章</a>、<em class="calibre13">强化学习和深度强化学习</em>，为您准备强化学习的基础知识。有了这些理论背景，我们将能够实现一些很酷算法。在此之前，我们将确保我们拥有所需的工具和库。</p>
+<p class="calibre2">我们实际上可以在不使用任何更高级别的库的情况下，用Python编写很酷的强化学习算法。然而，当我们开始为值函数或策略使用函数逼近器时，尤其是如果我们使用深度神经网络作为函数逼近器，那么最好使用高度优化的深度学习库，而不是编写我们自己的例程。深度学习库是我们需要安装的主要工具/库。现在有很多不同的库:PyTorch、TensorFlow、Caffe、Chainer、MxNet和CNTK等等。每个库都有自己的理念、优点和缺点，这取决于用例。我们将使用PyTorch来开发本书中的深度强化学习算法，因为它使用简单，并且具有动态图形定义。我们将讨论的算法和我们在本书中实现的方法将会以这样一种方式解释，你可以使用你选择的框架轻松地重新实现它们。</p>
+<p class="calibre2">如果您的计算机上没有GPU，或者如果您不打算将GPU用于培训，您可以跳过GPU驱动程序安装步骤，并可以使用以下conda命令安装仅CPU二进制版本的PyTorch:</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~$ conda install pytorch-cpu torchvision -c pytorch</strong></pre>
+<p class="calibre2">请注意，您将<em class="calibre13">而不是</em> <strong class="calibre4"> </strong>能够加速我们将作为本书一部分开发的一些代理的训练，这些代理可以利用GPU进行更快的训练。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+  
+    <title>Installing prerequisite system packages</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">安装必备系统包</h1>
+                
+            
+            
+                
+<p class="calibre2">让我们首先确保我们从Ubuntu上游库获得了最新的包版本。我们可以通过运行以下命令来实现这一点:</p>
+<pre class="calibre17"><strong class="calibre1">sudo apt-get update</strong><br class="title-page-name"/><br class="title-page-name"/><strong class="calibre1">sudo apt-get upgrade</strong></pre>
+<p class="calibre2">接下来，我们将安装必备的软件包。注意</p>
+<p class="calibre2">这些软件包中的一些可能已经安装在您的系统上，但是最好确保我们都有:</p>
+<pre class="calibre17"><strong class="calibre1">sudo apt-get install -y gfortran pkg-config software-properties-common</strong></pre>
+
+
+            
+
+            
+        
+    
+
+
+
+  
+    <title>Installing Compute Unified Device Architecture (CUDA)</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">安装计算统一设备架构(CUDA)</h1>
+                
+            
+            
+                
+<p class="calibre2">如果您没有Nvidia GPU，或者如果您有不支持CUDA的较旧的Nvidia GPU，您可以跳过这一步，进入下一部分，我们将介绍PyTorch的安装:</p>
+<ol class="calibre14">
+<li value="1" class="calibre11">从Nvidia官方网站这里下载你的Nvidia GPU最新的CUDA驱动:<a href="https://developer.nvidia.com/cuda-downloads" class="calibre9">https://developer.nvidia.com/cuda-downloads</a>。</li>
+<li value="2" class="calibre11">在操作系统和你的架构下选择Linux(大多是x86_64)，然后根据你的版本选择你的Linux OS发行版(Ubuntu)14.04，16.04，或者18.04，选择deb(local)作为安装程序类型。这将下载cuda本地安装文件，命名为类似于<kbd class="calibre12">cuda-repo-ubuntu1604-8-0-local_8.0.44-1_amd64</kbd>的东西。请注意您的cuda版本(本例中为8.0)。我们将在安装PyTorch时使用这个CUDA版本。</li>
+<li value="3" class="calibre11">然后，您可以按照说明或运行以下命令来安装CUDA:</li>
+</ol>
+<pre class="calibre17"><strong class="calibre1">sudo dpkg -i cuda-repo-ubuntu*.deb</strong><br class="title-page-name"/><br class="title-page-name"/><strong class="calibre1">sudo apt-get update</strong><br class="title-page-name"/><br class="title-page-name"/><strong class="calibre1">sudo apt-get install -y cuda</strong></pre>
+<p class="calibre2">如果一切顺利，您现在应该已经成功安装了Cuda。要快速检查一切是否正常，请运行以下命令:</p>
+<pre class="calibre17"><strong class="calibre1">nvcc -V</strong></pre>
+<p class="calibre2">这将打印出Cuda版本信息，类似于下面的屏幕截图。请注意，您的输出可能会有所不同，这取决于您安装的Cuda版本:</p>
+<div><img src="img/00109.jpeg" class="calibre50"/></div>
+<p class="calibre2">如果您得到了类似这样的输出，这是一个好消息！</p>
+<p class="calibre2">你可以在你的系统上安装最新的<strong class="calibre4"> CUDA深度神经网络</strong> ( <strong class="calibre4"> cuDNN </strong>)。我们不会在本书中介绍安装步骤，但安装步骤很简单，并在Nvidia官方CuDNN下载页面上列出:<a href="https://developer.nvidia.com/rdp/form/cudnn-download-survey" class="calibre9">https://developer.nvidia.com/rdp/form/cudnn-download-survey</a>。请注意，您需要注册一个免费的Nvidia开发者帐户来下载它。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+  
+    <title>Installing PyTorch</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">安装PyTorch</h1>
+                
+            
+            
+                
+<p class="calibre2">我们现在准备安装PyTorch！幸运的是，在我们的<kbd class="calibre12">rl_gym_book</kbd> <strong class="calibre4"> </strong> conda环境中运行以下命令非常简单:</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~$ conda install pytorch torchvision -c pytorch</strong></pre>
+<p class="calibre2">注意，这个命令将在CUDA 8.0中安装PyTorch。您注意到了之前安装的CUDA版本，该命令可能会根据您安装的CUDA版本而略有变化。例如，如果您安装了CUDA 9.1，要安装的命令将是:</p>
+<p class="calibre2"><kbd class="calibre12">conda install pytorch torchvision cuda91 -c pytorch</kbd></p>
+<p class="calibre2">您可以根据您的操作系统、软件包管理器(conda或pip或来自源代码)、Python版本(我们使用3.5)和CUDA版本，在<a href="http://pytorch.org" class="calibre9">http://pytorch.org</a>找到要安装的更新命令。</p>
+<p class="calibre2">就是这样！让我们快速尝试导入PyTorch库，并确保它能够工作。将下面几行代码键入或复制到<kbd class="calibre12">~/rl_gym_book</kbd>目录下名为<kbd class="calibre12">pytorch_test.py</kbd> <strong class="calibre4"> </strong>的文件中:</p>
+<pre class="calibre17">#!/usr/bin/env python<br class="title-page-name"/>import torch<br class="title-page-name"/>t = torch.Tensor(3,3) # Create a 3,3 Tensor<br class="title-page-name"/>print(t)</pre>
+<p class="calibre2">在<kbd class="calibre12">rl_gym_book</kbd> <strong class="calibre4"> </strong> conda环境中运行这个脚本。以下截图作为示例提供:</p>
+<div><img src="img/00110.jpeg" class="calibre51"/></div>
+<p class="calibre2">请注意，您可能会看到张量的不同值，当您下次运行脚本时，您可能会看到不同的值。这是因为火炬。<kbd class="calibre12">Tensor()</kbd>函数生成给定形状的随机张量，在我们的例子中是(3，3)。PyTorch遵循与NumPy相似的语法。如果你熟悉NumPy，就可以轻松拿起PyTorch。如果您不熟悉NumPy或PyTorch，建议您按照官方的PyTorch教程来熟悉它。</p>
+<p>您可能会注意到，在一些示例控制台截图中使用的文件夹名称是<kbd class="calibre28">read rl_gym_book</kbd>，而不是HOIAWOG。这两个目录名可以互换。事实上，它们是指向同一个目录的符号链接。</p>
+<p class="calibre2"/>
+
+
+            
+
+            
+        
+    
+
+
+
+  
+    <title>Summary</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+
+  
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">摘要</h1>
+                
+            
+            
+                
+<p class="calibre2">在本章中，我们通过一步一步的设置过程来安装和配置我们的开发环境，使用conda、OpenAI Gym和Pytorch！这一章帮助我们确保我们已经安装了所有需要的工具和库，开始在健身房环境中开发我们的代理。在下一章中，我们将探索健身房环境的特征，以了解它们是如何工作的，以及我们如何使用它们来培训我们的代理。在<a href="part0078.html#2ACBS0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第5章</a>、<em class="calibre13">实现您的第一个学习代理——解决山地汽车问题</em>中，我们将直接开发我们的第一个强化学习代理来解决山地汽车问题！然后，我们将在随后的章节中逐步推进并实现更复杂的强化学习算法。</p>
+
+
+            
+
+            
+        
+    
+</body></html>

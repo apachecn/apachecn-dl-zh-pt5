@@ -1,0 +1,286 @@
+<html><head/><body>
+<html>
+  <head>
+    <title>Chapter 3. Encoding Word into Vector</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div/><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03" class="calibre1"/>第三章。将单词编码成向量</h1></div></div></div><p class="calibre8">在前一章中，神经网络的输入是图像，也就是连续数值<a id="id149" class="calibre1"/>的向量，神经网络的<strong class="calibre2">自然语言</strong>。但对于许多其他机器学习领域，输入可能是分类的和离散的。</p><p class="calibre8">在本章中，我们将介绍一种称为嵌入的技术，它学习将离散输入信号转换成向量。输入的这种表示是与神经网络处理的其余部分兼容的重要的第一步。</p><p class="calibre8">这种嵌入技术将以自然语言文本为例进行说明，自然语言文本由属于有限词汇的单词组成。</p><p class="calibre8">我们将介绍嵌入的不同方面:</p><div><ul class="itemizedlist"><li class="listitem">嵌入的原则</li><li class="listitem">单词嵌入的不同类型</li><li class="listitem">一种热编码与索引编码</li><li class="listitem">建立一个将文本转化为向量的网络</li><li class="listitem">训练和发现嵌入空间的性质</li><li class="listitem">保存和加载模型的参数</li><li class="listitem">用于可视化的维数缩减</li><li class="listitem">评估嵌入的质量</li><li class="listitem">嵌入空间的应用</li><li class="listitem">重量捆绑</li></ul></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Chapter 3. Encoding Word into Vector</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h1 class="title" id="calibre_pb_1"><a id="ch03lvl1sec32" class="calibre1"/>编码和嵌入</h1></div></div></div><p class="calibre8">每个<a id="id150" class="calibre1"/>单词可以用词汇表中的一个索引来表示:</p><div><img src="img/00043.jpeg" alt="Encoding and embedding" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">对单词进行编码是将每个单词表示为一个向量的过程。对单词进行编码的最简单的方法<a id="id152" class="calibre1"/>被称为one-hot或1-of-K矢量表示法。在这种方法中，每个单词都被表示为一个全0的<img src="img/00044.jpeg" alt="Encoding and embedding" class="calibre23"/>向量，并且在排序后的词汇表中该单词的索引处有一个1。在这种记法中，|V|是词汇表的大小。词汇{ <strong class="calibre2">国王</strong>、<strong class="calibre2">王后</strong>、<strong class="calibre2">男人</strong>、<strong class="calibre2">女人</strong>、<strong class="calibre2">孩子</strong> }的这种编码中的词向量出现在下面的<strong class="calibre2">王后</strong>的编码示例中:</p><div><img src="img/00045.jpeg" alt="Encoding and embedding" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">在一键向量表示法中，每个单词与另一个单词是等距的。然而，它不能保持它们之间的任何关系，并导致数据稀疏。使用单词嵌入确实克服了这些缺点。</p><p class="calibre8">单词嵌入是一种将单词表示为实数向量的分布式语义方法。这种表示具有有用的聚类特性，因为它将语义和语法相似的单词组合在一起。</p><p class="calibre8">例如，<strong class="calibre2">海洋世界</strong>和<strong class="calibre2">海豚</strong>这两个词在创造的空间中会非常接近。这一步的主要目的是将每个单词映射成一个连续的低维实值向量，并将其用作模型的输入，例如<strong class="calibre2">递归神经网络</strong>(<strong class="calibre2">RNN</strong>)<strong class="calibre2">卷积神经网络</strong> ( <strong class="calibre2"> CNN </strong>)和<a id="id154" class="calibre1"/>等等:</p><div><img src="img/00046.jpeg" alt="Encoding and embedding" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">这样的<a id="id155" class="calibre1"/>表象就是<strong class="calibre2">密集</strong>。我们希望同义词和可互换的单词在这个空间中是相近的。</p><p class="calibre8">在这一章<a id="id156" class="calibre1"/>中，我们将介绍非常流行的单词嵌入模型Word2Vec，它最初是由Mikolov等人在2013年开发的。Word2Vec <a id="id157" class="calibre1"/>有两种不同的型号:<strong class="calibre2">连续包字</strong> ( <strong class="calibre2"> CBOW </strong>)和<strong class="calibre2">跳字</strong>。</p><p class="calibre8">在<a id="id158" class="calibre1"/> CBOW方法中，目标是在给定周围上下文的情况下预测单词。给定一个单词，Skip-gram预测单词的周围上下文(见下图):</p><div><img src="img/00047.jpeg" alt="Encoding and embedding" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">在这一章中，我们将关注CBOW模型。我们将从展示数据集开始，然后解释该方法背后的思想。之后，我们将使用Theano展示它的一个简单实现。最后，我们将参考单词嵌入的一些应用。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Dataset</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec33" class="calibre1"/>数据集</h1></div></div></div><p class="calibre8">在我们<a id="id161" class="calibre1"/>解释模型部分之前，让我们从处理文本语料库开始，创建词汇表并将其与文本集成，以便每个单词都表示为一个整数。作为数据集，可以使用任何文本语料库，例如维基百科或网络文章，或者来自Twitter等社交网络的帖子。常用的数据集包括PTB、text8、BBC、IMDB和WMT数据集。</p><p class="calibre8">在这一章中，我们使用了<code class="email">text8</code>语料库。它由来自维基百科转储的前1亿个字符的预处理版本组成。让我们首先下载文集:</p><div><pre class="programlisting">
+<strong class="calibre2">wget</strong> http://mattmahoney.net/dc/text8.zip -O /sharedfiles/text8.gz
+<strong class="calibre2">gzip</strong> -d /sharedfiles/text8.gz -f</pre></div><p class="calibre8">现在，我们构建词汇表，并用未知的的标记替换罕见的单词。让我们从将数据读入字符串列表开始:</p><div><ol class="orderedlist"><li class="listitem" value="1">Read the data into a list of strings:<div><pre class="programlisting">words = []
+<strong class="calibre2">with</strong> open('data/text8') <strong class="calibre2">as</strong> fin:
+  <strong class="calibre2">for</strong> line <strong class="calibre2">in</strong> fin:
+    words += [w <strong class="calibre2">for</strong> w <strong class="calibre2">in</strong> line.strip().lower().split()]
+
+<strong class="calibre2">data_size</strong> = len(words)  
+<strong class="calibre2">print</strong>('Data size:', data_size)</pre></div><p class="calibre24">从字符串列表中，我们现在可以构建字典。我们从统计单词在<code class="email">word_freq</code>字典中的出现频率开始。然后，我们用标记替换那些不常用的，在语料库中出现次数少于<code class="email">max_df</code>的单词。</p></li><li class="listitem" value="2">建立<a id="id162" class="calibre1"/>字典，用<code class="email">UNK</code>令牌:<div> <pre class="programlisting">unkown_token = '&lt;UNK&gt;' pad_token = '&lt;PAD&gt;' # for padding the context max_df = 5 # maximum number of freq word_freq = [[unkown_token, -1], [pad_token, 0]] word_freq.extend(Counter(words).most_common()) word_freq = OrderedDict(word_freq) word2idx = {unkown_token: 0, pad_token: 1} idx2word = {0: unkown_token, 1: pad_token} idx = 2 <strong class="calibre2">for</strong> w <strong class="calibre2">in</strong> word_freq:   f = word_freq[w]   <strong class="calibre2">if</strong> f <strong class="calibre2">&gt;=</strong> max_df:     word2idx[w] = idx     idx2word[idx] = w     idx += 1   <strong class="calibre2">else:</strong>     word2idx[w] = 0 # map the rare word into the unkwon token     word_freq[unkown_token] += 1 # increment the number of unknown tokens  data = [word2idx[w] <strong class="calibre2">for</strong> w <strong class="calibre2">in</strong> words]  <strong class="calibre2">del</strong> words # for reduce mem use  vocabulary_size = len(word_freq) most_common_words = list(word_freq.items())[:5] <strong class="calibre2">print(</strong>'Most common words (+UNK):', most_common_words) <strong class="calibre2">print(</strong>'Sample data:', data[:10], [idx2word[i] <strong class="calibre2">for</strong> i <strong class="calibre2">in</strong> data[:10]])  <em class="calibre12">Data size: 17005207</em> <em class="calibre12">Most common words (+UNK): [('&lt;UNK&gt;', 182564), ('the', 1061396), ('of', 593677), ('and', 416629), ('one', 411764)]</em> <em class="calibre12">Sample data: [5239, 3084, 12, 6, 195, 2, 3137, 46, 59, 156] ['anarchism', 'originated', 'as', 'a', 'term', 'of', 'abuse', 'first', 'used', 'against']</em> </pre> </div>替换生僻字</li><li class="listitem" value="3">现在，让我们<a id="id163" class="calibre1"/>定义创建数据集的功能(即上下文和目标):<div> <pre class="programlisting"> <strong class="calibre2">def</strong> get_sample(data, data_size, word_idx, pad_token, c = 1):    idx = max(0, word_idx - c)   context = data[idx:word_idx]   <strong class="calibre2">if</strong> word_idx + 1 <strong class="calibre2">&lt;</strong> data_size<strong class="calibre2">:</strong>     context += data[word_idx + 1 : min(data_size, word_idx + c + 1)]   target = data[word_idx]   context = [w <strong class="calibre2">for</strong> w <strong class="calibre2">in</strong> context <strong class="calibre2">if</strong> w != target]   <strong class="calibre2">if</strong> len(context) &gt; 0:     <strong class="calibre2">return</strong> target, context + (2 * c - len(context)) * [pad_token]   <strong class="calibre2">return</strong> None, None  <strong class="calibre2">def</strong> get_data_set(data, data_size, pad_token, c=1):   contexts = []   targets = []   <strong class="calibre2">for</strong> i <strong class="calibre2">in</strong> xrange(data_size):     target, context =  get_sample(data, data_size, i, pad_token, c)     <strong class="calibre2">if</strong> not target <strong class="calibre2">is</strong> None:       contexts.append(context)       targets.append(target)    <strong class="calibre2">return</strong> np.array(contexts, dtype='int32'), np.array(targets, dtype='int32')</pre> </div></li></ol><div/></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Continuous Bag of Words model</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec34" class="calibre1"/>连续包字模式</h1></div></div></div><p class="calibre8">下图显示了神经网络的设计<a id="id164" class="calibre1"/>,用于预测给定上下文的单词:</p><div><img src="img/00048.jpeg" alt="Continuous Bag of Words model" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">输入层接收上下文，而输出层预测目标单词。我们将用于CBOW模型的模型有三层:输入层、隐藏层(也称为投影层或嵌入层)和输出层。在我们的设置中，词汇大小为V，隐藏层大小为n。相邻单元完全连接。</p><p class="calibre8">输入和输出可以用一个索引(整数，0维)或一个热编码向量(1维)来表示。乘以独热编码向量<code class="email">v</code>简单地包括取嵌入矩阵的第j行:</p><div><img src="img/00049.jpeg" alt="Continuous Bag of Words model" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">由于<a id="id165" class="calibre1"/>索引表示在内存使用方面比一键编码表示更有效，并且Theano支持对符号变量进行索引，因此最好尽可能采用索引表示。</p><p class="calibre8">因此，输入(上下文)将是二维的，由一个矩阵表示，具有两个维度:批量大小和上下文长度。输出(目标)是一维的，由一维向量表示:批量大小。</p><p class="calibre8">让我们定义CBOW模型:</p><div><pre class="programlisting">
+<strong class="calibre2">import</strong> theano
+<strong class="calibre2">import</strong> theano.tensor <strong class="calibre2">as</strong> T
+<strong class="calibre2">import</strong> numpy as np
+<strong class="calibre2">import</strong> math
+context = T.imatrix(<strong class="calibre2">name</strong>='context')
+target = T.ivector('target')</pre></div><p class="calibre8">上下文和目标变量是该模型的已知参数。CBOW模型的未知参数是输入层和隐藏层之间的连接矩阵<img src="img/00050.jpeg" alt="Continuous Bag of Words model" class="calibre23"/>，以及隐藏层和输出层之间的连接矩阵<img src="img/00051.jpeg" alt="Continuous Bag of Words model" class="calibre23"/>:</p><div><pre class="programlisting">vocab_size = len(idx2word)
+emb_size = 128
+W_in_values = np.asarray(np.random.uniform(-1.0, 1.0, 
+	(vocab_size, emb_size)),
+<strong class="calibre2">dtype</strong>=theano.config.floatX)
+
+W_out_values = np.asarray(np.random.normal(
+	<strong class="calibre2">scale</strong>=1.0 / math.sqrt(emb_size),
+   <strong class="calibre2">size</strong>=(emb_size, vocab_size)),
+   <strong class="calibre2">dtype</strong>=theano.config.floatX)
+
+W_in = theano.shared(<strong class="calibre2">value</strong>=W_in_values,
+                      <strong class="calibre2">name</strong>='W_in',
+                      <strong class="calibre2">borrow</strong>=True)
+
+W_out = theano.shared(<strong class="calibre2">value</strong>=W_out_values,
+                      <strong class="calibre2">name</strong>='W_out',
+                      <strong class="calibre2">borrow</strong>=True)
+
+
+params = [W_in, W_out]</pre></div><p class="calibre8"><img src="img/00050.jpeg" alt="Continuous Bag of Words model" class="calibre23"/>的每一行是<a id="id166" class="calibre1"/>输入层的关联单词<code class="email">i</code>的N维向量表示<img src="img/00052.jpeg" alt="Continuous Bag of Words model" class="calibre23"/>，其中<code class="email">N</code>是隐藏层尺寸。给定一个上下文，在计算隐层输出时，CBOW模型取输入上下文单词向量的平均值，并使用<code class="email">input -&gt; hidden</code>权重矩阵与平均向量的乘积作为输出:</p><div><img src="img/00053.jpeg" alt="Continuous Bag of Words model" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">这里，<code class="email">C</code>是上下文中的单词数，<code class="email">w1, w2, w3,..., wc</code>是上下文中的单词，<img src="img/00054.jpeg" alt="Continuous Bag of Words model" class="calibre23"/>是单词<img src="img/00055.jpeg" alt="Continuous Bag of Words model" class="calibre23"/>的输入向量。输出层的激活函数是softmax层。等式2和3显示了我们如何计算输出层:</p><div><img src="img/00056.jpeg" alt="Continuous Bag of Words model" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">这里，<img src="img/00052.jpeg" alt="Continuous Bag of Words model" class="calibre23"/>是矩阵<img src="img/00051.jpeg" alt="Continuous Bag of Words model" class="calibre23"/>的第j列，<code class="email">V</code>是词汇量。在我们的设置中，词汇大小是<code class="email">vocab_size</code>，隐藏层大小是<code class="email">emb_size</code>。损失<a id="id167" class="calibre1"/>功能如下:</p><div><img src="img/00057.jpeg" alt="Continuous Bag of Words model" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">(4)</p><p class="calibre8">现在，让我们来翻译等式1、2、3和4。</p><p class="calibre8">计算隐藏(投影)层输出:<code class="email">input -&gt; hidden (eq. 1)</code></p><div><pre class="programlisting">h = T.mean(W_in[context], <strong class="calibre2">axis</strong>=1) 
+
+For the hidden -&gt; output layer (eq. 2)
+uj = T.dot(h, W_out) </pre></div><p class="calibre8">softmax激活(等式3) :</p><div><pre class="programlisting">p_target_given_contex = T.nnet.softmax(uj).dimshuffle(1, 0)</pre></div><p class="calibre8">损失函数(等式。4):</p><div><pre class="programlisting">loss = -T.mean(T.log(p_target_given_contex)[T.arange(target.shape[0]), target]) </pre></div><p class="calibre8">使用SGD更新模型的参数:</p><div><pre class="programlisting">g_params = T.grad(<strong class="calibre2">cost</strong>=loss, <strong class="calibre2">wrt</strong>=params)
+updates = [
+        (param, param - learning_rate <strong class="calibre2">*</strong> gparam)
+        <strong class="calibre2">for</strong> param, gparam <strong class="calibre2">in</strong> <strong class="calibre2">zip</strong>(params, g_params)
+]</pre></div><p class="calibre8">最后，我们需要定义培训和评估功能。</p><p class="calibre8">让我们共享数据集以将其传递给GPU。为简单起见，我们假设我们有一个名为<code class="email">get_data_set</code>的函数，它返回一组目标及其周围的上下文:</p><div><pre class="programlisting">contexts, targets = get_data_set(data, data_size, word2idx[pad_token], <strong class="calibre2">c</strong>=2)
+
+contexts = theano.shared(contexts)
+targets = theano.shared(targets)
+
+index = T.lscalar(<strong class="calibre2">'</strong>index')
+
+train_model = theano.function(
+    <strong class="calibre2">inputs</strong>=[index],
+    <strong class="calibre2">outputs</strong>=[loss],
+    <strong class="calibre2">updates</strong>=updates,
+    <strong class="calibre2">givens</strong>={
+        context: contexts[index * batch_size: (index + 1) <strong class="calibre2">*</strong> batch_size],
+        target: targets[index * batch_size: (index + 1) <strong class="calibre2">*</strong> batch_size]
+    }
+)</pre></div><p class="calibre8"><code class="email">train_model</code>的输入<a id="id168" class="calibre1"/>变量是批处理的索引，因为由于共享变量，整个数据集已经一次性传输到GPU。</p><p class="calibre8">为了在训练期间进行验证，我们使用小批量示例和所有嵌入之间的余弦相似性来评估模型。</p><p class="calibre8">让我们使用一个<code class="email">theano</code>变量来放置验证模型的输入:</p><div><pre class="programlisting">valid_samples = T.ivector('valid_samples') </pre></div><p class="calibre8">验证输入的规范化单词嵌入:</p><div><pre class="programlisting">embeddings = params[0]
+norm = T.sqrt(T.sum(T.sqr(embeddings), <strong class="calibre2">axis</strong>=1, <strong class="calibre2">keepdims=True</strong>))
+normalized_embeddings = W_in / norm
+
+
+valid_embeddings = normalized_embeddings[valid_samples]</pre></div><p class="calibre8">相似度是由余弦相似度函数给出的<a id="id169" class="calibre1"/>:</p><div><pre class="programlisting">similarity = theano.function([valid_samples], T.dot(valid_embeddings, normalized_embeddings.T))</pre></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Training the model</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec35" class="calibre1"/>训练模特</h1></div></div></div><p class="calibre8">现在我们可以<a id="id170" class="calibre1"/>开始训练模型了。在本例中，我们选择使用批量大小为64和100个历元的SGD来训练模型。为了验证该模型，我们随机选择了16个单词，并使用相似性度量作为评估指标:</p><div><ol class="orderedlist"><li class="listitem" value="1">让我们开始训练:<div> <pre class="programlisting">valid_size = 16     # Random set of words to evaluate similarity on. valid_window = 100  # Only pick dev samples in the head of the distribution. valid_examples = np.array(np.random.choice(valid_window, valid_size, <strong class="calibre2">replace=False</strong>), <strong class="calibre2">dtype=</strong>'int32')  n_epochs = 100 n_train_batches = data_size // batch_size n_iters = n_epochs <strong class="calibre2">*</strong> n_train_batches train_loss = np.zeros(n_iters) average_loss = 0  <strong class="calibre2">for</strong> epoch <strong class="calibre2">in</strong> range(n_epochs):     <strong class="calibre2">for</strong> minibatch_index <strong class="calibre2">in</strong> range(n_train_batches):          iteration = minibatch_index + n_train_batches * epoch         loss = train_model(minibatch_index)         train_loss[iteration] = loss         average_loss += loss           <strong class="calibre2">if</strong> iteration <strong class="calibre2">%</strong> 2000 == 0:            <strong class="calibre2">if</strong> iteration <strong class="calibre2">&gt;</strong> 0:             average_loss /= 2000             # The average loss is an estimate of the loss over the last 2000 batches.             <strong class="calibre2">print</strong>("Average loss at step ", iteration, ": ", average_loss)             average_loss = 0             # Note that this is expensive (~20% slowdown if computed every 500 steps)         <strong class="calibre2">if</strong> iteration <strong class="calibre2">%</strong> 10000 == 0:            sim = similarity(valid_examples)           <strong class="calibre2">for</strong> i <strong class="calibre2">in</strong> xrange(valid_size):               valid_word = idx2word[valid_examples[i]]               top_k = 8 # number of nearest neighbors               nearest = (-sim[i, :]).argsort()[1:top_k+1]               log_str = "Nearest to %s:" % valid_word               <strong class="calibre2">for</strong> k <strong class="calibre2">in</strong> xrange(top_k):                   close_word = idx2word[nearest[k]]                   log_str = "%s <strong class="calibre2">%s</strong>," % (log_str, close_word)               <strong class="calibre2">print</strong>(log_str)</pre> </div></li><li class="listitem" value="2">最后，让我们<a id="id171" class="calibre1"/>创建两个通用函数，帮助我们将任何模型参数保存在一个可重用的<code class="email">utils.py</code>实用程序文件中:<div> <pre class="programlisting"> <strong class="calibre2">def</strong> save_params(outfile, params):     l = []     <strong class="calibre2">for</strong> param <strong class="calibre2">in</strong> params:         l = l + [ param.get_value() ]     numpy.savez(outfile, <strong class="calibre2">*</strong>l)     <strong class="calibre2">print</strong>("Saved model parameters to {}.npz".format(outfile))  <strong class="calibre2">def</strong> load_params(path, params):     npzfile = numpy.load(path+".npz")     <strong class="calibre2">for</strong> i, param <strong class="calibre2">in</strong> enumerate(params):         param.set_value( npzfile["arr_" +str(i)] )     <strong class="calibre2">print(</strong>"Loaded model parameters from {}.npz".format(path))</pre> </div></li><li class="listitem" value="3">在GPU上运行，前面的代码打印出以下结果:<div> <pre class="programlisting"> <em class="calibre12">Using gpu device 1: Tesla K80 (CNMeM is enabled with initial size: 80.0% of memory, cuDNN 5105)</em> <em class="calibre12">Data size 17005207</em> <em class="calibre12">Most common words (+UNK) [('&lt;UNK&gt;', 182565), ('&lt;PAD&gt;', 0), ('the', 1061396), ('of', 593677), ('and', 416629)]</em> <em class="calibre12">Sample data [5240, 3085, 13, 7, 196, 3, 3138, 47, 60, 157] ['anarchism', 'originated', 'as', 'a', 'term', 'of', 'abuse', 'first', 'used', 'against']</em> <em class="calibre12">Average loss at step  0 :  11.2959747314</em> <em class="calibre12">Average loss at step  2000 :  8.81626828802</em> <em class="calibre12">Average loss at step  4000 :  7.63789177912</em> <em class="calibre12">Average loss at step  6000 :  7.40699760973</em> <em class="calibre12">Average loss at step  8000 :  7.20080085599</em> <em class="calibre12">Average loss at step  10000 :  6.85602856147</em> <em class="calibre12">Average loss at step  12000 :  6.88123817992</em> <em class="calibre12">Average loss at step  14000 :  6.96217652643</em> <em class="calibre12">Average loss at step  16000 :  6.53794862854</em> <em class="calibre12">...</em>   <em class="calibre12">Average loss at step  26552000 :  4.52319500107</em> <em class="calibre12">Average loss at step  26554000 :  4.55709513521</em> <em class="calibre12">Average loss at step  26556000 :  4.62755958384</em> <em class="calibre12">Average loss at step  26558000 :  4.6266620369</em> <em class="calibre12">Average loss at step  26560000 :  4.82731778347</em> <em class="calibre12">Nearest to system: systems, network, device, unit, controller, schemes, vessel, scheme,</em> <em class="calibre12">Nearest to up: off, out, alight, forth, upwards, down, ordered, ups,</em> <em class="calibre12">Nearest to first: earliest, last, second, next, oldest, fourth, third, newest,</em> <em class="calibre12">Nearest to nine: apq, nineteenth, poz, jyutping, afd, apod, eurocents, zoolander,</em> <em class="calibre12">Nearest to between: across, within, involving, with, among, concerning, through, from,</em> <em class="calibre12">Nearest to state: states, provincial, government, nation, gaeltachta, reservation, infirmity, slates,</em> <em class="calibre12">Nearest to are: were, is, aren, was, include, have, weren, contain,</em> <em class="calibre12">Nearest to may: might, should, must, can, could, would, will, cannot,</em> <em class="calibre12">Nearest to zero: hundred, pounders, hadza, cest, bureaus, eight, rang, osr,</em> <em class="calibre12">Nearest to that: which, where, aurea, kessai, however, unless, but, although,</em> <em class="calibre12">Nearest to can: could, must, cannot, should, may, will, might, would,</em> <em class="calibre12">Nearest to s: his, whose, its, castletown, cide, codepoint, onizuka, brooklands,</em> <em class="calibre12">Nearest to will: would, must, should, could, can, might, shall, may,</em> <em class="calibre12">Nearest to their: its, his, your, our, her, my, the, whose,</em> <em class="calibre12">Nearest to but: however, though, although, which, while, whereas, moreover, unfortunately,</em> <em class="calibre12">Nearest to not: never, indeed, rarely, seldom, almost, hardly, unable, gallaecia,</em> <em class="calibre12">Saved model parameters to model.npz</em> </pre> </div></li></ol><div/></div><p class="calibre8">让我们<a id="id172" class="calibre1"/>注意:</p><div><ul class="itemizedlist"><li class="listitem">生僻字只更新少量次数，而常用字更多地出现在输入和上下文窗口中。对常用词进行二次抽样可以弥补这一点。</li><li class="listitem">所有的权重在输出嵌入中被更新，并且只有它们中的一些，那些对应于上下文窗口中的单词的权重被积极地更新。负采样可以帮助重新平衡更新中的正负因素。</li></ul></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Visualizing the learned embeddings</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec36" class="calibre1"/>可视化学习到的嵌入</h1></div></div></div><p class="calibre8">让我们<a id="id173" class="calibre1"/>将2D图形中的嵌入形象化，以便<a id="id174" class="calibre1"/>理解它们<a id="id175" class="calibre1"/>如何捕捉相似性和语义。为了这个目的，我们需要将嵌入的维数<a id="id177" class="calibre1"/>减少到二维，而不改变嵌入的结构<a id="id178" class="calibre1"/>。</p><p class="calibre8">降低维度的数量被称为流形学习，存在许多不同的技术，其中一些是线性的，如<strong class="calibre2">主成分分析</strong> ( <strong class="calibre2"> PCA </strong>)，<strong class="calibre2">独立成分分析</strong> ( <strong class="calibre2"> ICA </strong>)，<strong class="calibre2">线性判别分析</strong> ( <strong class="calibre2"> LDA </strong>)，以及<strong class="calibre2">潜在语义分析</strong> / <strong class="calibre2">索引</strong>(<strong class="calibre2">LSA<strong class="calibre2"> <strong class="calibre2">局部线性嵌入</strong> ( <strong class="calibre2"> LLE </strong>)，<strong class="calibre2">黑森</strong> <a id="id180" class="calibre1"/> <strong class="calibre2">特征映射</strong>，<strong class="calibre2">谱嵌入</strong>，<strong class="calibre2">局部切空间嵌入</strong>，<strong class="calibre2">多维尺度</strong> ( <strong class="calibre2"> MDS </strong>)，以及<strong class="calibre2">t-分布随机邻居嵌入</strong> ( <strong class="calibre2"> t-SNE </strong>)。</strong></strong></p><p class="calibre8">为了显示单词embedding，让我们使用t-SNE，一种适用于高维数据的伟大技术，以揭示局部结构和聚类，而不将点聚集在一起:</p><div><ol class="orderedlist"><li class="listitem" value="1">Visualize the embeddings:<div><pre class="programlisting">
+<strong class="calibre2">def</strong> plot_with_labels(low_dim_embs, labels, <strong class="calibre2">filename</strong>='tsne.png'):
+  <strong class="calibre2">assert</strong> low_dim_embs.shape[0] &gt;= len(labels), "More labels than embeddings"
+  plt.figure(figsize=(18, 18))  #in inches
+  <strong class="calibre2">for</strong> i, label <strong class="calibre2">in</strong> enumerate(labels):
+    x, y = low_dim_embs[i,:]
+    plt.scatter(x, y)
+    plt.annotate(label,
+                 xy=(x, y),
+                 xytext=(5, 2),
+                 textcoords='offset points',
+                 ha='right',
+                 va='bottom')
+
+  plt.savefig(filename)
+
+<strong class="calibre2">from</strong> sklearn.manifold <strong class="calibre2">import</strong> TSNE
+<strong class="calibre2">import</strong> matplotlib.pyplot <strong class="calibre2">as</strong> plt
+
+tsne = TSNE(<strong class="calibre2">perplexity</strong>=30, <strong class="calibre2">n_components</strong>=2, <strong class="calibre2">init</strong>='pca', <strong class="calibre2">n_iter</strong>=5000)
+plot_only = 500
+low_dim_embs = tsne.fit_transform(final_embeddings[:plot_only,:])
+labels = [idx2word[i] for i in xrange(plot_only)]
+plot_with_labels(low_dim_embs, labels)</pre></div><p class="calibre24">绘制的<a id="id181" class="calibre1"/>地图显示了具有相似嵌入且彼此靠近的单词:</p><div><img src="img/00058.jpeg" alt="Visualizing the learned embeddings" class="calibre9"/></div><p class="calibre27"> </p></li></ol><div/></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Evaluating embeddings – analogical reasoning</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec37" class="calibre1"/>评估嵌入——类比推理</h1></div></div></div><p class="calibre8">类比推理是一种简单而有效的评估嵌入的方法，它通过预测如下形式的句法和语义关系:a是b的，就像c是to _？，表示为<em class="calibre12"> a : b → c:？</em>。任务是识别保留的第四个单词，只有精确匹配的单词才被认为是正确的。</p><p class="calibre8">例如，<em class="calibre12">女人</em>这个词是对这个问题的最好回答<em class="calibre12">国王之于女王就像男人之于女王？</em>。假设<img src="img/00059.jpeg" alt="Evaluating embeddings – analogical reasoning" class="calibre23"/>是归一化到单位范数的单词<img src="img/00060.jpeg" alt="Evaluating embeddings – analogical reasoning" class="calibre23"/>的表示向量。那么，我们就可以回答问题<em class="calibre12"> a : b → c:？</em>，通过查找单词<img src="img/00061.jpeg" alt="Evaluating embeddings – analogical reasoning" class="calibre23"/>最接近:</p><div><img src="img/00062.jpeg" alt="Evaluating embeddings – analogical reasoning" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">根据<a id="id183" class="calibre1"/>余弦相似度:</p><div><img src="img/00063.jpeg" alt="Evaluating embeddings – analogical reasoning" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">现在让我们使用Theano实现类比预测功能。首先，我们需要定义函数的输入。类比函数接收三个输入，分别是<code class="email">a</code>、<code class="email">b</code>和<code class="email">c</code>的单词索引:</p><div><pre class="programlisting">analogy_a = T.ivector('<strong class="calibre2">analogy_a</strong>')  
+analogy_b = T.ivector('<strong class="calibre2">analogy_b</strong>')  
+analogy_c = T.ivector('<strong class="calibre2">analogy_c</strong>')</pre></div><p class="calibre8">然后，我们需要将每个输入映射到单词嵌入向量。每一行<code class="email">a_emb</code>、<code class="email">b_emb</code>、<code class="email">c_emb</code>都是一个单词的嵌入向量:</p><div><pre class="programlisting">a_emb = embeddings[analogy_a]  # a's embs
+b_emb = embeddings[analogy_b]  # b's embs
+c_emb = embeddings[analogy_c]  # c's embs</pre></div><p class="calibre8">现在我们可以计算每个目标和vocab对之间的余弦距离。我们期望d在单位超球面上的嵌入向量是near: <code class="email">c_emb + (b_emb - a_emb)</code>，其形状为<code class="email">[bsz, emb_size]</code>。<code class="email">dist</code>有形状[ <code class="email">bsz, vocab_size</code> ]。</p><div><pre class="programlisting"> dist = T.dot(target, embeddings.T)</pre></div><p class="calibre8">在这个例子中，我们认为预测函数取前四个单词。因此，我们可以将Theano中的函数定义如下:</p><div><pre class="programlisting">pred_idx = T.argsort(dist, <strong class="calibre2">axis</strong>=1)[:, -4:]
+prediction = theano.function([analogy_a, analogy_b, analogy_c], pred_idx)</pre></div><p class="calibre8">要运行前面的函数，我们需要加载评估数据，在本例中是Google定义的类比问题集。每个问题包含由空格分隔的四个单词。第一个问题可以解读为<em class="calibre12">雅典之于希腊就像巴格达之于_？</em>而正确答案应该是<em class="calibre12">伊拉克</em>:</p><div><pre class="programlisting">Athens Greece Baghdad Iraq
+Athens Greece Bangkok Thailand
+Athens Greece Beijing China</pre></div><p class="calibre8">让我们使用下面代码中定义的<code class="email">read_analogies</code>函数加载<a id="id184" class="calibre1"/>类比问题:</p><div><pre class="programlisting">
+<strong class="calibre2">def</strong> read_analogies(fname, word2idx):
+    """Reads through the analogy question file.
+    Returns:
+      questions: a [n, 4] numpy array containing the analogy question's
+                 word ids.
+      questions_skipped: questions skipped due to unknown words.
+    """
+    questions = []
+    questions_skipped = 0
+    <strong class="calibre2">with</strong> open(fname, "r") <strong class="calibre2">as</strong> analogy_f:
+      <strong class="calibre2">for</strong> line <strong class="calibre2">in</strong> analogy_f:
+        <strong class="calibre2">if</strong> line.startswith(":"):  # Skip comments.
+          <strong class="calibre2">continue</strong>
+        words = line.strip().lower().split(" ")
+        ids = [word2idx.get(w.strip()) for w in words]
+        <strong class="calibre2">if</strong> None <strong class="calibre2">in</strong> ids <strong class="calibre2">or</strong> len(ids) != 4:
+          questions_skipped += 1
+        <strong class="calibre2">else</strong>:
+          questions.append(np.array(ids))
+    <strong class="calibre2">print</strong>("Eval analogy file: ", fname)
+    <strong class="calibre2">print</strong>("Questions: ", len(questions))
+    <strong class="calibre2">print</strong>("Skipped: ", questions_skipped)
+
+    <strong class="calibre2">return</strong> np.array(questions, <strong class="calibre2">dtype=</strong>np.int32)</pre></div><p class="calibre8">现在，我们可以运行评估模型:</p><div><pre class="programlisting">  """Evaluate analogy questions and reports accuracy."""
+
+  # How many questions we get right at precision@1.
+  correct = 0
+  analogy_data = read_analogies(args.eval_data, word2idx)
+  analogy_questions = analogy_data[:, :3]
+  answers = analogy_data[:, 3]
+  <strong class="calibre2">del</strong> analogy_data
+  total = analogy_questions.shape[0]
+  start = 0
+
+  <strong class="calibre2">while</strong> start &lt; total:
+    limit = start + 200
+    sub_questions = analogy_questions[start:limit, :]
+    sub_answers = answers[start:limit]
+    idx = prediction(sub_questions[:,0], sub_questions[:,1], sub_questions[:,2])
+
+    start = limit
+    <strong class="calibre2">for</strong> question <strong class="calibre2">in</strong> xrange(sub_questions.shape[0]):
+      <strong class="calibre2">for</strong> j <strong class="calibre2">in</strong> xrange(4):
+        <strong class="calibre2">if</strong> idx[question, j] == sub_answers[question]:
+          # Bingo! We predicted correctly. E.g., [italy, rome, france, paris].
+          correct += 1
+          <strong class="calibre2">break</strong>
+        <strong class="calibre2">elif</strong> idx[question, j] <strong class="calibre2">in</strong> sub_questions[question]:
+          # We need to skip words already in the question.
+          continue
+        <strong class="calibre2">else:</strong>
+          # The correct label is not the precision@1
+          break
+  <strong class="calibre2">print</strong>()
+  <strong class="calibre2">print</strong>("Eval %4d/%d accuracy = %4.1f%%" % (correct, total,
+                                            correct * 100.0 / total))</pre></div><p class="calibre8">该<a id="id185" class="calibre1"/>导致:</p><div><pre class="programlisting">
+<em class="calibre12">Eval analogy file:  questions-words.txt</em>
+<em class="calibre12">Questions:  17827</em>
+<em class="calibre12">Skipped:  1717</em>
+<em class="calibre12">Eval   831/17827 accuracy =  4.7%</em>
+</pre></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Evaluating embeddings – quantitative analysis</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec38" class="calibre1"/>评估嵌入——定量分析</h1></div></div></div><p class="calibre8">几个字可能足以表明嵌入的定量分析也是可能的。</p><p class="calibre8">一些单词相似性基准提出了基于人类的概念之间的距离:Simlex999 (Hill等人，2016年)，Verb-143 (Baker等人，2014年)，MEN (Bruni等人，2014年)，RareWord (Luong等人，2013年)，以及MTurk- 771 (Halawi等人，2012年)。</p><p class="calibre8">我们的嵌入之间的相似性距离可以与这些人类距离进行比较，使用Spearman的等级相关系数来定量评估所学习的嵌入的质量。</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Application of word embeddings</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec39" class="calibre1"/>单词嵌入的应用</h1></div></div></div><p class="calibre8">单词<a id="id187" class="calibre1"/>嵌入捕捉单词的意思。它们将离散输入转化为神经网络可以处理的输入。</p><p class="calibre8">嵌入是许多与语言相关的应用的开始:</p><div><ul class="itemizedlist"><li class="listitem">生成文本，我们将在下一章看到</li><li class="listitem">翻译系统，其中输入和目标句子是单词序列，其嵌入可以由端到端神经网络处理(<a class="calibre1" title="Chapter 8. Translating and Explaining with Encoding – decoding Networks" href="part0083_split_000.html#2F4UM2-ccdadb29edc54339afcb9bdf9350ba6b">第八章</a>、<em class="calibre12">用编码解码网络翻译和解释</em>)</li><li class="listitem">情感分析(<a class="calibre1" title="Chapter 5. Analyzing Sentiment with a Bidirectional LSTM" href="part0060_split_000.html#1P71O2-ccdadb29edc54339afcb9bdf9350ba6b">第5章</a>，<em class="calibre12">用双向LSTM分析情感</em>)</li><li class="listitem">计算机视觉中的零射击学习:word language中的结构使我们能够找到不存在训练图像的类</li><li class="listitem">图像注释/字幕</li><li class="listitem">神经精神病学，神经网络可以100%准确地预测人类的某些精神疾病</li><li class="listitem">聊天机器人，或回答用户的问题(<a class="calibre1" title="Chapter 9. Selecting Relevant Inputs or Memories with the Mechanism of Attention" href="part0091_split_000.html#2MP362-ccdadb29edc54339afcb9bdf9350ba6b">第9章</a>，<em class="calibre12">用注意力机制选择相关的输入或记忆</em></li></ul></div><p class="calibre8">与单词一样，语义嵌入的原理可以用于任何具有分类变量的问题(图像、声音、电影等的类别)，其中用于激活分类变量的学习嵌入可以用作神经网络的输入，用于进一步的分类挑战。</p><p class="calibre8">正如语言构建我们的思维一样，单词嵌入有助于构建或改善基于神经网络的系统的性能。</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Weight tying</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec40" class="calibre1"/>重量捆绑</h1></div></div></div><p class="calibre8">两个<a id="id188" class="calibre1"/>权重矩阵<img src="img/00050.jpeg" alt="Weight tying" class="calibre23"/>和<img src="img/00051.jpeg" alt="Weight tying" class="calibre23"/>分别用于输入或输出。虽然在反向传播期间，<img src="img/00051.jpeg" alt="Weight tying" class="calibre23"/>的所有权重在每次迭代时都被更新，但是<img src="img/00050.jpeg" alt="Weight tying" class="calibre23"/>仅在对应于当前训练输入单词的列上被更新。</p><p class="calibre8"><strong class="calibre2">权重绑定</strong> ( <strong class="calibre2"> WT </strong>)包括仅使用一个矩阵W用于输入和输出嵌入。然后，Theano计算关于这些新权重的新导数，并且在每次迭代中更新W中的所有权重。参数越少，过度拟合越少。</p><p class="calibre8">在Word2Vec的情况下，这种技术不会给出更好的结果，原因很简单:在Word2Vec模型中，在上下文中找到输入单词的概率如下所示:</p><div><img src="img/00064.jpeg" alt="Weight tying" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">它应该尽可能接近零，但是除了W = 0之外<a id="id189" class="calibre1"/>不能为零。</p><p class="calibre8">但是在<a id="id190" class="calibre1"/>的其他应用中，比如在<strong class="calibre2">神经网络语言模型</strong> ( <strong class="calibre2"> NNLM </strong>)第四章，<em class="calibre12">用递归神经网络生成文本</em>和<strong class="calibre2">神经机器翻译</strong> ( <strong class="calibre2"> NMT </strong>)第八章，<em class="calibre12">用编解码网络翻译解释</em>中，可以用输出嵌入来表示<em class="calibre12"/></p><div><ul class="itemizedlist"><li class="listitem">输入嵌入通常比输出嵌入差</li><li class="listitem">WT解决了这个问题</li><li class="listitem">用WT学习的普通嵌入在质量上接近于没有WT的输出嵌入</li><li class="listitem">在输出嵌入之前插入正则化投影矩阵P有助于网络使用相同的嵌入，并且在WT下导致甚至更好的结果</li></ul></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Further reading</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec41" class="calibre1"/>延伸阅读</h1></div></div></div><p class="calibre8">请参考以下文章:</p><div><ul class="itemizedlist"><li class="listitem">向量空间中单词表示的有效估计，托马斯·米科洛夫、程凯、格雷格·科拉多、杰弗里·迪恩，2013年1月</li><li class="listitem">基于因素的组合嵌入模型，莫宇，2014</li><li class="listitem">用于文本分类的字符级卷积网络，张翔，赵军波，杨乐存，2015</li><li class="listitem">单词和短语的分布式表示及其组合性，托马斯·米科洛夫，伊利亚·苏茨基弗，程凯，格雷格·科拉多，杰弗里·迪恩，2013</li><li class="listitem">使用输出嵌入改进语言模型，Ofir出版社，Lior Wolf，2016年8月</li></ul></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Summary</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec42" class="calibre1"/>总结</h1></div></div></div><p class="calibre8">在自然语言处理的情况下，本章介绍了一种将特定文本中的离散输入转换为数字嵌入的常见方法。</p><p class="calibre8">使用神经网络训练这些单词表示的技术不需要我们标记数据，而是直接从自然文本中推断其嵌入。这样的训练被命名为<em class="calibre12">无监督学习</em>。</p><p class="calibre8">深度学习的主要挑战之一是将输入和输出信号转换为网络可以处理的表示形式，特别是浮点向量。然后，神经网络提供了处理这些向量的所有工具，以进行学习、决策、分类、推理或生成。</p><p class="calibre8">在接下来的章节中，我们将使用这些嵌入来处理文本和更高级的神经网络。下一章介绍的第一个应用是关于自动文本生成的。</p></div></body></html>
+</body></html>

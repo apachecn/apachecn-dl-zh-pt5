@@ -1,0 +1,927 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Exploring Few-Shot Learning Algorithms</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">探索少镜头学习算法</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>恭喜你！我们已经进入了最后一章。我们已经走了很长的路。我们从学习什么是神经网络以及它们如何被用来识别手写数字开始。然后，我们探讨了如何用梯度下降算法训练神经网络。我们还学习了我如何将递归神经网络用于顺序任务，以及如何将卷积神经网络用于图像识别。接下来，我们研究了如何使用单词嵌入算法来理解文本的语义。然后我们熟悉了几种不同类型的生成式对抗网络和自动编码器。</p>
+
+<p>到目前为止，我们已经知道，当我们有一个相当大的数据集时，深度学习算法表现得非常好。但是，当我们没有大量数据点可供学习时，我们该如何处理这种情况呢？对于大多数用例，我们可能得不到大型数据集。在这种情况下，我们可以使用少量的学习算法，不需要庞大的数据集来学习。在这一章中，我们将理解少镜头学习算法如何从少量的数据点中学习，我们将探索不同类型的少镜头学习算法。首先，我们将研究一种流行的少镜头学习算法，称为<strong>连体网络</strong>。接下来，我们将直观地学习一些其他的少拍学习算法，如原型网络、关系网络和匹配网络。</p>
+
+<p>在本章中，我们将研究以下主题:</p>
+
+<ul>
+
+<li>什么是少投学习？</li>
+
+<li>暹罗网络</li>
+
+<li>暹罗网络体系结构</li>
+
+<li>原型网络</li>
+
+<li>关系网络</li>
+
+<li>匹配网络</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>What is few-shot learning?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">什么是少投学习？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>从几个数据点中学习被称为<strong>少拍</strong> <strong>学习</strong>或<strong> k拍学习</strong>，其中k指定数据集中每个类的数据点的数量。</p>
+
+<p>假设我们正在执行图像分类任务。假设我们有两个类别——苹果和橘子——我们试着将给定的图像分类为苹果或橘子。当我们的训练集中正好有一个苹果和一个橘子的图像时，这被称为一次性学习；也就是说，我们只从每个班级的一个数据点中学习。比如说，如果我们有11张苹果的图片和11张橘子的图片，那么这就叫做11次学习。因此，k-shot学习中的k意味着我们每个类拥有的数据点的数量。</p>
+
+<p>还有<strong>零炮学习</strong>，我们每节课没有任何数据点。等等。什么？在完全没有数据点的情况下，如何学习？在这种情况下，我们将没有数据点，但我们将有每个类的元信息，我们将从元信息中学习。</p>
+
+<p>由于我们的数据集中有两个类，即apple和orange，我们可以称之为<strong>双向k-shot学习</strong>。因此，在n向k-shot学习中，n向意味着我们在数据集中的类的数量，k-shot意味着我们在每个类中的数据点的数量。</p>
+
+<p>我们需要我们的模型从几个数据点中学习。为了达到这一点，我们以同样的方式训练他们；也就是说，我们在很少的数据点上训练模型。假设我们有一个数据集，<img class="fm-editor-equation" src="img/8ea8bd84-c391-4118-99ea-2b799e44ae1c.png" style="font-size: 1em;width:0.92em;height:1.00em;"/>。我们从数据集中的每个类中抽取一些数据点，我们称之为<strong>支持集</strong>。类似地，我们从每个类中抽取一些不同的数据点，并将其称为<strong>查询集</strong>。</p>
+
+<p class="mce-root"/>
+
+<p>我们用支持集训练模型，用查询集测试它。我们以情节的方式训练模型——也就是说，在每一集，我们从我们的数据集<img class="fm-editor-equation" src="img/191373ea-439a-4898-b792-99920d642af2.png" style="width:1.00em;height:1.08em;"/>中采样一些数据点，准备我们的支持集和查询集，并在支持集上训练和在查询集上测试。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Siamese networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">暹罗网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>暹罗网络是特殊类型的神经网络，是最简单和最常用的一次性学习算法之一。正如我们在上一节中了解到的，一次性学习是一种技术，在这种技术中，我们每节课只从一个训练示例中学习。因此，连体网络主要用于我们没有每个类的许多数据点的应用中。</p>
+
+<p>例如，假设我们想要为我们的组织构建一个人脸识别模型，并且我们的组织中有大约500人在工作。如果我们想从头开始使用<strong>卷积神经网络</strong> ( <strong> CNN </strong>)建立我们的人脸识别模型，那么我们需要所有这500个人的许多图像，来训练网络并获得良好的准确性。但是，显然，我们不会有所有这500个人的许多图像，因此，除非我们有足够的数据点，否则使用CNN或任何深度学习算法来建立模型是不可行的。因此，在这种情况下，我们可以求助于复杂的一次性学习算法，如暹罗网络，它可以从更少的数据点进行学习。</p>
+
+<p>但是暹罗网络是如何工作的呢？暹罗网络基本上由两个对称的神经网络组成，这两个网络共享相同的权重和架构，并且在末端使用能量函数<img class="fm-editor-equation" src="img/4526cd01-c2d0-42c7-9bf7-d3b4d66ef67a.png" style="width:0.83em;height:0.92em;"/>连接在一起。我们的暹罗网络的目标是了解这两个输入是相似还是不相似。</p>
+
+<p>假设我们有两个图像，<img class="fm-editor-equation" src="img/f96bf70f-61ea-4520-b883-aac9af61fcce.png" style="width:1.33em;height:1.00em;"/>和<img class="fm-editor-equation" src="img/b499e6ce-5bea-4d8a-abad-d0dcf6338639.png" style="width:1.42em;height:1.08em;"/>，我们想知道这两个图像是相似还是不相似。如下图所示，我们将<strong>图像<img class="fm-editor-equation" src="img/f96bf70f-61ea-4520-b883-aac9af61fcce.png" style="width:1.00em;height:0.75em;"/> </strong>馈给<strong>网络<img class="fm-editor-equation" src="img/834d0bf7-d38d-42a0-b532-aa3ce2d0fb73.png" style="width:0.92em;height:1.08em;"/></strong><strong>图像<img class="fm-editor-equation" src="img/b499e6ce-5bea-4d8a-abad-d0dcf6338639.png" style="width:1.33em;height:1.00em;"/> </strong>馈给<strong>网络<img class="fm-editor-equation" src="img/17ea0a48-207f-43ce-a8f0-4dad08a04873.png" style="width:0.92em;height:1.08em;"/> </strong>。这两个网络的作用是为输入图像生成嵌入(特征向量)。所以，我们可以使用任何能给我们嵌入的网络。由于我们的输入是一幅图像，我们可以使用卷积网络来生成嵌入:也就是说，用于提取特征。记住CNN在这里的作用只是提取特征，而不是分类。</p>
+
+<p class="mce-root">正如我们所知，这些网络应该具有相同的权重和架构，如果<strong>网络</strong> <img class="fm-editor-equation" src="img/c6c1992c-2bb2-4c35-9192-a57f24bbb3b9.png" style="width:0.75em;height:0.92em;"/>是三层CNN，那么<strong>网络</strong> <img class="fm-editor-equation" src="img/f605751c-593e-4a12-888b-d0f0e26d3c83.png" style="width:0.75em;height:0.92em;"/>也应该是三层CNN，我们必须对这两个网络使用相同的权重集。所以，<strong>网络</strong> <img class="fm-editor-equation" src="img/6deb49ca-2fd4-4b61-9f72-407d8308db55.png" style="width:0.75em;height:0.92em;"/>和<strong>网络</strong> <img class="fm-editor-equation" src="img/f8153a01-1897-4a05-b7a5-38cb2f6927a0.png" style="width:0.83em;height:1.00em;"/>会分别给我们输入图像<img class="fm-editor-equation" src="img/f96bf70f-61ea-4520-b883-aac9af61fcce.png" style="width:1.33em;height:1.00em;"/>和<img class="fm-editor-equation" src="img/b499e6ce-5bea-4d8a-abad-d0dcf6338639.png" style="width:1.58em;height:1.17em;"/>的嵌入。然后，我们将这些嵌入馈送到能量函数，它告诉我们两个输入图像有多相似。能量函数基本上是任何相似性度量，例如欧几里德距离和余弦相似性:</p>
+
+<p><img src="img/a023ef9e-46ed-4111-b409-65a54e6af39b.png" style="width:26.50em;height:24.25em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign">暹罗网络不仅用于人脸识别，还广泛用于我们没有很多数据点的应用和需要学习两个输入之间相似性的任务。暹罗网络的应用包括签名验证、相似问题检索和对象跟踪。我们将在下一节详细研究连体网络。</p>
+
+<p>暹罗网络体系结构</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Architecture of siamese networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">现在我们对暹罗网络有了基本的了解，我们将详细探讨它们。下图显示了连体网络的体系结构:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p><img src="img/fba47a65-a1b0-4603-a152-fb501e006d7d.png" style="width:23.25em;height:21.33em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign">如上图所示，一个连体网络由两个相同的网络组成，两个网络共享相同的权重和架构。假设我们有两个输入，<img class="fm-editor-equation" src="img/9077854b-355a-4606-ae06-2e521038b578.png" style="width:1.58em;height:1.17em;"/>和<img class="fm-editor-equation" src="img/36a7ea70-62f4-495a-a246-b07e25a85d07.png" style="width:1.42em;height:1.08em;"/>。我们把<strong>输入</strong> <img class="fm-editor-equation" src="img/e2aa271e-c7fc-474a-94e7-d7c5cfb8b422.png" style="width:1.33em;height:1.00em;"/>馈给<strong>网络</strong> <img class="fm-editor-equation" src="img/259f6957-4b31-438d-87a3-6d8947fc147d.png" style="width:0.83em;height:1.08em;"/>，即<img class="fm-editor-equation" src="img/313a447d-8f4f-459a-a019-24da4ab85aa9.png" style="width:3.00em;height:1.00em;"/>，我们把<strong>输入</strong> <img class="fm-editor-equation" src="img/4fb3738e-00c5-48ba-bab4-0c50b08a1091.png" style="width:1.17em;height:0.83em;"/>馈给<strong>网络</strong> <img class="fm-editor-equation" src="img/45a57887-05f2-445f-a95b-36f97e73443d.png" style="width:0.75em;height:0.92em;"/>，即<img class="fm-editor-equation" src="img/f5975395-4aee-4902-8149-dd528e1c6954.png" style="width:3.50em;height:1.17em;"/>。</p>
+
+<p class="mce-root">如您所见，这两个网络具有相同的权重<img class="fm-editor-equation" src="img/84870513-e640-4667-b014-56bd8b5f4cd8.png" style="width:0.92em;height:0.75em;"/>，它们将为我们的输入<img class="fm-editor-equation" src="img/019f1ca5-fc1c-4a4f-b0ca-88accc6eabcc.png" style="width:1.42em;height:1.08em;"/>和<img class="fm-editor-equation" src="img/64a84803-b209-4c29-968a-40722def7dab.png" style="width:1.42em;height:1.08em;"/>生成嵌入。然后，我们将这些嵌入馈送到能量函数<img class="fm-editor-equation" src="img/b4dda082-9107-4f03-80b7-2477fe7d2500.png" style="width:0.75em;height:0.92em;"/>，这将给出两个输入之间的相似性。它可以表示如下:</p>
+
+<p><img class="fm-editor-equation" src="img/60c5a706-06ce-4d7e-b0fc-925a5990908d.png" style="width:15.50em;height:1.08em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign">假设我们用欧几里德距离作为能量函数；如果<img class="fm-editor-equation" src="img/019f1ca5-fc1c-4a4f-b0ca-88accc6eabcc.png" style="width:1.17em;height:0.83em;"/>和<img class="fm-editor-equation" src="img/64a84803-b209-4c29-968a-40722def7dab.png" style="width:1.08em;height:0.83em;"/>相似，那么<img class="fm-editor-equation" src="img/b4dda082-9107-4f03-80b7-2477fe7d2500.png" style="width:0.92em;height:1.08em;"/>的值将会很低。如果输入值不同，<img class="fm-editor-equation" src="img/b4dda082-9107-4f03-80b7-2477fe7d2500.png" style="width:0.83em;height:1.00em;"/>的值会很大。</p>
+
+<p class="CDPAlignLeft CDPAlign">假设你有两个句子，句子1和句子2。我们把第一句话送给电视台<img class="fm-editor-equation" src="img/d473d10d-c2d9-4418-aade-1cf3e4a9f88e.png" style="width:1.00em;height:1.25em;"/>，第二句话送给电视台<img class="fm-editor-equation" src="img/9861dfc9-0ae1-4404-b665-77f3142dbb69.png" style="width:0.83em;height:0.92em;"/>。假设我们的网络<img class="fm-editor-equation" src="img/a1bc9ed3-da8e-433e-863d-cc78eafdb98b.png" style="width:0.75em;height:0.92em;"/>和网络<img class="fm-editor-equation" src="img/6e4329a8-431d-4a05-b1e6-5b54b056f4e3.png" style="width:0.75em;height:0.83em;"/>都是<strong>长短期记忆</strong> ( <strong> LSTM </strong>)网络，它们共享相同的权重。因此，网络<img class="fm-editor-equation" src="img/9f2f26fc-4e1a-4708-ba2a-045709cd84da.png" style="width:0.83em;height:1.08em;"/>和网络<img class="fm-editor-equation" src="img/af618eac-a43c-43f6-9d9a-e282ccd75ee8.png" style="width:0.75em;height:0.92em;"/>将分别为句子1和句子2生成嵌入。</p>
+
+<p>然后，我们将这些嵌入馈送到能量函数，该能量函数给我们两个句子之间的相似度分数。但是我们如何训练我们的暹罗网络呢？数据应该如何？有什么特点和标签？我们的目标函数是什么？</p>
+
+<p>暹罗网络的输入应成对出现，<img class="fm-editor-equation" src="img/95ed580d-79e1-4be1-89ea-d5f1e297aaff.png" style="width:3.08em;height:0.92em;"/>，以及它们的二进制标签，<img class="fm-editor-equation" src="img/55b589b4-d02c-435f-9325-5599a12cb16d.png" style="width:5.00em;height:1.33em;"/>，说明输入对是真对(相同)还是假对(不同)。正如您在下表中看到的，我们有成对的句子，标签暗示句子对是真实的(1)还是冒名顶替的(0):</p>
+
+<p class="mce-root"><img src="img/99490a38-0e57-4305-a8e0-d9f2a1439581.png" style="width:26.25em;height:18.42em;"/></p>
+
+<p>那么，我们的暹罗网络的损失函数是什么呢？</p>
+
+<p class="CDPAlignCenter CDPAlign">由于暹罗网络的目标不是执行分类任务，而是理解两个输入值之间的相似性，因此我们使用对比损失函数。它可以表示如下:</p>
+
+<p><img class="fm-editor-equation" src="img/4feefc7f-35a0-48a2-9be7-ca2afa4d4568.png" style="width:22.50em;height:1.17em;"/></p>
+
+<p>在前面的等式中，<img class="fm-editor-equation" src="img/b9498bd7-3711-489f-b50f-79c68bb299d5.png" style="width:0.75em;height:0.83em;"/>的值是真正的标签，如果两个输入值相似，它将是1，如果两个输入值不相似，它将是0，并且<img class="fm-editor-equation" src="img/3c536afe-2aa2-4305-ba0f-8c9bc7667612.png" style="width:0.75em;height:0.83em;"/>是我们的能量函数，它可以是任何距离度量。术语<strong>余量</strong>用于保持约束，即当两个输入值不相似时，如果它们的距离大于余量，那么它们不会招致损失。</p>
+
+<p class="CDPAlignCenter CDPAlign">原型网络</p>
+
+<p>原型网络是另一种简单、有效和流行的学习算法。像暹罗网络一样，它们试图学习度量空间来执行分类。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Prototypical networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">Prototypical networks</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>Prototypical networks are yet another simple, efficient, and popular learning algorithm. Like siamese networks, they try to learn the metric space to perform classification.</p>
+
+<p class="mce-root">原型网络的基本思想是创建每个类的原型表示，并基于类原型和查询点之间的距离对查询点(新点)进行分类。</p>
+
+<p class="mce-root">假设我们有一个包含狮子、大象和狗的图像的支持集，如下图所示:</p>
+
+<p><img src="img/a44e2b6a-2aaf-491f-82d4-d5c39b8cae7e.png" style="width:13.92em;height:39.42em;"/></p>
+
+<p class="mce-root">我们有三个班级(狮子、大象和狗)。现在我们需要为这三个类分别创建一个原型表示。如何才能构建这三个类的原型？首先，我们将使用一些嵌入函数来学习每个数据点的嵌入。嵌入函数<img class="fm-editor-equation" src="img/5345c9dc-00e0-49f3-9e70-189f55e5f7b0.png" style="width:2.00em;height:1.33em;"/>可以是能够用于提取特征的任何函数。由于我们的输入是图像，我们可以使用卷积网络作为我们的嵌入函数，它将从输入图像中提取特征，如下所示:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/cfab0e2b-76b0-4aa9-ac1d-96f005d59402.png" style="width:25.42em;height:33.92em;"/></p>
+
+<p>一旦我们了解了每个数据点的嵌入，我们就可以获得每个类中数据点的平均嵌入，并形成类原型，如下所示。因此，类原型基本上是类中数据点的平均嵌入:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/e8abebe0-665b-4307-b3cf-c2c9d17dd17d.png" style="width:42.67em;height:33.92em;"/></p>
+
+<p>类似地，当一个新的数据点进来时，也就是我们想要预测其标签的查询点，我们将使用我们用来创建类原型的相同嵌入函数来为这个新数据点生成嵌入:也就是说，我们使用卷积网络为我们的查询点生成嵌入:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/8db1780e-51b0-4d69-a173-be149de5370a.png" style="width:22.67em;height:7.00em;"/></p>
+
+<p>一旦我们有了查询点的嵌入，我们就比较类原型和查询点嵌入之间的距离，以找到查询点属于哪个类。我们可以使用欧几里德距离作为一种距离度量来寻找类原型和查询点嵌入之间的距离，如下所示:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/ea975337-7c70-454f-bd48-70a4f612fac4.png" style="width:25.50em;height:22.67em;"/></p>
+
+<p>在找到类原型和查询点嵌入之间的距离后，我们将softmax应用于这个距离并获得概率。因为我们有三个类，即狮子、大象和狗，所以我们将得到三个概率。具有高概率的类将是我们的查询点的类。</p>
+
+<p class="CDPAlignCenter CDPAlign">因为我们希望我们的网络只从几个数据点学习，也就是说，因为我们希望执行少量学习，所以我们以同样的方式训练我们的网络。我们使用<strong>情景训练</strong>；对于每一集，我们从数据集中的每个类中随机抽取一些数据点，我们称之为支持集，我们只使用支持集而不是整个数据集来训练网络。类似地，我们从数据集中随机抽取一个点作为查询点，并尝试预测其类别。这样，我们的网络就学会了如何从数据点中学习。</p>
+
+<p>原型网络的整体流程如下图所示。如您所见，首先，我们将为支持集中的所有数据点生成嵌入，并通过获取类中数据点的平均嵌入来构建类原型。我们还为我们的查询点生成嵌入。然后我们计算类原型和查询点嵌入之间的距离。我们使用欧几里得距离作为距离度量。然后我们将softmax应用到这个距离上，得到概率。</p>
+
+<p class="mce-root">如下图所示，由于我们的查询点是一只狮子，因此狮子的概率最高，为0.9:</p>
+
+<p class="mce-root"><img src="img/88bd003b-102f-4f92-974e-2ef36f599819.png" style="width:30.75em;height:41.50em;"/></p>
+
+<p class="mce-root">原型网络不仅用于单次/少次学习，也用于零次学习。考虑这样一种情况，我们没有每个类的数据点，但是我们有包含每个类的高级描述的元信息。</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/88bd003b-102f-4f92-974e-2ef36f599819.png" style="width:30.75em;height:41.50em;"/></p>
+
+<p>Prototypical networks are not only used for one-shot/few-shot learning, but are also used in zero-shot learning. Consider a case where we have no data points for each class but we have the meta-information containing a high-level description of each class.</p>
+
+<p class="mce-root">在这些情况下，我们学习每个类的元信息的嵌入以形成类原型，然后用类原型执行分类。</p>
+
+<p class="mce-root">关系网络</p>
+
+<p>关系网络由两个重要的功能组成:嵌入功能，用<img class="fm-editor-equation" src="img/e427d14c-2308-4c66-8ecc-9666f64c75cc.png" style="width:1.67em;height:1.75em;"/>表示，以及关系功能，用<img class="fm-editor-equation" src="img/c290ae58-090f-4a8e-b18a-7ac65be6776a.png" style="width:1.58em;height:1.33em;"/>表示。嵌入函数用于从输入中提取特征。如果我们的输入是图像，那么我们可以使用卷积网络作为我们的嵌入函数，这将给出图像的特征向量/嵌入。如果我们的输入是文本，那么我们可以使用LSTM网络来获得文本的嵌入。比方说，我们有一个包含三个类的支持集，{狮子，大象，狗}，如下所示:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Relation networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title"><img src="img/319b659d-b9dd-4d2e-a83a-f28726d45f6b.png" style="width:20.08em;height:20.33em;"/></h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>假设我们有一个查询图像<img class="fm-editor-equation" src="img/7abb45ef-26fe-462f-b7eb-e095ea763f9c.png" style="width:1.50em;height:1.33em;"/>，如下图所示，我们想要预测这个查询图像的类别:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/b34f9f63-5729-4203-a409-32051ab93fa3.png" style="width:11.50em;height:8.92em;"/></p>
+
+<p>首先，我们从支持集中取出每幅图像<img class="fm-editor-equation" src="img/e840f44c-6502-4cfb-aa78-1b27b42472b9.png" style="width:1.25em;height:1.00em;"/>，并将其传递给嵌入函数<img class="fm-editor-equation" src="img/5d2fbbe4-47c9-4941-b668-703c75ab2f90.png" style="width:2.92em;height:1.25em;"/>以提取特征。由于我们的支持集有图像，我们可以使用卷积网络作为我们的嵌入函数来学习嵌入。嵌入函数将给出支持集中每个数据点的特征向量。类似地，我们将通过将查询图像<img class="fm-editor-equation" src="img/0180e52f-4fcc-4ce5-8b1d-fcefecc78f61.png" style="width:1.25em;height:1.08em;"/>传递给嵌入函数<img class="fm-editor-equation" src="img/22e9a6f8-6081-4e64-af6f-2c16a31bb5bc.png" style="width:2.75em;height:1.17em;"/>来学习它的嵌入。</p>
+
+<p class="CDPAlignCenter CDPAlign">一旦我们有了支持集<img class="fm-editor-equation" src="img/327568ce-89fd-4121-99ee-6fe6b2d73d76.png" style="width:3.08em;height:1.33em;"/>和查询集<img class="fm-editor-equation" src="img/255c007b-bc4b-4adf-9005-39e9c8b836b5.png" style="width:2.75em;height:1.17em;"/>的特征向量，我们就使用某种操作符<img class="fm-editor-equation" src="img/355f516e-7436-4050-b37a-c7d8e349df7c.png" style="width:0.75em;height:0.92em;"/>将它们组合起来。这里，<img class="fm-editor-equation" src="img/794e0b65-28bc-49ad-a9b7-4dcd9f8992b4.png" style="width:0.75em;height:0.92em;"/>可以是任意组合运算符。我们使用串联作为运算符来组合支持和查询集的特征向量:</p>
+
+<p><img class="fm-editor-equation" src="img/6084602c-eed1-4dd6-9b6c-543b0f494679.png" style="width:7.92em;height:1.25em;"/></p>
+
+<p class="mce-root">如下图所示，我们将组合支持集<img class="fm-editor-equation" src="img/215d02a3-99bf-4967-a169-a3ae455f1bc5.png" style="width:2.92em;height:1.25em;"/>和查询集<img class="fm-editor-equation" src="img/d0a4b420-75dd-4d5a-97be-6344a359a5c9.png" style="width:2.92em;height:1.25em;"/>的特征向量。但是这样结合有什么用呢？那么，它将帮助我们理解支持集中图像的特征向量是如何与查询图像的特征向量相关联的。</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign">在我们的例子中，它将帮助我们理解狮子的特征向量如何与查询图像的特征向量相关，大象的特征向量如何与查询图像的特征向量相关，以及狗的特征向量如何与查询图像的特征向量相关:</p>
+
+<p class="mce-root"><img src="img/763d3d50-8c77-42e0-8de9-2687b67962b2.png" style="width:29.58em;height:17.75em;"/></p>
+
+<p class="mce-root">但是我们如何衡量这种相关性呢？这就是我们使用关系函数<img class="fm-editor-equation" src="img/1e678152-02f9-4375-90a2-93ec5c438844.png" style="width:1.58em;height:1.33em;"/>的原因。我们将这些组合的特征向量传递给关系函数，该函数将生成范围从0到1的关系得分，表示支持集<img class="fm-editor-equation" src="img/6eeaa3e6-88e7-4569-a8a8-2f2c319a0982.png" style="width:0.92em;height:0.75em;"/>中的样本和查询集<img class="fm-editor-equation" src="img/a29860ce-c399-457e-8e77-a84ef7da2b68.png" style="width:1.08em;height:0.92em;"/>中的样本之间的相似性。</p>
+
+<p class="CDPAlignCenter CDPAlign">下面的等式显示了我们如何计算关系网络中的关系分数<img class="fm-editor-equation" src="img/b8037d2f-42cd-4d2f-9f9e-ca58ab4b8702.png" style="width:1.08em;height:0.83em;"/>:</p>
+
+<p><img class="fm-editor-equation" src="img/3eb7811a-bc8e-4edf-a2ae-93a358281be6.png" style="width:12.33em;height:1.25em;"/></p>
+
+<p class="mce-root">这里，<img class="fm-editor-equation" src="img/f08b57bb-b307-4404-b888-1ae0cc33a679.png" style="width:1.17em;height:0.92em;"/>表示表示支持集合中的每个类别与查询图像之间的相似度的关系分数。因为我们在支持集合中有三个类，在查询集合中有一个图像，所以我们将有三个分数来指示支持集合中的所有三个类与查询图像是如何相似的。</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign">下图显示了一次性学习设置中关系网络的整体表示:</p>
+
+<p class="mce-root"><img src="img/476c6b34-8305-41a1-ae56-aeaf9c4cbdca.png" style="width:53.75em;height:28.75em;"/></p>
+
+<p class="mce-root">匹配网络</p>
+
+<p class="CDPAlignCenter CDPAlign">匹配网络是谷歌DeepMind发布的另一种简单有效的一次性学习算法。它甚至可以为数据集中未观察到的类生成标签。假设我们有一个支持集<img class="fm-editor-equation" src="img/3972487a-e95f-438b-8df3-2a9ea7483d47.png" style="width:0.58em;height:0.75em;"/>，包含<img class="fm-editor-equation" src="img/7743d648-4b0e-4d96-8cde-e98e6790428c.png" style="width:0.75em;height:0.67em;"/>个例子作为<img class="fm-editor-equation" src="img/a916403a-fec3-4114-9523-2d6a8a2dacb8.png" style="width:11.75em;height:1.17em;"/>。当给定一个查询点(新的未见过的例子)，<img class="fm-editor-equation" src="img/877e3333-4958-4163-8504-2536ca1cb638.png" style="width:0.67em;height:1.00em;"/>，匹配网络通过将其与支持集进行比较来预测<img class="fm-editor-equation" src="img/419cb580-0426-4c86-9553-1e0497079f52.png" style="width:0.83em;height:1.25em;"/>的类别。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Matching networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">我们可以将此定义为<img class="fm-editor-equation" src="img/4a143914-5a02-4c57-b9fa-3ed8b9625ab7.png" style="width:3.67em;height:1.08em;"/>，其中<img class="fm-editor-equation" src="img/78643764-3c92-4f94-b70f-dd465c6b31a5.png" style="width:0.58em;height:0.83em;"/>为参数化神经网络，<img class="fm-editor-equation" src="img/800e6e5b-3b27-4563-8496-5ba473035b4c.png" style="width:0.67em;height:1.33em;"/>为查询点<img class="fm-editor-equation" src="img/419cb580-0426-4c86-9553-1e0497079f52.png" style="width:0.92em;height:1.33em;"/>的预测类，<img class="fm-editor-equation" src="img/3972487a-e95f-438b-8df3-2a9ea7483d47.png" style="width:0.58em;height:0.75em;"/>为支持集。<img class="fm-editor-equation" src="img/dd9dc097-0ccc-4001-bca8-080b21fc7cb3.png" style="width:3.67em;height:1.08em;"/>将返回<img class="fm-editor-equation" src="img/419cb580-0426-4c86-9553-1e0497079f52.png" style="width:0.92em;height:1.33em;"/>属于支持集中每个类的概率。然后我们选择<img class="fm-editor-equation" src="img/419cb580-0426-4c86-9553-1e0497079f52.png" style="width:0.92em;height:1.33em;"/>的类作为具有最高概率的类。但是这到底是怎么回事呢？这个概率是如何计算的？现在让我们看看。查询点<img class="fm-editor-equation" src="img/419cb580-0426-4c86-9553-1e0497079f52.png" style="width:0.92em;height:1.33em;"/>的类别<img class="fm-editor-equation" src="img/800e6e5b-3b27-4563-8496-5ba473035b4c.png" style="width:0.50em;height:1.00em;"/>可以预测如下:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p><img class="fm-editor-equation" src="img/0e560d60-e3fd-4fda-8606-333a046c21a8.png" style="width:8.50em;height:3.50em;"/></p>
+
+<p class="mce-root">让我们来解释这个等式。这里<img class="fm-editor-equation" src="img/42f20a66-29b6-47df-b1bd-1d8f3b3fbac5.png" style="width:1.42em;height:1.17em;"/>和<img class="fm-editor-equation" src="img/93e299a7-1012-43e9-95b8-840fba0bcfe2.png" style="width:0.92em;height:0.83em;"/>是支持集的输入和标签。<img class="fm-editor-equation" src="img/419cb580-0426-4c86-9553-1e0497079f52.png" style="width:0.92em;height:1.33em;"/>是查询输入，也就是我们要预测标签的输入。还有<img class="fm-editor-equation" src="img/ec63616e-db01-4cff-b4cb-285dbfa10120.png" style="width:0.83em;height:0.92em;"/>是<img class="fm-editor-equation" src="img/419cb580-0426-4c86-9553-1e0497079f52.png" style="width:1.00em;height:1.42em;"/>和<img class="fm-editor-equation" src="img/2c66d51e-7fc3-46b7-9615-0a7bfb96d247.png" style="width:1.08em;height:0.92em;"/>之间的注意机制。但是我们如何表现注意力呢？这里，我们使用一个简单的注意机制，它是在<img class="fm-editor-equation" src="img/419cb580-0426-4c86-9553-1e0497079f52.png" style="width:0.92em;height:1.33em;"/>和<img class="fm-editor-equation" src="img/3edef960-050f-46ff-b3e4-5d0706b153ff.png" style="width:1.42em;height:1.17em;"/>之间的余弦距离上的softmax:</p>
+
+<p><img class="fm-editor-equation" src="img/12ae20db-cc46-4cb0-8022-99858213d603.png" style="width:14.67em;height:1.08em;"/></p>
+
+<p class="mce-root CDPAlignCenter CDPAlign">我们不能直接计算原始输入<img class="fm-editor-equation" src="img/419cb580-0426-4c86-9553-1e0497079f52.png" style="width:0.92em;height:1.33em;"/>和<img class="fm-editor-equation" src="img/3edef960-050f-46ff-b3e4-5d0706b153ff.png" style="width:1.42em;height:1.17em;"/>之间的余弦距离。因此，首先，我们将学习它们的嵌入，并计算嵌入之间的余弦距离。我们使用两种不同的嵌入，<img class="fm-editor-equation" src="img/a7796cc4-7eb6-4e44-96f7-78477d99f9a1.png" style="width:0.50em;height:1.00em;"/>和<img class="fm-editor-equation" src="img/a3c5f2d6-ab38-41b4-9155-851a406fb2e9.png" style="width:0.75em;height:1.25em;"/>，分别学习<img class="fm-editor-equation" src="img/419cb580-0426-4c86-9553-1e0497079f52.png" style="width:0.92em;height:1.33em;"/>和<img class="fm-editor-equation" src="img/2c66d51e-7fc3-46b7-9615-0a7bfb96d247.png" style="width:1.42em;height:1.17em;"/>的嵌入。我们将在接下来的章节中学习这两个嵌入函数<img class="fm-editor-equation" src="img/af72d86a-5c95-423b-a453-2b0235951e0a.png" style="width:0.75em;height:1.50em;"/>和<img class="fm-editor-equation" src="img/2d3e10e5-6f17-4b63-8b46-2e8efa44a783.png" style="width:0.67em;height:1.08em;"/>是如何学习嵌入的。因此，我们可以将注意力等式改写如下:</p>
+
+<p><img class="fm-editor-equation" src="img/dfc3af57-80b2-44e3-95a3-819355badafa.png" style="width:21.17em;height:1.42em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign">我们可以将前面的等式改写如下:</p>
+
+<p><img class="fm-editor-equation" src="img/58e2d8ec-2b3d-4d84-8ab4-79d9c1cfc48e.png" style="width:17.08em;height:3.83em;"/></p>
+
+<p class="mce-root CDPAlignCenter CDPAlign">在计算了注意力矩阵<img class="fm-editor-equation" src="img/ec836138-3d93-430b-98bd-68553f00583a.png" style="width:4.08em;height:1.42em;"/>之后，我们将注意力矩阵乘以支持集标签<img class="fm-editor-equation" src="img/5b35cf4f-0010-4965-9e7a-094e96381d55.png" style="width:1.33em;height:1.25em;"/>。但是，我们如何将支持集标签与我们的注意力矩阵相乘呢？首先，我们将我们的支持集标签转换为一个热编码值，然后将它们乘以我们的关注矩阵，结果，我们得到了我们的查询点<img class="fm-editor-equation" src="img/419cb580-0426-4c86-9553-1e0497079f52.png" style="width:0.92em;height:1.33em;"/>属于支持集中每个类的概率。然后我们应用<em> argmax </em>并选择<img class="fm-editor-equation" src="img/1b274c84-887d-4f18-9afb-8a0b2d476517.png" style="width:0.75em;height:1.50em;"/>作为具有最大概率值的一个。</p>
+
+<p class="mce-root">We can rewrite the preceding equation as follows:</p>
+
+<p class="CDPAlignCenter CDPAlign">还不清楚匹配网络？看下图；你可以看到我们的支持集中有三个类(狮子、大象和狗)，我们有一个新的查询图像<img class="fm-editor-equation" src="img/419cb580-0426-4c86-9553-1e0497079f52.png" style="width:0.92em;height:1.33em;"/>。</p>
+
+<p>首先，我们将支持集提供给嵌入函数<img class="fm-editor-equation" src="img/51ffa424-d10a-4d4e-8b51-a05216f68d7c.png" style="width:0.67em;height:1.08em;"/>并将查询图像提供给嵌入函数<img class="fm-editor-equation" src="img/e354a211-1d1d-4776-b33e-43a9fb66a11b.png" style="width:0.67em;height:1.33em;"/>，学习它们的嵌入并计算它们之间的余弦距离，然后我们在这个余弦距离上应用softmax注意力。然后，我们将注意力矩阵乘以独热编码的支持集标签，并获得概率。接下来，我们选择<img class="fm-editor-equation" src="img/1b274c84-887d-4f18-9afb-8a0b2d476517.png" style="width:0.67em;height:1.33em;"/>作为概率最高的一个。如下图所示，查询集图像是一只大象，我们在索引1处的概率很高，因此我们将<img class="fm-editor-equation" src="img/1b274c84-887d-4f18-9afb-8a0b2d476517.png" style="width:0.83em;height:1.67em;"/>的类预测为1(大象):</p>
+
+<p class="mce-root"><img src="img/3bd1eedc-c537-4218-ae99-4b411f7ce247.png" style="width:50.83em;height:38.50em;"/></p>
+
+<p>我们已经知道，我们使用两个嵌入函数<img class="fm-editor-equation" src="img/af72d86a-5c95-423b-a453-2b0235951e0a.png" style="width:0.67em;height:1.33em;"/>和<img class="fm-editor-equation" src="img/2d3e10e5-6f17-4b63-8b46-2e8efa44a783.png" style="width:0.67em;height:1.08em;"/>，分别用于学习<img class="fm-editor-equation" src="img/419cb580-0426-4c86-9553-1e0497079f52.png" style="width:0.67em;height:1.00em;"/>和<img class="fm-editor-equation" src="img/3edef960-050f-46ff-b3e4-5d0706b153ff.png" style="width:1.25em;height:1.00em;"/>的嵌入。现在我们将看到这两个函数是如何学习嵌入的。</p>
+
+<p>支持集合嵌入函数</p>
+
+<p class="CDPAlignCenter CDPAlign">我们使用嵌入函数<img class="fm-editor-equation" src="img/cc3dbde5-1474-48ec-82c4-a18fda5ae058.png" style="width:0.75em;height:1.25em;"/>来学习支持集的嵌入。我们使用双向LSTM作为我们的嵌入函数<img class="fm-editor-equation" src="img/cc3dbde5-1474-48ec-82c4-a18fda5ae058.png" style="width:0.75em;height:1.25em;"/>。我们可以如下定义我们的嵌入函数<img class="fm-editor-equation" src="img/cc3dbde5-1474-48ec-82c4-a18fda5ae058.png" style="width:0.75em;height:1.25em;"/>:</p>
+
+<p>查询集嵌入函数</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Support set embedding function</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">我们使用嵌入函数<img class="fm-editor-equation" src="img/8d4d5a84-14c0-4b6d-bc9f-eb0d49e3e80d.png" style="width:0.83em;height:1.67em;"/>来学习查询点<img class="fm-editor-equation" src="img/0b5d811d-c997-4209-83cc-48eafacacc5f.png" style="width:0.92em;height:1.33em;"/>的嵌入。我们使用LSTM作为我们的编码函数。除了将<img class="fm-editor-equation" src="img/0b5d811d-c997-4209-83cc-48eafacacc5f.png" style="width:0.92em;height:1.33em;"/>作为输入，我们还将传递我们的支持集嵌入的嵌入，即<em> g(x) </em>，我们还将传递一个名为<em> K </em>的参数，它定义了处理步骤的数量。让我们看看如何一步一步地计算查询集嵌入。首先，我们将初始化我们的LSTM单元:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>然后，对于处理步骤的数量，我们做如下处理:</p>
+
+<pre>    def g(self, x_i):<br/><br/>        forward_cell = rnn.BasicLSTMCell(32)<br/>        backward_cell = rnn.BasicLSTMCell(32)<br/>        outputs, state_forward, state_backward = rnn.static_bidirectional_rnn(forward_cell, backward_cell, x_i, dtype=tf.float32)<br/><br/>        return tf.add(tf.stack(x_i), tf.stack(outputs))</pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Query set embedding function</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">我们通过将查询集<img class="fm-editor-equation" src="img/0b5d811d-c997-4209-83cc-48eafacacc5f.png" style="width:0.92em;height:1.33em;"/>馈送给LSTM单元来计算其嵌入:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在，我们对支持集嵌入执行softmax关注:即<kbd>g_embedings</kbd>。它帮助我们避免不需要的元素:</p>
+
+<pre>cell = rnn.BasicLSTMCell(64)<br/>prev_state = cell.zero_state(self.batch_size, tf.float32) </pre>
+
+<p>我们更新<kbd>previous_state</kbd>并对多个处理步骤重复这些步骤，<kbd>K</kbd>:</p>
+
+<pre>for step in xrange(self.processing_steps):</pre>
+
+<p>计算<kbd>f_embeddings</kbd>的完整代码如下:</p>
+
+<pre>    output, state = cell(XHat, prev_state)<br/>            <br/>    h_k = tf.add(output, XHat)</pre>
+
+<p class="mce-root">匹配网络的结构</p>
+
+<p>匹配网络的整体流程如下图所示，与我们之前看到的图像不同。你可以看到支持集<img class="fm-editor-equation" src="img/8e559ad8-2621-4773-bc81-a1767a7b5a7c.png" style="width:1.42em;height:1.17em;"/>和查询集<img class="fm-editor-equation" src="img/b5c528a1-c1e1-4e80-ab81-9ab50e7076c8.png" style="width:0.92em;height:1.33em;"/>是如何分别通过嵌入函数<img class="fm-editor-equation" src="img/cb68a610-6d09-4529-a1de-985a5abb612e.png" style="width:0.75em;height:1.25em;"/>和<img class="fm-editor-equation" src="img/7017a935-4dcd-40d7-a4bc-d8162fcefe1f.png" style="width:0.83em;height:1.67em;"/>计算出来的。</p>
+
+<pre>    content_based_attention = tf.nn.softmax(tf.multiply(prev_state[1], g_embedding)) <br/>    r_k = tf.reduce_sum(tf.multiply(content_based_attention, g_embedding), axis=0) </pre>
+
+<p>如您所见，嵌入函数<img class="fm-editor-equation" src="img/fc7229de-25ee-464e-b14f-fc645b767ee3.png" style="width:0.83em;height:1.67em;"/>将查询集和支持集嵌入作为输入:</p>
+
+<pre>prev_state = rnn.LSTMStateTuple(state[0], tf.add(h_k, r_k))</pre>
+
+<p><img src="img/2de06008-7882-4735-91d6-3beacb5eca89.png" style="width:50.33em;height:30.83em;"/></p>
+
+<pre>    def f(self, XHat, g_embedding):<br/>        cell = rnn.BasicLSTMCell(64)<br/>        prev_state = cell.zero_state(self.batch_size, tf.float32) <br/><br/>        for step in xrange(self.processing_steps):<br/>            output, state = cell(XHat, prev_state)<br/>            <br/>            h_k = tf.add(output, XHat) <br/><br/>            content_based_attention = tf.nn.softmax(tf.multiply(prev_state[1], g_embedding)) <br/>            <br/>            r_k = tf.reduce_sum(tf.multiply(content_based_attention, g_embedding), axis=0) <br/><br/>            prev_state = rnn.LSTMStateTuple(state[0], tf.add(h_k, r_k))<br/><br/>        return output</pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>The architecture of matching networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">再次祝贺你学习了所有重要和流行的深度学习算法！深度学习是一个有趣且非常受欢迎的人工智能领域，它彻底改变了世界。现在你已经读完了这本书，你可以开始探索深度学习的各种进步，并开始尝试各种项目。学习，深度学习！</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>摘要</p>
+
+<p>我们从理解什么是k-shot学习开始这一章。我们了解到，在n向k-shot学习中，n向意味着我们的数据集中的类的数量，k-shot意味着我们在每个类中的数据点的数量；支持集和查询集相当于训练集和测试集。然后我们探索了暹罗网络。我们学习了连体网络如何使用相同的网络来学习两个输入的相似性。</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/2de06008-7882-4735-91d6-3beacb5eca89.png" style="width:50.33em;height:30.83em;"/></p>
+
+<p>Congratulations again for learning all of the important and popular deep learning algorithms! Deep learning is an interesting and very popular field of AI that has revolutionized the world. Now that you've finished reading the book, you can start exploring various advancements in deep learning and start experimenting with various projects. Learn and deep learn!</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">接下来，我们学习了原型网络，它创建每个类的原型表示，并根据类原型和查询点之间的距离对查询点(新点)进行分类。我们还学习了关系网络如何使用两种不同的函数嵌入和关系函数来对图像进行分类。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本章的最后，我们学习了匹配网络，以及它如何对支持集和查询集使用不同的嵌入函数来对图像进行分类。</p>
+
+<p class="mce-root">深度学习是人工智能领域最有趣的分支之一。现在你已经了解了各种深度学习算法，你可以开始建立深度学习模型，创建有趣的应用程序，也可以为深度学习研究做出贡献。</p>
+
+<p class="mce-root">问题</p>
+
+<p>让我们通过回答以下问题来评估从本章学到的知识:</p>
+
+<p>什么是少投学习？</p>
+
+<p>什么是支持集和查询集？</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Questions</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">定义连体网络。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>定义能量函数。</p>
+
+<ol>
+
+<li>暹罗网络的损失函数是什么？</li>
+
+<li>原型网络是如何工作的？</li>
+
+<li>关系网络中使用的不同类型的函数是什么？</li>
+
+<li>进一步阅读</li>
+
+<li>要了解如何从少量数据点中学习的更多信息，请查看Sudharsan Ravichandiran所著的<em>使用Python进行实践元学习</em>，该书由Packt publishing出版，可在<a href="https://www.packtpub.com/big-data-and-business-intelligence/hands-meta-learning-python">https://www . packtpub . com/big-data-and-business-intelligence/Hands-Meta-Learning-Python</a>获得。</li>
+
+<li>How does the prototypical network work?</li>
+
+<li>What are the different types of functions used in relation networks?</li>
+
+</ol>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Further reading</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">Further reading</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>To learn more about how to learn from a small number of data points, check out <em>Hands-On Meta Learning with Python</em> by Sudharsan Ravichandiran, published by Packt publishing available at, <a href="https://www.packtpub.com/big-data-and-business-intelligence/hands-meta-learning-python">https://www.packtpub.com/big-data-and-business-intelligence/hands-meta-learning-python</a>.</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

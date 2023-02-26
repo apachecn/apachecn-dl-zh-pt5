@@ -1,0 +1,1535 @@
+<html><head/><body>
+
+
+
+
+
+
+
+
+
+<title>Chapter 3: System Design and Engineering Challenges</title>
+
+
+
+
+
+
+
+<div><div><h1 class="chapter-number" id="_idParaDest-40"><a id="_idTextAnchor044"/> 3</h1>
+
+<h1 id="_idParaDest-41"><a id="_idTextAnchor045"/>系统设计和工程挑战</h1>
+
+<p>理解<strong class="bold">机器学习</strong> ( <strong class="bold"> ML </strong>)和深度学习概念是必不可少的，但如果你想建立一个由<strong class="bold">人工智能</strong> ( <strong class="bold"> AI </strong>)和深度学习支持的有效搜索解决方案，你还需要生产工程能力。有效地部署ML模型需要在技术领域更常见的能力，如软件工程和开发运维。这些能力称为<strong class="bold"> MLOps </strong>。对于需要高可用性和低等待时间的搜索系统来说尤其如此。</p>
+
+<p>在这一章中，你将学习设计搜索系统的基础知识。您将了解核心概念，如<strong class="bold">索引</strong>和<strong class="bold">查询</strong>以及如何使用它们来保存和检索信息。</p>
+
+<p>在本章中，我们将特别介绍以下主要话题:</p>
+
+<ul>
+
+<li>索引和查询</li>
+
+<li>评估神经搜索系统</li>
+
+<li>构建神经搜索系统的工程挑战</li>
+
+</ul>
+
+<p>在本章结束时，你将会完全理解将神经搜索投入生产时的能力和可能要克服的困难。您将能够评估什么时候使用神经搜索是有用的，以及哪种方法最适合您自己的搜索系统。</p>
+
+<h1 id="_idParaDest-42"><a id="_idTextAnchor046"/>技术要求</h1>
+
+<p>本章有以下技术要求:</p>
+
+<ul>
+
+<li>最低内存为4 GB的笔记本电脑；建议8 GB。</li>
+
+<li>在类似Unix的操作系统(如macOS或Ubuntu)上安装了Python，版本为3.7、3.8或3.9。</li>
+
+</ul>
+
+<p>本章的代码文件可以在<a href="https://github.com/PacktPublishing/Neural-Search-From-Prototype-to-Production-with-Jina">https://github . com/packt publishing/Neural-Search-From-Prototype-to-Production-with纪娜</a>获得。<a href="https://github.com/PacktPublishing/Neural-Search-From-Prototype-to-Production-with-Jina%0D"/></p>
+
+<h1 id="_idParaDest-43"><a id="_idTextAnchor047"/>引入索引和查询</h1>
+
+<p>在本节中，您将完成两个重要的高级任务来构建一个搜索系统:</p>
+
+<ul>
+
+<li><strong class="bold">索引</strong>:这是<a id="_idIndexMarker186"/>收集、解析和存储数据以促进快速准确的信息检索的过程。这包括添加、更新、删除和读取要索引的文档。</li>
+
+<li><strong class="bold">查询</strong>:查询<a id="_idIndexMarker187"/>是对用户查询进行解析、匹配、排序，并将相关信息返回给用户的过程。</li>
+
+</ul>
+
+<p>在神经搜索系统中，索引和查询都由一系列任务组成。让我们深入了解一下索引和查询组件。</p>
+
+<h2 id="_idParaDest-44"><a id="_idTextAnchor048"/>索引</h2>
+
+<p>索引是搜索系统中一个<a id="_idIndexMarker188"/>重要的过程。它构成了核心功能，因为它有助于有效地检索信息。索引把文件归纳成其中包含的有用信息。它将术语映射到包含信息的各个文档。在搜索系统中查找相关文档的过程与查看字典的过程基本相同，在字典中，索引可以帮助您有效地查找单词。</p>
+
+<p>在介绍细节之前，我们先问以下问题，以了解我们所处的位置:</p>
+
+<ul>
+
+<li>索引管道的主要组成部分是什么？</li>
+
+<li>哪些内容可以被索引？</li>
+
+<li>我们如何进行增量索引，如何快速索引？</li>
+
+</ul>
+
+<p>如果你不知道这些问题的答案，不要担心。继续读吧！</p>
+
+<p>在索引管道中，我们通常有三个主要组件:</p>
+
+<ul>
+
+<li><code>text/plain</code>，我们可能需要一个分词器和词干分析器，正如在<a href="B17488_01.xhtml#_idTextAnchor014"> <em class="italic">第一章</em> </a>，<em class="italic">神经搜索的神经网络</em>中所介绍的。如果我们想要索引模态<code>image/jpeg</code>的图像，我们可能想要一个组件来调整输入图像的大小或将输入图像转换成神经网络的预期格式。它高度依赖于你的任务和输入数据。</li>
+
+<li><strong class="bold">编码器</strong>:在<a id="_idIndexMarker191"/>神经搜索系统中，编码器等同于神经<a id="_idIndexMarker192"/>网络。这个神经网络将你的预处理输入作为一个向量表示(嵌入)。在这一步之后，每个由文本、图像、视频甚至DNA信息组成的原始文档都应该表示为一个数值向量。</li>
+
+<li><strong class="bold">索引器(用于存储)</strong>:一个<a id="_idIndexMarker193"/>索引器，更好地称为<strong class="bold">存储索引器</strong>，在<a id="_idIndexMarker194"/>索引阶段将<a id="_idIndexMarker195"/>编码器产生的矢量存储到存储器中，如内存或数据库。这包括关系数据库(PostgresSQL)、NoSQL (MongoDB)，或者更好的矢量数据库，比如Elasticsearch。</li>
+
+</ul>
+
+<p>应该注意的是<a id="_idIndexMarker196"/>每个步进任务都是独立的。从不同的角度来看可能会有所不同。例如，如果您正在一个电子商务环境中开发一个多模型搜索引擎，那么您的目标是创建一个可以将文本和图像作为查询并找到最相关产品的搜索系统。在这种情况下，您的索引可能有两种途径:</p>
+
+<ul>
+
+<li>应该使用基于文本的预处理程序和编码器对文本信息进行预处理和编码。</li>
+
+<li>同样，应该使用基于图像的预处理器和编码器对图像数据进行预处理和编码。</li>
+
+</ul>
+
+<p>您可能想知道什么可以被索引。什么都可以，只要你有编码器，你的数据可以被编码。可以索引的一些常见数据类型包括文本、图像、视频和音频。正如我们在前面章节中所讨论的，你可以编码源代码来建立一个源代码搜索系统，或者编码基因信息来建立一个围绕它的搜索系统。下图说明了一个<a id="_idIndexMarker197"/>索引管道:</p>
+
+<div><div><img alt="Figure 3.1 – A simple indexing pipeline takes documents as input and applies preprocessing and encoding. In the end, save the encoded features into storage&#10;&#10;" height="196" src="img/Figure_3.1_B17488.jpg" width="1545"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.1–一个简单的索引管道将文档作为输入，并应用预处理和编码。最后，将编码后的特征保存到存储器中</p>
+
+<p>现在，我们转到一个重要的话题:增量索引。首先，让我们讨论什么是增量索引。</p>
+
+<h3>了解增量索引</h3>
+
+<p><strong class="bold">增量索引</strong>对于任何搜索系统来说都是一个<a id="_idIndexMarker198"/>至关重要的特性。考虑到我们要索引的数据集合每天都可能发生巨大的变化，我们无法承受每次有小的变化时就索引整个数据集合。</p>
+
+<p>通常，有两种执行索引任务的常见做法，如下所示:</p>
+
+<ul>
+
+<li><strong class="bold">实时索引</strong>:给定<a id="_idIndexMarker199"/>发送到集合的任何数据，<a id="_idIndexMarker200"/>索引器立即将文档添加到索引中。</li>
+
+<li><strong class="bold">计划索引</strong>:假设<a id="_idIndexMarker201"/>任何数据被发送到<a id="_idIndexMarker202"/>集合，调度器触发索引任务并执行索引作业。</li>
+
+</ul>
+
+<p>前面的做法各有利弊。在实时索引中，用户可以立即获得新添加的文档(如果匹配的话)，同时也会消耗更多的系统资源，并可能导致数据不一致。然而，在计划索引的情况下，用户不能实时访问新添加的结果，但是它不容易出错并且更容易管理。</p>
+
+<p>您选择的索引策略取决于您的任务。如果任务是时间敏感的，最好使用<a id="_idIndexMarker203"/>实时索引。否则，最好设置一个cron作业，并在某个时间增量索引您的数据。</p>
+
+<h3>加速索引</h3>
+
+<p>在神经搜索中执行索引任务时，另一个关键的<a id="_idIndexMarker204"/>问题是索引的速度。虽然符号搜索系统仅在文本数据上工作，但是神经搜索系统的输入可以是三维的(<em class="italic">高度*宽度*颜色通道</em>)，例如RGB图像，或者四维的(<em class="italic">帧*高度*宽度*颜色通道</em>)，例如视频。这种数据可以用不同的模态进行索引，这会大大降低数据预处理和编码过程的速度。</p>
+
+<p>一般来说，有几种策略可以用来提高索引速度。其中一些如下:</p>
+
+<ul>
+
+<li>预处理器:对某些数据集应用某些预处理可以大大提高你的索引速度。例如，如果您想要索引高分辨率图像，最好调整它们的大小，使它们变小。</li>
+
+<li><strong class="bold"> GPU推断</strong>:在一个神经搜索系统中，编码占用了大部分索引时间。更具体地说，给定预处理的文档，使用深度神经网络将文档编码成向量需要时间。通过使用GPU实例进行编码，可以极大地提高性能。由于GPU有更高带宽的内存和L1缓存，GPU适合ML任务。</li>
+
+<li><strong class="bold">水平伸缩</strong>:在一台机器上索引大量数据会使过程变慢，但是如果我们将数据分布在多台机器上并并行执行索引，速度会快得多。例如，下图演示了如何将更多编码器分配给管道:</li>
+
+</ul>
+
+<div><div><img alt="Figure 3.2 – Indexing at speed with three encoders utilizing GPU inference in parallel&#10;&#10;" height="496" src="img/Figure_3.2_B17488.jpg" width="1536"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.2–三个编码器并行利用GPU推理进行高速索引</p>
+
+<p>值得一提的是，如果您来自文本检索背景，那么在为符号搜索构建倒排索引时，<strong class="bold">索引压缩</strong>也很重要。这在神经搜索系统中不再完全相同:</p>
+
+<ul>
+
+<li>首先，编码器将文档作为输入，并将文档的内容编码成一个N维向量(嵌入)。因此，我们可以认为编码器本身是一种压缩功能。</li>
+
+<li>第二，压缩密集矢量最终会牺牲矢量的质量。通常，更大维度的向量会带来更好的搜索结果，因为它们可以更好地表示被编码的文档。</li>
+
+</ul>
+
+<p>在实践中，我们需要在维度和内存使用之间找到一个平衡点，以便将所有向量加载到内存中来执行大规模的相似性搜索。在下一节中，我们将深入到查询部分，这将使您理解如何进行大规模的相似性搜索。</p>
+
+<h2 id="_idParaDest-45"><a id="_idTextAnchor049"/>查询</h2>
+
+<p>说到查询<a id="_idIndexMarker206"/>管道，它有很多与索引管道重叠的组件，但是有一些修改和附加组件，比如一个ranker。在这个阶段，管道的输入是单个用户查询。典型的查询任务有四个主要组成部分:</p>
+
+<ul>
+
+<li><strong class="bold">预处理器</strong>:该组件类似于索引管道中的预处理器<a id="_idIndexMarker207"/>。它<a id="_idIndexMarker208"/>将查询文档作为输入，并将与索引管道相同的预处理程序应用于输入。</li>
+
+<li><strong class="bold">编码器</strong>:编码器<a id="_idIndexMarker209"/>将预处理后的查询文档作为输入，<a id="_idIndexMarker210"/>产生向量作为输出。应该注意，在跨模态搜索系统中，索引中的编码器可能与查询步骤中的编码器不同。这将在<a href="B17488_07.xhtml#_idTextAnchor101"> <em class="italic">第七章</em> </a>、<em class="italic">探索纪娜</em>的高级用例中解释。</li>
+
+<li><strong class="bold">索引器</strong>:这个索引器，更好的是<a id="_idIndexMarker211"/>，命名为<strong class="bold"> SearchIndexer </strong>，将编码器产生的<a id="_idIndexMarker212"/>矢量<a id="_idIndexMarker213"/>作为输入，对所有索引的文档进行大规模的相似性搜索。这就是所谓的<strong class="bold">近似最近邻</strong> ( <strong class="bold">安</strong>)搜索。我们将<a id="_idIndexMarker214"/>在下一节详细阐述这个概念。</li>
+
+<li><strong class="bold">排序器</strong>:排序器<a id="_idIndexMarker215"/>针对<a id="_idIndexMarker216"/>集合中的每一个项目获取查询向量和相似性分数，以降序产生排序列表，并将结果返回给用户。</li>
+
+</ul>
+
+<p>索引<a id="_idIndexMarker217"/>和查询的一个主要区别是索引(在大多数情况下)是一个离线任务，而查询是一个在线任务。更具体地说，当我们引导一个神经搜索系统并创建一个查询时，系统将返回一个空列表，因为此时没有任何内容被索引。在我们向用户展示搜索系统之前，我们应该预先索引数据集合中的所有文档。该索引是脱机执行的。</p>
+
+<p>另一方面，在查询任务中，用户向系统发送一个查询，并期望立即得到匹配。所有的预处理、编码、索引搜索和排序都应该在等待时间内完成。因此，这是一项在线任务。</p>
+
+<p class="callout-heading">重要说明</p>
+
+<p class="callout">实时索引可以被认为是一项在线任务。</p>
+
+<p>与索引不同，在查询时，每个<a id="_idIndexMarker219"/>用户将单个文档作为查询发送到<a id="_idIndexMarker220"/>系统。预处理和编码需要很短的时间。另一方面，在索引存储器中寻找相似的项目成为影响神经搜索系统性能的关键工程挑战。这是为什么呢？</p>
+
+<p>例如，您已经预先索引了10亿个文档，在查询时，用户向系统发送一个查询，然后文档被预处理并编码成一个向量(嵌入)。给定查询向量，现在需要从一百万个向量中找出前N个相似向量。你是怎么做到的？通过逐个计算向量之间的距离来进行相似性搜索可能需要很长时间。相反，我们进行人工神经网络搜索。</p>
+
+<p class="callout-heading">重要说明</p>
+
+<p class="callout">当我们谈论人工神经网络搜索时，我们正在考虑百万/十亿规模的搜索。如果您想构建一个玩具示例并在成百上千的文档中搜索，普通的线性扫描已经足够快了。在生产环境中，请遵循下一节将介绍的选择策略。</p>
+
+<h3>人工神经网络搜索</h3>
+
+<p>顾名思义，人工神经网络搜索是不同因素之间的权衡:准确性、运行时间和内存消耗。与强力搜索相比，它在一定程度上牺牲了查准率和查全率的同时，保证了用户可以接受的运行时间。能达到多快？给定10亿个100维向量，它可以装入一个32 GB内存的服务器，响应速度为10 ms。在深入研究ANN search的细节之前，让我们先来看看下图:</p>
+
+<div><div><img alt="Figure 3.3 – ANN cheat sheet (source: Billion-scale Approximate Nearest Neighbor Search, Yusuke Matsui)&#10;&#10;" height="576" src="img/Figure_3.3_B17488.jpg" width="1024"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.3-ANN备忘单(来源:十亿级近似最近邻搜索，Yusuke Matsui)</p>
+
+<p>前面的<a id="_idIndexMarker222"/>图说明了<em class="italic">如何根据你的搜索系统</em>选择人工神经网络库。在图中，<em class="italic"> N </em>表示您的<em class="italic">存储索引</em>中的文档数量。不同数量的N可以使用不同的ANN搜索库进行优化，如<code>FAISS</code>(<a href="https://github.com/facebookresearch/faiss">https://github.com/facebookresearch/faiss</a>)或<code>NMSLIB</code>(<a href="https://github.com/nmslib/nmslib">https://github.com/nmslib/nmslib</a>)。同时，由于你很可能是一个Python用户，【https://github.com/spotify/annoy】库(<a href="https://github.com/spotify/annoy">和</a>)提供了一个性能合理的用户友好界面，对于百万级的矢量搜索来说，它已经足够好了。</p>
+
+<p>前面提到的<a id="_idIndexMarker223"/>库是基于不同的算法实现的，最流行的<a id="_idIndexMarker224"/>库<a id="_idIndexMarker225"/>是<strong class="bold"> KD-Trees </strong>、<strong class="bold">本地敏感哈希</strong> ( <strong class="bold"> LSH </strong>)，以及<strong class="bold">产品量化</strong> ( <strong class="bold"> PQ </strong>)。</p>
+
+<p>KD-Trees <a id="_idIndexMarker226"/>遵循迭代过程来构建树。为了便于可视化，我们假设数据只包含两个特征，<em class="italic"> f1 </em> ( <em class="italic"> x </em>轴)和<em class="italic"> f2 </em> ( <em class="italic"> y </em>轴)，如下所示:</p>
+
+<div><div><img alt="Figure 3.4 – KD-Trees, sample dataset to index&#10;&#10;" height="640" src="img/Figure_3.4_B17488.jpg" width="700"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.4–KD树，要索引的样本数据集</p>
+
+<p>构建一个<a id="_idIndexMarker227"/> KD树始于选择一个实用特征并为该特征设置一个阈值。为了说明这个想法，我们从手动选择f1和特征阈值0.5开始。为此，我们得到这样一个边界:</p>
+
+<div><div><img alt="Figure 3.5 – KD-Trees construction iteration 1&#10;&#10;" height="437" src="img/Figure_3.5_B17488.jpg" width="1064"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.5–KD树构建迭代1</p>
+
+<p>从<em class="italic">图3.5 </em>可以看出，特征空间已经被我们第一次选择的阈值为0.5的f1分割成两部分。对于树是如何体现的？构建指数时，我们实际上是在创建一个二叉查找树。阈值为0.5的f1的第一个选择成为我们的根节点。给定每个数据点，如果f1大于0.5，它将被放置在节点的右侧。否则，如图<em class="italic">图3.6 </em>所示，我们把它放到节点的左边:</p>
+
+<div><div><img alt="Figure 3.6 – KD-Trees construction iteration 2&#10;&#10;" height="429" src="img/Figure_3.6_B17488.jpg" width="1066"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.6–KD树构建迭代2</p>
+
+<p>我们从前面的树继续<a id="_idIndexMarker228"/>。在第二次迭代中，让我们将我们的规则定义为:给定f1 &gt; 0.5，选择阈值为0.5的f2。如上图所示，现在我们根据新的规则再次分割特征空间，这也反映在我们的树上:我们在图中创建了一个新节点<strong class="bold"> f2-0.5 </strong>(图中的<strong class="bold"> none </strong>节点仅用于可视化目的；我们还没有创建这个节点)。如下图所示:</p>
+
+<div><div><img alt="Figure 3.7 – KD-Tree construction iteration N (final iteration)&#10;&#10;" height="426" src="img/Figure_3.7_B17488.jpg" width="1064"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.7–KD树构建迭代N(最终迭代)</p>
+
+<p>如<em class="italic">图3.7 </em>所示，<a id="_idIndexMarker229"/>整个特征空间被分成六个箱。与之前相比，我们添加了三个新节点，包括两个叶节点:</p>
+
+<ul>
+
+<li>之前的<strong class="bold">无</strong>被一个实际节点<strong class="bold"> f2-0.65 </strong>代替；这个节点基于阈值0.65分割f2的空间，只有在f1 &lt; 0.5时才会发生。</li>
+
+<li>当f2 &lt;0.65, we further split f1 by a threshold of 0.2.</li>
+
+<li>When f2&gt; 0.65时，我们进一步将f1除以0.3的阈值。</li>
+
+</ul>
+
+<p>为此，我们的树有三个叶节点，每个叶节点可以构造两个箱(小于/大于阈值)，我们总共有六个箱。此外，每个数据点可以放入其中一个箱中。然后，我们完成了KD树的构建。应该注意的是，构建一个KD树可能并不简单，因为您需要考虑一些超参数，比如如何设置阈值或者我们应该创建多少个箱(或者停止标准)。实际上，没有金科玉律。通常，平均值或中值可用于设置阈值。箱的数量可能高度依赖于结果的评估和微调。</p>
+
+<p>在搜索时，给定一个用户查询，它可以被放入特征空间内的一个箱中。我们能够计算查询和作为最近邻候选的箱内所有项目之间的距离。我们还需要计算查询和所有其他箱之间的最小距离。如果查询向量和其他箱之间的距离大于查询向量和最近邻居候选之间的距离，我们可以通过修剪树的叶节点来忽略该箱内的所有数据点。否则，我们也将该区间内的数据点视为最近邻的候选。</p>
+
+<p>通过构建一个<a id="_idIndexMarker230"/> KD树，我们不再需要计算查询向量和每个文档之间的相似性。只有一定数量的箱应该被认为是候选。因此，可以大大减少搜索时间。</p>
+
+<p>在实践中，KD树遭受维数灾难。将它们应用于高维数据是很棘手的，因为有如此多的箱要搜索，仅仅因为对于每个特征，我们总是创建几个阈值。<strong class="bold">位置敏感散列法</strong> ( <strong class="bold"> LSH </strong>)可能是一个很好的替代算法。</p>
+
+<p>LSH背后的基本思想是相似的文档共享相同的散列码，它被设计成最大化冲突。更具体地说:给定一组向量，我们希望有一个哈希函数，能够将相似的文档编码到同一个哈希桶中。然后，我们只需要在桶内找到相似的向量(不需要扫描所有的数据)。</p>
+
+<p>先说<a id="_idIndexMarker231"/> LSH指数建设。在索引时，我们首先需要创建<a id="_idIndexMarker232"/>随机平面(超平面)来将特征空间分成<em class="italic">个面元</em>。</p>
+
+<div><div><img alt="Figure 3.8 – LSH index construction with random hyperplanes&#10;&#10;" height="741" src="img/Figure_3.8_B17488.jpg" width="904"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.8–用随机超平面构建LSH指数</p>
+
+<p>在<em class="italic">图3.8 </em>中，我们已经创建了<a id="_idIndexMarker233"/>六个超平面。每个超平面能够将我们的特征空间分成两个面元，或者左/右或者上/下，可以用二进制代码(或符号)表示:0或1。这被称为容器的索引。</p>
+
+<p>让我们试着得到右下bin的bin索引(它在bin中有四个点)。料仓<a id="_idIndexMarker234"/>位于以下位置:</p>
+
+<ul>
+
+<li><strong class="bold">平面1 </strong>的右侧，所以位置0的符号为1</li>
+
+<li><strong class="bold">平面2 </strong>的右侧，所以位置1的符号为1</li>
+
+<li><strong class="bold">平面3 </strong>的右侧，所以位置2的符号为1</li>
+
+<li><strong class="bold">平面4 </strong>的右侧，所以位置3的符号为1</li>
+
+<li><strong class="bold">平面5 </strong>的底部，所以位置4的符号为0</li>
+
+<li><strong class="bold">平面6 </strong>的底部，所以位置5的符号为0</li>
+
+</ul>
+
+<p>因此，我们可以将右下角的bin表示为111100。如果我们重复这个过程并用bin索引注释每个bin，我们将得到一个hash map。哈希映射的关键字是bin索引，而哈希映射的值是bin内数据点的id。</p>
+
+<div><div><img alt="Figure 3.9 – LSH index construction with bin index&#10;&#10;" height="736" src="img/Figure_3.9_B17488.jpg" width="904"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.9–利用bin指数构建LSH指数</p>
+
+<p>在LSH山顶搜索很容易。直观地说，给定一个查询，您可以只搜索它自己的箱内的所有数据点，也可以搜索它的相邻箱。</p>
+
+<p>你如何在它的邻近箱子中搜索？看看<em class="italic">图3.9 </em>。bin <a id="_idIndexMarker236"/>索引表示为二进制代码；相邻的容器与其自己的容器索引相比只有1比特的差异。显然，您可以将bin索引之间的差异视为一个超参数，并搜索更多的相邻bin。例如，如果您将hyper参数设置为2，意味着您允许LSH搜索2个邻居箱。</p>
+
+<p>为了更好地理解这一点，我们将看看LSH的恼人的实现<a id="_idIndexMarker237"/>，即LSH与随机投影。给定由深度神经网络产生的向量列表，我们首先进行以下操作:</p>
+
+<ol>
+
+<li>随机初始化一个超平面。</li>
+
+<li>向量与法线(垂直于超平面的向量)的点积。对于每个向量，如果值为正，我们生成二进制代码1，否则为0。</li>
+
+<li>我们生成N个超平面，并将该过程迭代N次。最后，每个向量由0和1的二进制向量表示。</li>
+
+<li>我们<a id="_idIndexMarker238"/>将每个二进制代码视为一个桶，并将所有具有相同二进制代码的文档保存到同一个桶中。</li>
+
+</ol>
+
+<p>以下代码块演示了随机投影LSH的简单实现<a id="_idIndexMarker239"/>:</p>
+
+<pre class="source-code">pip install numpy
+
+pip install spacy
+
+spacy download en_core_web_md</pre>
+
+<p>我们将两段句子预处理成桶:</p>
+
+<pre class="source-code">from collections import defaultdict
+
+import numpy as np
+
+import spacy
+
+n_hyperplanes = 10
+
+nlp = spacy.load('en_core_web_md')
+
+# process 2 sentences using the model
+
+docs = [
+
+    nlp('What a nice day today!'),
+
+    nlp('Hi how are you'),
+
+]
+
+# Get the mean vector for the entire sentence
+
+assert docs[0].vector.shape == (300,)
+
+# Random initialize 10 hyperplanes, dimension identical to embedding shape
+
+hyperplanes = np.random.uniform(-10, 10, (n_hyperplanes, docs[0].vector.shape[0]))
+
+def encode(doc, hyperplanes):
+
+    code = np.dot(doc.vector, hyperplanes.T)  # dot product vector with norm vector
+
+    binary_code = np.where(code &gt; 0, 1, 0)
+
+    return binary_code
+
+def create_buckets(docs, hyperplanes):
+
+    buckets = defaultdict()
+
+    for doc in docs:
+
+        binary_code = encode(doc, hyperplanes)
+
+        binary_code = ''.join(map(str, binary_code))
+
+        buckets[binary_code] = doc.text
+
+    return buckets
+
+if __name__ == '__main__':
+
+    buckets = create_buckets(docs, hyperplanes)
+
+    print(buckets)</pre>
+
+<p>这样，我们<a id="_idIndexMarker240"/>将数百万个文档映射到多个桶中。在搜索时，我们使用相同的超平面对搜索文档进行编码，获得二进制代码，并在相同的桶内找到相似的文档。</p>
+
+<p>在Annoy实现中，搜索速度取决于两个参数:</p>
+
+<ul>
+
+<li><code>search_k</code>:这个参数是你想从索引中获取的最上面的<code>k</code>个元素。</li>
+
+<li><code>N_trees</code>:该参数表示您要搜索的桶数。</li>
+
+</ul>
+
+<p>很明显，搜索运行时间高度依赖于这两个参数，用户需要根据他们的用例来微调这些参数。</p>
+
+<p>另一个流行的人工神经网络搜索<a id="_idIndexMarker241"/>算法是PQ。在我们深入PQ之前，理解什么是<em class="italic">量化</em>很重要。假设您有一百万个文档要索引，并且您为所有文档创建了100个<em class="italic">质心</em>。一个<strong class="bold">量化器</strong>是一个<a id="_idIndexMarker242"/>功能，可以将一个矢量映射到一个质心。你可能会觉得这个想法很熟悉。实际上，K-means算法<a id="_idIndexMarker243"/>就是一个可以帮助你生成这样的质心的函数。如果您不记得了，K-means的工作方式如下:</p>
+
+<ol>
+
+<li value="1">随机初始化<code>k</code>形心。</li>
+
+<li>将每个向量指定给其最近的质心。每个质心代表一个聚类。</li>
+
+<li>基于所有赋值的平均值计算新的<a id="_idIndexMarker244"/>形心，直到收敛。</li>
+
+</ol>
+
+<p>一旦K-均值收敛，给定所有要索引的向量，我们得到K个聚类。对于每个要索引的文档，我们在文档ID和集群索引之间创建一个映射。在搜索时，我们根据质心计算距离查询向量，得到最近的聚类，然后在这些聚类中找到最近的向量。</p>
+
+<p>这种量化算法具有相对较好的压缩比。你不必为了得到最接近的向量而线性扫描所有的向量；你只需要扫描量化器产生的某些簇。另一方面，如果质心的数量很少，搜索时的召回率可能很低。这是因为有太多的边缘情况不能被正确地分配到正确的集群。此外，如果我们将质心的集合数量简化为一个大的数字，我们的K-means运算将需要很长时间才能收敛。这成为离线索引时间和在线搜索时间的瓶颈。</p>
+
+<p><a id="_idIndexMarker245"/> PQ背后的基本思想是将高维向量分割成子向量，如以下步骤所示:</p>
+
+<ol>
+
+<li value="1">我们将每个向量分成<em class="italic"> m </em>个子向量。</li>
+
+<li>对于每个子矢量，我们应用量子化。为此，对于每个子向量，我们有一个唯一的簇ID(子向量与其质心最近的簇)。</li>
+
+<li>对于全向量，我们有一个簇id列表，可以作为全向量的码本。码本的维数与子向量的数量相同。</li>
+
+</ol>
+
+<p>下图说明了PQ算法:给定一个向量，我们将其切割成更低维度的子向量，并应用量化。为此，每个量子化的子矢量得到一个代码:</p>
+
+<div><div><img alt="Figure 3.10 – Product quantization&#10;&#10;" height="1005" src="img/Figure_3.10_B17488.jpg" width="1344"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.10-产品量化</p>
+
+<p>在搜索时，我们再次将高维查询向量分割成子向量，并生成码本(桶)。我们针对集合中的每个<a id="_idIndexMarker246"/>向量计算子向量级余弦相似性，并对子向量级相似性分数求和。我们根据向量级余弦相似性对最终结果进行排序。</p>
+
+<p>实际上，FAISS有一个高性能的PQ实现(并且超越了PQ)。更多信息，请参考文档(【https://github.com/facebookresearch/faiss/wiki】T4)。</p>
+
+<p>现在我们已经学习了神经搜索的两个基本任务，索引和查询。在下一节中，我们将介绍神经搜索系统评估，以使您的神经搜索系统完整并可投入生产。</p>
+
+<h1 id="_idParaDest-46"><a id="_idTextAnchor050"/>评估神经搜索系统</h1>
+
+<p>一旦你建立了一些基线，评估一个神经搜索系统的有效性是至关重要的。通过监控评估指标，您可以立即知道您的系统性能如何。通过深入查询，您还可以进行故障分析，并了解如何改进您的系统。</p>
+
+<p>在本节中，我们将简要概述最常用的评估指标。如果你想对这个话题有一个更详细的数学理解，我们强烈建议你通过信息检索(【https://nlp.stanford.edu/IR-book/pdf/08eval.pdf】)中的<em class="italic">评测。</em></p>
+
+<p>一般来说，考虑到搜索任务之间的差异，我们通常可以将搜索评估分为两类:</p>
+
+<ul>
+
+<li><strong class="bold">未分级结果的评估</strong>:这些指标广泛应用于一些检索或分类任务，包括精度、召回率和F值。</li>
+
+<li><strong class="bold">排名结果的评估</strong>:这些指标主要用于典型的搜索应用，给出的结果是有序的(排名)。</li>
+
+</ul>
+
+<p>首先，让我们从精确度、召回率和F值开始:</p>
+
+<ul>
+
+<li>在典型的搜索场景中，精度<a id="_idIndexMarker248"/>定义如下:</li>
+
+</ul>
+
+<p><em class="italic">精度=(检索到的相关文档数)/(检索到的文档数)</em></p>
+
+<p>这个想法很简单。假设我们的搜索系统返回10个文档，其中7个是相关的，那么精度将是0.7。</p>
+
+<p>应该注意的是，在评估过程中，我们关心顶部的<code>k</code>检索结果。就像前面提到的例子一样，我们评估前10个结果中的相关文档。这通常被称为精度，例如<strong class="bold">精度@10 </strong>。它<a id="_idIndexMarker249"/>也适用于我们将在本节稍后介绍的其他指标，例如Recall@10、mAP@10和nDCG@10。</p>
+
+<ul>
+
+<li>同样，召回<a id="_idIndexMarker250"/>定义如下:</li>
+
+</ul>
+
+<p><em class="italic">召回=(检索到的相关文档数)/(相关文档数)</em></p>
+
+<p>例如，如果我们在我们的系统中搜索<code>cat</code>，我们已经知道有100张与猫相关的图片被索引，并且返回了80张图片，那么召回率是0.8。这是一个评估指标，用于衡量搜索系统表现的<em class="italic">完整性</em>。</p>
+
+<p class="callout-heading">重要说明</p>
+
+<p class="callout">召回率是评估人工神经网络算法性能的<a id="_idIndexMarker251"/>最重要的评估指标，因为它描述了所有查询平均找到的真正最近邻的比例。</p>
+
+<p class="callout-heading">重要说明</p>
+
+<p class="callout">对于典型的ML任务，例如分类，准确性可以是一个很好的度量。但是对于搜索任务来说情况并非如此，因为搜索任务中的大多数数据集是偏斜的/不平衡的。</p>
+
+<p>作为一个搜索系统的设计者，你可能已经注意到这两个数字是相互权衡的:随着K数的增加，我们总是可以期待更低的精确度和更高的召回率，反之亦然。这是你的决定，优化精度或召回或优化这两个数字作为一个评估指标，即F1分数。</p>
+
+<ul>
+
+<li>f1-分数为<a id="_idIndexMarker253"/>，定义如下:</li>
+
+</ul>
+
+<p><em class="italic">F1-得分= (2 *精度*召回)/(精度+召回)</em></p>
+
+<p>它是精确度和召回率的加权调和平均值。事实上，较高的召回率往往与较低的准确率相关联。假设您正在评估一个排序列表，并且您关心要检索的前10个项目(并且在整个集合中有10个相关文档):</p>
+
+<table class="No-Table-Style _idGenTablePara-1" id="table001-2">
+
+<colgroup>
+
+<col/>
+
+<col/>
+
+<col/>
+
+<col/>
+
+</colgroup>
+
+<tbody>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">文件</strong></p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">标签</strong></p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">精度</strong></p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">召回</strong></p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档1</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>相关的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>1/1</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>1/10</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档2</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>相关的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>2/2</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>2/10</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档3</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>2/3</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>2/10</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档4</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>2/4</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>2/10</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档5</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>相关的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>3/5</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>3/10</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档6</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>3/6</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>3/10</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档7</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>3/7</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>3/10</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档8</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>相关的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>4/8</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>4/10</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档9</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>4/9</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>4/10</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>Doc10</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>4/10</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>4/10</p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">表3.1-前10个文档中10个的精确召回</p>
+
+<p><em class="italic">表3.1 </em>显示了给定二进制标签时不同级别的<a id="_idIndexMarker254"/>精度和召回率。</p>
+
+<p>熟悉了精度之后，我们现在可以继续计算平均精度。这个<a id="_idIndexMarker255"/>指标将让我们更好地理解我们的搜索系统对查询结果进行排序的能力。</p>
+
+<p>具体地，给定前面排序的列表，<code>aP@10</code>如下:</p>
+
+<p><code>aP@10 = (1/1 + 2/2 + 3/5 + 4/8) / 10 = 0.31</code></p>
+
+<p>请注意，在计算aP时，只考虑相关文档的精度。</p>
+
+<p>现在，aP已经针对一个特定的用户查询进行了计算。然而，为了给出更健壮的搜索系统评估，我们想要评估作为测试集的用户查询集合的性能。这就是所谓的<code>aP@k</code>的<a id="_idIndexMarker256"/>，然后我们对一组查询中的所有接入点进行平均，得到地图得分。</p>
+
+<p>mAP是给定排序列表的<a id="_idIndexMarker257"/>最重要的搜索系统评估指标之一。要对您的搜索系统进行地图评估，通常您必须遵循以下步骤:</p>
+
+<ol>
+
+<li value="1">编写一个查询列表，很好地代表用户的信息需求。这个数字取决于你的情况，比如50、100或200。</li>
+
+<li>如果您的文档已经有了指示相关度的标签，那么直接使用这些标签来计算每个查询的aP。如果您的文档不包含任何与每个查询相关的信息，我们需要专家注释或汇集来访问相关学位。</li>
+
+<li>通过取AP的平均值来计算查询列表上的mAP。如前所述，如果您没有对排名文档的相关评估，一种常见的技术称为<strong class="bold"> pooling </strong>。它<a id="_idIndexMarker258"/>要求我们建立多个搜索系统(比如三个)进行测试。给定每个查询，我们收集这三个搜索系统返回的前K个文档。人类注释者判断所有3 * K文档的相关程度。之后，我们认为该库中的所有文档都是不相关的，而该库中的所有文档都是相关的。然后，可以在池的顶部评估搜索结果。</li>
+
+</ol>
+
+<p>在这一点上，即使mAP正在评估一个排序列表，精度定义的本质仍然忽略了搜索任务的一些本质:精度是基于相关或不相关的二进制标签来评估的。它不反映针对文档的查询的<em class="italic">相关度</em>。<strong class="bold">归一化折扣累积增益</strong> ( <strong class="bold"> nDCG </strong>)用于<a id="_idIndexMarker259"/>评估<a id="_idIndexMarker260"/>搜索系统在相关度上的性能。</p>
+
+<p>nDCG可以为每个文档设置多个等级，例如<em class="italic">不相关</em>、<em class="italic">相关</em>或<em class="italic">高度相关</em>。在这种情况下，映射不再起作用。</p>
+
+<p>例如，给定三种相关度(不相关、相关和高度相关)，这些相关度的差异可以表示为用户通过获取每个文档可以获得的信息增益。对于高度相关的文档，增益可以赋值为<em class="italic"> 3 </em>，相关可以为<em class="italic"> 1 </em>，不相关可以设置为<em class="italic"> 0 </em>。然后，如果高度相关的文档的排名高于不相关的文档，则用户可以累积更多的<em class="italic">增益</em>，这被称为<strong class="bold">累积增益</strong> ( <strong class="bold"> CG </strong>)。下面的表格显示了给定由搜索系统产生的排名前10的文档，我们从每个文档获得的信息增益:</p>
+
+<table class="No-Table-Style _idGenTablePara-1" id="table002">
+
+<colgroup>
+
+<col/>
+
+<col/>
+
+<col/>
+
+</colgroup>
+
+<tbody>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">文件</strong></p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">标签</strong></p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">增益</strong></p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档1</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>高度相关</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>3</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档2</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>相关的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>一</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档3</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档4</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档5</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>相关的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>一</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档6</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档7</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档8</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>高度相关</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>3</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档9</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>Doc10</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">表3.2–获得信息最多的10份文件</p>
+
+<p>在前面的<a id="_idIndexMarker262"/>表中，系统将排名前10的文档返回给用户。基于相关度，我们将3指定为高度相关文档的增益，将1指定为相关文档的增益，将0指定为不相关文档的增益。CG是前10个文档中所有收益的总和，如下所示:</p>
+
+<p><code>CG@10 = 3 + 1 + 1 + 3 = 8</code></p>
+
+<p>但是想想搜索引擎的本质:用户从上到下浏览排名列表。因此，本质上，排名靠前的文档应该比排名靠后的文档有更多的收益，这样我们的搜索系统就会尝试将高度相关的文档排在更高的位置。因此，在实践中，我们将通过头寸来惩罚收益。请参见以下示例:</p>
+
+<table class="No-Table-Style _idGenTablePara-1" id="table003">
+
+<colgroup>
+
+<col/>
+
+<col/>
+
+<col/>
+
+<col/>
+
+</colgroup>
+
+<tbody>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">文件</strong></p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">标签</strong></p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">增益</strong></p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">贴现收益</strong></p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档1</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>高度相关</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>3</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>3</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档2</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>相关的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>一</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>1/log2</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档3</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档4</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档5</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>相关的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>一</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>1/log5</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档6</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档7</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档8</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>高度相关</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>3</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>3/log8</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>文档9</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>Doc10</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>不相干的</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">表3.3–收益和贴现收益的前10份文件</p>
+
+<p>在前面的<a id="_idIndexMarker263"/>表格中，给定了一个文档的增益及其排名位置，我们通过将增益除以一个因子来惩罚增益。在这种情况下，它是排名<a id="_idIndexMarker264"/>位置的对数。该收益的总和称为<strong class="bold">贴现累计收益</strong> ( <strong class="bold"> DCG </strong>):</p>
+
+<p><code>DCG@10 = 3 + 1/log2 + 1/log5 + 3/log8 = 6.51</code></p>
+
+<p>在我们开始计算nDCG之前，理解理想DCG的概念很重要。它仅仅意味着我们能达到的最好的排名结果。在前一种情况下，如果我们查看前10个位置，理想情况下，排序列表应该包含所有增益为3的高度相关的文档。因此，iDCG应该如下所示:</p>
+
+<p><code>iDCG@10 = 3 + 3/log2 + 3/log3 + 3/log4 + 3/log5 + 3/log6 + 3/log7 + 3/log8 + 3/log9 + 3/log10 = 21.41</code></p>
+
+<p>最终，最终的nDCG如下:</p>
+
+<p><code>nDCG = DCG/iDCG</code></p>
+
+<p>在前面的示例中，我们有以下内容:</p>
+
+<p><code>nDCG@10 = 6.51/21.41 = 0.304</code></p>
+
+<p>值得一提的是，尽管<a id="_idIndexMarker265"/> nDCG非常适合评估反映相关性程度的搜索系统，但<em class="italic">相关性</em>本身偏向于不同的因素，如搜索上下文和用户偏好。在现实世界的场景中执行这样的评估是很重要的。在下一章中，我们将深入探讨这些挑战的细节，并简要介绍如何解决它们。</p>
+
+<h1 id="_idParaDest-47"><a id="_idTextAnchor051"/>构建神经搜索系统的工程挑战</h1>
+
+<p>现在，你会注意到神经搜索系统最重要的组成部分是编码器和索引器。编码帖子的质量直接影响最终的搜索结果，而索引器的速度决定了你的神经搜索系统的可扩展性。</p>
+
+<p>同时，这仍然不足以让你的神经搜索系统准备就绪。还需要考虑许多其他问题。第一个问题是:你的编码器(神经模型)和你的数据有相同的分布吗？对于进入神经搜索系统世界的新人来说，他们正在使用预先训练的深度神经网络，例如在ImageNet上训练的<a id="_idIndexMarker267"/> ResNet，快速建立搜索系统是微不足道的。然而，如果你的目标是建立一个特定领域的神经搜索系统，比如说一个时尚产品图像搜索，它不会产生令人满意的结果。</p>
+
+<p>在我们真正开始创建编码器和设置我们的搜索系统之前，一个重要的主题是将迁移学习应用到您的数据集并评估匹配结果。这意味着采用一个预训练的深度学习模型，如ResNet，砍掉头部层，冻结预训练模型的权重，并在模型的末尾附加一个新的嵌入层，然后在您的域上的新数据集上训练它。这将大大提高搜索性能。</p>
+
+<p>除此之外，在一些基于视觉的搜索系统中，仅仅依靠编码器可能是不够的。例如，许多基于视觉的搜索系统严重依赖于对象检测器。在将完整图像发送到编码器之前，应首先将其发送到对象检测器，并提取图像中有意义的部分(并去除背景噪声)。这可能会提高嵌入质量。同时，一些基于视觉的分类模型也可以作为硬过滤器来丰富搜索上下文。例如，如果您正在构建一个神经搜索系统，允许人们在给定图像作为查询的情况下搜索类似的汽车，那么预先训练的品牌分类器可能会很有用。更具体地说，你预先训练一个汽车品牌分类器，让<em class="italic">根据图像识别</em>不同的汽车品牌，并将识别应用于索引和搜索管道。一旦基于视觉的搜索完成，您可以将识别的品牌作为硬过滤器来过滤掉其他品牌的汽车。</p>
+
+<p>类似地，对于基于文本的搜索，当用户提供关键字作为查询时，直接应用基于嵌入的相似性搜索可能是不够的。例如，您可以在索引和查询管道中创建一个<strong class="bold">命名实体识别</strong> ( <strong class="bold"> NER </strong>)模块<a id="_idIndexMarker269"/>来丰富元数据。</p>
+
+<p>对于基于web的搜索<a id="_idIndexMarker270"/>引擎，如Google、Bing或百度，很容易看到查询自动完成。向您的索引和搜索管道中添加一个基于深度神经网络的关键字提取组件，以使用类似的用户体验，这可能也非常有趣。</p>
+
+<p>总之，要构建一个生产就绪的神经搜索系统，设计一个功能完整的索引和查询管道是非常具有挑战性的，因为搜索是一项如此复杂的任务。设计这样一个系统已经很有挑战性了，更不用说设计基础设施了。幸运的是，纪娜已经可以帮你完成大多数最具挑战性的任务。</p>
+
+<h1 id="_idParaDest-48"><a id="_idTextAnchor052"/>总结</h1>
+
+<p>在这一章中，我们已经讨论了构建神经搜索系统的基本任务，即索引和查询管道。我们研究了这两个方面，并介绍了最具挑战性的部分，比如编码和索引。</p>
+
+<p>您应该对索引和查询的基本构件有基本的了解，比如预处理、编码和索引。您还应该注意到，搜索结果的质量高度依赖于编码器，而神经搜索系统的可伸缩性高度依赖于索引器和索引器背后最流行的算法。</p>
+
+<p>当您需要构建一个生产就绪的搜索系统时，您会意识到仅仅依靠基本的构建模块是不够的。由于搜索系统实现起来很复杂，所以为了获得更好的搜索结果，总是需要设计自己的构建模块并将其添加到索引和查询管道中。</p>
+
+<p>在下一章，我们将开始介绍纪娜，这是帮助你设计神经搜索系统的最流行的框架。你会意识到，纪娜已经为你解决了最困难的问题，并可能使你作为神经搜索系统工程师/科学家的生活变得容易得多。</p>
+
+</div>
+
+</div>
+
+
+
+</body></html>

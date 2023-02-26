@@ -1,0 +1,77 @@
+<html><head/><body>
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><div><h1 id="_idParaDest-6"><a id="_idTextAnchor005"/>前言</h1>
+			<p>从2012年赢得大型ImageNet比赛的AlexNet开始，到2018年登顶众多<strong class="bold">自然语言处理</strong> ( <strong class="bold"> NLP </strong>)排行榜的BERT预训练语言模型，现代<strong class="bold">深度学习</strong> ( <strong class="bold"> DL </strong>)在更广泛的<strong class="bold">人工智能</strong> ( <strong class="bold"> AI </strong>)和<strong class="bold">机器学习</strong> ( <strong class="bold"> ML </strong>中的革命然而，将这些DL模型从离线实验转移到生产环境的挑战仍然存在。这在很大程度上是由于支持DL全生命周期开发的统一开源框架的复杂性和缺乏。这本书将帮助您了解DL全生命周期开发的全貌，并实现可以从本地离线实验扩展到分布式环境和在线生产云的DL管道，重点是基于项目的实践学习，以支持使用流行的开源MLflow框架的端到端DL流程。</p>
+			<p>该书首先概述了DL的全生命周期和新兴的<strong class="bold">机器学习操作</strong> ( <strong class="bold"> MLOps </strong>)领域，清晰地描述了DL的四大支柱(数据、模型、代码和可解释性)以及MLflow在这些领域的作用。在第一章中，使用PyTorch Lightning Flash构建了一个基于迁移学习的NLP情感模型，在本书的其余部分中，该模型被进一步开发、调整并部署到生产中。从那里开始，它指导您逐步理解MLflow实验和使用模式的概念，使用MLflow作为统一框架来跟踪DL数据、代码和管道、模型、参数和大规模指标。我们将在分布式执行环境中运行具有可再现性和来源跟踪的DL管道，并通过使用Ray Tune、Optuna和HyperBand的<strong class="bold">超参数优化</strong> ( <strong class="bold"> HPO </strong>)来调整DL模型。我们还将构建一个包含预处理和后处理步骤的多步骤DL推理管道，使用Ray Serve和AWS SageMaker为生产部署一个DL推理管道，最后，使用<strong class="bold">SHapley Additive expansions</strong>(<strong class="bold">SHAP</strong>)和MLflow集成提供一个DL解释即服务。</p>
+			<p>到本书结束时，您将具备构建DL管道的基础和实践经验，从最初的离线实验到最终的部署和生产，所有这些都在一个可复制的开源框架内完成。在此过程中，您还将了解DL管道面临的独特挑战，以及我们如何通过实用且可扩展的解决方案来克服这些挑战，例如使用多核CPU、<strong class="bold">图形处理单元</strong>(<strong class="bold">GPU</strong>)、分布式和并行计算框架以及云。</p>
+			<h1 id="_idParaDest-7"><a id="_idTextAnchor006"/>这本书是给谁的</h1>
+			<p>这本书是为数据科学家、ML工程师和AI从业者编写的，他们希望使用开源的MLflow框架和相关工具(如Ray Tune、SHAP和Ray Serve)掌握DL开发从开始到生产的整个生命周期。本书中介绍的可伸缩、可复制和来源感知的实现确保您成功构建企业级DL管道。这本书将支持任何人构建强大的DL云应用程序。</p>
+			<h1 id="_idParaDest-8">这本书涵盖了什么</h1>
+			<p><a href="B18120_01_ePub.xhtml#_idTextAnchor015"> <em class="italic">第一章</em> </a>，<em class="italic">深度学习生命周期与MLOps挑战</em>，涵盖了DL全生命周期的五个阶段，也是本书中第一个使用迁移学习方法进行文本情感分类的DL模型。它还定义了MLOps的概念、三个基础层和四个支柱，以及MLflow在这些领域中的作用。还概述了DL数据、模型、代码和可解释性方面的挑战。这一章旨在让每个人都达到相同的基础水平，并对本书其余部分的范围提供清晰的说明和指导。</p>
+			<p><a href="B18120_02_ePub.xhtml#_idTextAnchor027"> <em class="italic">第2章</em> </a>，<em class="italic">深度学习MLflow入门</em>，作为MLflow入门和第一手操作学习模块，快速设置基于本地文件系统的MLflow跟踪服务器或在Databricks中与远程管理的MLflow跟踪服务器交互，并使用MLflow自动日志记录执行第一个DL实验。它还通过具体的例子解释了一些基本的MLflow概念，例如实验、运行、关于实验和运行的元数据以及它们之间的关系、代码跟踪、模型日志和模型风格。具体来说，我们强调实验应该是一流的实体，可以用来弥合DL模型的离线和在线生产生命周期之间的差距。本章构建了MLflow的基础知识。</p>
+			<p><a href="B18120_03_ePub.xhtml#_idTextAnchor040"> <em class="italic">第3章</em></a><em class="italic">跟踪模型、参数和指标</em>，涵盖了关于使用成熟的本地MLflow跟踪服务器进行跟踪的第一个深入学习模块。它首先建立一个本地成熟的MLflow跟踪服务器，运行在Docker Desktop中，带有一个MySQL后端存储和一个MinIO工件存储。在实现跟踪之前，本章提供了一个基于开放起源模型词汇表规范的开放起源跟踪框架，并提出了六种可以使用MLflow实现的起源问题。然后，它提供了实际操作的实现示例，说明如何使用MLflow模型日志记录API和注册表API来跟踪模型来源、模型度量和参数，有或没有自动日志记录。与其他典型的MLflow API教程不同，这些教程只提供关于使用API的指导，相反，本章重点关注如何成功地使用MLflow来回答出处问题。到本章结束时，我们可以回答六个起源问题中的四个，剩下的两个问题只有在我们有多步管道或部署到生产时才能回答，这将在后面的章节中介绍。</p>
+			<p><a href="B18120_04_ePub.xhtml#_idTextAnchor050"> <em class="italic">第4章</em> </a>，<em class="italic">跟踪代码和数据版本</em>，涵盖了关于MLflow跟踪的第二个深入学习模块。它分析了在ML/DL项目中使用笔记本和管道的当前实践。它推荐使用VS代码笔记本，并展示了一个具体的DL笔记本示例，该示例可以在启用MLflow跟踪的情况下以交互或非交互方式运行。它还推荐使用MLflow的<strong class="bold"> MLproject </strong>来使用MLflow的入口点和管道链接实现多步DL管道。为DL模型训练和注册创建了三步DL流水线。此外，它还显示了通过MLflow中的父子嵌套运行进行的管道级跟踪和单个步骤跟踪。最后，它展示了如何使用MLflow在<strong class="bold"> Delta Lake </strong>中跟踪公共和私有构建的Python库和数据版本。</p>
+			<p><a href="B18120_05_ePub.xhtml#_idTextAnchor060"> <em class="italic">第五章</em> </a>、<em class="italic">在不同环境下运行DL管道</em>，讲述了如何在不同环境下运行DL管道。它从在不同环境中执行DL管道的场景和需求开始。然后展示了如何使用MLflow的<strong class="bold">命令行接口</strong> ( <strong class="bold"> CLI </strong>)在四种场景下提交运行:使用本地代码在本地运行，使用GitHub中的远程代码在本地运行，使用本地代码在云中远程运行，以及使用GitHub中的远程代码在云中远程运行。MLflow支持的执行DL管道的灵活性和可再现性也为需要时的<strong class="bold">持续集成/持续部署</strong> ( <strong class="bold"> CI/CD </strong>)自动化提供了构建模块。</p>
+			<p><a href="B18120_06_ePub.xhtml#_idTextAnchor069"> <em class="italic">第6章</em> </a>、<em class="italic">运行大规模超参数调优</em>，涵盖了使用MLflow支持大规模HPO，使用最先进的HPO框架，如Ray Tune。它首先回顾了DL流水线超参数的类型和挑战。然后，比较了三个HPO框架Ray Tune、Optuna和HyperOpt，并详细分析了它们的优缺点及其与MLflow的集成成熟度。然后，它推荐并展示了如何使用射线调整与MLflow做HPO调整的DL模型，我们一直在这本书到目前为止的工作。此外，它涵盖了如何切换到其他HPO搜索和调度算法，如Optuna和HyperBand。这使我们能够以经济高效且可扩展的方式生产出满足业务需求的高性能DL模型。</p>
+			<p><a href="B18120_07_ePub.xhtml#_idTextAnchor083"> <em class="italic">第7章</em> </a>，<em class="italic">多步深度学习推理管道</em>，涵盖了使用MLflow的自定义Python模型方法创建多步推理管道。它首先概述了生产中推理工作流的四种模式，其中单一的训练模型通常不足以满足业务应用程序的需求。需要额外的预处理和后处理步骤。然后，它给出了实现多步推理管道的分步指南，该管道用语言检测、缓存和附加的模型元数据包装了之前微调过的DL情感模型。然后，这个推理管道被记录为一个通用的MLflow <strong class="bold"> PyFunc </strong>模型，可以使用通用的MLflow PyFunc load API加载该模型。将推理管道包装成MLflow模型为在同一个MLflow框架内实现模型管道的自动化和一致性管理打开了大门。</p>
+			<p><a href="B18120_08_ePub.xhtml#_idTextAnchor095"> <em class="italic">第8章</em> </a>，<em class="italic">大规模部署DL推理管道</em>，涵盖将DL推理管道部署到不同的主机环境中以供生产使用。它首先概述了部署和托管环境的情况，包括批量推理和大规模流推理。然后描述了不同的部署机制，如MLflow内置模型服务工具、定制部署插件和通用模型服务框架(如Ray Serve)。它展示了如何使用MLflow的Spark <code>mlflow-ray-serve</code>部署批处理推理管道的例子。然后描述了一个完整的分步指南，将DL推理管道部署到受管AWS SageMaker实例以供生产使用。</p>
+			<p><a href="B18120_09_ePub.xhtml#_idTextAnchor112"> <em class="italic">第9章</em> </a>，<em class="italic">深度学习可解释性的基础</em>，涵盖了可解释性的基本概念，并探索了两种流行的可解释工具的使用。它首先概述了可解释性的八个维度和<strong class="bold">可解释的AI </strong> ( <strong class="bold"> XAI </strong>)，然后提供了具体的学习示例来探索SHAP和变形金刚-解释工具箱在NLP情感管道中的使用。它强调当开发一个DL应用程序时，可解释性应该被提升为一级工件，因为在各种业务应用程序和领域中，对模型和数据解释的需求和期望越来越多。</p>
+			<p><a href="B18120_10_ePub.xhtml#_idTextAnchor127"> <em class="italic">第十章</em> </a>，<em class="italic">用MLflow </em>实现DL可解释性，涵盖了如何用MLflow实现DL可解释性，以提供<strong class="bold">解释即服务</strong> ( <strong class="bold"> EaaS </strong>)。它首先概述了MLflow当前支持解释器和解释的能力。具体来说，MLflow APIs中现有的与SHAP的集成不支持大规模的DL可解释性。因此，它为实现提供了两种使用MLflow的工件日志API和<strong class="bold">py func</strong>API的通用方法。提供了用于实现SHAP解释的示例，该解释将SHAP值记录在MLflow跟踪服务器的工件存储中的条形图中。SHAP解释器可以作为MLflow Python模型登录，然后作为批量解释的Spark UDF或在线EaaS的web服务加载。这在统一的MLflow框架中为实现可解释性提供了最大的灵活性。</p>
+			<h1 id="_idParaDest-9">为了充分利用这本书</h1>
+			<p>本书中的大多数代码都可以使用开源的MLflow工具来实现和执行，只有少数例外，即需要14天的完整Databricks试用(在https://databricks.com/try-databricks的<a href="https://databricks.com/try-databricks">注册)以及AWS免费层帐户(在https://aws.amazon.com/free/</a>的<a href="https://aws.amazon.com/free/">注册)。下面列出了本书涉及的一些主要软件包:</a></p>
+			<ul>
+				<li>MLflow 1.20.2及以上</li>
+				<li>Python 3.8.10</li>
+				<li>闪电0.5.0</li>
+				<li>变压器4.9.2</li>
+				<li>SHAP</li>
+				<li>PySpark 3.2.1</li>
+				<li>雷[调] 1.9.2</li>
+				<li>Optuna 2.10.0</li>
+			</ul>
+			<p>完整的包依赖关系列在本书GitHub库中每章的<code>requirements.txt </code>文件或<code>conda.yaml</code>文件中。所有代码都已经过测试，可以在macOS或Linux环境下成功运行。如果你是微软Windows用户，建议安装<strong class="bold"> WSL2 </strong>运行本书提供的bash脚本:<a href="https://www.windowscentral.com/how-install-wsl2-windows-10">https://www.windowscentral.com/how-install-wsl2-windows-10</a>。众所周知，MLflow CLI在Microsoft Windows命令行中无法正常工作。</p>
+			<p>从本书的<a href="B18120_03_ePub.xhtml#_idTextAnchor040"> <em class="italic">第3章</em> </a> <em class="italic">、</em> <em class="italic">跟踪模型、参数和指标</em>开始，您还需要安装Docker Desktop(<a href="https://www.docker.com/products/docker-desktop/">https://www.docker.com/products/docker-desktop/</a>)来设置一个完全成熟的本地MLflow跟踪服务器，用于执行本书中的代码。<a href="B18120_08_ePub.xhtml#_idTextAnchor095"> <em class="italic">第八章</em> </a> <em class="italic">需要AWS SageMaker，规模化部署DL推理流水线，</em>为云部署示例。本书中的<strong class="bold">集成开发环境</strong> ( <strong class="bold"> IDE </strong>)采用VS代码版本1.60或以上(<a href="https://code.visualstudio.com/updates/v1_60">https://code.visualstudio.com/updates/v1_60</a>)。Miniconda版本4.10.3或更高版本(<a href="https://docs.conda.io/en/latest/miniconda.html">https://docs.conda.io/en/latest/miniconda.html</a>)在本书中用于创建和激活虚拟环境。</p>
+			<p><strong class="bold">如果你使用的是这本书的数字版，我们建议你自己输入代码，或者从这本书的GitHub库中获取代码(下一节有链接)。这样做将帮助您避免任何与复制和粘贴代码相关的潜在错误。</strong></p>
+			<p>最后，为了最大限度地利用这本书，您应该有Python编程的经验，并对流行的ML和数据操作库(如pandas和PySpark)有基本的了解。</p>
+			<h1 id="_idParaDest-10"><a id="_idTextAnchor009"/>下载示例代码文件</h1>
+			<p>你可以从GitHub的<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow">https://GitHub . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow</a>下载本书的示例代码文件。如果代码有更新，它会在GitHub库中更新。</p>
+			<p>在https://github.com/PacktPublishing/<a href="https://github.com/PacktPublishing/">网站</a>上，我们也有来自我们丰富的书籍和视频目录的其他代码包。看看他们！</p>
+			<h1 id="_idParaDest-11"><a id="_idTextAnchor010"/>下载彩色图片</h1>
+			<p>我们还提供了一个PDF文件，其中有本书中使用的截图和图表的彩色图像。可以在这里下载:<a href="_ColorImages.pdf">https://static . packt-cdn . com/downloads/9781803241333 _ color images . pdf</a>。</p>
+			<h1 id="_idParaDest-12"><a id="_idTextAnchor011"/>使用的约定</h1>
+			<p>本书通篇使用了许多文本约定。</p>
+			<p><code>Code in text</code>:表示文本中的码字、数据库表名、文件夹名、文件名、文件扩展名、路径名、伪URL、用户输入和Twitter句柄。这里有一个例子:“出于学习目的，我们在GitHub存储库中的<code>chapter08</code>文件夹下提供了两个示例<code>mlruns</code>工件和<code>huggingface</code>缓存文件夹。”</p>
+			<p>代码块设置如下:</p>
+			<pre class="source-code">client = boto3.client('sagemaker-runtime') </pre>
+			<pre class="source-code">response = client.invoke_endpoint(</pre>
+			<pre class="source-code">        EndpointName=app_name, </pre>
+			<pre class="source-code">        ContentType=content_type,</pre>
+			<pre class="source-code">        Accept=accept,</pre>
+			<pre class="source-code">        Body=payload</pre>
+			<pre class="source-code">        )</pre>
+			<p>当我们希望将您的注意力吸引到代码块的特定部分时，相关的行或项目以粗体显示:</p>
+			<pre class="source-code">loaded_model = <strong class="bold">mlflow.pyfunc.spark_udf</strong>(</pre>
+			<pre class="source-code">    spark,</pre>
+			<pre class="source-code">    model_uri=logged_model, </pre>
+			<pre class="source-code">    result_type=StringType())</pre>
+			<p>任何命令行输入或输出都按如下方式编写:</p>
+			<pre>mlflow models serve -m models:/inference_pipeline_model/6</pre>
+			<p><strong class="bold">粗体</strong>:表示新术语、重要单词或您在屏幕上看到的单词。例如，菜单或对话框中的单词以<strong class="bold">粗体</strong>显示。下面是一个例子:“要执行该单元格中的代码，您只需点击右上角下拉菜单中的<strong class="bold">运行单元格</strong>。”</p>
+			<p class="callout-heading">提示或重要注意事项</p>
+			<p class="callout">像这样出现。</p>
+			<h1 id="_idParaDest-13"><a id="_idTextAnchor012"/>取得联系</h1>
+			<p>我们随时欢迎读者的反馈。</p>
+			<p><strong class="bold">总体反馈</strong>:如果您对本书的任何方面有疑问，请发邮件至customercare@packtpub.com<a href="mailto:customercare@packtpub.com">并在邮件主题中提及书名。</a></p>
+			<p><strong class="bold">勘误表</strong>:虽然我们已经尽力确保内容的准确性，但错误还是会发生。如果你在这本书里发现了一个错误，请告诉我们，我们将不胜感激。请游览www.packtpub.com/support/errata并填写表格。</p>
+			<p>盗版:如果您在互联网上发现我们作品的任何形式的非法拷贝，如果您能提供我们的地址或网站名称，我们将不胜感激。请通过<a href="mailto:copyright@packt.com">copyright@packt.com</a>联系我们，并提供材料链接。</p>
+			<p><strong class="bold">如果你有兴趣成为一名作家</strong>:如果有你擅长的主题，并且你有兴趣写书或投稿，请访问authors.packtpub.com<a href="http://authors.packtpub.com"/>。</p>
+			<h1 id="_idParaDest-14"><a id="_idTextAnchor013"/>分享你的想法</h1>
+			<p>一旦你阅读了<em class="italic">ml flow</em>的实用深度学习，我们很想听听你的想法！请<a href="">点击这里直接进入亚马逊对这本书的评论页面</a>并分享您的反馈。</p>
+			<p>您的评论对我们和技术社区非常重要，将有助于我们确保提供高质量的内容。</p>
+		</div>
+	</div>
+</body></html>

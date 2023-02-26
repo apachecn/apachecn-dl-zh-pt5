@@ -1,0 +1,1583 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Deep Learning for Games</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">游戏的深度学习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">欢迎来到<em>游戏动手深度学习</em>。这本书是为任何想要一个极其实用的方法来解决游戏的<strong>深度学习</strong>(<strong>D1</strong>)的复杂性的人而写的。重要的是，本书中讨论的概念不仅仅局限于游戏。我们在这里学到的大部分内容将很容易应用到其他应用/模拟中。</p>
+
+<p class="mce-root"><strong>强化学习</strong> ( <strong> RL </strong>)，这将是我们在后面章节中谈到的一个核心元素，正在迅速成为主导的<strong>机器学习</strong> ( <strong> ML </strong>)技术。从服务器优化到预测零售市场的客户活动，它已经被应用到了方方面面。我们在本书中的旅程将主要集中在游戏开发上，我们的目标是构建一个可行的冒险游戏。请记住，你在本书中发现的原理是如何应用于其他问题的，比如模拟、机器人等等。</p>
+
+<p class="mce-root">在这一章中，我们将从神经网络和深度学习的基础知识开始。我们将讨论神经网络的背景，逐步建立一个可以玩简单文本游戏的神经网络。具体而言，本章将涵盖以下主题:</p>
+
+<ul>
+
+<li>数字图书馆的过去、现在和未来</li>
+
+<li>神经网络——基础</li>
+
+<li>多层感知器在<strong>张量流</strong> ( <strong> TF </strong>)中</li>
+
+<li>理解张量流</li>
+
+<li>用反向传播训练神经网络</li>
+
+<li>在Keras中构建自动编码器</li>
+
+</ul>
+
+<p>这本书假设你有Python的工作知识。您应该能够设置和激活虚拟环境。后面的章节会用到Unity 3D，仅限Windows和macOS(向那些铁杆Linux用户道歉)。</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p>如果你已经掌握了深度学习，你可能会倾向于跳过这一章。不管怎样，这一章非常值得一读，并将建立我们在整本书中使用的术语。至少，做动手练习——你以后会感谢自己的！</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>The past, present, and future of DL</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">数字图书馆的过去、现在和未来</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>虽然术语<em>de</em><em>EP</em><em>learning</em>是由Igor Aizenberg和他的同事在2000年首次与神经网络联系起来的，但它只是在最近5年才变得流行起来。在此之前，我们将这类算法称为<strong>人工神经网络</strong> ( <strong> ANN </strong>)。然而，深度学习指的是比人工神经网络更广泛的东西，包括连接机器的许多其他领域。因此，为了澄清，我们将在本书的剩余部分讨论DL的ANN形式。不过，我们也会讨论一些其他形式的可以在游戏中使用的DL，在<a href="6ca7a117-1a8c-49f9-89c0-ee2f2a1e8baf.xhtml">第五章</a>，<em>介绍DRL </em>。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>The past</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">过去</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>多层感知器网络的第一种形式，或者我们现在所说的ANN，是由Alexey Ivakhnenko在1965年提出的。Ivakhnenko等了好几年才在1971年写了关于多层感知器的文章。这个概念需要一段时间来渗透，直到20世纪80年代，更多的研究才开始。这一次尝试了图像分类和语音识别，失败了，但正在取得进展。又过了10年，到了90年代末，又重新流行起来。以至于人工神经网络又进入了一些游戏，直到更好的方法出现。事情平息下来，又过了十年左右。</p>
+
+<p>然后，在2012年，吴恩达和杰夫·迪恩使用人工神经网络来识别视频中的猫，人们对深度学习的兴趣激增。他们的步伐是几个琐碎(但有趣)的进步之一，这些进步让人们坐起来，关注深度学习。然后在2015年，Google的<strong> DeepMind </strong>团队打造了AlphaGo，这一次全世界都坐了起来。AlphaGo被证明在围棋比赛中击败了世界上最好的选手，这改变了一切。其他技术很快出现，<strong>深度强化学习</strong> ( <strong> DRL </strong>)就是其中之一，表明人类的表现可以在以前认为不可能的领域被持续击败。</p>
+
+<p class="mce-root">在向学生讲授神经网络时，教授们喜欢分享一个幽默而中肯的故事:<em>美国陆军在80年代进行了早期研究，使用人工神经网络来识别敌人的坦克。该算法在100%的时间里都有效，军队组织了一次大型演示来展示它的成功。不幸的是，演示中没有任何</em> <em>起作用，每一次测试都悲惨地失败了。回去分析后，陆军意识到ANN根本没有识别出敌人的坦克。相反，它已经在阴天拍摄的图像上进行了训练，它所做的只是识别云层。</em></p>
+
+<p class="mce-root">现状</p>
+
+<p>目前，至少在撰写本文时，我们仍然处于一个碎片和混乱的深度学习爆炸之中，我们作为开发人员的工作是搞清楚这一切。神经网络目前是许多DL技术的基础，其中一些我们将在本书中介绍。除此之外，似乎每天都有新的更强大的技术出现，研究人员争先恐后地去理解它们。现在，这种想法的冲击实际上可以阻止一项技术，因为研究人员花费越来越多的时间试图复制结果。这肯定是人工神经网络(深度学习)之前遭受的大部分早期停滞的原因。事实上，业内许多怀疑论者预测又会出现一个小问题。所以，你应该担心，读这本书值得吗？简短的回答是<em>是的</em>。最长的答案是<em>可能不会，</em>这一次情况非常不同，许多深度学习概念现在正在产生收入，这是一件好事。事实上，DL技术现在是一个证明赚钱的投资者放心，只会鼓励新的投资和增长。确切的增长幅度还有待观察，但机器和DL空间现在已经成熟，各行各业都有机会和增长。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>The present</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">那么，游戏行业还有可能再次抛弃游戏吗？这也不太可能，一般来说，因为许多最近的主要进展，如强化学习，是为了玩经典的雅达利游戏而建立的，并利用游戏作为问题。这只会鼓励更多利用游戏进行深度学习的研究。游戏平台Unity 3D已经对玩游戏的强化学习进行了重大投资。事实上，Unity正在开发一些强化学习方面的最前沿技术，我们稍后将与该平台合作。Unity确实使用C#来编写脚本，但使用Python来建立和训练深度学习模型。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>At present, at least at the time of writing, we are still in the midst of a deep learning explosion with debris and chaos, and it is our job as developers to make sense of all this. Neural networks are currently the basis for many DL technologies, several of which we will cover in this book. Except, it seems that every day, new and more powerful techniques emerge, and researchers scramble to make sense of them. Now, this rush of ideas can actually stall a technology, as researchers spend more and more time trying to replicate results. It is most certainly a cause for much of the earlier stalling that ANNs (deep learning) previously suffered from. In fact, many skeptics in the industry are predicting yet another hiccup. So, should you be worried, is reading this book worth it? The short answer is <em>yes</em>. The long answer is <em>probably not,</em> this time things are very different and many deep learning concepts are now generating revenue, which is a good thing. The fact that DL technology is now a proven money-earner puts investors at ease and only encourages new investment and growth. Exactly how much growth is yet to be seen, but the machine and DL space is now ripe with opportunity and growth from all sectors.</p>
+
+<p>So, is it still possible that the game industry will again turn its back on games? That is also unlikely, generally because many of the more recent major advances, like reinforcement learning, were built to play classic Atari games, and use games as the problem. This only encourages more research into deep learning using games. Unity 3D, the game platform, has made a major investment into reinforcement learning for playing games. In fact, Unity is developing some of the most cutting-edge technology in reinforcement learning and we will be working with this platform later. Unity does use C# for scripting but uses Python to build and train deep learning models.</p>
+
+<p class="mce-root">今后</p>
+
+<p class="mce-root">预测任何事情的未来都是极其困难的，但是如果你足够仔细地观察，你可能会对事情的发展有所了解。当然，拥有水晶球或训练有素的神经网络肯定会有所帮助，但很多流行的东西往往取决于下一个伟大的成就。如果没有任何预测能力，我们可以观察到深度学习研究和商业发展的当前趋势吗？嗯，现在的趋势是用ML生成DL；也就是说，一台机器本质上自己组装了一个神经网络，用来解决一个问题。谷歌目前正在投入相当多的资源来构建一项名为<strong> AutoML </strong>的技术，该技术可以生成一个神经网络推理模型，可以识别图像中的对象/活动，语音识别或手写识别等。经常被称为人工神经网络教父的Geoffery Hinton最近表明，复杂的深层网络系统可以分解为可重用的层。本质上，您可以使用从各种预训练模型中提取的层来构建网络。这肯定会演变成更有趣的技术，并很好地融入DL搜索，但也为计算的下一阶段让路。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>The future</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">现在，编程代码在某种程度上会变得太乏味、太困难、太昂贵。我们已经可以从离岸开发的爆炸中看到这一点，公司寻求最便宜的开发商。据估计，代码成本平均为每条线10-20美元，是的，每条<em>线</em>。那么，开发人员将在什么时候开始以ANN或<strong> TensorFlow </strong> ( <strong> TF </strong>)推理图的形式构建他们的代码呢？嗯，对于本书的大部分内容，我们开发的DL代码将向下生成一个TF推断图；一个大脑，如果你愿意的话。然后，我们将在本书的最后一章中使用这些大脑在我们的冒险游戏中构建智能。构建图形模型的技术正迅速成为主流。许多在线ML应用程序现在允许用户建立能够识别图像、语音和视频中的事物的模型，只需上传训练内容并按下按钮即可。这是否意味着应用程序在未来可以这样开发，不需要任何编程？答案是肯定的，而且已经在发生了。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>既然我们已经探索了深度学习的过去、现在和未来，我们可以在下一节开始深入研究更多的术语以及神经网络实际上是如何工作的。</p>
+
+<p>神经网络——基础</p>
+
+<p>神经网络或多层感知器的灵感来源于人脑和神经系统。我们神经系统的核心是计算机模拟图上方的神经元，它是一个感知机:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Neural networks – the foundation</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">感知器旁边的人类神经元的例子</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们大脑中的神经元收集输入，做一些事情，然后做出反应，就像计算机模拟的<strong>感知器</strong>。感知器接受一组输入，将它们相加，并通过激活函数传递它们。该激活功能确定是否发送输出，以及在激活时以什么级别发送输出。让我们仔细看看感知器，如下:</p>
+
+<div><img src="img/8455ea99-f7e7-4664-a948-86f3e3fb1811.png" style="width:27.58em;height:15.83em;"/></div>
+
+<p>感知器</p>
+
+<p>在上图的左侧，可以看到一组输入被推进，加上一个恒定的偏置。我们将在后面更深入地探讨这种偏见。然后，输入乘以一组单独的权重，并通过一个激活函数。在Python代码中，它和<kbd>Chapter_1_1.py</kbd>中的一样简单:</p>
+
+<div><img src="img/9734ac86-d48c-4952-9f17-e790fe5fe746.png" style="width:34.33em;height:17.75em;"/></div>
+
+<p>注意<kbd>weights</kbd>列表比<kbd>inputs</kbd>列表多了一个元素；也就是说要考虑偏差(<kbd>weights[0]</kbd>)。除此之外，你可以看到我们只是简单地循环通过<kbd>inputs</kbd>，将它们乘以指定的权重，然后加上偏差。然后将<kbd>activation</kbd>与<kbd>0.0</kbd>进行比较，如果大于0，我们输出。在这个非常简单的例子中，我们只是将值与0进行比较，这本质上是一个简单的阶跃函数。稍后我们将花一些时间反复重温各种激活功能；将这个简单的模型视为执行这些功能的重要部分。</p>
+
+<p>前面的示例代码块的输出是什么？看看您是否能弄明白，或者采取挑战性较小的路线，将其复制并粘贴到您最喜欢的Python编辑器中并运行。代码将按原样运行，不需要特殊的库。</p>
+
+<pre><br/>inputs = [1,2]<br/>weights = [1,1,1]<br/><br/>def perceptron_predict(inputs, weights):<br/>    activation = weights[0]<br/>    for i in range(len(inputs)-1):<br/>        activation += weights[i] * input<br/>    return 1.0 if activation &gt;= 0.0 else 0.0<br/><br/>print(perceptron_predict(inputs,weights))</pre>
+
+<p>在前面的代码示例中，我们正在查看输入数据的一个点<kbd>[1,2]</kbd>，这在DL中几乎没有用。DL模型通常需要数百、数千甚至数百万个数据点或输入数据集来有效地训练和学习。幸运的是，用一个感知器，我们需要的数据量不到10。</p>
+
+<p>What is the output from the preceding block of sample code? See whether you can figure it out, or take the less challenging route and copy and paste it into your favorite Python editor and run it. The code will run as is and requires no special libraries.</p>
+
+<p>In the previous code example, we are looking at one point of input data, <kbd>[1,2]</kbd>, which is hardly useful when it comes to DL. DL models typically require hundreds, thousands, or even millions of data points or sets of input data to train and learn effectively. Fortunately, with one perceptron, the amount of data we need is less than 10.</p>
+
+<p class="mce-root">让我们扩展前面的例子，通过打开您的首选Python编辑器并遵循以下步骤，通过<kbd>perceptron_predict</kbd>函数运行10个点的训练集:</p>
+
+<p class="mce-root">我们将在本书后面的大部分主要编码部分使用Visual Studio代码。无论如何，使用您喜欢的编辑器，但是如果您对Python相对陌生，请尝试一下代码。代码可用于Windows、macOS和Linux。</p>
+
+<p>在您喜欢的Python编辑器中输入以下代码块，或者从下载的源代码中打开<kbd>Chapter_1_2.py</kbd>:</p>
+
+<p>这段代码只是扩展了我们之前看到的例子。在这种情况下，我们测试在<kbd>train</kbd>列表中定义的多个数据点。然后我们只需遍历列表中的每一项，并打印出预测值。</p>
+
+<ol>
+
+<li class="mce-root">运行代码并观察输出。如果您不确定如何运行Python代码，请确保在继续学习之前先学习该课程。</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px">train = [[1,2],[2,3],[1,1],[2,2],[3,3],[4,2],[2,5],[5,5],[4,1],[4,4]]<br/>weights = [1,1,1]<br/><br/>def perceptron_predict(inputs, weights):<br/>    activation = weights[0]    <br/>    for i in range(len(inputs)-1):<br/>      activation += weights[i+1] * inputs[i]<br/>      return 1.0 if activation &gt;= 0.0 else 0.0<br/><br/>for inputs in train:<br/>  print(perceptron_predict(inputs,weights))</pre>
+
+<ol start="2">
+
+<li>您应该看到重复1.0s的输出，这基本上意味着所有输入值都被识别为相同。这不是很有用的东西。这是因为我们没有训练或调整输入权重来匹配已知的输出。我们需要做的是训练权重来识别数据，我们将在下一节中讨论如何做到这一点。</li>
+
+<li>Run the code and observe the output. If you are unsure of how to run Python code, be sure to take that course first before going any further.</li>
+
+</ol>
+
+<p>用Python训练感知器</p>
+
+<p class="mce-root">完美！我们创造了一个简单的感知器，它接受输入并输出，但实际上什么也不做。我们的感知机需要训练它的权重，以便实际做一些事情。幸运的是，有一个定义明确的方法，称为<strong>梯度下降</strong>，我们可以用它来调整每一个权重。再次打开Python编辑器，更新或输入以下代码，或从代码下载中打开<kbd>Chapter_1_3.py</kbd>:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Training a perceptron in Python</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title"><kbd>train_weights</kbd>函数是新的，将用于使用迭代误差最小化来训练感知器，并将成为我们在更复杂的网络中使用梯度下降的基础。这里发生了很多事情，所以我们将一点一点地分解它。首先，我们用下面这行代码将<kbd>weights</kbd>列表初始化为值<kbd>0.0</kbd>:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>然后我们开始在一个<kbd>for</kbd>循环中训练每个时期。一个<strong>历元</strong>本质上是一遍我们的训练数据。我们进行多次传递的原因是为了让我们的权重收敛到全局最小值，而不是局部最小值。在每个时期，使用以下等式训练权重:</p>
+
+<pre class="mce-root">def perceptron_predict(inputs, weights):<br/> activation = weights[0]<br/> for i in range(len(inputs)-1):<br/>  activation += weights[i + 1] * inputs[i]<br/> return 1.0 if activation &gt;= 0.0 else 0.0<br/><br/>def train_weights(train, learning_rate, epochs):<br/> weights = [0.0 for i in range(len(train[0]))]<br/> for epoch in range(epochs):<br/>  sum_error = 0.0<br/>  for inputs in train:<br/>   prediction = perceptron_predict(inputs, weights)<br/>   error = inputs[-1] - prediction<br/>   sum_error += error**2<br/>   weights[0] = weights[0] + learning_rate * error<br/>   for i in range(len(inputs)-1):<br/>    weights[i + 1] = weights[i + 1] + learning_rate * error * inputs[i]<br/>  print('&gt;epoch=%d, learning_rate=%.3f, error=%.3f' % (epoch, learning_rate, sum_error))<br/> return weights<br/><br/>train = [[1.5,2.5,0],[2.5,3.5,0],[1.0,11.0,1],[2.3,2.3,1],[3.6,3.6,1],[4.2,2.4,0],[2.4,5.4,0],[5.1,5.1,1],[4.3,1.3,0],[4.8,4.8,1]]<br/><br/>learning_rate = 0.1<br/>epochs = 10<br/>weights = train_weights(train, learning_rate, epochs)<br/>print(weights)</pre>
+
+<p><img class="fm-editor-equation" src="img/cc2e7fbe-9265-435e-bf04-279555c2ca09.png" style="width:30.25em;height:1.33em;"/></p>
+
+<pre class="mce-root">weights = [0.0 for i in range(len(train[0]))]</pre>
+
+<p>请考虑以下情况:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/6b8441cd-52a3-48a8-857d-e9280eb3ad9a.png" style="width:1.00em;height:0.83em;"/> =权重<br/> <img class="fm-editor-equation" src="img/e022d5c3-8424-4f64-8a6c-eec5b51c0975.png" style="width:6.08em;height:1.17em;"/> =感知器学习<br/> <img class="fm-editor-equation" src="img/f83850ef-a8ce-4917-8535-66c37dad9d62.png" style="width:4.25em;height:1.17em;"/>的速率=标注的训练值<br/> <img class="fm-editor-equation" src="img/c42999b3-45b8-4275-a516-20131ec52ec0.png" style="width:4.67em;height:1.17em;"/> =感知器返回的值<br/> <img class="fm-editor-equation" src="img/d9d34cbd-58a9-4f2a-b685-5c0997c5c4fc.png" style="width:2.67em;height:0.75em;"/> = <img class="fm-editor-equation" src="img/5937c8c0-55a8-459d-aa32-fe722b51b262.png" style="width:3.67em;height:1.00em;"/> - <img class="fm-editor-equation" src="img/3ec50e08-1a20-4317-b539-4bb85fc26986.png" style="width:4.67em;height:1.17em;"/></p>
+
+<p>偏差以类似的方式训练，但请记住它是<kbd>weight</kbd>。还要注意我们现在如何在<kbd>train</kbd>列表中标记我们的数据点，用<kbd>0.0</kbd>或<kbd>1.0</kbd>作为结束值。值<kbd>0.0</kbd>表示<em>不匹配</em>，而值<kbd>1.0</kbd>表示<em>完全匹配</em>，如以下代码摘录所示:</p>
+
+<p class="mce-root">这种数据标记在训练神经网络中很常见，被称为<strong>监督训练</strong>。我们将在后面的章节中探讨其他无监督和半监督的训练方法。如果运行上述代码，您将看到以下输出:</p>
+
+<p>示例训练运行的示例输出</p>
+
+<pre>train = [[1.5,2.5,0.0],[2.5,3.5,0.0],[1.0,11.0,1.0],[2.3,2.3,1.0],[3.6,3.6,1.0],[4.2,2.4,0.0],[2.4,5.4,0.0],[5.1,5.1,1.0],[4.3,1.3,0.0],[4.8,4.8,1.0]]</pre>
+
+<p>现在，如果你有一些以前的ML经验，你会立即意识到训练在一些局部最小值附近摇摆不定，使我们的训练无法收敛。在你的DL职业生涯中，你可能会多次遇到这种类型的抖动，所以了解如何修复它是有帮助的。</p>
+
+<div><img src="img/2ce90bda-11c8-4219-b997-831957fcfed7.png" style="width:36.75em;height:14.58em;"/></div>
+
+<p>在这种情况下，我们的问题可能是选择<kbd>activation</kbd>函数，您可能还记得，这只是一个简单的阶跃函数。我们可以通过输入一个新的函数来解决这个问题，这个函数叫做<strong>整流线性单元</strong> ( <strong> ReLU </strong>)。下图并列显示了<kbd>step</kbd>和<kbd>ReLU</kbd>功能的示例:</p>
+
+<p>step和ReLU激活函数的比较</p>
+
+<p>为了更改激活功能，请打开前面的代码清单，并按照以下步骤操作:</p>
+
+<div><img src="img/d11b04f2-d5cc-4206-8b6c-05ef1427b83c.png" style="width:53.92em;height:16.08em;"/></div>
+
+<p>找到以下代码行:</p>
+
+<p class="mce-root">修改它，就像这样:</p>
+
+<ol>
+
+<li class="mce-root">如果激活函数的值大于0，那么激活函数与其自身相乘的细微差别就是<kbd>ReLU</kbd>函数的实现。是的，看起来很容易。</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px">return 1.0 if activation &gt;= 0.0 else 0.0</pre>
+
+<ol start="2">
+
+<li>运行代码并观察输出的变化。</li>
+
+</ol>
+
+<pre style="padding-left: 60px">return 1.0 if activation * (activation&gt;0) &gt;= 0.0 else 0.0</pre>
+
+<ol start="3">
+
+<li>That subtle difference in multiplying the activation function by itself if its value is greater than 0 is the implementation of the <kbd>ReLU</kbd> function. Yes, it is that deceptively easy.</li>
+
+<li>Run the code and observe the change in output.</li>
+
+</ol>
+
+<p class="mce-root">当您运行代码时，这些值会快速收敛并保持稳定。这是我们训练中的一个巨大进步，也是将激活功能改为<kbd>ReLU</kbd>的一个原因。原因是，现在我们的感知器权重可以更慢地收敛到全局最大值，而以前它们只是通过使用<kbd>step</kbd>函数在局部最小值附近摇摆。在本书的课程中，我们还会测试很多其他的激活功能。在下一节中，我们来看看当我们开始将我们的感知器组合成多层时，事情是如何变得更加复杂的。</p>
+
+<p class="mce-root">TF中的多层感知器</p>
+
+<p>到目前为止，我们一直在看一个简单的单感知器的例子，以及如何训练它。这对于我们的小数据集来说效果很好，但是随着输入数量的增加，我们网络的复杂性也会增加，这也会影响到数学。下图显示了一个多层感知器，或者我们通常所说的ANN:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Multilayer perceptron in TF</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">多层感知器或人工神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在图中，我们看到一个网络，有一个输入层、一个隐藏层和一个输出层。这些输入现在被神经元的输入层共享。第一层神经元处理输入，输出结果由隐层处理，以此类推，直到最后到达输出层。</p>
+
+<div><img src="img/b188eaf0-7904-4c2b-9580-efb1446135d7.png" style="width:26.08em;height:18.58em;"/></div>
+
+<p>多层网络可能会变得非常复杂，这些模型的代码通常被Keras、PyTorch等高级接口抽象掉。这些工具对于快速探索网络架构和理解DL概念非常有用。然而，当涉及到游戏中的关键性能时，它确实需要在TensorFlow或支持低级数学运算的API中构建模型。在本书中，我们将从Keras(一个更高级的SDK)切换到TensorFlow，然后再回到DL的介绍性章节。这将让您看到使用任一界面之间的差异和相似之处。</p>
+
+<p>Unity ML-Agents最初是用Keras原型开发的，但后来发展到TensorFlow。可以肯定的是，Unity的团队以及其他人这样做是出于性能的原因，在某种程度上也是为了控制。使用TensorFlow类似于编写自己的着色器。虽然编写着色器和TF代码相当困难，但定制自己的渲染和现在学习的能力将使你的游戏独一无二，脱颖而出。</p>
+
+<p>接下来有一个很棒的多层感知器TensorFlow例子供你参考，清单<kbd>Chapter_1_4.py</kbd>。为了使用TensorFlow运行此代码，请遵循以下步骤:</p>
+
+<p>在下一节之前，我们不会讨论张量流的基础知识。这是为了在我们让你厌烦细节之前，你能先看到TF的行动。</p>
+
+<p>首先，在Windows或macOS上的Python 3.5/3.6窗口中使用以下命令安装TensorFlow。您还可以使用具有管理员权限的Anaconda提示符:</p>
+
+<p>确保安装适合默认Python环境的TensorFlow。我们将在以后考虑创建更结构化的虚拟环境。如果你不确定什么是Python虚拟环境，那就离开这本书，马上去上Python课程。</p>
+
+<ol start="1">
+
+<li>在这个练习中，我们正在加载<strong> MNIST </strong>手写数字数据库。如果你读过任何关于ML和DL的东西，你很可能已经看过或听过这个数据集。如果你还没有，只需快速谷歌一下MNIST就能了解这些数字的样子。</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px"><strong>pip install tensorflow</strong> <br/>OR <br/><strong>conda install tensorflow</strong>    //using Anaconda</pre>
+
+<ol start="2">
+
+<li>Make sure you install TensorFlow suited to the default Python environment. We will worry about creating more structured virtual environments later. If you are not sure what a Python virtual environment is, step away from the book and take a course in Python right away.</li>
+
+</ol>
+
+<p>In this exercise, we are loading the <strong>MNIST</strong> handwritten digits database. If you have read anything at all about ML and DL, you have most likely seen or heard about this dataset already. If you haven't, just quickly Google <em>MNIST</em> to get a sense of what these digits look like.</p>
+
+<p class="mce-root">下面的Python代码来自清单<kbd>Chapter_1_4.py</kbd>,每个部分都在下面的步骤中进行了解释:</p>
+
+<p class="mce-root">我们从加载<kbd>mnist</kbd>训练集开始。<kbd>mnist</kbd>数据集是28 x 28像素图像的集合，显示了数字0-9的手绘表示，或者我们将称之为10个类别:</p>
+
+<ol start="3">
+
+<li>然后我们将<kbd>tensorflow</kbd>库作为<kbd>tf</kbd>导入。接下来，我们设置一些参数，我们将在以后使用。注意我们是如何定义输入和隐藏参数的:</li>
+
+</ol>
+
+<pre style="padding-left: 60px">from tensorflow.examples.tutorials.mnist import input_data<br/>mnist = input_data.read_data_sets("/tmp/data/", one_hot=True)</pre>
+
+<ol start="4">
+
+<li>We start by loading the <kbd>mnist</kbd> training set. The <kbd>mnist</kbd> dataset is a collection of 28 x 28 pixel images showing hand-drawn representations of the digits 0-9, or what we will refer to as 10 classes:</li>
+
+</ol>
+
+<pre class="mce-root" style="padding-left: 60px">import tensorflow as tf<br/># Parameters<br/>learning_rate = 0.001<br/>training_epochs = 15<br/>batch_size = 100<br/>display_step = 1<br/># Network Parameters<br/>n_hidden_1 = 256 # 1st layer number of neurons<br/>n_hidden_2 = 256 # 2nd layer number of neurons<br/>n_input = 784 # MNIST data input (img shape: 28*28)<br/>n_classes = 10 # MNIST total classes (0-9 digits)</pre>
+
+<ol start="5">
+
+<li class="mce-root">Then we import the <kbd>tensorflow</kbd> library as <kbd>tf</kbd>. Next, we set a number of parameters we will use later. Note how we are defining the inputs and hidden parameters as well:</li>
+
+</ol>
+
+<pre class="mce-root" style="color: black;padding-left: 60px"># tf Graph input<br/>X = tf.placeholder("float", [None, n_input])<br/>Y = tf.placeholder("float", [None, n_classes])<br/><br/># Store layers weight &amp; bias<br/>weights = {<br/> 'h1': tf.Variable(tf.random_normal([n_input, n_hidden_1])),<br/> 'h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2])),<br/> 'out': tf.Variable(tf.random_normal([n_hidden_2, n_classes]))<br/>}<br/>biases = {<br/> 'b1': tf.Variable(tf.random_normal([n_hidden_1])),<br/> 'b2': tf.Variable(tf.random_normal([n_hidden_2])),<br/> 'out': tf.Variable(tf.random_normal([n_classes]))<br/>}</pre>
+
+<p class="mce-root">接下来，我们用<kbd>tf.placeholder</kbd>设置几个TensorFlow占位符，以类型<kbd>'float'</kbd>保存输入和类的数量。然后我们使用<kbd>tf.Variable</kbd>创建并初始化变量，首先是权重，然后是偏差。在变量声明中，我们使用<kbd>tf.random_normal</kbd>将正态分布的数据初始化为维数等于<kbd>n_input</kbd>和<kbd>n_hidden_1</kbd>的2D矩阵或张量，用随机分布的数据填充张量:</p>
+
+<p class="mce-root">然后，我们通过乘以每个层操作的权重和偏差来创建模型。我们在这里所做的基本上是把我们的激活方程转换成一个矩阵/方程张量。现在，我们使用矩阵/张量乘法，在一次操作中执行多次传递，而不是执行一次传递。这允许我们一次运行多个训练图像或数据集，这是一种我们用来更好地概括学习的技术。</p>
+
+<ol start="6">
+
+<li class="mce-root">对于我们神经网络中的每一层，我们使用<kbd>tf.add</kbd>和<kbd>tf.matmul</kbd>将矩阵乘法运算添加到我们通常所说的<strong>张量流推断图</strong>中。您可以从我们创建的代码中看到，我们的模型有两个隐藏层和一个输出层:</li>
+
+</ol>
+
+<pre class="mce-root" style="padding-left: 60px"># Create model<br/>def multilayer_perceptron(x):<br/> # Hidden fully connected layer with 256 neurons<br/> layer_1 = tf.add(tf.matmul(x, weights['h1']), biases['b1'])<br/> # Hidden fully connected layer with 256 neurons<br/> layer_2 = tf.add(tf.matmul(layer_1, weights['h2']), biases['b2'])<br/> # Output fully connected layer with a neuron for each class<br/> out_layer = tf.matmul(layer_2, weights['out']) + biases['out']<br/> return out_layer<br/><br/># Construct model<br/>logits = multilayer_perceptron(X)</pre>
+
+<ol start="7">
+
+<li>Then we create the model by multiplying the weights and biases for each layer operation. What we are doing here is essentially converting our activation equation into a matrix/tensor of equations. Now instead of doing a single pass, we perform multiple passes in one operation using matrix/tensor multiplication. This allows us to run multiple training images or sets of data at a time, which is a technique we use to better generalize learning.</li>
+
+</ol>
+
+<p style="padding-left: 60px">For each layer in our neural network, we use <kbd>tf.add</kbd> and <kbd>tf.matmul</kbd> to add matrix multiplication operations to what we commonly call a <strong>TensorFlow inference graph</strong>. You can see by the code we are creating that there are two hidden layers and one output layer for our model:</p>
+
+<pre class="mce-root" style="padding-left: 60px"># Define loss and optimizer<br/>loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y))<br/>optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)<br/>train_op = optimizer.minimize(loss_op)</pre>
+
+<p class="mce-root">接下来，我们定义一个<kbd>loss</kbd>函数和优化器。<kbd>loss_op</kbd>用于计算网络的总损耗。然后<kbd>AdamOptimizer</kbd>是根据<kbd>loss</kbd>或<kbd>cost</kbd>功能进行优化。我们稍后将详细解释这些术语，所以如果事情仍然模糊不清，请不要担心:</p>
+
+<p class="mce-root">然后，我们通过创建并运行一个新会话来初始化一个新的TensorFlow会话。我们再次使用历元迭代训练方法来循环每批图像。请记住，整批图像同时通过网络，而不仅仅是一张图像。然后，我们循环每个时期的每批图像，并优化(反向传播和训练)成本，或者最小化成本，如果您愿意的话:</p>
+
+<ol start="8">
+
+<li>然后，我们输出每个时期运行的结果，显示网络如何最小化误差:</li>
+
+</ol>
+
+<pre class="mce-root" style="padding-left: 60px"># Initializing the variables<br/>init = tf.global_variables_initializer()<br/>with tf.Session() as sess:<br/> sess.run(init)<br/> # Training cycle<br/> for epoch in range(training_epochs):<br/>   avg_cost = 0.<br/>   total_batch = int(mnist.train.num_examples/batch_size)<br/>   # Loop over all batches<br/>   for i in range(total_batch):<br/>     batch_x, batch_y = mnist.train.next_batch(batch_size)<br/>     # Run optimization op (backprop) and cost op (to get loss value)<br/>     _, c = sess.run([train_op, loss_op], feed_dict={X: batch_x,Y: batch_y})<br/>     # Compute average loss<br/>     avg_cost += c / total_batch</pre>
+
+<ol start="9">
+
+<li>接下来，我们实际使用前面的代码运行预测，并使用我们之前在<kbd>logits</kbd>模型上选择的优化器确定正确值的百分比:</li>
+
+</ol>
+
+<pre class="mce-root" style="padding-left: 60px"># Display logs per epoch step<br/> if epoch % display_step == 0:<br/> print("Epoch:", '%04d' % (epoch+1), "cost={:.9f}".format(avg_cost))<br/> print("Optimization Finished!")</pre>
+
+<ol start="10">
+
+<li>最后，我们计算并输出我们模型的<kbd>accuracy</kbd>。如果你做这个练习，不要只考虑模型有多精确，而是要想办法提高精确度。</li>
+
+</ol>
+
+<pre class="mce-root" style="padding-left: 60px"># Test model<br/> pred = tf.nn.softmax(logits) # Apply softmax to logits<br/> correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(Y, 1))</pre>
+
+<p class="mce-root">在前面的参考示例中有很多内容，我们将在接下来的小节中进一步分解。希望你现在能明白事情会变得多么复杂。这就是为什么在本书的大部分基础章节中，我们将首先教授Keras的概念。Keras是一个强大而简单的框架，它将帮助我们立即构建复杂的网络，并使我们的教学和您的学习变得更加简单。我们还将提供在TensorFlow中开发的重复示例，并在本书中展示一些关键差异。</p>
+
+<ol start="11">
+
+<li>在下一节，我们将解释张量流的基本概念，它是什么，以及我们如何使用它。</li>
+
+</ol>
+
+<pre class="mce-root" style="padding-left: 60px"># Calculate accuracy<br/> accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))<br/> print("Accuracy:", accuracy.eval({X: mnist.test.images, Y: mnist.test.labels}))</pre>
+
+<ol start="12">
+
+<li>张量流基础</li>
+
+</ol>
+
+<p><strong> TensorFlow </strong> ( <strong> TF </strong>)正迅速成为驱动许多DL应用的技术。还有其他API，比如Theano，但它是最吸引人的，也是最适用于我们的。总体框架，比如Keras，提供了部署TF或Theano模型的能力。这对于构建原型和快速验证概念非常有用，但是，作为一名游戏开发人员，您知道对于游戏来说，最主要的需求总是性能和控制。与Keras等任何高级框架相比，TF提供了更好的性能和更多的控制。换句话说，要成为一名认真的DL开发人员，你可能需要并且想要学习TF。</p>
+
+<p>TF，顾名思义，就是关于张量的。张量是一个数学概念，它描述了一组以<em> n </em>维组织的数据，其中<em> n </em>可以是1、2 x 2、4 x 4 x 4等等。一维张量将描述一个单一的数字，比如说<img class="fm-editor-equation" src="img/6fa7dde2-1b00-44af-8f4c-041e252a6be9.png" style="width:1.75em;height:1.00em;"/>，一个2 x 2张量将是<img class="fm-editor-equation" src="img/7077b58d-f2f0-4f9e-843e-fe60c0e44cfe.png" style="width:4.50em;height:2.42em;"/>或者你可以称之为矩阵。一个3 x 3 x 3的张量可以描述一个立方体的形状。本质上，你在矩阵上应用的任何运算都可以应用到张量上，TF中的所有东西都是张量。作为一个有游戏开发背景的人，当你第一次开始使用张量时，把它们想象成一个矩阵或向量通常是有帮助的。<br/> <br/>张量无非就是多维数组，向量，或者矩阵，下面的图表中有很多例子:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>TensorFlow Basics</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">多种形式的张量(占位符)</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>让我们回过头来打开<kbd>Chapter_1_4.py</kbd>并遵循下面的步骤，以便更好地理解TF示例是如何运行的:</p>
+
+<p class="mce-root">首先，再次检查顶部，特别注意占位符和变量的声明位置；下面的代码片段再次显示了这一点:</p>
+
+<p class="mce-root"><kbd>placeholder</kbd>用于定义输入和输出张量。<kbd>Variable</kbd>设置一个可变张量，可以在TF会话或程序执行时对其进行操作。在本例中，一个名为<kbd>random_normal</kbd>的助手方法用一个正态分布的数据集填充隐藏的权重。还有其他像这样的辅助方法可以使用；查看文档了解更多信息。</p>
+
+<p>接下来，我们将<kbd>logits</kbd>模型构建为一个名为<kbd>multilayer_perceptron</kbd>的函数，如下所示:</p>
+
+<div><img src="img/971d6c2e-1fa2-4e56-8d3b-7410e1ab3118.png" style="width:43.08em;height:28.08em;"/></div>
+
+<p>在函数内部，我们看到三个网络层的定义，两个输入和一个输出。通过使用add或<kbd>+</kbd>函数将<kbd>matmul (x, weights['h1'])</kbd>和<kbd>biases['b1']</kbd>的结果相加来构建每一层。<kbd>Matmul</kbd>对每个权重乘以输入<em> x </em>进行简单的矩阵乘法运算。回想我们的第一个例子感知器；这相当于将我们所有的权重乘以输入，然后加上偏差。注意合成张量<kbd>(layer_1, layer_2)</kbd>是如何被用作下一层的输入的。</p>
+
+<p>跳到第50行左右，注意我们是如何获取对<kbd>loss</kbd>、<kbd>optimizer</kbd>和<kbd>initialization</kbd>函数的引用的:</p>
+
+<ol>
+
+<li class="mce-root">First, examine the top section again and pay special attention to where the placeholder and variable is declared; this is shown again in the following snippet:</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px">tf.placeholder("float", [None, n_input])<br/>...<br/>tf.Variable(tf.random_normal([n_input, n_hidden_1]))</pre>
+
+<ol start="2">
+
+<li>重要的是要明白，我们存储的是对函数的引用，而不是执行它们。损失和优化器函数已经有了一定的深度，但是还要特别注意<kbd>global_variables_initalizer()</kbd>函数。这个函数是初始化所有变量的地方，我们需要首先运行这个函数。</li>
+
+<li class="mce-root">接下来，向下滚动到会话初始化的开头并启动，如下所示:</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px">def multilayer_perceptron(x):<br/>  layer_1 = <strong>tf.add</strong>(<strong>tf.matmul</strong>(x, weights['h1']), biases['b1'])<br/>  layer_2 = <strong>tf.add</strong>(<strong>tf.matmul</strong>(layer_1, weights['h2']), biases['b2'])<br/>  out_layer = <strong>tf.matmul</strong>(layer_2, weights['out']) <strong>+</strong> biases['out']<br/>  return out_layer<br/><br/>logits = multilayer_perceptron(X)</pre>
+
+<ol start="4">
+
+<li>我们在TF中把<kbd>Session</kbd>构造成一个执行容器，也就是所谓的图。这是一个描述节点和连接的数学图，与我们正在模拟的网络没有什么不同。TF中的所有事情都需要发生在一个会话中。然后我们用<kbd>run</kbd>运行第一个函数<kbd>(init)</kbd>。</li>
+
+<li>因为我们已经详细介绍了培训，所以我们要看的下一个元素是由以下代码执行的下一个函数<kbd>run</kbd>:</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px"><strong>loss_op</strong> = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y))<br/><strong>optimizer</strong> = tf.train.AdamOptimizer(learning_rate=learning_rate)<br/><strong>train_op</strong> = optimizer.minimize(loss_op)<br/><strong>init</strong> = tf.global_variables_initializer()</pre>
+
+<p class="mce-root">在<kbd>run</kbd>函数中发生了很多事情。我们使用当前的<kbd>feed_dict</kbd>字典作为输入，作为一组输入训练和损失函数<kbd>train_op</kbd>和<kbd>loss_op</kbd>。由此产生的产值<kbd>c</kbd>，等于总成本。注意，输入功能集被定义为<kbd>train_op</kbd>然后是<kbd>loss_op</kbd>。在这种情况下，顺序被定义为<kbd>train</kbd> / <kbd>loss</kbd>，但是如果您愿意，也可以反过来。您还需要反转输出值，因为输出顺序与输入顺序相匹配。</p>
+
+<ol start="6">
+
+<li>代码的其余部分已经详细定义了，但是在用TF构建模型时，理解一些关键的区别是很重要的。正如你所看到的，对我们来说，快速建立复杂的神经网络是相对容易的。然而，我们仍然缺少一些关键的知识，这些知识将在以后构建更复杂的网络时有用。我们一直缺少的是用于训练神经网络的基础数学，我们将在下一节中探讨这一点。</li>
+
+<li>Next, scroll down to the start of the session initialization and start, as follows:</li>
+
+</ol>
+
+<pre style="padding-left: 60px">with tf.<strong>Session</strong>() as sess:<br/>  sess.<strong>run</strong>(<strong>init</strong>)</pre>
+
+<ol start="8">
+
+<li>用反向传播训练神经网络</li>
+
+<li>计算神经元的激活，前向部分，或者我们所说的<strong>前馈传播</strong>，处理起来相当简单。我们现在遇到的复杂性是通过网络训练错误。当我们现在训练网络时，我们从最后一个输出层开始，并确定总误差，就像我们对单个感知器所做的那样，但现在我们需要对输出层上的所有误差求和。然后，我们需要使用这个值通过网络反向传播误差，根据每个权重对总误差的贡献来更新每个权重。在一个有数千或数百万个权重的网络中，理解单个权重的贡献可能会相当复杂，幸好有微分和链式法则的帮助。在我们开始复杂的数学之前，我们首先需要讨论<kbd>Cost</kbd>函数，以及我们如何在下一节计算误差。</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px">_, c = sess.<strong>run</strong>([<strong>train_op</strong>, <strong>loss_op</strong>], feed_dict={X: batch_x,Y: batch_y})</pre>
+
+<ol start="10">
+
+<li>虽然反向传播的数学很复杂，可能令人生畏，但在某些时候，你会想要或需要很好地理解它。但是，出于本书的目的，您可以根据需要省略或重新阅读这一部分。我们在后面章节中开发的所有网络将自动为我们处理反向传播。当然，你也不能逃避数学；在深度学习中无处不在。</li>
+
+</ol>
+
+<p>成本函数</p>
+
+<p class="mce-root"><kbd>Cost</kbd>函数描述了我们整个网络中一个批次的平均误差总和，通常由以下等式定义:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Training neural networks with backpropagation</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title"><img class="fm-editor-equation" src="img/17490b69-202e-4ae1-bdb0-45b96d921c7f.png" style="width:13.08em;height:1.42em;"/></h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>输入定义为每个重量，输出是我们在加工批次中遇到的总平均成本。把这个成本想象成误差的平均总和。现在，我们的目标是将该函数或误差成本降至最低。在前面的几个例子中，我们已经看到一种叫做<strong>梯度下降</strong>的技术被用来最小化这个成本函数。梯度下降的工作原理是对<kbd>Cost</kbd>函数求微分，并确定每个权重的梯度。然后，对于每一个权重，或者你可以称之为维度，算法会根据计算出的最小化<kbd>Cost</kbd>函数的梯度来改变权重。</p>
+
+<p>在我们进入解释微分的复杂数学之前，让我们看看梯度下降在二维中是如何工作的，如下图所示:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>The Cost function</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">寻找全局最小值的梯度下降示例</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>更简单地说，算法所做的只是试图在缓慢渐进的步骤中找到最小值。我们使用小的步长来避免超过最小值，正如你之前看到的会发生的(记得抖动)。这就是术语<strong>学习率</strong>的由来，它决定了我们想要训练的速度。训练越慢，你对自己的结果越有信心，但通常需要花费时间。另一种选择是使用更高的学习率更快地训练，但是，正如你现在看到的，可能很容易超过任何全局最小值。</p>
+
+<p class="CDPAlignCenter CDPAlign">梯度下降是我们将讨论的最简单的形式，但是请记住，我们还将探索其他优化算法的几种高级变体。例如，在TF的例子中，我们使用了<kbd>AdamOptimizer</kbd>来最小化<kbd>Cost</kbd>函数，但是还有其他一些变化。不过现在，我们将在下一节集中讨论如何计算<kbd>Cost</kbd>函数的梯度，并理解梯度下降反向传播的基础知识。</p>
+
+<p>偏导数和链式法则</p>
+
+<p>在我们进入计算每个权重的细节之前，让我们回顾一下微积分。如果你还记得你最喜欢的数学课——微积分，你可以通过求导来确定函数上任意一点的变化斜率。微积分复习器如下图所示:</p>
+
+<div><img src="img/c32e3474-a1e4-4d14-9c54-0c9cb5b6d698.png" style="width:43.17em;height:26.83em;"/></div>
+
+<p>微积分基本方程述评</p>
+
+<p>在图中，我们有一个非线性函数，<strong> f </strong>，它描述了蓝线的方程。我们可以通过对f '求导并求解来确定任意点的斜率(变化率)。回想一下，我们还可以使用这个新函数来确定局部和全局最小值或最大值的函数，如图所示。简单的微分允许我们求解一个变量，但我们需要求解多个权重，因此我们将使用偏导数或对一个变量进行微分。</p>
+
+<p>Gradient descent is the simplest form we will talk about, but keep in mind that there are also several advanced variations of other optimization algorithms we will explore. In the TF example, for instance, we used <kbd>AdamOptimizer</kbd> to minimize the <kbd>Cost</kbd> function, but there are several other variations. For now, though, we will focus on how to calculate the gradient of the <kbd>Cost</kbd> function and understand the basics of backpropagation with gradient descent in the next section.</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Partial differentiation and the chain rule</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">你可能还记得，偏导数允许我们推导一个变量相对于其他变量的关系，然后我们把其他变量当作常数。让我们回到我们的<kbd>Cost</kbd>函数，看看如何区分单个重量:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p><em> <img class="fm-editor-equation" src="img/540eed90-acc5-4e90-9e5f-5a4a2da7a90f.png" style="width:1.00em;height:1.25em;"/> </em>是我们下面所描述的成本函数:</p>
+
+<div><img src="img/9c72438b-cc34-4723-9e40-cee35840839a.png" style="width:29.25em;height:29.67em;"/></div>
+
+<p><img class="fm-editor-equation" src="img/de02ffdb-0412-45e9-bdc9-d1b72f38f618.png" style="width:15.25em;height:1.33em;"/></p>
+
+<p>我们可以根据单个可变权重来区分该函数，如下所示:</p>
+
+<p class="mce-root"><img class="fm-editor-equation" src="img/80566a95-aafa-43b8-ba8a-9bc0d258169e.png" style="width:7.50em;height:2.75em;"/></p>
+
+<p><img class="fm-editor-equation" src="img/cc8b62c3-a3dd-4c94-9ff8-fc11d9a2a622.png" style="width:7.08em;height:2.58em;"/></p>
+
+<ol>
+
+<li>如果我们将所有这些偏导数收集在一起，我们将得到<kbd>Cost</kbd>函数的矢量梯度<img class="fm-editor-equation" src="img/0fb9abc8-223f-4fa3-96a3-b025e13774ac.png" style="width:1.00em;height:1.25em;"/>，表示如下:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/50074553-fd8d-432d-9d74-20562d73b5d4.png" style="width:8.75em;height:11.00em;"/></p>
+
+<ol start="2">
+
+<li>这个梯度定义了一个矢量方向，我们想要取反它，并使用它来最小化<kbd>Cost</kbd>函数。在我们之前的例子中，这个向量有超过13，000个分量。这些对应于我们需要优化的网络中超过13，000个权重。为了计算梯度，我们需要结合很多偏导数。幸运的是，微积分中的链式法则可以帮助我们，大大简化数学。回想一下，链规则是由以下内容定义的:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/405bae41-bd8e-43fa-b46c-1be1b4d0657d.png" style="width:8.00em;height:2.83em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign">现在，我们可以使用链式法则定义单个重量的梯度，如下所示:</p>
+
+<ol start="3">
+
+<li><img class="fm-editor-equation" src="img/95d4ef61-83e7-4680-b338-2637ad32a9df.png" style="width:6.92em;height:3.00em;"/></li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/237b0114-cc6f-4cb2-b9ca-f527d882243a.png" style="width:14.33em;height:2.92em;"/></p>
+
+<ol start="4">
+
+<li>这里，<img class="fm-editor-equation" src="img/53d1990c-21bb-4d13-97a4-d69c40d87558.png" style="width:0.58em;height:1.50em;"/>代表输入数，<img class="fm-editor-equation" src="img/d7bf0016-5adf-4f73-88c6-a93ebacf1caa.png" style="width:0.58em;height:1.42em;"/>代表神经元位置。请注意，我们现在需要对给定神经元的激活函数<em> a </em>求偏导数，这再次总结如下:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/4ed6a86d-bbe9-435e-8490-8e05e0d56102.png" style="width:10.42em;height:4.00em;"/></p>
+
+<ol start="5">
+
+<li>上标符号<img class="fm-editor-equation" src="img/674a1fc1-17c6-4627-a679-e4a020bc511c.png" style="width:1.17em;height:1.25em;"/>表示当前层，<img class="fm-editor-equation" src="img/7768eb39-9ec9-40af-b61a-bd226e3544ca.png" style="width:2.58em;height:1.08em;"/>表示前一层。<img class="fm-editor-equation" src="img/b73cb21f-571d-4923-a76b-f6227090187d.png" style="width:0.75em;height:0.92em;"/>表示前一层的输入或输出。<img class="fm-editor-equation" src="img/5b84bf4a-5db8-43b0-bcb0-d8a9531484ee.png" style="width:0.92em;height:0.92em;"/>表示激活功能，回想一下我们之前为该角色使用了<kbd>Step</kbd>和<kbd>ReLU</kbd>功能。</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign">然后，我们求这个函数的偏导数，就像这样:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/2b7fef57-c426-4338-b802-fe934fdf278a.png" style="width:16.75em;height:3.75em;"/></p>
+
+<ol start="6">
+
+<li>为方便起见，我们定义如下:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/e26b112d-5a95-468a-9e28-291bcd88df10.png" style="width:6.33em;height:3.83em;"/></p>
+
+<p style="padding-left: 60px">在这一点上，事情可能看起来比实际复杂得多。试着理解符号的所有微妙之处，记住我们所看到的本质上是激活相对于<kbd>Cost</kbd>函数的偏导数。额外的符号所做的只是让我们能够索引个体权重、神经元和层。我们可以这样表达:</p>
+
+<ol start="7">
+
+<li><img class="fm-editor-equation" src="img/700a7c49-24b2-4c81-81ac-1660a520c017.png" style="width:12.67em;height:3.42em;"/></li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign">同样，我们所做的只是为第<img class="fm-editor-equation" src="img/625ab8a1-2e70-4937-95b8-1ac620c209c5.png" style="width:0.50em;height:1.33em;"/> <sup>个</sup>输入、<img class="fm-editor-equation" src="img/aa2eb4de-35af-441a-b21a-eedb4d796372.png" style="width:0.50em;height:1.17em;"/> <sup>个</sup>神经元和第<img class="fm-editor-equation" src="img/3fb99529-b043-4057-8400-e4d5924454df.png" style="width:0.58em;height:1.00em;"/>层的权重定义梯度(<img class="fm-editor-equation" src="img/c7be7304-2015-4fb0-bce6-d80275794496.png" style="width:1.25em;height:1.42em;"/>)。随着梯度下降，我们需要使用前面的基本公式反向传播对权重的调整。对于输出层(最后一层)，现在可以总结如下:</p>
+
+<p style="padding-left: 60px"><img class="fm-editor-equation" src="img/a7244943-32ae-4e8c-8a70-5bdef000f42c.png" style="width:23.75em;height:3.25em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign">对于内部层或隐藏层，等式为:</p>
+
+<p class="mce-root"><img class="fm-editor-equation" src="img/018674a5-8d61-42fd-a036-427bf65bab66.png" style="width:17.42em;height:3.92em;"/></p>
+
+<p class="mce-root">再对一般方程进行一些替换和处理，我们最终得到了这个结果:</p>
+
+<ol start="8">
+
+<li><img class="fm-editor-equation" src="img/6318bfc0-51f2-486e-ab6e-c87bc93d5e67.png" style="width:33.33em;height:3.75em;"/></li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign">这里，<em>f’</em>表示激活函数的导数。</p>
+
+<ol start="9">
+
+<li>上述等式允许我们使用以下程序运行网络并反向传播误差:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign">首先从输入层开始计算每个层的激活<img class="fm-editor-equation" src="img/12a18170-2428-4904-bbc5-71fcfc00cffd.png" style="width:1.17em;height:1.08em;"/>和<img class="fm-editor-equation" src="img/c475dd78-297d-41ea-99f8-582ae07a5009.png" style="width:1.17em;height:1.17em;"/>并向前传播。</p>
+
+<ol start="10">
+
+<li>然后，我们使用<img class="fm-editor-equation" src="img/abb13af1-a57e-435b-95b2-e8bd980a33ab.png" style="width:3.25em;height:1.25em;"/>在输出层评估<img class="fm-editor-equation" src="img/4cad7f38-ff20-4529-a65a-046d1ca4dd6d.png" style="width:1.50em;height:1.92em;"/>项。</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign">我们通过使用<img class="fm-editor-equation" src="img/3a68e2e9-7e67-4bdc-9919-75611c86fe29.png" style="width:12.58em;height:2.50em;"/>使用余数来评估每个层，从输出层开始并向后传播。</p>
+
+<ol start="11">
+
+<li>同样，我们使用偏导数<img class="fm-editor-equation" src="img/3fcd1213-41e8-4d5d-b7b9-2a737e0b210c.png" style="width:8.00em;height:3.25em;"/>来获得每一层中所需的导数。</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign">为了掌握所有的概念，你可能需要通读几遍这一部分。同样有用的是运行前面的示例并观察训练，尝试想象每个权重是如何更新的。我们在这里并没有完全完成，还有几个步骤——使用自动微分是其中之一。除非您正在开发自己的低级网络，否则只要对数学有一个基本的了解，就可以让您更好地理解训练神经网络的需求。在下一节中，我们将回到一些更实用的基础知识，并通过构建一个神经网络代理来运用我们的新知识。</p>
+
+<p style="padding-left: 60px">学习不会也不应该都来自同一个源头。一定要让你的学习多样化，包括其他书籍、视频和课程。你不仅会在学习上更成功，而且在这个过程中可能会理解得更多。</p>
+
+<p>用Keras构建自动编码器</p>
+
+<ol>
+
+<li>虽然我们已经覆盖了许多理解DL所需要的重要基础，但是我们还没有做的是构建一些可以真正做任何事情的东西。当开始使用DL时，我们首先要解决的问题之一是构建自动编码器来编码和重组数据。通过这个练习，我们可以确认进入网络的内容也可以从网络中返回，并从本质上让我们确信人工神经网络不是一个完整的黑盒。构建和使用自动编码器还允许我们调整和测试各种参数，以便理解它们的功能。让我们从打开<kbd>Chapter_1_5.py</kbd>列表开始，并遵循以下步骤:</li>
+
+<li>我们将一部分一部分地检查清单。首先，我们输入基础层<kbd>Input</kbd>和<kbd>Dense</kbd>，然后是<kbd>Model</kbd>，它们都来自<kbd>tensorflow.keras</kbd>模块，导入如下:</li>
+
+</ol>
+
+<ol start="3">
+
+<li>我们使用层或神经元来定义Keras中的DL模型，而不是单个神经元。<kbd>Input</kbd>和<kbd>Dense</kbd>层是我们最常用的，但我们也会看到其他层。顾名思义，<kbd>Input</kbd>层处理输入，而<kbd>Dense</kbd>层或多或少是典型的全连接神经元层，我们已经讨论过了。</li>
+
+<li>我们在这里使用Keras的嵌入式版本。原始样本取自Keras博客，并转换为TensorFlow。</li>
+
+</ol>
+
+<p style="color: black">接下来，我们用下面的代码行设置<kbd>encoding</kbd>维度的数量:</p>
+
+<p>这是我们想要减少样本的维数。在这种情况下，它只有32，大约是784个输入尺寸的图像的24倍。记住，我们得到<kbd>784</kbd>输入尺寸，因为我们的输入图像是28 x 28，我们将它们展平成长度为784的向量，每个像素代表一个值或尺寸。接下来，我们用784个输入尺寸设置<kbd>Input</kbd>层，如下所示:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Building an autoencoder with Keras</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">那条线创建了一个有784个输入的<kbd>Input</kbd>层。然后，我们将使用下面的代码行将这784个维度编码到下一个<kbd>Dense</kbd>层中:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>前面的代码简单地创建了32个(<kbd>encoding_dim</kbd>)神经元的完全连接的隐藏(<kbd>Dense</kbd>)层，并构建了编码器。你可以看到<kbd>input_img</kbd>，即<kbd>Input</kbd>层，被用作输入，我们的激活函数是<kbd>ReLU</kbd>。下一行使用<kbd>Input</kbd>层(<kbd>input_img</kbd>)和<kbd>Dense</kbd> ( <kbd>encoded</kbd>)层构建了一个<kbd>Model</kbd>。使用两层，我们将图像从784维编码到32维。</p>
+
+<ol>
+
+<li>接下来，我们需要使用以下代码使用更多层来解码图像:</li>
+
+</ol>
+
+<pre style="padding-left: 60px">from tensorflow.keras.layers import Input, Dense<br/>from tensorflow.keras.models import Model</pre>
+
+<p class="mce-root">我们建立的下一组层和模型将被用来解码图像回到784维。底部的最后一行代码是我们使用<kbd>binary_crossentropy</kbd>的<kbd>loss</kbd>函数，通过<kbd>adadelta</kbd>优化器调用编译<kbd>autoencoder</kbd>模型的地方。稍后，我们将在损失类型和优化参数上花费更多时间，但现在请注意，当我们编译模型时，我们本质上只是设置它来进行反向传播和使用优化算法。请记住，所有这些都是自动为我们做的，我们不需要处理任何讨厌的数学。</p>
+
+<p class="mce-root"/>
+
+<ol start="2">
+
+<li>这就建立了我们的模型的主要部分，编码器、解码器和完整的自动编码器模型，我们为后面的训练进一步编译了它们。在下一节中，我们将处理模型的定型和预测。</li>
+
+</ol>
+
+<p>训练模型</p>
+
+<ol start="3">
+
+<li>接下来，我们需要用一组样本数据来训练我们的模型。我们将再次使用MNIST手写数字集；这是简单、免费和方便的。回到代码清单，继续如下练习:</li>
+
+</ol>
+
+<pre style="padding-left: 60px">encoding_dim = 32</pre>
+
+<ol start="4">
+
+<li>从我们停止的地方开始，找到下面的代码段:</li>
+
+</ol>
+
+<pre style="padding-left: 60px">input_img = Input(shape=(784,))</pre>
+
+<ol start="5">
+
+<li>That line creates an <kbd>Input</kbd> layer with a shape of 784 inputs. Then we are going to encode those 784 dimensions into our next <kbd>Dense</kbd> layer using the following line:</li>
+
+</ol>
+
+<pre style="padding-left: 60px">encoded = Dense(encoding_dim, activation='ReLU')(input_img)<br/>encoder = Model(input_img, encoded)</pre>
+
+<ol start="6">
+
+<li>The preceding code simply creates our fully connected hidden (<kbd>Dense</kbd>) layer of 32 (<kbd>encoding_dim</kbd>) neurons and builds the encoder. You can see that the <kbd>input_img</kbd>, the <kbd>Input</kbd> layer, is used as input and our activation function is <kbd>ReLU</kbd>. The next line constructs a <kbd>Model</kbd> using the <kbd>Input</kbd> layer (<kbd>input_img</kbd>) and the <kbd>Dense</kbd> (<kbd>encoded</kbd>) layer. With two layers, we encode the image from 784 dimensions to 32.</li>
+
+</ol>
+
+<ol start="7">
+
+<li>我们首先导入<kbd>mnist</kbd>库和<kbd>numpy</kbd>，然后将数据加载到<kbd>x_train</kbd>和<kbd>x_test</kbd>数据集。作为数据科学和机器学习的一般规则，您通常需要一个用于学习的训练集，然后是一个用于测试的评估集。这些数据集通常是通过将数据随机分成用于训练的<kbd>80</kbd>百分比和用于测试的<kbd>20</kbd>百分比来生成的。</li>
+
+</ol>
+
+<pre style="padding-left: 60px">decoded = Dense(784, activation='sigmoid')(encoded)<br/>autoencoder = Model(input_img, decoded)<br/>encoded_input = Input(shape=(encoding_dim,))<br/><br/>decoder_layer = autoencoder.layers[-1]<br/>decoder = Model(encoded_input, decoder_layer(encoded_input))<br/><br/>autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')</pre>
+
+<ol start="8">
+
+<li>然后，我们用下面的代码进一步定义我们的训练和测试输入:</li>
+
+</ol>
+
+<ol>
+
+<li style="list-style-type: none">前两行通过除以<kbd>255</kbd>来归一化我们的输入灰度像素颜色值和从<kbd>0</kbd>到<kbd>255</kbd>的数字。这给了我们一个从<kbd>0</kbd>到<kbd>1</kbd>的数字。我们通常希望将我们的输入规范化。接下来，我们将训练集和测试集改造成输入<kbd>Tensor</kbd>。<ol start="4"/>
+
+</li>
+
+</ol>
+
+<p>随着模型的构建和编译，是时候开始训练了。接下来的几行是网络学习如何编码和解码图像的地方:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Training the model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">您可以在我们的代码中看到，我们正在设置使用<kbd>x_train</kbd>作为输入和输出来拟合数据。我们使用<kbd>50</kbd> <kbd>epochs</kbd>和<kbd>batch size</kbd><kbd>256</kbd>的图片。稍后您可以随意使用这些参数，看看它们对训练有什么影响。之后，使用<kbd>encoder</kbd>和<kbd>decoder</kbd>模型来预测测试图像。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>这就完成了我们需要的模型和培训设置。请记住，我们正在拍摄一张28 x 28的图像，将其解压缩为32个数字，然后使用神经网络重建图像。随着这次模型的完成和训练，我们希望查看输出，我们将在下一节中进行查看。</p>
+
+<ol start="1">
+
+<li>检查输出</li>
+
+</ol>
+
+<pre style="padding-left: 60px">from tensorflow.keras.datasets import mnist<br/>import numpy as np<br/>(x_train, _), (x_test, _) = mnist.load_data()</pre>
+
+<p class="mce-root">这一次我们的最后一步将是看看这些图像到底发生了什么。我们将通过输出一个小的图像样本来完成这个练习，以获得我们的成功率。按照下一个练习完成代码并运行自动编码器:</p>
+
+<p class="mce-root">继续上一个练习，找到以下最后一段代码:</p>
+
+<ol start="2">
+
+<li>在这段代码中，我们只是在所有训练完成后输出输入和自动编码的图像。这部分代码从导入<kbd>mathplotlib</kbd>进行绘图开始，然后我们遍历大量图像来显示结果。剩下的代码只是输出图像。</li>
+
+<li class="mce-root">像平常一样运行Python代码，这一次预计培训需要几分钟时间。完成所有操作后，您应该会看到类似于下图的图像:</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px">x_train = x_train.astype('float32') / 255.<br/>x_test = x_test.astype('float32') / 255.<br/>x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))<br/>x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))<br/>print( x_train.shape)<br/>print( x_test.shape)</pre>
+
+<ol start="4">
+
+<li>原始输入图像与编码和解码输出图像的对比示例</li>
+
+<li>这就完成了我们对构建一个简单的Keras模型的研究，该模型可以对图像进行编码和解码。这让我们可以看到多层神经网络的每一小部分是如何用Keras函数编写的。在最后一节，我们邀请读者做一些额外的练习来进一步学习。</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px">autoencoder.fit(x_train, x_train, epochs=50, batch_size=256,<br/> shuffle=True, validation_data=(x_test, x_test))<br/><br/>encoded_imgs = encoder.predict(x_test)<br/>decoded_imgs = decoder.predict(encoded_imgs)</pre>
+
+<ol start="6">
+
+<li>练习</li>
+
+</ol>
+
+<p>使用这些额外的练习来帮助你学习和进一步测试你的知识。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Examining the output</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">回答以下问题:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>说出三种不同的激活功能。记住，谷歌是你的朋友。</p>
+
+<ol start="1">
+
+<li>偏见的目的是什么？</li>
+
+</ol>
+
+<pre style="padding-left: 60px">import matplotlib.pyplot as plt<br/>n = 10 # how many digits we will display<br/>plt.figure(figsize=(20, 4))<br/>for i in range(n):<br/> # display original<br/> ax = plt.subplot(2, n, i + 1)<br/> plt.imshow(x_test[i].reshape(28, 28))<br/> plt.gray()<br/> ax.get_xaxis().set_visible(False)<br/> ax.get_yaxis().set_visible(False)<br/><br/># display reconstruction<br/> ax = plt.subplot(2, n, i + 1 + n)<br/> plt.imshow(decoded_imgs[i].reshape(28, 28))<br/> plt.gray()<br/> ax.get_xaxis().set_visible(False)<br/> ax.get_yaxis().set_visible(False)<br/>plt.show()</pre>
+
+<ol start="2">
+
+<li>如果您减少其中一个章节样本中的纪元数量，您预计会发生什么情况？你试过吗？</li>
+
+<li>反向传播的目的是什么？</li>
+
+</ol>
+
+<div><img src="img/57c7b3de-945e-42fb-af0a-cf5258f7f7f5.png" style="width:25.33em;height:9.08em;"/></div>
+
+<p>解释成本函数的目的。</p>
+
+<p>在Keras autoencoder示例中，增加或减少编码维数会发生什么？</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Exercises</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">我们输入的图层类型的名称是什么？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>当你增加或减少批量时会发生什么？</p>
+
+<p>对于Keras示例，输入<kbd>Tensor</kbd>的形状是什么？提示:我们已经有一个打印声明显示这一点。</p>
+
+<ol>
+
+<li>在最后一个练习中，我们用多少MNIST样本进行训练和测试？</li>
+
+<li>随着我们在书中的进展，额外的练习肯定会变得更加困难。不过现在，请花些时间回答这些问题，测试一下你的知识。</li>
+
+<li>What would you expect to happen if you reduced the number of epochs in one of the chapter samples? Did you try it?</li>
+
+<li>What is the purpose of backpropagation?</li>
+
+<li>摘要</li>
+
+<li>在这一章中，我们探索了从简单的单一感知器到更复杂的多层感知器模型的DL基础。我们从DL的过去、现在和未来开始，在此基础上，我们构建了一个单一感知器的基本参考实现，以便我们能够理解DL的原始简单性。然后，我们通过使用TF将更多的感知器添加到多层实现中来建立我们的知识。使用TF让我们看到了一个原始的内部模型是如何用一个复杂得多的数据集MNIST来表示和训练的。然后我们进行了一次漫长的数学之旅，虽然Keras从我们这里抽象出了许多复杂的数学，但我们深入研究了梯度下降和反向传播是如何工作的。最后，我们用Keras的另一个参考实现结束了这一章，它具有一个自动编码器。自动编码允许我们训练具有多种用途的网络，并扩展了我们对网络架构不必是线性的理解。</li>
+
+<li>在下一章中，我们将基于我们目前的知识水平，发现<strong>卷积</strong>和<strong>递归</strong>神经网络。这些扩展为神经网络的基本形式提供了额外的能力，并在我们最近的DL进展中发挥了重要作用。</li>
+
+<li>下一章，我们将开始构建游戏组件的旅程，届时我们将看到另一个被认为是DL基础的元素GAN。gan就像DL中的瑞士军刀，正如我们将在下一章看到的，它们为我们提供了大量的用途。</li>
+
+<li>What is the shape of the input <kbd>Tensor</kbd> for the Keras example? Hint: we already have a print statement displaying this.</li>
+
+<li>In the last exercise, how many MNIST samples do we train and test with?</li>
+
+</ol>
+
+<p>As we progress in the book, the additional exercises will certainly become more difficult. For now, though, take some time to answer the questions and test your knowledge.</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">Summary</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>In this chapter, we explored the foundations of DL from the basics of the simple single perceptron to more complex multilayer perceptron models. We started with the past, present, and future of DL and, from there, we built a basic reference implementation of a single perceptron so that we could understand the raw simplicity of DL. Then we built on our knowledge by adding more perceptrons into a multiple layer implementation using TF. Using TF allowed us to see how a raw internal model is represented and trained with a much more complex dataset, MNIST. Then we took a long journey through the math, and although a lot of the complex math was abstracted away from us with Keras, we took an in-depth look at how gradient descent and backpropagation work. Finally, we finished off the chapter with another reference implementation from Keras that featured an autoencoder. Auto encoding allows us to train a network with multiple purposes and extends our understanding of how network architecture doesn't have to be linear.</p>
+
+<p>For the next chapter, we will build on our current level of knowledge and discover <strong>convolutional</strong> and <strong>recurrent</strong> neural networks. These extensions provide additional capabilities to the base form of a neural network and have played a significant part in our most recent DL advances.</p>
+
+<p>For the next chapter, we will begin our journey into building components for games when we look at another element considered foundational to DL—the GAN. GANs are like a Swiss Army knife in DL and, as we will see in the next chapter, they offer us plenty of uses.</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

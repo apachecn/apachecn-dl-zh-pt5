@@ -1,0 +1,105 @@
+<html><head/><body>
+<html>
+  <head>
+    <title>Chapter 9. Selecting Relevant Inputs or Memories with the Mechanism of Attention</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div/><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch09" class="calibre1"/>第九章。用注意机制选择相关的输入或记忆</h1></div></div></div><p class="calibre8">本章介绍了关注神经网络性能的机制，并使网络能够通过关注其输入或记忆的相关部分来提高其性能。</p><p class="calibre8">有了这样一种机制，翻译、注释、解释和分段，如前一章所见，就有了更高的准确性。</p><p class="calibre8">神经网络的输入和输出也可以连接到外部存储器的<em class="calibre12">读</em>和<em class="calibre12">写</em>。这些网络，即<strong class="calibre2">存储网络</strong>，通过外部存储器得到增强，能够决定从哪里存储或检索什么信息。</p><p class="calibre8">在本章中，我们将讨论:</p><div><ul class="itemizedlist"><li class="listitem">注意的机制</li><li class="listitem">对齐翻译</li><li class="listitem">图像中的焦点</li><li class="listitem">神经图灵机</li><li class="listitem">内存网络</li><li class="listitem">动态存储网络</li></ul></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Chapter 9. Selecting Relevant Inputs or Memories with the Mechanism of Attention</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h1 class="title" id="calibre_pb_1"><a id="ch09lvl1sec83" class="calibre1"/>可区分的注意机制</h1></div></div></div><p class="calibre8">当<a id="id355" class="calibre1"/>翻译句子、描述图像内容、注释句子或转录音频时，在移动到下一部分之前，为了全局理解，在某个顺序下，一次专注于输入句子或图像的一个部分，以获得块的意义并对其进行转换，这听起来是很自然的。</p><p class="calibre8">例如，在德语中，在某些条件下，动词出现在句子的末尾，因此，当翻译成英语时，一旦主题已经被阅读和翻译，一个好的机器翻译神经网络可以将其焦点移动到<a id="id356" class="calibre1"/>句子的末尾，以找到动词并将其翻译成英语。通过<em class="calibre12">注意机制</em>，将输入位置与当前输出预测相匹配的过程是可能的。</p><p class="calibre8">首先，让我们回到使用softmax层设计的分类网络(参见<a class="calibre1" title="Chapter 2. Classifying Handwritten Digits with a Feedforward Network" href="part0026_split_000.html#OPEK1-ccdadb29edc54339afcb9bdf9350ba6b">第2章</a>、<em class="calibre12">使用前馈网络</em>对手写数字进行分类)，它输出一个非负权重向量<img src="img/00130.jpeg" alt="Differentiable mechanism of attention" class="calibre23"/>，在给定输入X:</p><div><img src="img/00131.jpeg" alt="Differentiable mechanism of attention" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">然后:</p><div><img src="img/00132.jpeg" alt="Differentiable mechanism of attention" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">分类的目的是对于正确的类别<em class="calibre12"> k </em>使<img src="img/00133.jpeg" alt="Differentiable mechanism of attention" class="calibre23"/>尽可能接近<em class="calibre12"> 1 </em>，而对于其他类别则接近零。</p><p class="calibre8">但是<img src="img/00133.jpeg" alt="Differentiable mechanism of attention" class="calibre23"/>是一个概率分布，也可以作为一个权重向量来关注位置<em class="calibre12"> k </em>处内存向量<img src="img/00134.jpeg" alt="Differentiable mechanism of attention" class="calibre23"/>的一些值:</p><div><img src="img/00135.jpeg" alt="Differentiable mechanism of attention" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">如果重量集中在位置<em class="calibre12"> k </em>，则返回<img src="img/00136.jpeg" alt="Differentiable mechanism of attention" class="calibre23"/>。根据权重的清晰度，输出或多或少会有些模糊。</p><p class="calibre8">这种在特定位置寻址矢量<em class="calibre12"> m </em>值的<a id="id357" class="calibre1"/>机制是一种<strong class="calibre2">注意机制</strong>:也就是说，它是线性的、可微分的，并且具有<a id="id358" class="calibre1"/>用于特定任务训练的反向传播梯度下降。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Chapter 9. Selecting Relevant Inputs or Memories with the Mechanism of Attention</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><div><h2 class="title1" id="calibre_pb_2"><a id="ch09lvl2sec25" class="calibre1"/>具有注意力机制的更好翻译</h2></div></div></div><p class="calibre8">注意力机制的<a id="id359" class="calibre1"/>应用非常大。为了更好的理解，我们先用机器翻译的例子来说明一下。注意机制将源句子和目标句子对齐(预测翻译)，并避免长句的翻译质量下降:</p><div><img src="img/00137.jpeg" alt="Better translations with attention mechanism" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">在前一章中，我们通过编码器-解码器框架和编码器向解码器提供的固定长度编码向量<em class="calibre12"> c </em>解决了机器翻译问题。利用注意机制，如果编码递归网络的每一步都产生隐藏状态<em class="calibre12">h</em>T19】I，则在每个解码时间步<em class="calibre12"> t </em>提供给解码器的向量将是可变的，并且由下式给出:</p><div><img src="img/00138.jpeg" alt="Better translations with attention mechanism" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">使用<img src="img/00139.jpeg" alt="Better translations with attention mechanism" class="calibre23"/>由softmax函数产生的校准系数:</p><div><img src="img/00140.jpeg" alt="Better translations with attention mechanism" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">根据解码器的先前隐藏状态<img src="img/00141.jpeg" alt="Better translations with attention mechanism" class="calibre23"/>和编码隐藏状态<img src="img/00142.jpeg" alt="Better translations with attention mechanism" class="calibre23"/>的<a id="id360" class="calibre1"/>，先前解码器隐藏状态和每个编码器隐藏状态之间的嵌入点积产生一个描述它们应该如何匹配的权重:</p><div><img src="img/00143.jpeg" alt="Better translations with attention mechanism" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">经过几个时期的训练后，该模型通过关注输入的一部分来预测每个下一个单词:</p><div><img src="img/00144.jpeg" alt="Better translations with attention mechanism" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">为了学习<a id="id361" class="calibre1"/>更好地对齐，可以使用数据集中存在的对齐注释，并为注意力机制产生的权重添加交叉熵损失，以在训练的第一个时期使用。</p></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Chapter 9. Selecting Relevant Inputs or Memories with the Mechanism of Attention</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><div><h2 class="title1" id="calibre_pb_3">使用注意机制更好地注释图像</h2></div></div></div><p class="calibre8">同样的注意力机制也可以应用到注释图像或转录音频的任务中。</p><p class="calibre8">对于图像，注意机制在每个预测时间步集中于特征的相关部分:</p><div><img src="img/00145.jpeg" alt="Better annotate images with attention mechanism" class="calibre9"/><div><p class="calibre29">展示、参与和讲述:视觉注意下的神经图像字幕生成</p></div></div><p class="calibre10"> </p><p class="calibre8">让我们来看看训练有素的模特在图像上的注意点:</p><div><img src="img/00146.jpeg" alt="Better annotate images with attention mechanism" class="calibre9"/><div><p class="calibre29">(<em class="calibre12">展示、参与和讲述:视觉注意下的神经图像字幕生成</em>，Kelvin Xu等人，2015)</p></div></div><p class="calibre10"> </p></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Store and retrieve information in Neural Turing Machines</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch09lvl1sec84" class="calibre1"/>在神经图灵机中存储和检索信息</h1></div></div></div><p class="calibre8">注意<a id="id363" class="calibre1"/>机制可以用来访问记忆增强网络中的一部分记忆。</p><p class="calibre8">神经图灵机中的记忆概念受到了神经科学和计算机硬件的启发。</p><p class="calibre8">存储信息的RNN隐藏状态不能存储足够大量的数据并检索它，即使当RNN增加了存储单元时，例如在LSTM的情况下。</p><p class="calibre8">为了解决<a id="id365" class="calibre1"/>这个问题，<strong class="calibre2">神经图灵机</strong> ( <strong class="calibre2"> NTM </strong>)首先被设计成带有<strong class="calibre2">外部存储库</strong>和读/写头，同时保留了通过梯度下降进行训练的魔力。</p><p class="calibre8">读取<a id="id366" class="calibre1"/>内存条是通过关注变量内存条给出的，就像之前例子中关注输入一样:</p><div><img src="img/00147.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">这可以用下面的方式来说明:</p><div><img src="img/00148.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">而<a id="id367" class="calibre1"/>向<a id="id368" class="calibre1"/>存储体写入值包括将新值分配给部分存储器，这要归功于另一种注意机制:</p><div><img src="img/00149.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre9"/></div><p class="calibre10"> </p><div><img src="img/00150.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">描述要存储的信息，和<img src="img/00151.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre23"/>要擦除的信息，和分别是存储体的大小:</p><div><img src="img/00152.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8"><a id="id369" class="calibre1"/>读写头<a id="id370" class="calibre1"/>设计为硬盘，其移动性由注意力权重<img src="img/00153.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre23"/>和<img src="img/00154.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre23"/>决定。</p><p class="calibre8">记忆<img src="img/00155.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre23"/>会像LSTM的细胞记忆一样在每个时间步进化；但是，由于内存库被设计得很大，网络倾向于在每个时间步长存储和组织输入的<a id="id371" class="calibre1"/>数据，与任何经典的RNN相比，干扰更少。</p><p class="calibre8">使用记忆的过程自然是由递归神经网络驱动的，该神经网络在每个时间步充当<strong class="calibre2">控制器</strong>:</p><div><img src="img/00156.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8"><a id="id372" class="calibre1"/>控制器网络在每个时间步的输出:</p><div><ul class="itemizedlist"><li class="listitem">每个写/读磁头的定位或注意系数</li><li class="listitem">为写磁头存储或擦除的值</li></ul></div><p class="calibre8"><a id="id373" class="calibre1"/>原NTM提出两种方法定义<em class="calibre12">头定位</em>，也称为<em class="calibre12">寻址</em>，由权重<img src="img/00157.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre23"/>定义:</p><div><ul class="itemizedlist"><li class="listitem">A content-based positioning, to place similar content in the same area of the memory, which is useful for retrieval, sorting or counting tasks:<div><img src="img/00158.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre9"/></div><p class="calibre27"> </p></li><li class="listitem">一种基于位置的定位，它基于磁头的先前位置，可用于复印任务。门<img src="img/00159.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre23"/>定义了先前的权重对新生成的权重的影响，以计算头部的位置。移位权重<img src="img/00160.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre23"/>定义了相对于该位置从该位置平移的量。</li></ul></div><p class="calibre8">最后，锐化权重<img src="img/00161.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre23"/>减少了头部位置的模糊:</p><div><img src="img/00162.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre9"/></div><p class="calibre10"> </p><div><img src="img/00163.jpeg" alt="Store and retrieve information in Neural Turing Machines" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">所有的<a id="id374" class="calibre1"/>操作都是可微分的。</p><p class="calibre8">许多<a id="id375" class="calibre1"/>两个以上的读取头是可能的，特别是对于诸如两个存储值相加的任务，单个读取头可能会受到限制。</p><p class="calibre8">在检索输入序列中的下一项、多次重复输入序列或从分布中抽样等任务中，这些NTM已经显示出比LSTM更好的能力。</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Memory networks</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div/><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch09lvl1sec85" class="calibre1"/>记忆网络</h1></div></div></div><p class="calibre8">给定一些事实或故事来回答问题或解决问题导致了一种新型网络的设计，即记忆网络。在这种情况下，事实或故事被嵌入到记忆库中，就好像它们是输入一样。为了解决需要对事实进行排序或在事实之间建立转换的任务，记忆网络在记忆库的多个步骤或跳跃中使用循环推理过程。</p><p class="calibre8">首先，查询或问题<em class="calibre12"> q </em>被转换成常量输入嵌入:</p><div><img src="img/00164.jpeg" alt="Memory networks" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">而在推理的每一步，回答问题的事实<em class="calibre12"> X </em>被嵌入到两个存储体中，其中嵌入系数是时间步长的函数:</p><div><img src="img/00165.jpeg" alt="Memory networks" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">要<a id="id377" class="calibre1"/>计算注意力权重:</p><div><img src="img/00166.jpeg" alt="Memory networks" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">并且:</p><div><img src="img/00167.jpeg" alt="Memory networks" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">注意选择:</p><div><img src="img/00168.jpeg" alt="Memory networks" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">如前所述，每个推理时间步的输出随后与同一性连接相结合，以提高递归的效率:</p><div><img src="img/00169.jpeg" alt="Memory networks" class="calibre9"/></div><p class="calibre10">一个线性层和分类softmax层被添加到最后的<img src="img/00170.jpeg" alt="Memory networks" class="calibre23"/>:</p><p class="calibre8">A linear layer and classification softmax layer are added to the last <img src="img/00170.jpeg" alt="Memory networks" class="calibre23"/>:</p><div><img src="img/00171.jpeg" alt="Memory networks" class="calibre9"/></div><p class="calibre10"><a id="ch09lvl2sec27" class="calibre1"/>情景记忆与动态记忆网络</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Memory networks</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_1">另一个<a id="id378" class="calibre1"/>设计已经引入了动态存储网络。首先，N个事实用分隔符标记连接起来，然后用RNN编码:RNN <a id="id379" class="calibre1"/>在每个分隔符<img src="img/00172.jpeg" alt="Episodic memory with dynamic memory networks" class="calibre23"/> <em class="calibre12"> </em>处的输出被用作输入嵌入。这种对事实进行编码的方式更加自然，也保留了时间依赖性。这个问题也用RNN编码以产生一个向量<em class="calibre12"> q </em>。</h2></div></div></div><p class="calibre8">第二，依靠与RNN混合的注意机制，用情节记忆代替记忆库，以便也保持事实之间的时间依赖性:</p><p class="calibre8">Secondly, the memory bank is replaced with an episodic memory, relying on an attention mechanism mixed with an RNN, in order to preserve time dependency between the facts as well:</p><div><img src="img/00173.jpeg" alt="Episodic memory with dynamic memory networks" class="calibre9"/></div><p class="calibre10">门<img src="img/00174.jpeg" alt="Episodic memory with dynamic memory networks" class="calibre23"/>由多层感知器根据推理<img src="img/00175.jpeg" alt="Episodic memory with dynamic memory networks" class="calibre23"/>的先前状态、问题和作为输入嵌入的输入<img src="img/00176.jpeg" alt="Episodic memory with dynamic memory networks" class="calibre23"/>给出。</p><p class="calibre8">RNN的推理方式相同:</p><p class="calibre8">The reasoning occurs the same way with a RNN:</p><div><img src="img/00177.jpeg" alt="Episodic memory with dynamic memory networks" class="calibre9"/></div><p class="calibre10">下图说明了计算情景记忆时输入和输出之间的相互作用:</p><p class="calibre8">问我任何问题:自然语言处理的动态记忆网络</p><div><img src="img/00178.jpeg" alt="Episodic memory with dynamic memory networks" class="calibre9"/><div><p class="calibre29">Ask Me Anything: dynamic memory networks for natural language processing</p></div></div><p class="calibre10">为了对这些网络进行基准测试，脸书研究所综合了bAbI数据集，使用NLP <a id="id380" class="calibre1"/>工具为一些随机建模的故事创建事实、问题和答案。数据集由不同的任务组成，以测试不同的推理技能，例如对一个、两个或三个事实、时间、大小或位置进行推理，计数、列出或理解<a id="id381" class="calibre1"/>论据、否定、动机和寻找路径之间的关系。</p><p class="calibre8">至于机器翻译中的引导对齐，当数据集还包含导致答案的事实的注释时，也可以使用监督训练来:</p><p class="calibre8">注意机制</p><div><ul class="itemizedlist"><li class="listitem">当使用的事实数量足以回答问题时，何时停止推理循环，产生停止标记</li><li class="listitem"><a id="ch09lvl1sec86" class="calibre1"/>延伸阅读</li></ul></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Further reading</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0">您可以参考以下主题，了解更多信息:</h1></div></div></div><p class="calibre8"><em class="calibre12">问我任何问题:自然语言处理的动态记忆网络</em>，<em class="calibre12"> </em>安基特·库马尔，奥赞·伊尔索伊，彼得·翁德鲁斯卡，莫希特·伊耶，詹姆斯·布拉德伯里，伊桑·古尔拉贾尼，维克多·钟，罗曼·保卢斯，理查德·索彻，2015</p><div><ul class="itemizedlist"><li class="listitem"><em class="calibre12">注意力和增强循环神经网络</em>，克里斯·奥拉赫，山·卡特，2016年9月【http://distill.pub/2016/augmented-rnns/ T2】</li><li class="listitem"><em class="calibre12">主题感知神经机器翻译的引导对齐训练</em>，陈，Evgeny Matusov，Shahram Khadivi，Jan-Thorsten Peter，2016年7月</li><li class="listitem"><em class="calibre12">展示、参与和讲述:视觉注意力的神经图像字幕生成</em>，Kelvin Xu，Jimmy Ba，Ryan Kiros，Kyunghyun Cho，Aaron，Ruslan Salakhutdinov，Richard Zemel，Yoshua Bengio，Fev 2015</li><li class="listitem"><em class="calibre12">走向人工智能-完整的问题回答:一组先决玩具任务</em>，杰森·韦斯顿、安托万·博德斯、苏米特·乔普拉、亚历山大·m·拉什、巴特·范·梅林博尔、阿曼德·朱林、托马斯·米科洛夫，2015</li><li class="listitem"><em class="calibre12">记忆网络</em>，杰森·韦斯顿，苏米特·乔普拉，安托万·博德斯，2014</li><li class="listitem"><em class="calibre12">端到端存储网络</em>，Sainbayar Sukhbaatar，Arthur Szlam，Jason Weston，Rob Fergus，2015</li><li class="listitem"><em class="calibre12">神经图灵机</em>，亚历克斯·格雷夫斯，格雷格·韦恩，伊沃·达尼埃尔卡，2014</li><li class="listitem"><em class="calibre12">用于生成图像描述的深度视觉语义对齐</em>，安德烈·卡帕西，李菲菲，2014</li><li class="listitem"><a id="ch09lvl1sec87" class="calibre1"/>摘要</li></ul></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Summary</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0">注意机制是一个聪明的选择，可以帮助神经网络选择正确的信息，并集中精力产生正确的输出。它可以直接放置在输入或要素上(由几个图层处理的输入)。在翻译、图像注释和语音识别的情况下，精确度增加了，特别是当输入的维度很重要时。</h1></div></div></div><p class="calibre8">注意力机制导致了新型的网络，通过外部存储器增强，作为输入/输出，从外部存储器读取数据或向外部存储器写入数据。这些网络已被证明在问答挑战中非常强大，自然语言处理中的大多数任务都可以被转换为:标记、分类、序列到序列或问答任务。</p><p class="calibre8">在下一章，我们将看到更先进的技术以及它们在更一般的递归神经网络中的应用，以提高精确度。</p><p class="calibre8">In the next chapter, we'll see more advanced techniques and their application to the more general case of recurrent neural networks, to improve accuracy.</p></div></body></html>
+</body></html>

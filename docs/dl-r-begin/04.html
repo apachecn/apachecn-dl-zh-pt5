@@ -1,0 +1,1660 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Training Deep Prediction Models</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">训练深度预测模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">前面的章节讲述了神经网络背后的一些理论，并在r中使用了一些神经网络包。现在是时候深入研究并看看训练深度学习模型了。在这一章中，我们将探索如何训练和建立前馈神经网络，这是最常见的深度学习模型。我们将使用MXNet建立深度学习模型，使用零售数据集执行分类和回归。</p>
+
+<p class="mce-root">本章将涵盖以下主题:</p>
+
+<ul>
+
+<li class="mce-root">深度前馈神经网络入门</li>
+
+<li class="mce-root">常见激活功能–整流器、双曲正切和最大输出</li>
+
+<li class="mce-root">MXNet深度学习库简介</li>
+
+<li class="mce-root">用例–使用MXNet进行分类和回归</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Getting started with deep feedforward neural networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">深度前馈神经网络入门</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>深度前馈神经网络被设计成逼近函数<em> f() </em>，该函数将某组输入变量<em> x </em>映射到输出变量<em> y </em>。它们被称为前馈神经网络，因为信息从输入通过每个连续层流动到输出，并且没有反馈或递归循环(包括前向和后向连接的模型被称为递归神经网络)。</p>
+
+<p class="mce-root">深度前馈神经网络适用于广泛的问题，并且对于诸如图像分类的应用特别有用。更一般地说，前馈神经网络在有明确定义的结果(图像包含什么数字，某人是在楼上走还是在平面上走，疾病的存在/不存在，等等)的预测和分类中是有用的。</p>
+
+<p class="mce-root">深度前馈神经网络可以通过将层或函数链接在一起来构建。例如，下图显示了一个具有四个隐藏层的网络:</p>
+
+<div><img class="alignnone size-full wp-image-580 image-border" src="img/b1e3521b-c8bd-4d17-a5cc-7ba53b3f619c.png" style="width:19.33em;height:27.17em;"/></div>
+
+<p>图4.1:深度前馈神经网络</p>
+
+<p class="mce-root">这个模型图是一个有向无环图。作为一个函数，从输入端<em xmlns:epub="http://www.idpf.org/2007/ops"> X </em>到输出端<em xmlns:epub="http://www.idpf.org/2007/ops"> Y </em>的整体映射是一个多层函数。第一个隐藏层是<em xmlns:epub="http://www.idpf.org/2007/ops">H</em><em xmlns:epub="http://www.idpf.org/2007/ops"><sub>1</sub>= f<sup>(1)</sup>(X，w<sub>1</sub>a<sub>1</sub></em><em xmlns:epub="http://www.idpf.org/2007/ops">)</em>，第二个隐藏层是<em xmlns:epub="http://www.idpf.org/2007/ops">H<sub>2</sub>= f<sup>(2)</sup>(H<sub>1</sub>，w <sub> 2 </sub>这些多层可以允许从相对简单的功能和转换构建复杂的功能和转换。</em></p>
+
+<p class="mce-root">如果一个层中包含足够多的隐藏神经元，它可以用许多不同类型的函数来逼近期望的精度。前馈神经网络可以通过在层间应用非线性变换来逼近非线性函数。这些非线性函数被称为激活函数，我们将在下一节讨论。</p>
+
+<p class="mce-root">通过前向和后向传播训练模型时，将学习每层的权重。必须确定的模型的另一个关键部分是成本或损失函数。最常用的两个代价函数是交叉熵，用于分类任务，和<strong>均方误差</strong> ( <strong> MSE </strong>)，用于回归任务。</p>
+
+<p class="mce-root">激活功能</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Activation functions</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">激活函数确定输入和隐藏层之间的映射。它定义了神经元如何被激活的功能形式。例如，线性激活函数可以定义为:<em xmlns:epub="http://www.idpf.org/2007/ops"> f(x) = x </em>，在这种情况下，神经元的值将是原始输入，<em xmlns:epub="http://www.idpf.org/2007/ops"> x </em>。图4.2 的顶部面板显示了一个线性激活功能。很少使用线性激活函数，因为在实践中，深度学习模型会发现使用线性激活函数很难学习非线性函数形式。在前面的章节中，我们使用双曲正切作为激活函数，即<em xmlns:epub="http://www.idpf.org/2007/ops"> f(x) = tanh(x) </em>。双曲正切在某些情况下可以很好地工作，但一个潜在的限制是，在低或高的值，它饱和，如图4.2的中间面板所示。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">也许是目前最流行的激活功能，也是一个很好的首选(Nair，v .和Hinton，G. E. (2010))，被称为<em>整流器</em>。整流器有不同种类，但最常见的是由<em> f(x) = max(0，x) </em>函数定义的，该函数称为<strong> relu </strong>。relu激活在零以下是平坦的，在零以上是线性的；图4.2给出了一个例子。</p>
+
+<p class="mce-root">我们将讨论的最后一种激活函数是maxout(古德菲勒、沃德-法利、米尔扎、库维尔和本吉奥(2013))。最大输出单元取其输入的最大值，尽管通常这是在加权之后，因此具有最高值的输入变量并不总是获胜。Maxout激活函数似乎对dropout特别有效。</p>
+
+<p class="mce-root">relu激活是最常用的激活功能，也是本书剩余部分深度学习模型的默认选项。下面是我们讨论过的一些激活函数的图表:</p>
+
+<p class="mce-root">图4.2:常见的激活功能</p>
+
+<p class="mce-root">MXNet深度学习库简介</p>
+
+<div><img class="alignnone size-full wp-image-581 image-border" src="img/ef0c14cf-ea97-45eb-941c-a48fc465b00a.png" style="width:80.25em;height:17.17em;"/></div>
+
+<p>我们将在本书中使用的深度学习库是MXNet、Keras和TensorFlow。Keras是一个前端API，这意味着它不是一个独立的库，因为它在后端需要一个低级别的库，通常是TensorFlow。使用Keras而不是TensorFlow的优势在于它的界面更简单。我们将在本书后面的章节中使用Keras。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Introduction to the MXNet deep learning library</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">MXNet和TensorFlow都是多用途的数值计算库，可以使用GPU进行大规模并行矩阵运算。因此，多维矩阵是两个库的核心。在R中，我们熟悉vector，它是同类型值的一维数组。R数据框是一个值的二维数组，其中每一列可以有不同的类型。R矩阵是具有相同类型的值的二维数组。R中的一些机器学习算法需要一个矩阵作为输入。我们在<a href="">第2章</a>、<em>中看到了一个这样的例子，用RSNSS包训练一个预测模型</em>。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>The deep learning libraries we will use in this book are MXNet, Keras, and TensorFlow. Keras is a frontend API, which means it is not a standalone library as it requires a lower-level library in the backend, usually TensorFlow. The advantage of using Keras rather than TensorFlow is that it has a simpler interface. We will use Keras in later chapters in this book.</p>
+
+<p>在R中，使用超过两个维度的数据结构并不常见，但深度学习广泛使用它们。例如，如果您有一个32 x 32的彩色图像，您可以将像素值存储在一个32 x 32 x 3的矩阵中，其中前两个维度是宽度和高度，最后一个维度是红色、绿色和蓝色。这可以通过为图像集合添加另一个维度来进一步扩展。这称为批处理，允许处理器(CPU/GPU)同时处理多个图像。批量大小是一个超参数，选择的值取决于输入数据的大小和内存容量。如果我们的批量大小是64，我们的矩阵将是一个大小为32 x 32 x 3 x 64的4维矩阵，其中前两个维度是宽度和高度，第三个维度是颜色，最后一个维度是批量大小64。重要的是要认识到这只是另一种表示数据的方式。在R中，我们将相同的数据存储为64行、32 x 32 x 3 = 3，072列的二维矩阵(或dataframe)。我们所做的只是重塑数据，而不是改变它。</p>
+
+<p class="mce-root">这些包含同类型元素的n维矩阵是使用MXNet和TensorFlow的基石。在MXNet中，它们被称为NDArrays。在张量流中，他们被称为<strong>张量</strong>。这些n维矩阵很重要，因为它们意味着我们可以更高效地将数据馈入GPUs与处理单行数据相比，GPU可以更高效地批量处理数据。在前面的例子中，我们一批使用64张图像，因此深度学习库将以32 x 32 x 3 x 64的块来处理输入数据。</p>
+
+<p class="mce-root">本章将使用MXNet深度学习库。MXNet起源于卡内基梅隆大学，并得到亚马逊的大力支持，他们选择它作为他们2016年默认的深度学习库。2017年，MXNet被接受为Apache孵化器项目，确保它将继续作为开源软件。下面是一个非常简单的R中MXNet的NDArray (matrix)操作的例子，如果你还没有安装R的MXNet包，回到<a href="">第1章</a>、<em>深度学习入门</em>获取说明，或者使用这个链接:<a href="https://mxnet.apache.org/install/index.html">https://mxnet.apache.org/install/index.html</a>:</p>
+
+<p class="mce-root">我们可以逐行分解这段代码:</p>
+
+<p>第1行加载MXNet包。</p>
+
+<pre>library(mxnet) # 1<br/>ctx = mx.cpu() # 2<br/>a &lt;- mx.nd.ones(c(2,3),ctx=ctx) # 3<br/>b &lt;- a * 2 + 1 # 4<br/>typeof(b) # 5<br/>[1] "externalptr"<br/>class(b) # 6<br/>[1] "MXNDArray"<br/>b # 7<br/>     [,1] [,2] [,3]<br/>[1,]    3    3    3<br/>[2,]    3    3    3</pre>
+
+<p>第2行设置CPU上下文。这告诉MXNet在哪里处理你的计算，是在CPU上还是在GPU上，如果有的话。</p>
+
+<ul>
+
+<li>第3行创建了一个大小为2 x 3的二维NDArray，其中每个值都是1。</li>
+
+<li>第4行创建了另一个大小为2 x 3的二维NDArray。每个值都将是3，因为我们执行的是逐元素乘法并加1。</li>
+
+<li>第5行显示b是一个外部指针。</li>
+
+<li>第6行显示b的类是MXNDArray。</li>
+
+<li>第7行显示了结果。</li>
+
+<li>我们可以对<kbd>b</kbd> <em> <strong> </strong> </em>变量进行数学运算，比如乘法和加法。然而，重要的是要认识到，虽然它的行为类似于R矩阵，但它不是本机R对象。我们可以在输出这个变量的类型和类时看到这一点。</li>
+
+<li>在开发深度学习模型时，通常有两个不同的步骤。首先创建模型架构，然后训练模型。主要原因是因为大多数深度学习库采用符号编程，而不是你习惯的命令式编程。您以前用R编写的大部分代码都是命令式程序，它按顺序执行代码。对于数学优化任务，如深度学习，这可能不是最有效的执行方法。大多数深度学习库，包括MXNet和TensorFlow，都使用符号编程。对于符号编程，首先设计程序执行的计算图。然后编译并执行该图。当计算图生成时，输入、输出和图操作已经定义，这意味着代码可以优化。这意味着对于深度学习来说，符号程序通常比命令式程序更高效。</li>
+
+</ul>
+
+<p>下面是一个使用符号程序进行优化的简单示例:</p>
+
+<p><em> M = (M1 * M2) + (M3* M4) </em></p>
+
+<p>命令式程序将按如下方式进行计算:</p>
+
+<p style="padding-left: 30px"><em> Mtemp1 = (M1 * M2) </em></p>
+
+<p><em> Mtemp2 = (M3* M4) </em></p>
+
+<p style="padding-left: 30px"><em> M = Mtemp1 + Mtemp2 </em></p>
+
+<p style="padding-left: 30px">符号程序将首先创建一个计算图，可能如下所示:</p>
+
+<p style="padding-left: 30px">图4.3:计算图表示例</p>
+
+<p><em> M1 </em>、<em> M2 </em>、<em> M3 </em>、<em> M4 </em>为需要操作的符号。该图显示了操作的依赖关系；<em> + </em>运算要求前面两个乘法运算完成后才能执行。但是这两个乘法步骤之间没有依赖关系，所以它们可以并行执行。这种类型的优化意味着代码可以执行得更快。</p>
+
+<div><img src="img/339f563d-ac31-47c8-b5d5-366f91ad90e9.png" style="width:18.58em;height:16.42em;"/></div>
+
+<p>从编码的角度来看，这意味着你在创建深度学习模型时有两个步骤——首先你定义模型的架构，然后你训练模型。你为你的深度学习模型创建<em>层</em>，每层都有占位符的符号。例如，第一层通常是:</p>
+
+<p><kbd>data</kbd>是输入的占位符，我们将在后面插入。每一层的输出作为输入进入下一层。这可能是卷积层、密集层、激活层、下降层等等。下面的代码示例显示了层如何继续相互馈入；这摘自本章后面的一个完整的例子。请注意每一层的符号是如何在下一层中用作输入的，这就是一层又一层地构建模型的方式。将符号<kbd>data1</kbd>传递给对<kbd>mx.symbol.FullyConnected</kbd>的第一个调用，将符号<kbd>fc1</kbd>传递给对<kbd>mx.symbol.Activation</kbd>的第一个调用，依此类推。</p>
+
+<p class="mce-root">当您执行这段代码时，它会立即运行，因为在这个阶段没有执行任何东西。最后，将最后一层传递给一个函数来训练模型。在MXNet中，这是<kbd>mx.model.FeedForward.create</kbd>函数。在这个阶段，计算图被计算，并且模型开始被训练:</p>
+
+<pre style="padding-left: 30px">data &lt;- mx.symbol.Variable("data")</pre>
+
+<p>这是深度学习模型被创建和训练的时候。关于MXNet架构的更多信息可在线获得；以下链接将帮助您入门:</p>
+
+<pre>data &lt;- mx.symbol.Variable("data")<br/>fc1 &lt;- mx.symbol.FullyConnected(data, name="fc1", num_hidden=64)<br/>act1 &lt;- mx.symbol.Activation(fc1, name="activ1", act_type=activ)<br/><br/>drop1 &lt;- mx.symbol.Dropout(data=act1,p=0.2)<br/>fc2 &lt;- mx.symbol.FullyConnected(drop1, name="fc2", num_hidden=32)<br/>act2 &lt;- mx.symbol.Activation(fc2, name="activ2", act_type=activ)<br/><br/>.....<br/>softmax &lt;- mx.symbol.SoftmaxOutput(fc4, name="sm")</pre>
+
+<p class="mce-root"><a href="https://mxnet.apache.org/tutorials/basic/symbol.html">https://mxnet.apache.org/tutorials/basic/symbol.html</a></p>
+
+<pre>softmax &lt;- mx.symbol.SoftmaxOutput(fc4, name="sm")<br/>model &lt;- mx.model.FeedForward.create(softmax, X = train_X, y = train_Y,<br/>                                     ctx = devices,num.round = num_epochs,<br/>                                     ................</pre>
+
+<p class="mce-root"><a href="https://mxnet.incubator.apache.org/architecture/program_model.html">https://mxnet . incubator . Apache . org/architecture/program _ model . html</a></p>
+
+<ul>
+
+<li class="mce-root">深度学习层</li>
+
+<li class="mce-root">在早期的代码片段中，我们看到了深度学习模型的一些层，包括<kbd xmlns:epub="http://www.idpf.org/2007/ops">mx.symbol.FullyConnected</kbd>、<kbd xmlns:epub="http://www.idpf.org/2007/ops">mx.symbol.Activation</kbd>和<kbd xmlns:epub="http://www.idpf.org/2007/ops">mx.symbol.Dropout</kbd>。层是如何构建模型的；它们是数据的计算转换。比如<kbd xmlns:epub="http://www.idpf.org/2007/ops">mx.symbol.FullyConnected</kbd>是我们在<a xmlns:epub="http://www.idpf.org/2007/ops" href="">第一章</a>、<em xmlns:epub="http://www.idpf.org/2007/ops">深度学习入门</em>中介绍的第一类层运算we matrix运算。它是完全连接的<em xmlns:epub="http://www.idpf.org/2007/ops">,因为所有输入值都连接到该层中的所有节点。在其他深度学习库中，如Keras，它被称为<strong xmlns:epub="http://www.idpf.org/2007/ops">密集</strong>层。</em></li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Deep learning layers</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title"><kbd>mx.symbol.Activation</kbd>层对前一层的输出执行激活功能。<kbd>mx.symbol.Dropout</kbd>层对前一层的输出执行丢弃。MXNet中其他常见的图层类型有:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p><kbd xmlns:epub="http://www.idpf.org/2007/ops">mxnet.symbol.Convolution</kbd>:执行卷积运算，匹配数据中的模式。它主要用于计算机视觉任务，我们将在<a xmlns:epub="http://www.idpf.org/2007/ops" href="">Chapte</a>T8】rT10】5，<em xmlns:epub="http://www.idpf.org/2007/ops">使用卷积神经网络进行图像分类</em>中看到。它们也可以用于自然语言处理，我们会在<a xmlns:epub="http://www.idpf.org/2007/ops" href="">第六章</a>、<em xmlns:epub="http://www.idpf.org/2007/ops">利用深度学习的自然语言处理</em>中看到。</p>
+
+<p><kbd>mx.symbol.Pooling</kbd>:对上一层的输出进行汇集。池化通过从输入的各部分中取平均值或最大值来减少元素的数量。这些通常用于卷积层。</p>
+
+<ul>
+
+<li><kbd>mx.symbol.BatchNorm</kbd>:用于归一化前一层的权重。这样做的原因与您在建模之前规范化输入数据的原因相同:它有助于模型更好地训练。它还可以防止在训练过程中渐变变得非常非常小或非常非常大时渐变消失和爆炸。这会导致模型无法收敛，也就是训练会失败。</li>
+
+<li><kbd>mx.symbol.SoftmaxOutput</kbd>:根据前一层的输出计算softmax结果。</li>
+
+<li>使用这些层有公认的模式，例如，激活层通常跟随全连接层。脱落层通常应用在激活功能之后，但是可以在完全连接的层和激活功能之间。卷积层和池层通常按此顺序在图像任务中一起使用。在这个阶段，不需要试图记忆何时使用这些层；在本书的其余部分，你会遇到大量的例子！</li>
+
+<li>如果这一切看起来令人困惑，那么知道应用这些层的许多困难工作已经从你身上抽象出来，你会感到安慰。在前一章中，当我们构建神经网络时，我们必须管理各层的所有输入输出。这意味着要确保矩阵的维数是正确的，这样运算才能进行。深度学习库，比如MXNet和TensorFlow，会帮你搞定这些。</li>
+
+</ul>
+
+<p>构建深度学习模型</p>
+
+<p>既然我们已经涵盖了基础知识，那么让我们来看看如何构建我们的第一个真正的深度学习模型！我们将使用我们在第2章、<em xmlns:epub="http://www.idpf.org/2007/ops">中使用的<kbd xmlns:epub="http://www.idpf.org/2007/ops">UHI HAR</kbd>数据集来训练预测模型</em>。下面的代码做了一些数据准备:它加载数据并只选择存储平均值的列(列名中包含单词<kbd xmlns:epub="http://www.idpf.org/2007/ops">mean</kbd>的列)。<kbd xmlns:epub="http://www.idpf.org/2007/ops">y</kbd>变量从1到6；我们将减去1，因此范围是0到5。该部分的代码在<kbd xmlns:epub="http://www.idpf.org/2007/ops">Chapter4/uci_har.R</kbd>中。它要求<kbd xmlns:epub="http://www.idpf.org/2007/ops">UHI HAR</kbd>数据集在数据文件夹中；从<a xmlns:epub="http://www.idpf.org/2007/ops" href="https://archive.ics.uci.edu/ml/datasets/human+activity+recognition+using+smartphones">https://archive . ics . UCI . edu/ml/datasets/human+activity+recognition+using+smart phones</a>下载并解压到data文件夹:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Building a deep learning model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">接下来，我们将转置数据并将其转换为矩阵。MXNet期望数据是宽度<kbd>x</kbd>高度而不是高度<kbd>x</kbd>宽度:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>下一步是定义计算图。我们为数据创建一个占位符，并创建两个完全连接(或密集)的层，然后进行relu激活。第一层有64个节点，第二层有32个节点。我们创建一个最终的全连接层，它有六个节点——y变量中不同类的数量。我们使用softmax激活将最后六个节点的数字转换为每个类别的概率:</p>
+
+<pre>train.x &lt;- read.table("../data/UCI HAR Dataset/train/X_train.txt")<br/>train.y &lt;- read.table("../data/UCI HAR Dataset/train/y_train.txt")[[1]]<br/>test.x &lt;- read.table("../data/UCI HAR Dataset/test/X_test.txt")<br/>test.y &lt;- read.table("../data/UCI HAR Dataset/test/y_test.txt")[[1]]<br/>features &lt;- read.table("../data/UCI HAR Dataset/features.txt")<br/>meanSD &lt;- grep("mean\\(\\)|std\\(\\)", features[, 2])<br/>train.y &lt;- train.y-1<br/>test.y &lt;- test.y-1</pre>
+
+<p>当您运行前面的代码时，实际上什么都不会执行。为了训练模型，我们创建了一个<kbd>devices</kbd>对象来指示代码应该在哪里运行，CPU还是GPU。然后将最后一层的符号(softmax)传递给<kbd>mx.model.FeedForward.create</kbd>函数。该函数还有其他参数，更恰当的说法是超参数。其中包括历元(<kbd>num.round</kbd>)，它控制我们通过数据的次数；学习率(<kbd>learning.rate</kbd>)，它控制每次通过时梯度更新的程度；动量(<kbd>momentum</kbd>)，它是一个超参数，可以帮助模型更快地训练；权重初始化器(<kbd>initializer</kbd>)，它控制节点的权重和偏差的初始设置。我们还会传入评估指标(<kbd>eval.metric</kbd>)，这是如何评估模型的，以及一个回调函数(<kbd>epoch.end.callback</kbd>)，它用于输出进度信息。当我们运行该函数时，它训练模型并按照我们用于<kbd>epoch.end.callback</kbd>参数的值输出进度，即每个时期:</p>
+
+<pre>train.x &lt;- t(train.x[,meanSD])<br/>test.x &lt;- t(test.x[,meanSD])<br/>train.x &lt;- data.matrix(train.x)<br/>test.x &lt;- data.matrix(test.x)</pre>
+
+<p>既然我们已经训练了我们的模型，让我们看看它在测试集上的表现如何:</p>
+
+<pre>data &lt;- mx.symbol.Variable("data")<br/>fc1 &lt;- mx.symbol.FullyConnected(data, name="fc1", num_hidden=64)<br/>act1 &lt;- mx.symbol.Activation(fc1, name="relu1", act_type="relu")<br/>fc2 &lt;- mx.symbol.FullyConnected(act1, name="fc2", num_hidden=32)<br/>act2 &lt;- mx.symbol.Activation(fc2, name="relu2", act_type="relu")<br/>fc3 &lt;- mx.symbol.FullyConnected(act2, name="fc3", num_hidden=6)<br/>softmax &lt;- mx.symbol.SoftmaxOutput(fc3, name="sm")</pre>
+
+<p>还不错！在我们的测试集上，我们已经达到了<kbd>87.11%</kbd>的准确率。</p>
+
+<pre>devices &lt;- mx.cpu()<br/>mx.set.seed(0)<br/>tic &lt;- proc.time()<br/>model &lt;- mx.model.FeedForward.create(softmax, X = train.x, y = train.y,<br/>                                      ctx = devices,num.round = 20,<br/>                                      learning.rate = 0.08, momentum = 0.9,<br/>                                      eval.metric = mx.metric.accuracy,<br/>                                      initializer = mx.init.uniform(0.01),<br/>                                      epoch.end.callback =<br/>                                        mx.callback.log.train.metric(1))<br/>Start training with 1 devices<br/>[1] Train-accuracy=0.185581140350877<br/>[2] Train-accuracy=0.26104525862069<br/>[3] Train-accuracy=0.555091594827586<br/>[4] Train-accuracy=0.519127155172414<br/>[5] Train-accuracy=0.646551724137931<br/>[6] Train-accuracy=0.733836206896552<br/>[7] Train-accuracy=0.819100215517241<br/>[8] Train-accuracy=0.881869612068966<br/>[9] Train-accuracy=0.892780172413793<br/>[10] Train-accuracy=0.908674568965517<br/>[11] Train-accuracy=0.898572198275862<br/>[12] Train-accuracy=0.896821120689655<br/>[13] Train-accuracy=0.915544181034483<br/>[14] Train-accuracy=0.928879310344828<br/>[15] Train-accuracy=0.926993534482759<br/>[16] Train-accuracy=0.934401939655172<br/>[17] Train-accuracy=0.933728448275862<br/>[18] Train-accuracy=0.934132543103448<br/>[19] Train-accuracy=0.933324353448276<br/>[20] Train-accuracy=0.934132543103448<br/>print(proc.time() - tic)<br/>   user system elapsed <br/>   7.31 3.03 4.31 </pre>
+
+<p>等等，我们在前面章节中提到的反向传播、导数等等在哪里？答案是深度学习库很大程度上为你自动管理。在MXNet中，自动微分包含在一个名为autograd package的包中，它用链式法则对操作图进行微分。在构建深度学习模型时，少了一件需要担心的事情。更多信息请访问<a href="https://mxnet.incubator.apache.org/tutorials/gluon/autograd.html">https://mxnet . incubator . Apache . org/tutorials/gluon/autograded . html</a>。</p>
+
+<pre><br/>preds1 &lt;- predict(model, test.x)<br/>pred.label &lt;- max.col(t(preds1)) - 1<br/>t &lt;- table(data.frame(cbind(test.y,pred.label)),<br/>            dnn=c("Actual", "Predicted"))<br/>acc&lt;-round(100.0*sum(diag(t))/length(test.y),2)<br/>print(t)<br/>      Predicted<br/>Actual   0   1   2   3   4   5<br/>     0 477  15   4   0   0   0<br/>     1 108 359   4   0   0   0<br/>     2  13  42 365   0   0   0<br/>     3   0   0   0 454  37   0<br/>     4   0   0   0 141 391   0<br/>     5   0   0   0  16   0 521<br/>print(sprintf(" Deep Learning Model accuracy = %1.2f%%",acc))<br/>[1] " Deep Learning Model accuracy = 87.11%"</pre>
+
+<p>用例–使用MXNet进行分类和回归</p>
+
+<p>在本节中，我们将使用一个新的数据集来创建一个二元分类任务。我们将在此使用的数据集是一个事务性数据集，可在<a href="https://www.dunnhumby.com/sourcefiles">https://www.dunnhumby.com/sourcefiles</a>获得。该数据集可从dunnhumby获得，该数据集可能因其与Tesco(一家英国杂货店)俱乐部卡的链接而闻名，Tesco是世界上最大的零售忠诚度系统之一。我推荐以下这本书，它描述了dunnhumby如何通过将分析应用于零售忠诚度计划来帮助Tesco成为第一零售商:<em> Humby，Clive，Terry Hunt和Tim Phillips。得分。Kogan Page Publishers，2008 </em>。尽管这本书相对较旧，但它仍然是描述如何推出基于数据分析的业务转型计划的最佳用例之一。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Use case – using MXNet for classification and regression</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">数据下载和探索</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>当您转到前面的链接时，有几个不同的数据选项；我们将使用的那个叫做<strong>让我们来点真实的</strong>。这个数据集是一个虚构的零售忠诚度计划的两年多的数据。该数据由通过购物篮ID和客户代码链接的购买组成，也就是说，我们可以跟踪客户在一段时间内的交易。这里有许多选项，包括完整的数据集，压缩了4.3 GB，解压缩了40 GB以上。对于我们的第一个模型，我们将使用最小的数据集，并将为随机选择的5000个客户样本下载名为<strong> All transactions的数据</strong>；这是整个数据库大小的1/100。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Data download and exploration</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">我要感谢dunnhumby发布了这个数据集，并允许我们使用它。深度学习和机器学习的一个问题是缺乏人们可以在其上练习技能的大规模真实数据集。当一家公司努力发布这样的数据集时，我们应该感谢他们的努力，不要在指定的条款和条件之外使用数据集。请花时间阅读条款和条件，并将数据集仅用于个人学习目的。请记住，对该数据集(或其他公司发布的数据集)的任何滥用都意味着公司将更不愿意在未来提供其他数据集。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>阅读完条款和条件并将数据集下载到您的计算机后，将其解压缩到<kbd>code</kbd>文件夹下名为<kbd>dunnhumby/in</kbd>的目录中。确保文件直接解压到这个文件夹下，而不是子目录下，否则你可能需要在解压数据后复制它们。数据文件采用<strong>逗号分隔的</strong> ( <strong> CSV </strong>)格式，每周数据有一个单独的文件。可以使用文本编辑器打开和查看这些文件。我们将使用<em>表4.1 </em>中的一些字段进行分析:</p>
+
+<p><strong>字段名</strong></p>
+
+<p><strong>描述</strong></p>
+
+<table border="1" style="border-collapse: collapse;width: 100%">
+
+<tbody>
+
+<tr>
+
+<td style="width: 138px">
+
+<p><strong>格式</strong></p>
+
+</td>
+
+<td style="width: 480px">
+
+<p><kbd>BASKET_ID</kbd></p>
+
+</td>
+
+<td style="width: 69px">
+
+<p>购物篮ID或交易ID。购物篮中的所有商品共享相同的<kbd>basket_id</kbd>值。</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 138px">
+
+<p>数字的</p>
+
+</td>
+
+<td style="width: 480px">
+
+<p><kbd>CUST_CODE</kbd></p>
+
+</td>
+
+<td style="width: 69px">
+
+<p>客户代码。这将交易/访问与客户联系起来。</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 138px">
+
+<p>茶</p>
+
+</td>
+
+<td style="width: 480px">
+
+<p><kbd>SHOP_DATE</kbd></p>
+
+</td>
+
+<td style="width: 69px">
+
+<p>购物发生的日期。日期以yyyymmdd格式指定。</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 138px">
+
+<p>茶</p>
+
+</td>
+
+<td style="width: 480px">
+
+<p><kbd>STORE_CODE</kbd></p>
+
+</td>
+
+<td style="width: 69px">
+
+<p>存储代码。</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 138px">
+
+<p>茶</p>
+
+</td>
+
+<td style="width: 480px">
+
+<p><kbd>QUANTITY</kbd></p>
+
+</td>
+
+<td style="width: 69px">
+
+<p>在此购物篮中购买的相同产品的数量。</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 138px">
+
+<p>数字的</p>
+
+</td>
+
+<td style="width: 480px">
+
+<p><kbd>SPEND</kbd></p>
+
+</td>
+
+<td style="width: 69px">
+
+<p>与所购物品相关的支出。</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 138px">
+
+<p>数字的</p>
+
+</td>
+
+<td style="width: 480px">
+
+<p><kbd>PROD_CODE</kbd></p>
+
+</td>
+
+<td style="width: 69px">
+
+<p>产品代码。</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 138px">
+
+<p>茶</p>
+
+</td>
+
+<td style="width: 480px">
+
+<p><kbd>PROD_CODE_10</kbd></p>
+
+</td>
+
+<td style="width: 69px">
+
+<p>产品层次结构10级代码。</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 138px">
+
+<p>茶</p>
+
+</td>
+
+<td style="width: 480px">
+
+<p><kbd>PROD_CODE_20</kbd></p>
+
+</td>
+
+<td style="width: 69px">
+
+<p>产品层次结构第20层代码。</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 138px">
+
+<p>茶</p>
+
+</td>
+
+<td style="width: 480px">
+
+<p><kbd>PROD_CODE_30</kbd></p>
+
+</td>
+
+<td style="width: 69px">
+
+<p>产品层次结构第30层代码。</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 138px">
+
+<p>茶</p>
+
+</td>
+
+<td style="width: 480px">
+
+<p><kbd>PROD_CODE_40</kbd></p>
+
+</td>
+
+<td style="width: 69px">
+
+<p>产品层次结构级别40代码。</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 138px">
+
+<p>茶</p>
+
+</td>
+
+<td style="width: 480px">
+
+<p>表4.1:事务数据集的部分数据字典</p>
+
+</td>
+
+<td style="width: 69px">
+
+<p>该数据存储了客户交易的详细信息。一个人在购物交易中购买的每一个独特的项目都由一行表示，并且交易中的项目将具有相同的<kbd>BASKET_ID</kbd>字段。也可以使用<kbd>CUST_CODE</kbd>字段将交易链接到客户。如果您想了解有关字段类型的更多信息，ZIP文件中包含一个PDF。</p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p>我们将使用该数据集来完成客户流失预测任务。客户流失预测任务是我们预测哪些客户将在接下来的<kbd>x</kbd>天内再次光顾。流失预测用于发现那些有离开你的程序的危险的客户。它被公司用于购物忠诚度计划、手机订阅、电视订阅等，以确保他们保持足够的客户。对于大多数依靠经常性订阅收入的公司来说，将资源用于维护现有客户群比试图获得新客户更有效。这是因为获取新客户的成本很高。此外，随着客户离开后时间的推移，重新赢得他们越来越难，因此有一个很小的时间窗口可以向他们发送特别优惠，以吸引他们留下来。</p>
+
+<p>以及二元分类，我们将建立一个回归模型。这将预测一个人在接下来的14天里将要花费的金额。幸运的是，我们可以构建一个适用于这两种预测任务的数据集。</p>
+
+<p>数据以117个CSV文件的形式提供(忽略<kbd>time.csv</kbd>，它是一个查找文件)。第一步是执行一些基本的数据探索，以验证数据下载成功，然后执行一些基本的数据质量检查。这是任何分析中重要的第一步:尤其是当您使用外部数据集时，您应该在创建任何机器学习模型之前对数据进行一些验证检查。<kbd>Chapter4/0_Explore.Rmd</kbd>脚本创建一个摘要文件，并对数据进行一些探索性分析。这是一个RMD文件，所以需要从RStudio运行。为了简洁，并且因为这本书是关于深度学习而不是数据处理的，我将只包括这个脚本的一些输出和情节，而不是复制所有的代码。您还应该运行该文件中的代码，以确保数据被正确导入，尽管第一次运行时可能需要几分钟时间。以下是该脚本数据的一些摘要:</p>
+
+<p>如果我们将此与网站和PDF进行比较，它看起来是有序的。我们拥有超过250万条记录，以及761家商店中5，000名顾客的数据。数据探索脚本还创建了一些图表，让我们对数据有所了解。<em>图4.3 </em>显示了117周的销售情况；我们看到数据的多样性(它不是一条表示每天都不同的平线),并且没有表示缺失数据的间隙。有季节性模式，在日历年年底，即假日季节，有较大的高峰:</p>
+
+<p>图4.3:销售随时间变化的曲线图。</p>
+
+<pre style="padding-left: 30px">Number of weeks we have data: 117.<br/>Number of transaction lines: 2541019.<br/>Number of transactions (baskets): 390320.<br/>Number of unique Customers: 5000.<br/>Number of unique Products: 4997.<br/>Number of unique Stores: 761.</pre>
+
+<p>图4.3中的图表显示数据已经成功导入。数据看起来是一致的，是我们对零售交易文件的预期，我们看不到任何差距，并且存在季节性。</p>
+
+<div><img src="img/75c3ec73-4b6d-4920-a4fa-cac73b6b7411.png"/></div>
+
+<p>对于一个人购买的每件物品，都有一个产品代码(<kbd>PROD_CODE</kbd>)和四个部门代码(<kbd>PROD_CODE_10</kbd>、<kbd>PROD_CODE_20</kbd>、<kbd>PROD_CODE_30</kbd>、<kbd>PROD_CODE_40</kbd>)。我们将在分析中使用这些部门代码；<kbd>Chapter4/0_Explore.Rmd</kbd>中的代码为它们创建了一个摘要。我们希望了解每个部门代码有多少个唯一值，这些代码是否代表一个层次结构(每个代码最多有一个父代码)，以及是否有重复的代码:</p>
+
+<p>我们有4，997个独特的产品代码和4个部门代码。我们的部门代码从有250个唯一代码的<kbd xmlns:epub="http://www.idpf.org/2007/ops">PROD_CODE_10</kbd>到有9个唯一代码的<kbd xmlns:epub="http://www.idpf.org/2007/ops">PROD_CODE_40</kbd>。这是一个产品部门代码层级，其中<kbd xmlns:epub="http://www.idpf.org/2007/ops">PROD_CODE_40</kbd>是主要类别，<kbd xmlns:epub="http://www.idpf.org/2007/ops">PROD_CODE_10</kbd>是层级中最低的部门代码。<kbd xmlns:epub="http://www.idpf.org/2007/ops">PROD_CODE_10</kbd>、<em xmlns:epub="http://www.idpf.org/2007/ops">、<strong>、</strong>、</em>、<em xmlns:epub="http://www.idpf.org/2007/ops">、<strong>、</strong>、<kbd xmlns:epub="http://www.idpf.org/2007/ops">PROD_CODE_30</kbd>中的每个代码只有一个父代码；例如，没有重复的代码，即一个部门代码只属于一个超类别。我们没有得到一个查找文件来说明这些代码代表什么，但是一个产品的产品代码层次结构的示例可能类似于以下内容:</em></p>
+
+<p>为了了解这些部门代码，我们还可以根据<em>图4.4 </em>中独特产品部门代码的数量绘制一段时间内的销售数据。这个情节也是在<kbd>Chapter4/0_Explore.Rmd</kbd>中创造的:</p>
+
+<pre style="padding-left: 30px">PROD_CODE: Number of unique codes: 4997. Number of repeated codes: 0.<br/>PROD_CODE_10: Number of unique codes:250. Number of repeated codes: 0.<br/>PROD_CODE_20: Number of unique codes:90. Number of repeated codes: 0.<br/>PROD_CODE_30: Number of unique codes:31. Number of repeated codes: 0.<br/>PROD_CODE_40: Number of unique codes:9.</pre>
+
+<p>图4.4:按日期购买的唯一产品代码</p>
+
+<pre style="padding-left: 30px">PROD_CODE_40 : Chilled goods<br/>  PROD_CODE_30 : Dairy<br/>    PROD_CODE_20 : Fresh Milk<br/>      PROD_CODE_10 : Full-fat Milk<br/>        PROD_CODE : Brand x Full-fat Milk</pre>
+
+<p>请注意，对于此图，<em> y </em>轴是唯一的产品代码，而不是销售额。这个数据看起来也是一致的；数据中有一些峰值和谷值，但没有<em>图4.3 </em>中那么明显，这是意料之中的。</p>
+
+<div><img src="img/c1b38686-bbcf-478f-b068-58fa2219df6f.png"/></div>
+
+<p>为我们的模型准备数据</p>
+
+<p>现在我们已经下载并验证了数据，我们可以使用它来为我们的二元分类和回归模型任务创建数据集。我们希望能够预测哪些客户将在接下来的两周内访问商店以执行二元分类任务，以及他们将在接下来的两周内为回归任务花费多少。<kbd>Chapter4/prepare_data.R</kbd>脚本将原始交易数据转换成适合机器学习的格式。您需要运行代码来为模型创建数据集，但是您不必确切地理解它是如何工作的。如果你想专注于深度学习模型的构建，请随意跳过。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Preparing the data for our models</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">我们需要将数据转换成适合预测任务的格式。对于我们想要预测的每个实例，这应该是单独的一行。这些列将包括一些特征字段(<kbd>X</kbd>变量)和另一个预测值字段(<kbd>Y</kbd>变量)。我们希望预测客户是否会返回以及他们的消费，因此我们的数据集将为每个客户提供一行功能和预测变量。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>第一步是找到分隔用于预测的变量(<kbd xmlns:epub="http://www.idpf.org/2007/ops">X</kbd>)和我们将预测的变量(<kbd xmlns:epub="http://www.idpf.org/2007/ops">Y</kbd>)的截止日期。代码查看数据，找到最后的交易日期；然后从该日期减去13天。这是一个截止日期，我们希望预测哪些顾客会在截止日期<em xmlns:epub="http://www.idpf.org/2007/ops">当天或之后在我们的商店消费；基于截止日期</em>之前<em xmlns:epub="http://www.idpf.org/2007/ops">发生的事情。截止日期之前的数据将用于制作我们的X或特征变量，截止日期当天或之后的销售数据将用于制作我们的Y或预测变量。以下是那部分代码:</em></p>
+
+<p>如果此代码没有运行，最可能的原因是源数据没有保存在正确的位置。数据集必须解压缩到code文件夹下名为dunnhumby/in的目录中，即与章节文件夹处于同一级别。</p>
+
+<p>我们数据中的最后日期是<kbd>20080706</kbd>，即2008年7月7日<sup>日</sup>，截止日期是2008年6月23日<sup>日</sup>。尽管我们有2006年的数据，但我们将只使用2008年的销售数据。任何超过六个月的数据都不太可能影响未来的客户销售。任务是根据客户在2008年6月23日<sup>日</sup>之前的活动，预测客户是否会在2008年6月23日<sup>日</sup>至2008年7月7日<sup>日</sup>之间再次光临。</p>
+
+<pre>library(readr)<br/>library(reshape2)<br/>library(dplyr)<br/><br/>source("import.R")<br/><br/># step 1, merge files<br/>import_data(data_directory,bExploreData=0)<br/><br/># step 2, group and pivot data<br/>fileName &lt;- paste(data_directory,"all.csv",sep="")<br/>fileOut &lt;- paste(data_directory,"predict.csv",sep="")<br/>df &lt;- read_csv(fileName,col_types = cols(.default = col_character()))<br/><br/># convert spend to numeric field<br/>df$SPEND&lt;-as.numeric(df$SPEND)<br/><br/># group sales by date. we have not converted the SHOP_DATE to date<br/># but since it is in yyyymmdd format,<br/># then ordering alphabetically will preserve date order<br/>sumSalesByDate&lt;-df %&gt;%<br/>   group_by(SHOP_WEEK,SHOP_DATE) %&gt;%<br/>   summarise(sales = sum(SPEND)<br/>   )<br/><br/># we want to get the cut-off date to create our data model<br/># this is the last date and go back 13 days beforehand<br/># therefore our X data only looks at everything from start to max date - 13 days<br/># and our Y data only looks at everything from max date - 13 days to end (i.e. 14 days)<br/>max(sumSalesByDate$SHOP_DATE)<br/>[1] "20080706"<br/>sumSalesByDate2 &lt;- sumSalesByDate[order(sumSalesByDate$SHOP_DATE),]<br/>datCutOff &lt;- as.character(sumSalesByDate2[(nrow(sumSalesByDate2)-13),]$SHOP_DATE)<br/>datCutOff<br/>[1] "20080623"<br/>rm(sumSalesByDate,sumSalesByDate2)</pre>
+
+<p>我们现在需要从数据中创建特征；为了使用按部门代码细分的支出，我们将使用<kbd>PROD_CODE_40</kbd>字段。我们可以只根据这个部门代码对销售额进行分组，但是这样会使2008年1月的支出和2008年6月的支出具有相同的权重。我们希望在预测列中加入一些时间因素。相反，我们将在部门代码和周的组合上创建特性。这将允许我们的模型更加重视最近的活动。首先，我们按客户代码、周和部门代码分组，并创建<kbd>fieldName</kbd>列。然后，我们透视这些数据以创建我们的特征(<kbd>X</kbd>)数据集。该数据集中的单元格值是该客户的销售额(行)和该周的部门代码(列)。下面是两个客户的数据转换示例。<em>表4.2 </em>显示了每周的销售支出和<kbd>PROD_CODE_40</kbd>字段。<em>然后，表4.3 </em>使用透视创建一个数据集，其中每个客户有一行，聚合字段现在是列，其值为:</p>
+
+<p><kbd>CUST_CODE</kbd></p>
+
+<p><kbd>PROD_CODE_40</kbd></p>
+
+<table border="1" style="border-collapse: collapse;width: 100%">
+
+<tbody>
+
+<tr>
+
+<td style="width: 23%">
+
+<p><kbd>SHOP_WEEK</kbd></p>
+
+</td>
+
+<td style="width: 21%">
+
+<p><kbd>fieldName</kbd></p>
+
+</td>
+
+<td style="width: 19%">
+
+<p><kbd>Sales</kbd></p>
+
+</td>
+
+<td style="width: 24.4745%">
+
+<p><kbd>cust_001</kbd></p>
+
+</td>
+
+<td style="width: 23.5255%">
+
+<p>D00001</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 23%">
+
+<p>200801</p>
+
+</td>
+
+<td style="width: 21%">
+
+<p><kbd>D00001_200801</kbd></p>
+
+</td>
+
+<td style="width: 19%">
+
+<p>10.00</p>
+
+</td>
+
+<td style="width: 24.4745%">
+
+<p><kbd>cust_002</kbd></p>
+
+</td>
+
+<td style="width: 23.5255%">
+
+<p>D00001</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 23%">
+
+<p>200801</p>
+
+</td>
+
+<td style="width: 21%">
+
+<p><kbd>D00001_200801</kbd></p>
+
+</td>
+
+<td style="width: 19%">
+
+<p>12.00</p>
+
+</td>
+
+<td style="width: 24.4745%">
+
+<p><kbd>cust_001</kbd></p>
+
+</td>
+
+<td style="width: 23.5255%">
+
+<p>D00015</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 23%">
+
+<p>200815</p>
+
+</td>
+
+<td style="width: 21%">
+
+<p><kbd>D00015_200815</kbd></p>
+
+</td>
+
+<td style="width: 19%">
+
+<p>15.00</p>
+
+</td>
+
+<td style="width: 24.4745%">
+
+<p><kbd>cust_001</kbd></p>
+
+</td>
+
+<td style="width: 23.5255%">
+
+<p>D00020</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 23%">
+
+<p>200815</p>
+
+</td>
+
+<td style="width: 21%">
+
+<p><kbd>D00020_200815</kbd></p>
+
+</td>
+
+<td style="width: 19%">
+
+<p>20.00</p>
+
+</td>
+
+<td style="width: 24.4745%">
+
+<p><kbd>cust_002</kbd></p>
+
+</td>
+
+<td style="width: 23.5255%">
+
+<p>D00030</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 23%">
+
+<p>200815</p>
+
+</td>
+
+<td style="width: 21%">
+
+<p><kbd>D00030_200815</kbd></p>
+
+</td>
+
+<td style="width: 19%">
+
+<p>25.00</p>
+
+</td>
+
+<td style="width: 24.4745%">
+
+<p>表4.2:按客户代码、部门代码和周列出的销售汇总</p>
+
+</td>
+
+<td style="width: 23.5255%">
+
+<p><kbd>CUST_CODE</kbd></p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p><kbd>D00001_200801</kbd></p>
+
+<table border="1" style="border-collapse: collapse;width: 100%">
+
+<tbody>
+
+<tr>
+
+<td>
+
+<p><kbd>D00015_200815</kbd></p>
+
+</td>
+
+<td>
+
+<p><kbd>D00020_200815</kbd></p>
+
+</td>
+
+<td>
+
+<p><kbd>D00030_200815</kbd></p>
+
+</td>
+
+<td>
+
+<p><kbd>cust_001</kbd></p>
+
+</td>
+
+<td>
+
+<p>10.00</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td>
+
+<p>15.00</p>
+
+</td>
+
+<td>
+
+<p>20.00</p>
+
+</td>
+
+<td>
+
+<p>15.00</p>
+
+</td>
+
+<td>
+
+<p><kbd>cust_002</kbd></p>
+
+</td>
+
+<td>12.00</td>
+
+</tr>
+
+<tr>
+
+<td>
+
+<p><kbd>cust_002</kbd></p>
+
+</td>
+
+<td>
+
+<p>12.00</p>
+
+</td>
+
+<td>25.00</td>
+
+<td>表4.3:转换后来自表4.2的数据</td>
+
+<td>
+
+<p>下面是进行这种转换的代码:</p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p>predictor ( <kbd>Y</kbd>)变量是关于客户是否在从<kbd>200818</kbd>到<kbd>200819</kbd>的几周访问了站点的标志。我们对截止日期后的数据进行分组，并按客户对销售额进行分组，这些构成了我们的<kbd>Y</kbd>值的基础。我们连接<kbd>X</kbd>和<kbd>Y</kbd>数据集，通过左连接确保所有行都在<kbd>X</kbd>侧。最后，我们为二元分类任务创建一个1/0标志。当我们完成时，我们看到我们的数据集中有<kbd>3933</kbd>条记录:没有返回的<kbd>1560</kbd>个客户和返回的<kbd>2373</kbd>个客户。我们通过保存文件来完成建模。以下代码显示了这些步骤:</p>
+
+<p>我们使用销售数据来创建预测值字段，但是在此任务中我们忽略了一些客户属性。这些字段包括<kbd>Customers Price Sensitivity</kbd>和<kbd>Customers Lifestage</kbd>。我们没有使用这些字段的主要原因是为了避免数据泄露。建立预测模型时可能会发生数据泄漏；在生产环境中创建数据集时，如果某些字段的值不可用或不同，就会出现这种情况。这些字段可能会导致数据泄漏，因为我们不知道它们是何时设置的；可能是客户注册时，也可能是每晚运行的流程。如果这些是在我们的截止日期之后创建的，这将意味着这些字段可能不公平地预测我们的<kbd>Y</kbd>变量。</p>
+
+<pre># we are going to limit our data here from year 2008 only<br/># group data and then pivot it<br/>sumTemp &lt;- df %&gt;%<br/>   filter((SHOP_DATE &lt; datCutOff) &amp; (SHOP_WEEK&gt;="200801")) %&gt;%<br/>   group_by(CUST_CODE,SHOP_WEEK,PROD_CODE_40) %&gt;%<br/>   summarise(sales = sum(SPEND)<br/>   )<br/>sumTemp$fieldName &lt;- paste(sumTemp$PROD_CODE_40,sumTemp$SHOP_WEEK,sep="_")<br/>df_X &lt;- dcast(sumTemp,CUST_CODE ~ fieldName, value.var="sales")<br/>df_X[is.na(df_X)] &lt;- 0</pre>
+
+<p>例如，<kbd>Customers Price Sensitivity</kbd>有<kbd>Less Affluent</kbd>、<kbd>Mid Market</kbd>和<kbd>Up Market</kbd>的值，这些值可能来自客户购买的东西。因此，如果在为预测模型创建数据集的截止日期之后更新这些字段，在流失预测任务中使用这些字段会导致数据泄漏。<kbd>Customers Price Sensitivity</kbd>的<kbd>Up Market</kbd>值可能与退货支出密切相关，但该值实际上是其预测值的汇总。数据泄漏是数据模型在生产中表现不佳的主要原因之一，因为模型是用与Y变量相关联的数据训练的，而这些数据在现实中根本不存在。您应该始终检查时序任务的数据泄漏，并自问是否有任何字段(尤其是查找属性)在用于创建模型数据的日期之后被修改过。</p>
+
+<pre># y data just needs a group to get sales after cut-off date<br/>df_Y &lt;- df %&gt;%<br/>   filter(SHOP_DATE &gt;= datCutOff) %&gt;%<br/>   group_by(CUST_CODE) %&gt;%<br/>   summarise(sales = sum(SPEND)<br/>   )<br/>colnames(df_Y)[2] &lt;- "Y_numeric"<br/><br/># use left join on X and Y data, need to include all values from X<br/># even if there is no Y value<br/>dfModelData &lt;- merge(df_X,df_Y,by="CUST_CODE", all.x=TRUE)<br/># set binary flag<br/>dfModelData$Y_categ &lt;- 0<br/>dfModelData[!is.na(dfModelData$Y_numeric),]$Y_categ &lt;- 1<br/>dfModelData[is.na(dfModelData$Y_numeric),]$Y_numeric &lt;- 0<br/>rm(df,df_X,df_Y,sumTemp)<br/><br/>nrow(dfModelData)<br/>[1] 3933<br/>table(dfModelData$Y_categ)<br/>   0    1 <br/>1560 2373 <br/><br/># shuffle data<br/>dfModelData &lt;- dfModelData[sample(nrow(dfModelData)),]<br/><br/>write_csv(dfModelData,fileOut)</pre>
+
+<p class="mce-root">二元分类模型</p>
+
+<p class="mce-root">上一节的代码在<kbd>dunnhumby</kbd>文件夹中创建了一个名为<kbd>predict.csv</kbd>的新文件。对于每个客户，该数据集都有一个单独的行，其中0/1字段指示他们是否在过去两周内访问过，预测变量基于这两周之前的销售数据。现在我们可以着手建立一些机器学习模型。<kbd>Chapter4/binary_predict.R</kbd>文件包含我们的第一个预测任务，二进制分类的代码。代码的第一部分加载数据，并通过包含除客户ID、二进制分类预测变量和回归预测变量之外的所有列来创建预测变量数组。要素列都是严重右偏分布的数值字段，因此我们对这些字段应用对数变换。我们首先添加<kbd>0.01</kbd>，以避免在尝试获取零值日志<em> (log(0)= -Inf) </em>时得到非数字结果。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>The binary classification model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">下图左侧显示了转换前的数据，右侧显示了转换后的数据:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>图4.5:转换前后特征变量的分布。</p>
+
+<p>第二个图中左边的大条是原始字段为零的位置<em> (log(0+0.01) = -4.6) </em>。以下代码加载数据，执行对数转换，并创建先前的绘图:</p>
+
+<div><img src="img/488ede9b-6fc5-407d-aa55-e2ab03fda92a.png"/></div>
+
+<p>在我们训练深度学习模型之前，我们以数据为基准训练三个机器学习模型——一个逻辑回归模型、<kbd>Random Forest</kbd>模型和<kbd>XGBoost</kbd>模型。这段代码包含数据加载、转换和三个模型:</p>
+
+<p>我们创建逻辑回归、<kbd>Random Forest</kbd>和<kbd>XGBoost</kbd>模型有很多原因。首先，准备数据的大部分工作已经完成，所以这样做是微不足道的。其次，它给了我们一个基准来比较我们的深度学习模型。第三，如果在数据准备任务中存在问题，这些机器学习算法会更快地突出这些问题，因为它们会比训练深度学习模型更快。在这种情况下，我们只有几千条记录，所以这些机器学习算法将很容易在这些数据上运行。如果数据对于这些算法来说太大，我会考虑选取一个较小的样本，并在这个较小的样本上运行我们的基准测试任务。有许多机器学习算法可供选择，但我使用这些算法作为基准，原因如下:</p>
+
+<pre>set.seed(42)<br/>fileName &lt;- "../dunnhumby/predict.csv"<br/>dfData &lt;- read_csv(fileName,<br/>                    col_types = cols(<br/>                      .default = col_double(),<br/>                      CUST_CODE = col_character(),<br/>                      Y_categ = col_integer())<br/>                    )<br/>nobs &lt;- nrow(dfData)<br/>train &lt;- sample(nobs, 0.9*nobs)<br/>test &lt;- setdiff(seq_len(nobs), train)<br/>predictorCols &lt;- colnames(dfData)[!(colnames(dfData) %in% c("CUST_CODE","Y_numeric","Y_categ"))]<br/><br/># data is right-skewed, apply log transformation<br/>qplot(dfData$Y_numeric, geom="histogram",binwidth=10,<br/>       main="Y value distribution",xlab="Spend")+theme(plot.title = element_text(hjust = 0.5))<br/>dfData[, c("Y_numeric",predictorCols)] &lt;- log(0.01+dfData[, c("Y_numeric",predictorCols)])<br/>qplot(dfData$Y_numeric, geom="histogram",binwidth=0.5,<br/>       main="log(Y) value distribution",xlab="Spend")+theme(plot.title = element_text(hjust = 0.5))<br/>trainData &lt;- dfData[train, c(predictorCols)]<br/>testData &lt;- dfData[test, c(predictorCols)]<br/>trainData$Y_categ &lt;- dfData[train, "Y_categ"]$Y_categ<br/>testData$Y_categ &lt;- dfData[test, "Y_categ"]$Y_categ</pre>
+
+<p>逻辑回归是一个基本模型，也是一个很好的基准</p>
+
+<pre>#Logistic Regression Model<br/>logReg=glm(Y_categ ~ .,data=trainData,family=binomial(link="logit"))<br/>pr &lt;- as.vector(ifelse(predict(logReg, type="response",<br/>                                testData) &gt; 0.5, "1", "0"))<br/># Generate the confusion matrix showing counts.<br/>t&lt;-table(dfData[test, c(predictorCols, "Y_categ")]$"Y_categ", pr,<br/>          dnn=c("Actual", "Predicted"))<br/>acc&lt;-round(100.0*sum(diag(t))/length(test),2)<br/>print(t)<br/>      Predicted<br/>Actual   0   1<br/>     0 130  42<br/>     1  48 174<br/>print(sprintf(" Logistic regression accuracy = %1.2f%%",acc))<br/>[1] " Logistic regression accuracy = 77.16%"<br/>rm(t,pr,acc)<br/><br/>rf &lt;- randomForest::randomForest(as.factor(Y_categ) ~ .,<br/>                                  data=trainData,<br/>                                  na.action=randomForest::na.roughfix)<br/>pr &lt;- predict(rf, newdata=testData, type="class")<br/># Generate the confusion matrix showing counts.<br/>t&lt;-table(dfData[test, c(predictorCols, "Y_categ")]$Y_categ, pr,<br/>          dnn=c("Actual", "Predicted"))<br/>acc&lt;-round(100.0*sum(diag(t))/length(test),2)<br/>print(t)<br/>      Predicted<br/>Actual   0   1<br/>     0 124  48<br/>     1  30 192<br/>print(sprintf(" Random Forest accuracy = %1.2f%%",acc))<br/>[1] " Random Forest accuracy = 80.20%"<br/>rm(t,pr,acc)<br/><br/>xgb &lt;- xgboost(data=data.matrix(trainData[,predictorCols]), label=trainData[,"Y_categ"]$Y_categ,<br/>                nrounds=75, objective="binary:logistic")<br/>pr &lt;- as.vector(ifelse(<br/>   predict(xgb, data.matrix(testData[, predictorCols])) &gt; 0.5, "1", "0"))<br/>t&lt;-table(dfData[test, c(predictorCols, "Y_categ")]$"Y_categ", pr,<br/>          dnn=c("Actual", "Predicted"))<br/>acc&lt;-round(100.0*sum(diag(t))/length(test),2)<br/>print(t)<br/>      Predicted<br/>Actual   0   1<br/>     0 125  47<br/>     1  44 178<br/>print(sprintf(" XGBoost accuracy = %1.2f%%",acc))<br/>[1] " XGBoost accuracy = 76.90%"<br/>rm(t,pr,acc)</pre>
+
+<p><kbd>Random Forest</kbd>已知使用默认参数训练得很好，并且对过度拟合和相关变量(我们这里有)是健壮的</p>
+
+<ul>
+
+<li class="mce-root"><kbd>XGBoost</kbd>一直被评为表现最好的机器学习算法之一</li>
+
+<li class="mce-root">所有三种算法都达到了相似的准确度，最高的准确度是由<kbd>Random Forest</kbd>以80.2%的准确度达到的。我们现在知道这个数据集适合于预测任务，并且我们有一个基准可以与之进行比较。</li>
+
+<li class="mce-root">现在我们将使用MXNet构建一个深度学习模型:</li>
+
+</ul>
+
+<p class="mce-root">深度学习模型在测试数据上实现了<kbd>77.16%</kbd>的准确率，只有<kbd>Random Forest</kbd>模型能打败它。这表明深度学习模型可以与最好的机器学习算法竞争。它还表明，分类任务上的深度学习模型并不总是击败其他机器学习算法。我们使用这些模型来提供一个基准，这样我们就会知道我们的深度学习模型正在获得不错的结果；这让我们有信心，我们的深度学习模型是有竞争力的。</p>
+
+<p class="mce-root">我们的深度学习模型在每一层使用20%的下降和权重衰减进行正则化。没有辍学，模型过度训练明显。这可能是因为这些特性高度相关，因为我们的列是各个部门的支出。它计算出，如果一列是一种面包，另一列是一种牛奶，那么它们会一起变化，也就是说，交易越多、花费越多的人可能两者都买。</p>
+
+<pre>require(mxnet)<br/><br/># MXNet expects matrices<br/>train_X &lt;- data.matrix(trainData[, predictorCols])<br/>test_X &lt;- data.matrix(testData[, predictorCols])<br/>train_Y &lt;- trainData$Y_categ<br/><br/># hyper-parameters<br/>num_hidden &lt;- c(128,64,32)<br/>drop_out &lt;- c(0.2,0.2,0.2)<br/>wd=0.00001<br/>lr &lt;- 0.03<br/>num_epochs &lt;- 40<br/>activ &lt;- "relu"<br/><br/># create our model architecture<br/># using the hyper-parameters defined above<br/>data &lt;- mx.symbol.Variable("data")<br/>fc1 &lt;- mx.symbol.FullyConnected(data, name="fc1", num_hidden=num_hidden[1])<br/>act1 &lt;- mx.symbol.Activation(fc1, name="activ1", act_type=activ)<br/><br/>drop1 &lt;- mx.symbol.Dropout(data=act1,p=drop_out[1])<br/>fc2 &lt;- mx.symbol.FullyConnected(drop1, name="fc2", num_hidden=num_hidden[2])<br/>act2 &lt;- mx.symbol.Activation(fc2, name="activ2", act_type=activ)<br/><br/>drop2 &lt;- mx.symbol.Dropout(data=act2,p=drop_out[2])<br/>fc3 &lt;- mx.symbol.FullyConnected(drop2, name="fc3", num_hidden=num_hidden[3])<br/>act3 &lt;- mx.symbol.Activation(fc3, name="activ3", act_type=activ)<br/><br/>drop3 &lt;- mx.symbol.Dropout(data=act3,p=drop_out[3])<br/>fc4 &lt;- mx.symbol.FullyConnected(drop3, name="fc4", num_hidden=2)<br/>softmax &lt;- mx.symbol.SoftmaxOutput(fc4, name="sm")<br/><br/># run on cpu, change to 'devices &lt;- mx.gpu()'<br/># if you have a suitable GPU card<br/>devices &lt;- mx.cpu()<br/>mx.set.seed(0)<br/>tic &lt;- proc.time()<br/># This actually trains the model<br/>model &lt;- mx.model.FeedForward.create(softmax, X = train_X, y = train_Y,<br/>                                      ctx = devices,num.round = num_epochs,<br/>                                      learning.rate = lr, momentum = 0.9,<br/>                                      eval.metric = mx.metric.accuracy,<br/>                                      initializer = mx.init.uniform(0.1),<br/>                                      wd=wd,<br/>                                      epoch.end.callback = mx.callback.log.train.metric(1))<br/>print(proc.time() - tic)<br/>   user system elapsed <br/>   9.23 4.65 4.37 <br/><br/>pr &lt;- predict(model, test_X)<br/>pred.label &lt;- max.col(t(pr)) - 1<br/>t &lt;- table(data.frame(cbind(testData[,"Y_categ"]$Y_categ,pred.label)),<br/>            dnn=c("Actual", "Predicted"))<br/>acc&lt;-round(100.0*sum(diag(t))/length(test),2)<br/>print(t)<br/>      Predicted<br/>Actual   0   1<br/>     0 136  36<br/>     1  54 168<br/>print(sprintf(" Deep Learning Model accuracy = %1.2f%%",acc))<br/>[1] " Deep Learning Model accuracy = 77.16%"<br/>rm(t,pr,acc)<br/>rm(data,fc1,act1,fc2,act2,fc3,act3,fc4,softmax,model)</pre>
+
+<p>回归模型</p>
+
+<p class="mce-root">上一节开发了用于二进制分类任务的深度学习模型，本节开发了用于预测连续数值的深度学习模型，即回归分析。我们使用用于二元分类任务的相同数据集，但是我们使用不同的目标列来预测。在该任务中，我们希望预测顾客是否会在未来14天内再次光临我们的商店。在此任务中，我们希望预测未来14天内顾客在我们商店的消费金额。我们遵循类似的过程；我们通过对数据应用对数转换来加载和准备数据集。代码在<kbd>Chapter4/regression.R</kbd>中:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>The regression model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">然后，我们使用<kbd>lm</kbd>对数据进行回归分析，以在创建深度学习模型之前创建基准:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们为回归任务输出两个度量，rmse和mae。我们在本章前面已经讨论过了。平均绝对误差衡量预测值和实际值之间的绝对差异。<strong>均方根误差</strong> ( <strong> rmse </strong>)对预测值和实际值之差的平方进行惩罚，所以一个大的误差比小的误差之和代价更大。现在我们来看看深度学习回归代码。首先，我们加载数据并定义模型:</p>
+
+<pre>set.seed(42)<br/>fileName &lt;- "../dunnhumby/predict.csv"<br/>dfData &lt;- read_csv(fileName,<br/>                    col_types = cols(<br/>                      .default = col_double(),<br/>                      CUST_CODE = col_character(),<br/>                      Y_categ = col_integer())<br/> )<br/>nobs &lt;- nrow(dfData)<br/>train &lt;- sample(nobs, 0.9*nobs)<br/>test &lt;- setdiff(seq_len(nobs), train)<br/>predictorCols &lt;- colnames(dfData)[!(colnames(dfData) %in% c("CUST_CODE","Y_numeric","Y_numeric"))]<br/><br/>dfData[, c("Y_numeric",predictorCols)] &lt;- log(0.01+dfData[, c("Y_numeric",predictorCols)])<br/>trainData &lt;- dfData[train, c(predictorCols,"Y_numeric")]<br/>testData &lt;- dfData[test, c(predictorCols,"Y_numeric")]<br/><br/>xtrain &lt;- model.matrix(Y_numeric~.,trainData)<br/>xtest &lt;- model.matrix(Y_numeric~.,testData)</pre>
+
+<p>现在我们训练模型；请注意，第一个注释显示了如何切换到使用GPU而不是CPU:</p>
+
+<pre># lm Regression Model<br/>regModel1=lm(Y_numeric ~ .,data=trainData)<br/>pr1 &lt;- predict(regModel1,testData)<br/>rmse &lt;- sqrt(mean((exp(pr1)-exp(testData[,"Y_numeric"]$Y_numeric))^2))<br/>print(sprintf(" Regression RMSE = %1.2f",rmse))<br/>[1] " Regression RMSE = 29.30"<br/>mae &lt;- mean(abs(exp(pr1)-exp(testData[,"Y_numeric"]$Y_numeric)))<br/>print(sprintf(" Regression MAE = %1.2f",mae))<br/>[1] " Regression MAE = 13.89"</pre>
+
+<p>对于回归度量，越低越好，因此我们对深度学习模型(28.92)的rmse度量是对原始回归模型(29.30)的改进。有趣的是，深度学习模型的Mae(14.33)实际上比原始回归模型(13.89)更差。由于rsme更多地惩罚实际值和预测值之间的大差异，这表明深度学习模型中的错误没有回归模型中的错误那么极端。</p>
+
+<pre>require(mxnet)<br/>Loading required package: mxnet<br/><br/># MXNet expects matrices<br/>train_X &lt;- data.matrix(trainData[, predictorCols])<br/>test_X &lt;- data.matrix(testData[, predictorCols])<br/>train_Y &lt;- trainData$Y_numeric<br/><br/>set.seed(42)<br/># hyper-parameters<br/>num_hidden &lt;- c(256,128,128,64)<br/>drop_out &lt;- c(0.4,0.4,0.4,0.4)<br/>wd=0.00001<br/>lr &lt;- 0.0002<br/>num_epochs &lt;- 100<br/>activ &lt;- "tanh"<br/><br/># create our model architecture<br/># using the hyper-parameters defined above<br/>data &lt;- mx.symbol.Variable("data")<br/>fc1 &lt;- mx.symbol.FullyConnected(data, name="fc1", num_hidden=num_hidden[1])<br/>act1 &lt;- mx.symbol.Activation(fc1, name="activ1", act_type=activ)<br/>drop1 &lt;- mx.symbol.Dropout(data=act1,p=drop_out[1])<br/><br/>fc2 &lt;- mx.symbol.FullyConnected(drop1, name="fc2", num_hidden=num_hidden[2])<br/>act2 &lt;- mx.symbol.Activation(fc2, name="activ2", act_type=activ)<br/>drop2 &lt;- mx.symbol.Dropout(data=act2,p=drop_out[2])<br/><br/>fc3 &lt;- mx.symbol.FullyConnected(drop2, name="fc3", num_hidden=num_hidden[3])<br/>act3 &lt;- mx.symbol.Activation(fc3, name="activ3", act_type=activ)<br/>drop3 &lt;- mx.symbol.Dropout(data=act3,p=drop_out[3])<br/><br/>fc4 &lt;- mx.symbol.FullyConnected(drop3, name="fc4", num_hidden=num_hidden[4])<br/>act4 &lt;- mx.symbol.Activation(fc4, name="activ4", act_type=activ)<br/>drop4 &lt;- mx.symbol.Dropout(data=act4,p=drop_out[4])<br/><br/>fc5 &lt;- mx.symbol.FullyConnected(drop4, name="fc5", num_hidden=1)<br/>lro &lt;- mx.symbol.LinearRegressionOutput(fc5)<br/><br/></pre>
+
+<p>改进二元分类模型</p>
+
+<pre># run on cpu, change to 'devices &lt;- mx.gpu()'<br/># if you have a suitable GPU card<br/>devices &lt;- mx.cpu()<br/>mx.set.seed(0)<br/>tic &lt;- proc.time()<br/># This actually trains the model<br/>model &lt;- mx.model.FeedForward.create(lro, X = train_X, y = train_Y,<br/> ctx = devices,num.round = num_epochs,<br/> learning.rate = lr, momentum = 0.9,<br/> eval.metric = mx.metric.rmse,<br/> initializer = mx.init.uniform(0.1),<br/> wd=wd,<br/> epoch.end.callback = mx.callback.log.train.metric(1))<br/>print(proc.time() - tic)<br/> user system elapsed <br/> 13.90 1.82 10.50 <br/><br/>pr4 &lt;- predict(model, test_X)[1,]<br/>rmse &lt;- sqrt(mean((exp(pr4)-exp(testData[,"Y_numeric"]$Y_numeric))^2))<br/>print(sprintf(" Deep Learning Regression RMSE = %1.2f",rmse))<br/>[1] " Deep Learning Regression RMSE = 28.92"<br/>mae &lt;- mean(abs(exp(pr4)-exp(testData[,"Y_numeric"]$Y_numeric)))<br/>print(sprintf(" Deep Learning Regression MAE = %1.2f",mae))<br/>[1] " Deep Learning Regression MAE = 14.33"<br/>rm(data,fc1,act1,fc2,act2,fc3,act3,fc4,lro,model)</pre>
+
+<p>本节建立在前面的二进制分类任务的基础上，旨在提高该任务的准确性。我们可以做的第一件事就是使用更多的数据，事实上是100倍的数据！我们将下载整个数据集，zip文件中有超过4 GB的数据，解压缩后有40 GB的数据。返回下载链接(<a href="https://www.dunnhumby.com/sourcefiles">https://www.dunnhumby.com/sourcefiles</a>)并再次选择<strong>让我们得到真实的排序</strong>，并下载<strong>完整数据集</strong>的所有文件。有九个文件要下载，CSV文件应该解压到<kbd>dunnhumby/in</kbd>文件夹中。记得检查CSV文件是否在此文件夹中，而不是子文件夹中。你需要再次运行<kbd>Chapter4/prepare_data.R</kbd>中的代码。当这个操作完成时，<kbd>predict.csv</kbd>文件应该有390，000条记录。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Improving the binary classification model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">你可以试着跟随这里，但要知道准备数据和运行深度学习模型将需要很长时间。如果你的电脑速度慢，你也可能会遇到问题。我在配有32 GB RAM的英特尔i5处理器上测试了这段代码，模型运行了30分钟。它还需要超过50 GB的硬盘空间来存储解压缩文件和临时文件。如果在本地计算机上运行它有问题，另一个选择是在云中运行这个例子，我们将在后面的章节中讨论。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">这个部分的代码在<kbd>Chapter4/binary_predict2.R</kbd>脚本中。由于我们有了更多的数据，我们可以建立一个更复杂的模型。我们有100倍多的数据，所以我们的新模型增加了一个额外的层，更多的节点到我们的隐藏层。我们已经减少了正规化的数量和学习率。我们还增加了更多的纪元。这里是<kbd>Chapter4/binary_predict2.R</kbd>中的代码，它构建并训练了深度学习模型。我们没有包括用于加载和准备数据的样板代码，因为这与原始脚本没有什么不同:</p>
+
+<p>精度从早期型号的<kbd>77.16%</kbd>提高到了该型号的<kbd>77.88%</kbd>。这可能看起来不太重要，但是如果我们考虑到大型数据集几乎有390，000行，那么0.72%的准确性增加代表现在正确分类的大约2，808个客户。如果每个客户价值50美元，那就是额外的140，000美元的收入。</p>
+
+<p class="mce-root">一般来说，随着您添加更多的数据，您的模型应该变得更加复杂，以概括数据中的所有模式。我们将在<a href="">第6章</a>、<em>调优和优化模型</em>中涉及更多内容，但我鼓励您尝试<kbd>Chapter4/binary_predict.R</kbd>中的代码。尝试更改超参数或添加更多层。即使是精确度上0.1 - 0.2%的小改进也是显著的。如果你能在这个数据集上获得超过78%的准确率，这就是一个很好的成就。</p>
+
+<pre># hyper-parameters<br/>num_hidden &lt;- c(256,128,64,32)<br/>drop_out &lt;- c(0.2,0.2,0.1,0.1)<br/>wd=0.0<br/>lr &lt;- 0.03<br/>num_epochs &lt;- 50<br/>activ &lt;- "relu"<br/><br/># create our model architecture<br/># using the hyper-parameters defined above<br/>data &lt;- mx.symbol.Variable("data")<br/>fc1 &lt;- mx.symbol.FullyConnected(data, name="fc1", num_hidden=num_hidden[1])<br/>act1 &lt;- mx.symbol.Activation(fc1, name="activ1", act_type=activ)<br/><br/>drop1 &lt;- mx.symbol.Dropout(data=act1,p=drop_out[1])<br/>fc2 &lt;- mx.symbol.FullyConnected(drop1, name="fc2", num_hidden=num_hidden[2])<br/>act2 &lt;- mx.symbol.Activation(fc2, name="activ2", act_type=activ)<br/><br/>drop2 &lt;- mx.symbol.Dropout(data=act2,p=drop_out[2])<br/>fc3 &lt;- mx.symbol.FullyConnected(drop2, name="fc3", num_hidden=num_hidden[3])<br/>act3 &lt;- mx.symbol.Activation(fc3, name="activ3", act_type=activ)<br/><br/>drop3 &lt;- mx.symbol.Dropout(data=act3,p=drop_out[3])<br/>fc4 &lt;- mx.symbol.FullyConnected(drop3, name="fc4", num_hidden=num_hidden[4])<br/>act4 &lt;- mx.symbol.Activation(fc4, name="activ4", act_type=activ)<br/><br/>drop4 &lt;- mx.symbol.Dropout(data=act4,p=drop_out[4])<br/>fc5 &lt;- mx.symbol.FullyConnected(drop4, name="fc5", num_hidden=2)<br/>softmax &lt;- mx.symbol.SoftmaxOutput(fc5, name="sm")<br/><br/># run on cpu, change to 'devices &lt;- mx.gpu()'<br/># if you have a suitable GPU card<br/>devices &lt;- mx.cpu()<br/>mx.set.seed(0)<br/>tic &lt;- proc.time()<br/># This actually trains the model<br/>model &lt;- mx.model.FeedForward.create(softmax, X = train_X, y = train_Y,<br/> ctx = devices,num.round = num_epochs,<br/> learning.rate = lr, momentum = 0.9,<br/> eval.metric = mx.metric.accuracy,<br/> initializer = mx.init.uniform(0.1),<br/> wd=wd,<br/> epoch.end.callback = mx.callback.log.train.metric(1))<br/>print(proc.time() - tic)<br/> user system elapsed <br/>1919.75 1124.94 871.31<br/><br/>pr &lt;- predict(model, test_X)<br/>pred.label &lt;- max.col(t(pr)) - 1<br/>t &lt;- table(data.frame(cbind(testData[,"Y_categ"]$Y_categ,pred.label)),<br/> dnn=c("Actual", "Predicted"))<br/>acc&lt;-round(100.0*sum(diag(t))/length(test),2)<br/>print(t)<br/>      Predicted<br/>Actual     0     1<br/> 0     10714  4756<br/> 1      3870 19649<br/>print(sprintf(" Deep Learning Model accuracy = %1.2f%%",acc))<br/>[1] " Deep Learning Model accuracy = 77.88%"</pre>
+
+<p class="mce-root">如果想进一步探索，还有其他方法可以考察。这些包括改变模型数据的创建方式。如果你真的想伸展自己，这里有几个你可以尝试的主意:</p>
+
+<p class="mce-root">我们当前的功能是部门代码和周的组合，我们使用<kbd>PROD_CODE_40</kbd>字段作为部门代码。它只有九个唯一值，因此对于每周，只有九个字段表示该数据。如果你使用<kbd>PROD_CODE_30</kbd>、<kbd>PROD_CODE_20</kbd>或<kbd>PROD_CODE_10</kbd>，你会创造出更多的功能。</p>
+
+<p>以类似的方式，您可以尝试使用部门代码和日期，而不是使用部门代码和周的组合。这可能会创建太多的功能，但我会考虑在截止日期前的最后14天这样做。</p>
+
+<ul>
+
+<li>尝试不同的数据准备方法。我们使用对数标度，它适用于我们的二元分类任务，但不是回归任务的最佳方法，因为它不能创建正态分布的数据。尝试对数据应用z缩放和最小-最大标准化。如果这样做，您必须确保在评估模型之前将其正确应用于测试数据。</li>
+
+<li>培训数据使用销售额。您可以将其更改为项目数量或项目的交易数量。</li>
+
+<li>你可以创造新的功能。一个潜在的强大示例是根据一周中的某一天或一个月中的某一天来创建字段。我们可以为一周中每天的消费金额和访问次数创建功能。</li>
+
+<li>我们可以基于购物篮的平均大小、客户访问的频率等等来创建特征。</li>
+
+<li>我们可以尝试一种不同的模型架构，它可以利用时间序列数据。</li>
+
+<li>如果给我一个工作任务，这些都是我会尝试的。在传统的机器学习中，添加更多的特征往往会导致问题，因为大多数传统的机器学习算法都难以处理高维数据。深度学习模型可以处理这些情况，所以添加更多功能通常没有坏处。</li>
+
+<li>数据的不合理有效性</li>
+
+</ul>
+
+<p>我们在二进制分类任务上的第一个深度学习模型只有不到4000条记录。我们这样做是为了让您可以快速运行这个示例。对于深度学习，你真的需要更多的数据，所以我们用更多的数据创建了一个更复杂的模型，这给了我们更多的准确性。这一过程证明了以下几点:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>The unreasonable effectiveness of data</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">在使用深度学习模型之前，用其他机器学习算法建立基线提供了一个很好的基准</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">我们必须创建一个更复杂的模型，并为我们更大的数据集调整超参数</p>
+
+<ul>
+
+<li class="mce-root">数据的不合理有效性</li>
+
+<li>这里最后一点借用了Peter Norvig的一篇文章，可在<a href="https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/35179.pdf">https://static . Google user content . com/media/research . Google . com/en//pubs/archive/35179 . pdf</a>获得。还有一个同名的YouTube视频。Norvig文章中的一个要点是:简单的模型和大量的数据总是胜过基于更少数据的更复杂的模型。</li>
+
+<li class="mce-root">我们将深度学习模型的准确率提高了0.38%。考虑到我们的数据集具有高度相关的变量，并且我们的领域正在模拟人类活动，这还不错。人是可以预测的。所以当试图预测他们下一步做什么时，一个小的数据集通常是有用的。在其他领域，添加更多的数据会产生更大的影响。考虑一个复杂的彩色图像识别任务，其中图像质量和格式不一致。在这种情况下，将我们的训练数据增加10倍会比前面的例子产生更大的影响。对于许多深度学习项目，你应该从项目的最开始就包括获取更多数据的任务。这可以通过手动标记数据、外包任务(Amazon Turk)或在应用程序中构建某种形式的反馈机制来实现。</li>
+
+</ul>
+
+<p class="mce-root">虽然其他机器学习算法也可能随着数据的增加而提高性能，但最终增加更多数据将不再产生影响，性能将停滞不前。这是因为这些算法从来不是为大型高维数据设计的，因此无法在非常大的数据集中模拟复杂的模式。然而，你可以建立越来越复杂的深度学习架构，可以对这些复杂的模式进行建模。下图说明了深度学习算法如何继续利用更多数据，并且在其他机器算法的性能停滞不前后，性能仍然可以提高:</p>
+
+<p class="mce-root">图4.6:与其他机器学习模型相比，深度学习模型的模型准确性如何随着数据集大小的增加而增加</p>
+
+<p class="mce-root">摘要</p>
+
+<div><img src="img/29e70a08-a194-4761-852f-61eb03609c66.png" style="width:30.67em;height:23.92em;"/></div>
+
+<p>我们在这一章中涉及了很多内容。我们研究了激活函数，并使用MXNet建立了我们的第一个真正的深度学习模型。然后，我们采用现实生活中的数据集，并创建了两个应用机器学习模型的用例。第一个用例是根据客户过去的活动预测哪些客户将来会再次光顾。这是一个二元分类任务。第二个用例是根据客户过去的活动预测他们未来的消费。这是一个回归任务。我们首先在一个小数据集上运行这两个模型，并使用不同的机器学习库将它们与我们的深度学习模型进行比较。我们的深度学习模型优于所有算法。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">然后，我们通过使用一个大100倍的数据集来进一步研究这个问题。我们建立了一个更大的深度学习模型，并调整了我们的参数，以提高我们的二进制分类任务的准确性。我们在本章结束时简要讨论了深度学习模型如何在大数据集上优于传统的机器学习算法。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在下一章，我们将研究计算机视觉任务，深度学习已经彻底改变了这些任务。</p>
+
+<p>We then took this further by using a dataset that was 100 times bigger. We built a larger deep learning model and adjusted our parameters to get an increase in our binary classification task accuracy. We finished the chapter with a brief discussion on how deep learning models out-perform traditional machine learning algorithms on large datasets.</p>
+
+<p>In the next chapter, we will look at computer vision tasks, which deep learning has revolutionized.</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

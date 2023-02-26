@@ -1,0 +1,355 @@
+<html><head/><body>
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><div><h1 id="_idParaDest-96"><em class="italic"> <a id="_idTextAnchor095"/>第八章</em>:大规模部署DL推理流水线</h1>
+			<p>为生产使用部署一个<strong class="bold">深度学习</strong> ( <strong class="bold"> DL </strong>)推理管道既令人兴奋又富有挑战性。令人兴奋的是，最后，DL模型管道可以用于预测现实世界的生产数据，这将为业务场景提供真正的价值。然而，具有挑战性的部分是有不同的DL模型服务于平台和主机环境。为正确的模型服务场景选择正确的框架并不容易，它可以最小化部署复杂性，但以可伸缩和经济高效的方式提供最佳的模型服务体验。本章将概述不同的部署场景和主机环境，然后提供关于如何部署到不同环境的实践学习，包括使用MLflow部署工具的本地和远程云环境。学完本章后，您应该能够自信地将MLflow DL推理管道部署到各种主机环境中，用于批处理或实时推理服务。</p>
+			<p>在本章中，我们将讨论以下主要话题:</p>
+			<ul>
+				<li>了解部署和托管环境的前景</li>
+				<li>为批处理和web服务推理进行本地部署</li>
+				<li>使用Ray Serve和MLflow部署插件进行部署</li>
+				<li>部署到AWS SageMaker——完整的端到端指南</li>
+			</ul>
+			<h1 id="_idParaDest-97"><a id="_idTextAnchor096"/>技术要求</h1>
+			<p>本章学习需要以下项目:</p>
+			<ul>
+				<li>本章GitHub库代码:<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow/tree/main/chapter08">https://GitHub . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow/tree/main/chapter 08</a>。</li>
+				<li>雷服和<code>mlflow-ray-serve</code>外挂:<a href="https://github.com/ray-project/mlflow-ray-serve">https://github.com/ray-project/mlflow-ray-serve</a>。</li>
+				<li>AWS SageMaker:你需要有一个AWS账户。您可以通过位于<a href="https://aws.amazon.com/free/">https://aws.amazon.com/free/</a>的免费注册网站轻松创建一个免费的AWS帐户。</li>
+				<li>AWS <strong class="bold">命令行界面</strong>(<strong class="bold">CLI</strong>):<a href="https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html">https://docs . AWS . Amazon . com/CLI/latest/user guide/getting-started-install . html</a>。</li>
+				<li>Docker桌面:【https://www.docker.com/products/docker-desktop/】T21。</li>
+				<li>完成本书第七章 、<em class="italic">多步深度学习推理流水线、</em>中的例子。这将为您提供一个可以在本章中使用的现成的推理管道。</li>
+			</ul>
+			<h1 id="_idParaDest-98"><a id="_idTextAnchor097"/>了解不同的部署工具和主机环境</h1>
+			<p>MLOps技术堆栈中有不同的部署工具，它们具有不同的目标用例以及用于部署不同模型推理管道的宿主环境。在<a href="B18120_07_ePub.xhtml#_idTextAnchor083"> <em class="italic">第7章</em> </a>、<em class="italic">多步深度学习推理管道</em>中，我们学习了不同的推理场景和需求，并实现了一个多步DL推理管道，可以部署到模型托管/服务环境中。现在，我们将学习如何将这样的模型部署到几个特定的模型托管和服务环境中。这在图8.1 中显示如下:</p>
+			<div><div><img src="img/B18120_08_01.jpg" alt="Figure 8.1 – Using model deployment tools to deploy a model inference pipeline to &#13;&#10;a model hosting and serving environment&#13;&#10;" width="1186" height="347"/>
+				</div>
+			</div>
+			<p class="figure-caption">图8.1–使用模型部署工具将模型推理管道部署到模型托管和服务环境中</p>
+			<p>从<em class="italic">图8.1 </em>可以看出，不同的模型托管和服务环境可以有不同的部署工具。在这里，我们列出了如下三种典型场景:</p>
+			<ul>
+				<li><strong class="bold">批量推理</strong>:如果我们希望<a id="_idIndexMarker504"/>定期进行批量推理，我们可以使用PySpark <strong class="bold">用户定义函数</strong> ( <strong class="bold"> UDF </strong>)来加载一个MLflow模型<a id="_idIndexMarker505"/>来实现这一点，因为我们可以在分布式集群上利用Spark的可伸缩计算方法(<a href="https://mlflow.org/docs/latest/models.html#export-a-python-function-model-as-an-apache-spark-udf">https://ml flow . org/docs/latest/models . html # export-a-python-function-model-as-an-Apache-Apache)我们将在下一节展示一个如何做到这一点的例子。</a></li>
+				<li><strong class="bold">大规模流推理</strong>:这通常需要一个端点来托管<strong class="bold">模型即服务</strong> ( <strong class="bold"> MaaS </strong>)。有相当多的工具和框架用于<a id="_idIndexMarker506"/>产品级部署和模型服务。在本章开始学习如何进行这种类型的部署之前，我们将在本节中比较几个工具，以了解它们如何工作以及它们与MLflow的集成情况。</li>
+				<li><strong class="bold"> On-device model推断</strong>:这是一个名为<strong class="bold"> TinyML </strong>的新兴领域，它在<a id="_idIndexMarker507"/>移动、传感器或边缘设备等资源受限的环境中部署ML/DL模型(<a href="https://www.kdnuggets.com/2021/11/on-device-deep-learning-pytorch-mobile-tensorflow-lite.html">https://www . kdnugges . com/2021/11/On-device-deep-learning-py torch-mobile-tensor flow-lite . html</a>)。两个流行的框架是<a id="_idIndexMarker508"/>py torch Mobile(<a href="https://pytorch.org/mobile/home/">https://pytorch.org/mobile/home/</a>)和tensor flow Lite(<a href="https://www.tensorflow.org/lite">https://www.tensorflow.org/lite</a>)。这不是本书的重点。鼓励你在这一章的末尾查阅这方面的进一步阅读。</li>
+			</ul>
+			<p>现在，让我们看看有哪些工具可用于将模型推理部署为服务，尤其是那些支持MLflow模型部署的工具。有三种类型的模型部署和服务工具，如下所示:</p>
+			<ul>
+				<li><strong class="bold"> MLflow内置模型部署</strong>:这是MLflow版本的现成产品，包括部署到本地web服务器、AWS SageMaker和<a id="_idIndexMarker511"/> Azure ML。在撰写本文时，Databricks上还有一个托管的MLflow，它支持公共审核中的模型服务，我们不会在本书中介绍，因为这在官方Databricks文档中有很好的介绍(感兴趣的读者<a id="_idIndexMarker512"/>应该在以下网站查找关于此Databricks功能的官方文档:<a href="https://docs.databricks.com/applications/mlflow/model-serving.html">https://docs . data bricks . com/applications/ml flow/model-serving . html</a>)。然而，我们将在本章中向您展示如何使用MLflow内置模型部署来部署到本地和远程AWS SageMaker。</li>
+				<li><code>mlflow-torchserv</code>(<a href="https://github.com/mlflow/mlflow-torchserve">https://github.com/mlflow/mlflow-torchserve</a>)<code>mlflow-ray-serve</code>(<a href="https://github.com/ray-project/mlflow-ray-serve">https://github.com/ray-project/mlflow-ray-serve</a>)<code>mlflow-triton-plugin</code>(<a href="https://github.com/triton-inference-server/server/tree/v2.17.0/deploy/mlflow-triton-plugin">https://github . com/triton-inference-server/server/tree/v 2 . 17 . 0/deploy/ml flow-triton-plugin</a>)。我们将在本章展示如何使用<code>mlflow-ray-serve</code>插件进行部署。</li>
+				<li><code>mlflow-ray-serve</code> plugin to deploy the MLflow Python model. Note that, although in this book we show how to use an MLflow customized plugin to deploy with a generic ML serve tool such as Ray Serve, it is important to note that a generic ML serve tool can do much more with or without an MLflow customized plugin.<p class="callout-heading">通过专门的推理引擎优化DL推理</p><p class="callout">还有一些<a id="_idIndexMarker520"/>特殊的MLflow <a id="_idIndexMarker521"/>模型口味比如<strong class="bold">ONNX</strong>(<a href="https://onnx.ai/">https://onnx.ai/</a>)<strong class="bold">torch script</strong>(<a href="https://huggingface.co/docs/transformers/v4.17.0/en/serialization#torchscript">https://hugging face . co/docs/transformers/v 4 . 17 . 0/en/serialization # torch script</a>)是专门为DL模型推理运行时设计的。我们可以将DL模型转换成ONNX模型风格(<a href="https://github.com/microsoft/onnxruntime">https://github.com/microsoft/onnxruntime</a>)或者TorchScript服务器(<a href="https://pytorch.org/serve/">https://pytorch.org/serve/</a>)。由于ONNX和TorchScript仍在发展中，并且是专门为最初的DL模型部分而设计的，而不是整个推理管道，所以我们不在本章中讨论它们。</p></li>
+			</ul>
+			<p>既然我们已经对各种部署工具和模型服务框架有了很好的理解，让我们在接下来的章节中通过具体的例子来学习如何进行部署。</p>
+			<h1 id="_idParaDest-99"><a id="_idTextAnchor098"/>本地部署批处理和web服务推理</h1>
+			<p>出于开发和测试的目的，我们通常需要在本地部署我们的模型，以验证它是否按预期工作。我们来看两个场景是如何做到的:批量推理和web服务推理。</p>
+			<h2 id="_idParaDest-100"><a id="_idTextAnchor099"/>批量推断</h2>
+			<p>对于批次<a id="_idIndexMarker524"/>推断，遵循<a id="_idIndexMarker525"/>以下说明:</p>
+			<ol>
+				<li>确保你已经完成了<a href="B18120_07_ePub.xhtml#_idTextAnchor083"> <em class="italic">第七章</em> </a>、<em class="italic">多步深度学习推理流水线</em>。这将产生一个MLflow <code>pyfunc</code> DL推理模型管道URI，可以使用标准MLflow Python函数加载。记录的型号可以通过<code>run_id</code>和型号名称进行唯一定位，如下:<pre>logged_model = 'runs:/37b5b4dd7bc04213a35db646520ec404/inference_pipeline_model'</pre></li>
+			</ol>
+			<p>还可以使用型号注册表通过型号名称和版本号来标识型号，如下所示:</p>
+			<pre>logged_model = 'models:/inference_pipeline_model/6'</pre>
+			<ol>
+				<li value="2">按照本<code>README.md</code>文件(<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow/blob/main/chapter08/README.md">https://github . com/packt publishing/Practical-Deep-Learning-at-Scale-with-MLFlow/blob/main/chapter 08/readme . MD</a>)的<em class="italic">批量推理使用PySpark UDF函数</em>部分中的说明，设置本地虚拟环境、一个成熟的ml flow跟踪服务器和一些环境变量，以便我们可以在您的本地环境中执行代码。</li>
+				<li>用MLflow <code>mlflow.pyfunc.spark_udf</code> API加载模型，创建一个PySpark UDF函数，如下所示。您可能想从GitHub查看一下<code>batch_inference.py</code>文件，以便跟进(<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow/blob/main/chapter08/batch/batch_inference.py">https://GitHub . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow/blob/main/chapter 08/batch/batch _ inference . py</a>):<pre>loaded_model = <strong class="bold">mlflow.pyfunc.spark_udf</strong>(spark, model_uri=logged_model, result_type=StringType())</pre></li>
+			</ol>
+			<p>这将把推理管道包装成一个PySpark UDF函数，返回结果类型为<code>String</code>。这是因为我们的模型推理管道有一个模型签名，要求输出为一个<code>string</code>类型的列。</p>
+			<ol>
+				<li value="4">现在，我们<a id="_idIndexMarker526"/>可以将PySpark UDF函数应用于输入数据帧。注意，<a id="_idIndexMarker527"/>输入数据帧必须有一个数据类型为<code>string</code>的<code>text</code>列，因为这是模型签名所要求的:<pre><strong class="bold">df</strong> = <strong class="bold">df</strong>.withColumn('predictions', loaded_model())</pre></li>
+			</ol>
+			<p>因为我们的模型推理管道已经定义了一个模型签名，如果它在输入数据帧中找到了<code>text</code>列，在本例中是<code>df</code>，我们就不需要指定任何列参数。注意，我们可以使用Spark的<code>read</code> API读取大量数据，它支持不同的数据格式读取，比如CSV、JSON、Parquet等等。在我们的示例中，我们从IMDB数据集中读取了<code>test.csv</code>文件。如果我们有大量数据，这将利用Spark在集群上强大的分布式计算。这使我们能够毫不费力地进行批量推断。</p>
+			<ol>
+				<li value="5">要从头到尾运行批处理推理代码，您应该在以下位置查看存储库中提供的完整代码:<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow/blob/main/chapter08/batch/batch_inference.py">https://github . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow/blob/main/chapter 08/batch/batch _ inference . py</a>。在<code>batch</code>文件夹中运行以下命令之前，确保<a id="_idIndexMarker528"/>用您自己的<code>run_id</code>和型号名称或<a id="_idIndexMarker529"/>注册的型号名称和版本替换<code>logged_model</code>变量:<pre><strong class="bold">python batch_inference.py</strong></pre></li>
+				<li>您应该在屏幕上看到图8.2 中的输出:</li>
+			</ol>
+			<div><div><img src="img/B18120_08_02.jpg" alt="Figure 8.2 – Batch inference using PySpark UDF function&#13;&#10;" width="785" height="945"/>
+				</div>
+			</div>
+			<p class="figure-caption">图8.2–使用PySpark UDF函数进行批量推断</p>
+			<p>从<em class="italic">图8.2 </em>中可以看到<a id="_idIndexMarker530"/>，我们加载的多步推理管道工作正常，甚至检测到了非英语文本和副本，尽管语言<a id="_idIndexMarker531"/>检测器可能产生了一些误报。输出是一个两列<a id="_idIndexMarker532"/>数据帧，其中模型预测的JSON响应保存在<code>predictions</code>列中。请注意，您可以在Databricks笔记本中使用<code>batch_inference.py</code>中提供的相同代码，并通过更改输入数据和记录的模型位置，使用Spark cluster处理大量输入数据。</p>
+			<p>既然我们知道了如何大规模地进行批量推理，那么让我们看看如何为相同的模型推理管道部署到本地web服务。</p>
+			<h2 id="_idParaDest-101"><a id="_idTextAnchor100"/>作为web服务的模型</h2>
+			<p>我们可以在本地将同一个<a id="_idIndexMarker533"/>日志模型推理管道部署到一个web服务，并拥有一个接受HTTP请求和HTTP响应的端点。</p>
+			<p>本地部署非常简单，只需一个命令行。我们可以像在前面的批处理推断中一样，使用模型URI来部署一个日志模型或一个注册模型，如下所示:</p>
+			<pre>mlflow models serve -m models:/inference_pipeline_model/6</pre>
+			<p>您应该能够看到以下内容:</p>
+			<pre>2022/03/06 21:50:19 INFO mlflow.models.cli: Selected backend for flavor 'python_function'
+2022/03/06 21:50:21 INFO mlflow.utils.conda: === Creating conda environment mlflow-a0968092d20d039088e2875ad04bbaa0f3a75206 ===
+± |main U:1 ?:8 X| done
+Solving environment: done</pre>
+			<p>这将使用记录的模型创建conda环境，这样它将有所有的依赖项来运行。创建conda环境后，您应该看到以下内容:</p>
+			<pre>2022/03/06 21:52:11 INFO mlflow.pyfunc.backend: === Running command 'source /Users/yongliu/opt/miniconda3/bin/../etc/profile.d/conda.sh &amp;&amp; conda activate mlflow-a0968092d20d039088e2875ad04bbaa0f3a75206 1&gt;&amp;2 &amp;&amp; gunicorn --timeout=60 -b 127.0.0.1:5000 -w 1 ${GUNICORN_CMD_ARGS} -- mlflow.pyfunc.scoring_server.wsgi:app'
+[2022-03-06 21:52:12 -0800] [97554] [INFO] Starting gunicorn 20.1.0
+[2022-03-06 21:52:12 -0800] [97554] [INFO] Listening at: http://127.0.0.1:5000 (97554)
+[2022-03-06 21:52:12 -0800] [97554] [INFO] Using worker: sync
+[2022-03-06 21:52:12 -0800] [97561] [INFO] Booting worker with pid: 97561</pre>
+			<p>现在，模型被部署为web服务，并准备好接受模型<a id="_idIndexMarker535"/>预测的HTTP请求。打开<a id="_idIndexMarker536"/>不同的终端窗口，键入以下命令调用模型web服务以获得预测响应:</p>
+			<pre>curl http://127.0.0.1:5000/invocations -H 'Content-Type: application/json' -d '{
+    "columns": ["text"],
+    "data": [["This is the best movie we saw."], ["What a movie!"]]
+}'</pre>
+			<p>我们可以立即看到以下预测响应:</p>
+			<pre>[{"text": "{\"response\": {\"prediction_label\": [\"positive\"]}, \"metadata\": {\"language_detected\": \"en\"}, \"model_metadata\": {\"finetuned_model_uri\": \"runs:/07b900a96af04037a956c74ef691396e/model\", \"inference_pipeline_model_uri\": \"runs:/37b5b4dd7bc04213a35db646520ec404/inference_pipeline_model\"}}"}, {"text": "{\"response\": {\"prediction_label\": [\"positive\"]}, \"metadata\": {\"language_detected\": \"en\"}, \"model_metadata\": {\"finetuned_model_uri\": \"runs:/07b900a96af04037a956c74ef691396e/model\", \"inference_pipeline_model_uri\": \"runs:/37b5b4dd7bc04213a35db646520ec404/inference_pipeline_model\"}}"}]</pre>
+			<p>如果到目前为止您已经遵循了这些步骤，并且看到了预测结果，那么您应该会感到非常自豪<a id="_idIndexMarker537"/>，因为您刚刚在本地web服务中部署了<a id="_idIndexMarker538"/>一个DL模型推理管道！这对于测试和调试来说是非常好的，并且模型的行为在生产web服务器上不会改变，所以我们应该确保它在本地web服务器上工作。</p>
+			<p>到目前为止，我们已经学习了如何使用内置的MLflow部署工具。接下来，我们将了解如何使用通用部署工具Ray Serve来部署MLflow推理管道。</p>
+			<h1 id="_idParaDest-102"><a id="_idTextAnchor101"/>使用Ray Serve和MLflow部署插件进行部署</h1>
+			<p>一种更通用的部署方式是使用一个框架，比如Ray Serve(<a href="https://docs.ray.io/en/latest/serve/index.html">https://docs.ray.io/en/latest/serve/index.html</a>)。Ray Serve有几个优点，比如DL模型<a id="_idIndexMarker540"/>框架不可知论者，原生Python <a id="_idIndexMarker541"/>支持，支持复杂模型<a id="_idIndexMarker542"/>组合推理<a id="_idIndexMarker543"/>模式。Ray Serve支持所有主要的DL框架和任何任意的业务逻辑。那么，我们可以同时利用Ray Serve和MLflow来进行模型部署和服务吗？好消息是，我们可以使用Ray Serve提供的MLflow部署插件来做到这一点。让我们来看看如何使用<code>mlflow-ray-serve</code>插件通过Ray Serve(<a href="https://github.com/ray-project/mlflow-ray-serve">https://github.com/ray-project/mlflow-ray-serve</a>)进行MLflow模型部署。在我们开始之前，我们需要安装<code>mlflow-ray-serve</code>包:</p>
+			<pre>pip install mlflow-ray-serve</pre>
+			<p>然后，我们需要首先使用以下两个命令在本地启动单节点光线簇:</p>
+			<pre>ray start --head
+serve start</pre>
+			<p>这将<a id="_idIndexMarker544"/>在本地启动一个光线簇，你<a id="_idIndexMarker545"/>可以在<code>http://127.0.0.1:8265/#/</code>从你的网络浏览器访问它的仪表板，如下所示:</p>
+			<div><div><img src="img/B18120_08_03.jpg" alt="Figure 8.3 – A locally running Ray cluster&#13;&#10;" width="1178" height="795"/>
+				</div>
+			</div>
+			<p class="figure-caption">图8.3–本地运行的光线簇</p>
+			<p><em class="italic">图8.3 </em>显示了一个局部运行的射线簇。然后，您可以发出以下命令将<code>inference_pipeline_model</code>部署到Ray Serve中，如下所示:</p>
+			<pre>mlflow deployments create -t ray-serve -m runs:/63f101fb3700472ca58975488636f4ae/inference_pipeline_model --name dl-inference-model-on-ray -C num_replicas=1</pre>
+			<p>这将显示以下屏幕输出:</p>
+			<pre>2022-03-20 20:16:46,564    INFO worker.py:842 -- Connecting to existing Ray cluster at address: 127.0.0.1:6379
+2022-03-20 20:16:46,717    INFO api.py:242 -- Updating deployment 'dl-inference-model-on-ray'. component=serve deployment=dl-inference-model-on-ray
+(ServeController pid=78159) 2022-03-20 20:16:46,784    INFO deployment_state.py:912 -- Adding 1 replicas to deployment 'dl-inference-model-on-ray'. component=serve deployment=dl-inference-model-on-ray
+2022-03-20 20:17:10,309    INFO api.py:249 -- Deployment 'dl-inference-model-on-ray' is ready at `http://127.0.0.1:8000/dl-inference-model-on-ray`. component=serve deployment=dl-inference-model-on-ray
+python_function deployment dl-inference-model-on-ray is created</pre>
+			<p>这意味着<a id="_idIndexMarker546"/>在<code>http://127.0.0.1:8000/dl-inference-model-on-ray</code>的一个端点<a id="_idIndexMarker547"/>准备好服务一个在线推理请求！您可以使用在<code>chapter08/ray_serve/query_ray_serve_endpoint.py</code>提供的Python代码测试这个部署，如下所示:</p>
+			<pre>python ray_serve/query_ray_serve_endpoint.py</pre>
+			<p>这将在屏幕上显示如下结果:</p>
+			<pre>2022-03-20 21:16:45,125    INFO worker.py:842 -- Connecting to existing Ray cluster at address: 127.0.0.1:6379
+[{'name': 'dl-inference-model-on-ray', 'info': Deployment(name=dl-inference-model-on-ray,version=None,route_prefix=/dl-inference-model-on-ray)}]
+{
+    "columns": [
+        "text"
+    ],
+    "index": [
+        0,
+        1
+    ],
+    "data": [
+        [
+            "{\"response\": {\"prediction_label\": [\"negative\"]}, \"metadata\": {\"language_detected\": \"en\"}, \"model_metadata\": {\"finetuned_model_uri\": \"runs:/be2fb13fe647481eafa071b79dde81de/model\", \"inference_pipeline_model_uri\": \"runs:/63f101fb3700472ca58975488636f4ae/inference_pipeline_model\"}}"
+        ],
+        [
+            "{\"response\": {\"prediction_label\": [\"positive\"]}, \"metadata\": {\"language_detected\": \"en\"}, \"model_metadata\": {\"finetuned_model_uri\": \"runs:/be2fb13fe647481eafa071b79dde81de/model\", \"inference_pipeline_model_uri\": \"runs:/63f101fb3700472ca58975488636f4ae/inference_pipeline_model\"}}"
+        ]
+    ]
+}</pre>
+			<p>您应该会看到推理模型的预期响应。如果您一直坚持到现在，那么恭喜<a id="_idIndexMarker548"/>使用<code>mlflow-ray-serve</code> MLflow部署插件成功完成了<a id="_idIndexMarker549"/>部署！如果不再需要这个Ray Serve实例，可以通过执行以下命令行来停止它:</p>
+			<pre>ray stop</pre>
+			<p>这将停止本地计算机上所有正在运行的Ray实例。</p>
+			<p class="callout-heading">使用MLflow部署插件进行部署</p>
+			<p class="callout">有几个<a id="_idIndexMarker550"/> MLflow部署插件。我们刚刚展示了如何使用<code>mlflow-ray-serve</code>部署一个通用的MLflow Python模型<code>inference_pipeline_model</code>。这为部署到许多目标目的地打开了大门，您可以在任何云提供商中启动Ray集群。我们不会在这一章中涉及更多的细节，因为这超出了本书的范围。如果你对<a id="_idIndexMarker551"/>感兴趣，可以参考关于如何启动云集群的Ray文档(AWS、Azure和<strong class="bold"> Google云平台</strong>(<strong class="bold">GCP</strong>):<a href="https://docs.ray.io/en/latest/cluster/cloud.html#:~:text=The%20Ray%20Cluster%20Launcher%20can,ready%20to%20launch%20your%20cluster">https://docs . Ray . io/en/latest/cluster/Cloud . html #:~:text = The % 20 Ray % 20 cluster % 20 launcher % 20 can，ready % 20 to % 20 launch % 20 your % 20 cluster</a>。一旦有了光线簇，就可以按照相同的过程来部署MLflow模型。</p>
+			<p>既然我们已经知道了几种本地部署的方法，并且如果需要的话，还可以使用Ray Serve进一步部署到云，那么在下一节中，让我们看看如何部署到云管理的推理服务AWS SageMaker，因为它已经被广泛使用，并且可以为如何在现实场景中进行部署提供很好的经验。</p>
+			<h1 id="_idParaDest-103"><a id="_idTextAnchor102"/>部署到AWS sage maker——完整的端到端指南</h1>
+			<p>AWS SageMaker有一个由AWS管理的<a id="_idIndexMarker552"/>云托管模型服务。我们<a id="_idIndexMarker553"/>将使用AWS SageMaker作为一个例子，向您展示如何部署到一个远程云提供商，以提供托管的web服务，从而服务于真实的生产流量。AWS SageMaker有一套ML/DL相关的服务，包括支持注释和模型训练等等。在这里，我们展示如何<strong class="bold">将自己的模型</strong> ( <strong class="bold"> BYOM </strong>)用于部署。这意味着您有一个在AWS SageMaker之外训练的模型推理管道，现在只需要部署到SageMaker进行<a id="_idIndexMarker554"/>托管。按照下面的步骤准备和部署DL情感模型。需要一些先决条件:</p>
+			<ul>
+				<li>您必须在本地环境中运行Docker Desktop。</li>
+				<li>您必须拥有AWS帐户。你可以通过位于<a href="https://aws.amazon.com/free/">https://aws.amazon.com/free/</a>的免费注册网站轻松创建一个免费的AWS账户。</li>
+			</ul>
+			<p>一旦你有了这些需求，激活<code>dl-model-chapter08</code> conda虚拟环境，按照几个步骤部署到SageMaker。我们将这些步骤分为如下六个小节:</p>
+			<ol>
+				<li value="1">建立本地SageMaker Docker映像</li>
+				<li>在SageMaker Docker图像上添加额外的模型工件层</li>
+				<li>使用新构建的SageMaker Docker映像测试本地部署</li>
+				<li>将SageMaker Docker映像推送到AWS弹性容器注册表</li>
+				<li>部署推理管道模型以创建SageMaker端点</li>
+				<li>查询SageMaker端点以进行在线推断</li>
+			</ol>
+			<p>让我们从构建本地SageMaker Docker映像的第一步开始。</p>
+			<h2 id="_idParaDest-104"><a id="_idTextAnchor103"/>步骤1:构建本地SageMaker Docker映像</h2>
+			<p>我们有意从本地构建开始，而不是推到AWS，以便我们可以了解如何在这个基本映像之上添加额外的层，并在产生任何云成本之前在本地验证一切:</p>
+			<pre><strong class="bold">mlflow sagemaker build-and-push-container --build --no-push -c mlflow-dl-inference</strong></pre>
+			<p>您会看到许多屏幕输出，最后会显示如下内容:</p>
+			<pre><strong class="bold">#15 exporting to image</strong>
+<strong class="bold">#15 sha256:e8c613e07b0b7ff33893b694f7759a10 d42e180f2b4dc349fb57dc6b71dcab00</strong>
+<strong class="bold">#15 exporting layers</strong>
+<strong class="bold">#15 exporting layers 8.7s done</strong>
+<strong class="bold">#15 writing image sha256:95bc539b021179e5e87087 012353ebb43c71410be535ef368d1121b550c57bd4 done</strong>
+<strong class="bold">#15 naming to docker.io/library/mlflow-dl-inference done</strong>
+<strong class="bold">#15 DONE 8.7s</strong></pre>
+			<p>如果您看到图像名称<code>mlflow-dl-inference</code>，这意味着您已经成功地创建了一个SageMaker兼容的MLflow-model-serving Docker图像。您可以通过运行以下命令来验证这一点:</p>
+			<pre><strong class="bold">docker images | grep mlflow-dl-inference</strong></pre>
+			<p>您应该会看到如下所示的输出:</p>
+			<pre><strong class="bold">mlflow-dl-inference          latest                  95bc539b0211   6 minutes ago   2GB</strong></pre>
+			<h2 id="_idParaDest-105"><a id="_idTextAnchor104"/>第二步:在SageMaker Docker图像上添加额外的模型工件层</h2>
+			<p>回想一下，我们的推理管道模型建立在一个微调的DL模型之上，我们通过MLflow PythonModel API的<code>load_context</code>函数(<a href="https://www.mlflow.org/docs/latest/python_api/mlflow.pyfunc.html#mlflow.pyfunc.PythonModel">https://www . ml flow . org/docs/latest/python _ API/ml flow . py func . html # ml flow . py func . python model</a>)加载模型，而不序列化微调的模型本身。这部分是因为MLflow无法使用pickle正确序列化PyTorch数据加载器(<a href="https://pytorch.org/docs/stable/data.html#single-and-multi-process-data-loading">https://py torch . org/docs/stable/data . html # single-and-multi-process-data-loading</a>),因为在撰写本文时，数据加载器没有实现pickle序列化。这确实给了我们一个机会来学习当一些依赖项不能被正确序列化时，我们如何部署，尤其是在处理真实的DL模型时。</p>
+			<p class="callout-heading">允许Docker容器访问MLflow跟踪服务器的两种方式</p>
+			<p class="callout">有两种方法允许像<code>mlflow-dl-inference</code>这样的Docker容器在运行时访问和加载一个微调过的模型。第一种方法是允许容器包含MLflow跟踪服务器URL和访问令牌。这可能会在企业环境中引起一些安全问题，因为Docker映像现在包含一些安全凭证。第二种方法是直接复制所有引用的工件来创建一个新的Docker映像，这个映像是自给自足的。在运行时，它不需要知道原始MLflow跟踪服务器的位置，因为它在本地拥有所有的模型工件。这种独立的方法消除了对安全漏洞的任何担忧。我们在本章中使用第二种方法进行部署。</p>
+			<p>在这一章中，我们将把引用的微调模型复制到一个新的Docker映像中，该映像建立在基本的<code>mlflow-dl-inference</code> Docker映像之上。这将生成一个新的自包含Docker映像，而无需依赖任何外部MLflow跟踪服务器。为此，您需要从模型跟踪服务器下载微调的DL模型到您当前的<a id="_idIndexMarker555"/>本地文件夹，或者您可以使用本地文件系统作为MLflow跟踪服务器后端，在本地运行我们的MLproject的管道。按照<code>README.md</code>文件中的<em class="italic">部署到AWS SageMaker </em>部分来重现本地MLflow运行，以准备一个微调的模型和本地文件夹中的<code>inference-pipeline-model</code>。出于学习的目的，我们在GitHub存储库中的<code>chapter08</code>文件夹中提供了两个示例<code>mlruns</code>工件和<code>huggingface</code>缓存文件夹(<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow/tree/main/chapter08">https://GitHub . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow/tree/main/chapter 08</a>)，这样我们就可以通过使用这些现有工件立即开始构建一个新的Docker映像。</p>
+			<p>要构建新的Docker映像，我们需要创建一个Docker文件，如下所示:</p>
+			<pre class="source-code">FROM mlflow-dl-inference</pre>
+			<pre class="source-code">ADD mlruns/1/meta.yaml  /opt/mlflow/mlruns/1/meta.yaml</pre>
+			<pre class="source-code">ADD mlruns/1/d01fc81e11e842f5b9556ae04136c0d3/ /opt/mlflow/mlruns/1/d01fc81e11e842f5b9556ae04136c0d3/</pre>
+			<pre class="source-code">ADD tmp/opt/mlflow/hf/cache/dl_model_chapter08/csv/ /opt/mlflow/tmp/opt/mlflow/hf/cache/dl_model_chapter08/csv/</pre>
+			<p>第一行意味着它从已有的<code>mlflow-dl-inference</code> Docker镜像开始，后面三行<code>ADD</code>会将一个<code>meta.yaml</code>文件和两个文件夹复制到Docker镜像中相应的位置。注意，如果您已经按照<code>README</code>文件生成了自己的运行，那么您不需要添加第三行。注意，默认情况下，当Docker容器启动时，它会自动转到这个<code>/opt/mlflow/</code>工作目录，因此所有内容都需要复制到这个文件夹中，以便于访问。另外，请注意，<code>/opt/mlflow</code>目录需要超级用户权限，因此您需要<a id="_idIndexMarker556"/>准备好输入您本地机器的管理员密码(通常，在您自己的笔记本电脑上，这是您自己的密码)。</p>
+			<p class="callout-heading">将私有构建的Python包复制到Docker映像中</p>
+			<p class="callout">也可以将私有构建的Python包复制到Docker映像中，这样我们就可以在<code>conda.yaml</code>文件中直接引用它们，而不用离开容器本身。例如，我们可以将一个私有的Python轮包<code>cool-dl-package-1.0.py3-none-any.whl</code>复制到<code>/usr/private-wheels/cool-dl-package/cool-dl-package-1.0-py3-none-any.whl</code> Docker文件夹，然后我们可以在<code>conda.yaml</code>文件中指向这个路径。这允许MLflow模型工件成功加载这些本地可访问的Python包。在我们当前的例子中，我们不使用这种方法，因为我们没有使用任何私有的Python包。如果您有兴趣探索这一点，这对于将来的参考很有用。</p>
+			<p>现在，您可以运行以下命令在<code>chapter08</code>文件夹中构建一个新的Docker映像，如下所示:</p>
+			<pre><strong class="bold">docker build . -t mlflow-dl-inference-w-finetuned-model</strong></pre>
+			<p>这将在<code>mlflow-dl-inference</code>之上构建一个新的Docker映像<code>mlflow-dl-inference-w-finetuned-model</code>。您应该会看到下面的输出(为了简洁起见，只显示了第一行和最后一行):</p>
+			<pre><strong class="bold">[+] Building 0.2s (9/9) FINISHED</strong>
+<strong class="bold"> =&gt; [internal] load build definition from Dockerfile                                                      0.0s</strong>
+<strong class="bold">…………</strong>
+<strong class="bold">=&gt; =&gt; naming to docker.io/library/mlflow-dl-inference-w-finetuned-model</strong></pre>
+			<p>现在，您有了一个名为<code>mlflow-dl-inference-w-finetuned-model</code>的新Docker映像，它包含了经过微调的模型。现在，我们准备使用这个新的Docker映像部署我们的推理管道模型，它是SageMaker兼容的。</p>
+			<h2 id="_idParaDest-106"><a id="_idTextAnchor105"/>步骤3:使用新构建的SageMaker Docker映像测试本地部署</h2>
+			<p>在我们部署到云之前，让我们使用这个新的SageMaker <a id="_idIndexMarker557"/> Docker映像在本地测试部署。MLflow提供了一种使用以下命令进行本地测试的便捷方法:</p>
+			<pre><strong class="bold">mlflow sagemaker run-local -m runs:/dc5f670efa1a4eac95683633ffcfdd79/inference_pipeline_model -p 5555 -i mlflow-dl-inference-w-finetuned-model</strong></pre>
+			<p>该命令将开始在本地运行<code>mlflow-dl-inference-w-finetuned-model</code> Docker容器，并将带有<code>dc5f670efa1a4eac95683633ffcfdd79</code>运行ID的推理管道模型部署到该容器中。</p>
+			<p class="callout-heading">修复潜在的Docker错误</p>
+			<p class="callout">请注意，您可能会<a id="_idIndexMarker558"/>遇到一个Docker错误，说明<strong class="bold">路径/opt/ml flow/ml runs/1/dc5f 670 EFA 1a 4 EAC 95683633 ffcfdd 79/artifacts/inference _ pipeline _ model不是从主机共享的，Docker </strong>不知道它。您可以从<strong class="bold"> Docker </strong> | <strong class="bold">首选项中配置共享路径...</strong> | <strong class="bold">资源</strong> | <strong class="bold">文件共享</strong>修复此Docker错误。</p>
+			<p>我们已经在GitHub存储库中提供了这个推理管道模型，所以当您在本地环境中签出存储库时，这应该是现成的。web服务的端口是<code>5555</code>。命令运行后，您将在屏幕上看到许多输出，最后，您应该会看到以下内容:</p>
+			<pre><strong class="bold">[2022-03-18 01:47:20 +0000] [552] [INFO] Starting gunicorn 20.1.0</strong>
+<strong class="bold">[2022-03-18 01:47:20 +0000] [552] [INFO] Listening at: http://127.0.0.1:8000 (552)</strong>
+<strong class="bold">[2022-03-18 01:47:20 +0000] [552] [INFO] Using worker: gevent</strong>
+<strong class="bold">[2022-03-18 01:47:20 +0000] [565] [INFO] Booting worker with pid: 565</strong>
+<strong class="bold">[2022-03-18 01:47:20 +0000] [566] [INFO] Booting worker with pid: 566</strong>
+<strong class="bold">[2022-03-18 01:47:20 +0000] [567] [INFO] Booting worker with pid: 567</strong>
+<strong class="bold">[2022-03-18 01:47:20 +0000] [568] [INFO] Booting worker with pid: 568</strong>
+<strong class="bold">[2022-03-18 01:47:20 +0000] [569] [INFO] Booting worker with pid: 569</strong>
+<strong class="bold">[2022-03-18 01:47:20 +0000] [570] [INFO] Booting worker with pid: 570</strong></pre>
+			<p>这意味着服务已经启动并正在运行。您可能会看到一些关于PyTorch版本不兼容的警告，但是可以安全地忽略它们。一旦该服务启动并运行，您就可以在不同的终端窗口中对其进行测试，方法是发出如下的<code>curl</code> web请求，就像我们之前尝试的那样:</p>
+			<pre><strong class="bold">curl http://127.0.0.1:5555/invocations -H 'Content-Type: application/json' -d '{</strong>
+<strong class="bold">    "columns": ["text"],</strong>
+<strong class="bold">    "data": [["This is the best movie we saw."], ["What a movie!"]]</strong>
+<strong class="bold">}'</strong></pre>
+			<p>注意，本地主机的端口号是<code>5555</code>。然后，您应该会看到如下响应:</p>
+			<pre><strong class="bold">[{"text": "{\"response\": {\"prediction_label\": [\"positive\"]}, \"metadata\": {\"language_detected\": \"en\"}, \"model_metadata\": {\"finetuned_model_uri\": \"runs:/d01fc81e11e842f5b9556ae04136c0d3/model\", \"inference_pipeline_model_uri\": \"runs:/dc5f670efa1a4eac95683633ffcfdd79/inference_pipeline_model\"}}"}, {"text": "{\"response\": {\"prediction_label\": [\"negative\"]}, \"metadata\": {\"language_detected\": \"en\"}, \"model_metadata\": {\"finetuned_model_uri\": \"runs:/d01fc81e11e842f5b9556ae04136c0d3/model\", \"inference_pipeline_model_uri\": \"runs:/dc5f670efa1a4eac95683633ffcfdd79/inference_pipeline_model\"}}"}]</strong></pre>
+			<p>您可能想知道这与上一节中推理模型的本地web服务有什么不同。不同的是，这一次，我们在本地使用SageMaker <a id="_idIndexMarker560"/>容器，而以前，它只是一个没有Docker容器的本地web服务。在本地测试SageMaker容器非常重要，这样您就不会浪费时间和金钱将失败的模型服务部署到云中。</p>
+			<p>接下来，我们准备将这个容器部署到AWS SageMaker。</p>
+			<h2 id="_idParaDest-107"><a id="_idTextAnchor106"/>步骤4:将SageMaker Docker映像推送到AWS弹性容器注册中心</h2>
+			<p>现在，您可以使用下面的命令将新构建的<code>mlflow-dl-inference-w-finetuned-model</code> Docker映像推送到AWS <strong class="bold">弹性容器注册表</strong> ( <strong class="bold"> ECR </strong>)。确保正确设置了AWS访问令牌和<a id="_idIndexMarker561"/>访问ID(真实的，不是本地开发的)。获得访问密钥ID和令牌后，运行以下命令来设置对真实AWS的访问:</p>
+			<pre><strong class="bold">aws configure</strong></pre>
+			<p>执行命令后回答所有问题，您就可以开始了。现在，您可以运行以下命令将<code>mlflow-dl-inference-w-finetuned-model</code> Docker映像推送到AWS ECR:</p>
+			<pre><strong class="bold">mlflow sagemaker build-and-push-container --no-build --push -c mlflow-dl-inference-w-finetuned-model</strong></pre>
+			<p>确保不要用命令中包含的<code>--no-build</code>选项构建新的映像，因为我们只是想推送映像，而不是构建新的映像。您将看到<a id="_idIndexMarker562"/>下面的输出，它显示图像正被推送到ECR。注意，在下面的输出中，AWS帐户被<code>xxxxx</code>屏蔽。你会在输出中看到你的账号。确保您拥有写入AWS ECR存储的权限:</p>
+			<pre><strong class="bold">2022/03/18 17:36:05 INFO mlflow.sagemaker: Pushing image to ECR</strong>
+<strong class="bold">2022/03/18 17:36:06 INFO mlflow.sagemaker: Pushing docker image mlflow-dl-inference-w-finetuned-model to xxxxx.dkr.ecr.us-west-2.amazonaws.com/mlflow-dl-inference-w-finetuned-model:1.23.1</strong>
+<strong class="bold">Created new ECR repository: mlflow-dl-inference-w-finetuned-model</strong>
+<strong class="bold">2022/03/18 17:36:06 INFO mlflow.sagemaker: Executing: aws ecr get-login-password | docker login  --username AWS  --password-stdin xxxxx.dkr.ecr.us-west-2.amazonaws.com;</strong>
+<strong class="bold">docker tag mlflow-dl-inference-w-finetuned-model xxxxx.dkr.ecr.us-west-2.amazonaws.com/mlflow-dl-inference-w-finetuned-model:1.23.1;</strong>
+<strong class="bold">docker push xxxxx.dkr.ecr.us-west-2.amazonaws.com/mlflow-dl-inference-w-finetuned-model:1.23.1</strong>
+<strong class="bold">Login Succeeded</strong>
+<strong class="bold">The push refers to repository [xxxxx.dkr.ecr.us-west-2.amazonaws.com/mlflow-dl-inference-w-finetuned-model]</strong>
+<strong class="bold">447db5970ca5: Pushed</strong>
+<strong class="bold">9d6787a516e7: Pushed</strong>
+<strong class="bold">1.23.1: digest: sha256:f49f85741bc2b82388e85c79f6621f4 d7834e19bdf178b70c1a6c78c572b4d10 size: 3271</strong></pre>
+			<p>一旦完成，如果你去AWS网站(例如，如果你使用<code>us-west-2</code>地区数据中心，网址是<a href="https://us-west-2.console.aws.amazon.com/ecr/repositories?region=us-west-2">https://us-west-2.console.aws.amazon.com/ecr/repositories?region=us-west-2 </a>，您应该<a id="_idIndexMarker563"/>在ECR中找到您新推送的图像，文件夹名为<code>mlflow-dl-inference-w-finetuned-model</code>。然后你会在这个文件夹中找到如下的图像(<em class="italic">图8.4 </em>):</p>
+			<p class="figure-caption"> </p>
+			<div><div><img src="img/B18120_08_04.jpg" alt="Figure 8.4 – AWS ECR repositories with mlflow-dl-inference-w-finetuned-model image tag 1.23.1&#13;&#10;" width="867" height="362"/>
+				</div>
+			</div>
+			<p class="figure-caption">图8.4–带有ml flow-dl-inference-w-fine tuned-model图像标签1.23.1的AWS ECR存储库</p>
+			<p>注意图像标签号<code>Copy URI</code>选项。它将如下所示(AWS帐户用<code>xxxxx</code>屏蔽):</p>
+			<pre>xxxxx.dkr.ecr.us-west-2.amazonaws.com/mlflow-dl-inference-w-finetuned-model:1.23.1</pre>
+			<p>在下一步中，您将需要这个映像URI来部署到SageMaker。现在让我们部署到SageMaker来创建一个推理端点。</p>
+			<h2 id="_idParaDest-108"><a id="_idTextAnchor107"/>步骤5:部署推理管道模型以创建SageMaker端点</h2>
+			<p>现在，是时候使用我们刚刚推送到AWS ECR注册中心的图像URI将推理管道模型部署到SageMaker了。我们已经将<code>sagemaker/deploy_to_sagemaker.py</code>代码包含在GitHub库的<code>chapter08</code>文件夹中。您需要为部署使用正确的AWS角色。您可以在您的帐户中创建一个新的<code>AWSSageMakerExecutionRole</code>角色，并为该角色分配两个权限策略<code>AmazonS3FullAccess</code>和<code>AmazonSageMakerFullAccess</code>。在现实世界的场景中，您可能希望将权限收紧到更严格的策略，但是出于学习的目的，这将很好。下图显示了创建角色后的屏幕:</p>
+			<div><div><img src="img/B18120_08_05.jpg" alt="Figure 8.5 – Create a role that can be used for deployment in SageMaker&#13;&#10;" width="751" height="677"/>
+				</div>
+			</div>
+			<p class="figure-caption">图8.5–创建一个可用于SageMaker部署的角色</p>
+			<p>您还需要为SageMaker创建一个S3存储桶，以便上传模型工件并将它们部署到SageMaker。在我们的例子中，我们创建了一个名为<code>dl-inference-deployment</code>的桶。当我们执行部署脚本时，如这里所示，要部署的模型将首先上传到<code>dl-inference-deployment</code> bucket，然后部署到SageMaker。我们在<code>chapter08/sagemaker/deploy_to_sagemaker.py</code> GitHub存储库中提供了完整的部署脚本，因此您<a id="_idIndexMarker565"/>可以下载并执行它，如下所示(提醒您，在运行该脚本之前，请确保将<code>MLFLOW_TRACKING_URI</code>的环境变量重置为空，如<code>export MLFLOW_TRACKING_URI=</code>所示):</p>
+			<pre><strong class="bold">sudo python sagemaker/deploy_to_sagemaker.py</strong></pre>
+			<p>该脚本执行以下两项任务:</p>
+			<ol>
+				<li value="1">将<code>chapter08</code>文件夹下的本地<code>mlruns</code>复制到本地<code>/opt/mlflow</code>文件夹，以便SageMaker部署代码可以选择<code>inference-pipeline-model</code>进行上传。因为<code>/opt</code>路径通常是受限制的，这里我们使用<code>sudo</code>(超级用户)来做这个复制。这将提示您在笔记本电脑上键入您的用户密码。</li>
+				<li>使用<code>mlflow.sagemaker.deploy</code> API创建一个新的SageMaker端点<code>dl-sentiment-model</code>。</li>
+			</ol>
+			<p>代码片段如下:</p>
+			<pre>mlflow.sagemaker.deploy(
+    mode='create',
+    app_name=endpoint_name,
+    model_uri=model_uri,
+    image_url=image_uri,
+    execution_role_arn=role,
+    instance_type='ml.m5.xlarge',
+    bucket = bucket_for_sagemaker_deployment,
+    instance_count=1,
+    region_name=region
+)</pre>
+			<p>这些参数需要一些解释，以便我们完全理解所需的所有准备工作:</p>
+			<ul>
+				<li>这是推理管道模型的URI。在我们的例子中，它是<code>runs:/dc5f670efa1a4eac95683633ffcfdd79/inference_pipeline_model</code>。</li>
+				<li>这是我们上传到AWS ECR的Docker图像。在我们的例子中，它是<code>xxxxx.dkr.ecr.us-west-2.amazonaws.com/mlflow-dl-inference-w-finetuned-model:1.23.1</code>。请注意，您需要用您的实际账号替换屏蔽的AWS账号<code>xxxxx</code>。</li>
+				<li><code>execution_role_arn</code>:这是我们创建的角色，允许SageMaker进行<a id="_idIndexMarker566"/>部署。在我们的例子中，它是<code>arn:aws:iam::565251169546:role/AWSSageMakerExecutionRole</code>。同样，您需要用您实际的AWS帐号替换<code>xxxxx</code>。</li>
+				<li><code>bucket</code>:这是我们创建的S3桶，允许SageMaker上传模型，然后进行实际部署。在我们的例子中，它是<code>dl-inference-deployment</code>。</li>
+			</ul>
+			<p>其余的参数不言自明。</p>
+			<p>执行部署脚本后，您将看到以下输出(其中<code>xxxxx</code>是屏蔽的AWS帐号):</p>
+			<pre><strong class="bold">2022/03/18 19:30:47 INFO mlflow.sagemaker: Using the python_function flavor for deployment!</strong>
+<strong class="bold">2022/03/18 19:30:47 INFO mlflow.sagemaker: tag response: {'ResponseMetadata': {'RequestId': 'QMAQRCTJT36TXD2H', 'HostId': 'DNG57U3DJrhLcsBxa39zsjulUH9VB56FmGkxAiMYN+2fhc/rRukWe8P3qmBmvRYbMj0sW3B2iGg=', 'HTTPStatusCode': 200, 'HTTPHeaders': {'x-amz-id-2': 'DNG57U3DJrhLcsBxa39zsjulUH9VB56FmGkxAiMYN+2fhc/rRukWe8P3qmBmvRYbMj0sW3B2iGg=', 'x-amz-request-id': 'QMAQRCTJT36TXD2H', 'date': 'Sat, 19 Mar 2022 02:30:48 GMT', 'server': 'AmazonS3', 'content-length': '0'}, 'RetryAttempts': 0}}</strong>
+<strong class="bold">2022/03/18 19:30:47 INFO mlflow.sagemaker: Creating new endpoint with name: dl-sentiment-model ...</strong>
+<strong class="bold">2022/03/18 19:30:47 INFO mlflow.sagemaker: Created model with arn: arn:aws:sagemaker:us-west-2:xxxxx:model/dl-sentiment-model-model-qbca2radrxitkujn3ezubq</strong>
+<strong class="bold">2022/03/18 19:30:47 INFO mlflow.sagemaker: Created endpoint configuration with arn: arn:aws:sagemaker:us-west-2:xxxxx:endpoint-config/dl-sentiment-model-config-r9ax3wlhrfisxkacyycj8a</strong>
+<strong class="bold">2022/03/18 19:30:48 INFO mlflow.sagemaker: Created endpoint with arn: arn:aws:sagemaker:us-west-2:xxxxx:endpoint/dl-sentiment-model</strong>
+<strong class="bold">2022/03/18 19:30:48 INFO mlflow.sagemaker: Waiting for the deployment operation to complete...</strong>
+<strong class="bold">2022/03/18 19:30:48 INFO mlflow.sagemaker: Waiting for endpoint to reach the "InService" state. Current endpoint status: "Creating"</strong></pre>
+			<p>这可能需要几分钟(有时超过10分钟)。您可能会看到一些关于PyTorch版本兼容性的警告消息，正如您在进行本地SageMaker部署测试时看到的<a id="_idIndexMarker567"/>。您也可以直接访问SageMaker网站，您将看到从<strong class="bold">创建</strong>开始的端点状态，然后最终变为绿色<strong class="bold">运行中</strong>状态，如下所示:</p>
+			<div><div><img src="img/B18120_08_06.jpg" alt="Figure 8.6 – AWS SageMaker dl-sentiment-model endpoint InService&#13;&#10;" width="1165" height="424"/>
+				</div>
+			</div>
+			<p class="figure-caption">图8.6–AWS sage maker dl-服务中的情绪模型端点</p>
+			<p>如果你看到<strong class="bold">在役</strong>状态，那么恭喜你！您已经成功地将DL推理管道模型部署到SageMaker中，现在您可以将它用于生产流量了！</p>
+			<p>现在服务的状态是inService，您可以在下一步中使用命令行查询它。</p>
+			<h2 id="_idParaDest-109"><a id="_idTextAnchor108"/>步骤6:查询SageMaker端点进行在线推理</h2>
+			<p>要查询SageMaker端点，可以使用以下命令行:</p>
+			<pre><strong class="bold">aws sagemaker-runtime invoke-endpoint --endpoint-name 'dl-sentiment-model' --content-type 'application/json; format=pandas-split' --body '{"columns":["text"], "data": [["This is the best movie we saw."], ["What a movie!"]]}' response.json</strong></pre>
+			<p>您将看到如下输出:</p>
+			<pre><strong class="bold">{</strong>
+<strong class="bold">    "ContentType": "application/json",</strong>
+<strong class="bold">    "InvokedProductionVariant": "dl-sentiment-model-model-qbca2radrxitkujn3ezubq"</strong>
+<strong class="bold">}</strong></pre>
+			<p>实际的预测结果存储在本地<code>response.json</code>文件中，可以通过运行以下命令显示响应的内容来查看:</p>
+			<pre><strong class="bold">cat response.json</strong></pre>
+			<p>这将显示如下内容:</p>
+			<pre><strong class="bold">[{"text": "{\"response\": {\"prediction_label\": [\"positive\"]}, \"metadata\": {\"language_detected\": \"en\"}, \"model_metadata\": {\"finetuned_model_uri\": \"runs:/d01fc81e11e842f5b9556ae04136c0d3/model\", \"inference_pipeline_model_uri\": \"runs:/dc5f670efa1a4eac95683633ffcfdd79/inference_pipeline_model\"}}"}, {"text": "{\"response\": {\"prediction_label\": [\"negative\"]}, \"metadata\": {\"language_detected\": \"en\"}, \"model_metadata\": {\"finetuned_model_uri\": \"runs:/d01fc81e11e842f5b9556ae04136c0d3/model\", \"inference_pipeline_model_uri\": \"runs:/dc5f670efa1a4eac95683633ffcfdd79/inference_pipeline_model\"}}"}]</strong></pre>
+			<p>这是我们的推理管道模型的预期响应模式！还可以使用Python代码对SageMaker推理端点运行查询，我们已经在GitHub存储库中的<code>chapter08/sagemaker/ query_sagemaker_endpoint.py</code>文件中提供了这些代码。核心代码片段使用<code>SageMakerRuntime</code>客户端的<code>invoke_endpoint</code>进行查询，如下所示:</p>
+			<pre class="source-code">client = boto3.client('sagemaker-runtime') </pre>
+			<pre class="source-code">response = client.invoke_endpoint(</pre>
+			<pre class="source-code">    EndpointName=app_name, </pre>
+			<pre class="source-code">    ContentType=content_type,</pre>
+			<pre class="source-code">    Accept=accept,</pre>
+			<pre class="source-code">    Body=payload</pre>
+			<pre class="source-code">    )</pre>
+			<p><code>invoke_endpoint</code>的参数需要一些解释:</p>
+			<ul>
+				<li><code>EndpointName</code>:这是推理端点名。在我们的例子中，它是<code>dl-inference-model</code>。</li>
+				<li><code>ContentType</code>:这是请求体中输入数据的MIME类型。在我们的例子中，我们使用<code>application/json; format=pandas-split</code>。</li>
+				<li><code>Accept</code>:这是响应体中推理所需的MIME类型。在我们的<a id="_idIndexMarker570"/>示例中，我们期望<code>text/plain</code>字符串类型。</li>
+				<li><code>Body</code>:这是我们想要使用DL模型推理服务来预测情绪的实际文本。在我们的例子中是<code>{"columns": ["text"],"data": [["This is the best movie we saw."], ["What a movie!"]]}</code>。</li>
+			</ul>
+			<p>GitHub存储库中提供了完整的代码，您可以在命令行中运行它，如下所示:</p>
+			<pre><strong class="bold">python sagemaker/query_sagemaker_endpoint.py</strong></pre>
+			<p>您将在终端屏幕上看到以下输出:</p>
+			<pre><strong class="bold">Application status is: InService</strong>
+<strong class="bold">[{"text": "{\"response\": {\"prediction_label\": [\"positive\"]}, \"metadata\": {\"language_detected\": \"en\"}, \"model_metadata\": {\"finetuned_model_uri\": \"runs:/d01fc81e11e842f5b9556ae04136c0d3/model\", \"inference_pipeline_model_uri\": \"runs:/dc5f670efa1a4eac95683633ffcfdd79/inference_pipeline_model\"}}"}, {"text": "{\"response\": {\"prediction_label\": [\"negative\"]}, \"metadata\": {\"language_detected\": \"en\"}, \"model_metadata\": {\"finetuned_model_uri\": \"runs:/d01fc81e11e842f5b9556ae04136c0d3/model\", \"inference_pipeline_model_uri\": \"runs:/dc5f670efa1a4eac95683633ffcfdd79/inference_pipeline_model\"}}"}]</strong></pre>
+			<p>这就是我们对推理管道模型响应的预期！如果您已经阅读了本章，那么恭喜您成功地将我们的推理管道模型部署到远程云主机AWS SageMaker的生产环境中！完成本章中的课程后，请确保删除端点，以免产生不必要的成本。</p>
+			<p>让我们总结一下本章所学的内容。</p>
+			<h1 id="_idParaDest-110"><a id="_idTextAnchor109"/>总结</h1>
+			<p>在这一章中，我们学习了为批量推理和在线实时推理部署MLflow推理管道模型的不同方法。我们首先对不同的模型服务场景(批处理、流和设备上)进行了简要的调查，并查看了三种不同类别的MLflow模型部署工具(MLflow内置部署工具、MLflow部署插件和可以与MLflow推理模型一起工作的通用模型推理服务框架)。然后，我们讨论了几个本地部署场景，使用PySpark UDF函数进行批量推理，并为web服务进行MLflow本地部署。之后，我们学习了如何结合使用Ray Serve和<code>mlflow-ray-serve</code>插件来将MLflow Python推理管道模型部署到本地Ray集群中。这为部署到任何云平台(如AWS、Azure ML或GCP)打开了大门，只要我们可以在云中建立一个Ray集群。最后，我们提供了关于如何部署到AWS SageMaker的完整的端到端指南，重点关注BYOM的一个常见场景，其中我们有一个在AWS SageMaker外部构建的训练有素的推理管道模型，现在需要部署到AWS SageMaker以提供托管模型服务。我们的分步指南将为您提供信心，为实际生产应用部署MLflow推理管道模型。</p>
+			<p>请注意，部署DL推理管道模型的前景仍在发展，我们刚刚学习了一些基础技能。鼓励您从<em class="italic">延伸阅读</em>部分探索更多高级主题。</p>
+			<p>现在我们知道了如何部署和托管DL推理管道，我们将在下一章学习如何进行模型可解释性，这对于许多真实场景中可信和可解释的模型预测结果非常重要。</p>
+			<h1 id="_idParaDest-111"><a id="_idTextAnchor110"/>延伸阅读</h1>
+			<ul>
+				<li><em class="italic">tiny ml介绍</em>:<a href="https://towardsdatascience.com/an-introduction-to-tinyml-4617f314aa79">https://towards data science . com/An-Introduction-to-tiny ml-4617 f 314 aa 79</a></li>
+				<li><em class="italic">性能优化和MLFlow集成–Seldon Core 1 . 10 . 0发布</em>:<a href="https://www.seldon.io/performance-optimizations-and-mlflow-integrations-seldon-core-1-10-0-released/">https://www . Seldon . io/Performance-Optimizations-and-ml flow-Integrations-Seldon-Core-1-10-0-Released/</a></li>
+				<li><em class="italic"> Ray &amp; MLflow:将分布式机器学习应用用于生产</em>:<a href="https://medium.com/distributed-computing-with-ray/ray-mlflow-taking-distributed-machine-learning-applications-to-production-103f5505cb88">https://medium . com/Distributed-computing-with Ray/Ray-ml flow-Taking-Distributed-Machine-Learning-Applications-to-Production-103 f 5505 cb88</a></li>
+				<li><em class="italic">用MLflow和Amazon SageMaker管理你的机器学习生命周期</em>:<a href="https://aws.amazon.com/blogs/machine-learning/managing-your-machine-learning-lifecycle-with-mlflow-and-amazon-sagemaker/">https://AWS . Amazon . com/blogs/machine-learning/Managing-your-machine-learning-life cycle-with-ml flow-and-Amazon-sage maker/</a></li>
+				<li><em class="italic">使用AWS sage maker</em>:<a href="https://medium.com/geekculture/84af8989d065">https://medium.com/geekculture/84af8989d065</a>在云中部署本地培训的ML模型</li>
+				<li><em class="italic">2022年py torch vs tensor flow</em>:<a href="https://www.assemblyai.com/blog/pytorch-vs-tensorflow-in-2022/">https://www . assembly ai . com/blog/py torch-vs-tensor flow-in-2022/</a></li>
+				<li><em class="italic">试用Databricks:免费试用版或社区版</em>:<a href="https://docs.databricks.com/getting-started/try-databricks.html#free-trial-or-community-edition">https://docs . data bricks . com/getting-started/Try-data bricks . html #免费试用版或社区版</a></li>
+				<li><em class="italic">带有MLflow和Amazon SageMaker管道的MLOps</em>:<a href="https://towardsdatascience.com/mlops-with-mlflow-and-amazon-sagemaker-pipelines-33e13d43f238">https://towardsdatascience . com/MLOps-with-ml flow-and-Amazon-SageMaker-Pipelines-33e 13d 43 f 238</a></li>
+				<li><em class="italic"> PyTorch JIT和torch script</em>:<a href="https://towardsdatascience.com/pytorch-jit-and-torchscript-c2a77bac0fff">https://towardsdatascience . com/py torch-JIT-and-torch script-c 2 a 77 BAC 0 fff</a></li>
+				<li><em class="italic"> ML模特上菜最佳工具</em>:<a href="https://neptune.ai/blog/ml-model-serving-best-tools">https://neptune.ai/blog/ml-model-serving-best-tools</a></li>
+				<li><em class="italic">将机器学习模型部署到生产-推理服务架构模式</em>:<a href="https://medium.com/data-for-ai/deploying-machine-learning-models-to-production-inference-service-architecture-patterns-bc8051f70080">https://medium . com/data-for-ai/Deploying-Machine-Learning-models-to-production-Inference-service-architecture-patterns-BC 8051 f 70080</a></li>
+				<li><em class="italic">如何将大规模深度学习模型部署到生产中</em>:<a href="https://towardsdatascience.com/how-to-deploy-large-size-deep-learning-models-into-production-66b851d17f33">https://towards data science . com/How-to-Deploy-Large-Size-Deep-Learning-Models-into-Production-66b 851d 17 f 33</a></li>
+				<li><em class="italic">在Kubernetes上使用Mlflow大规模提供ML模型</em>:<a href="https://medium.com/artefact-engineering-and-data-science/serving-ml-models-at-scale-using-mlflow-on-kubernetes-7a85c28d38e">https://medium . com/artefact-engineering-and-data-science/Serving-ML-models-at-scale-using-ML flow-on-Kubernetes-7a 85 c 28d 38 e</a></li>
+				<li><em class="italic">当PyTorch遇到ml flow</em>:<a href="https://mlops.community/when-pytorch-meets-mlflow/">https://ml ops . community/When-py torch-meets-ml flow/</a></li>
+				<li><em class="italic">将模型部署到Azure Kubernetes服务集群</em>:<a href="https://docs.microsoft.com/en-us/azure/machine-learning/how-to-deploy-azure-kubernetes-service?tabs=python">https://docs . Microsoft . com/en-us/Azure/machine-learning/how-to-Deploy-Azure-Kubernetes-Service？tabs=python </a></li>
+				<li><em class="italic"> ONNX和Azure机器学习:创建和加速ML模型</em>:<a href="https://docs.microsoft.com/en-us/azure/machine-learning/concept-onnx">https://docs . Microsoft . com/en-us/Azure/Machine-Learning/concept-ONNX</a></li>
+			</ul>
+		</div>
+	</div>
+</body></html>

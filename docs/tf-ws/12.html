@@ -1,0 +1,751 @@
+<html><head/><body>
+
+
+	
+		<title>B16341_Solution_ePub</title>
+		
+	
+	
+		<div><h1 id="_idParaDest-224"><a id="_idTextAnchor248"/>附录</h1>
+		</div>
+		<div><h1 id="_idParaDest-225"><a id="_idTextAnchor249"/> 1。TensorFlow机器学习简介</h1>
+			<h2 id="_idParaDest-226"><a id="_idTextAnchor250"/>活动1.01:在TensorFlow中执行张量加法</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li>导入张量流库:<pre>import tensorflow as tf</pre></li>
+				<li>使用TensorFlow的<code>Variable</code>类:<pre>var1 = tf.Variable(2706, tf.int32) var2 = tf.Variable(2386, tf.int32)</pre>创建两个等级为<code>0</code>的张量</li>
+				<li>Create a new variable to add the two scalars created and print the result:<pre>var_sum = var1 + var2
+var_sum.numpy()</pre><p>这将导致以下输出:</p><pre>5092</pre><p>该输出显示了<code>Product A</code>在<code>Location X</code>的总收入。</p></li>
+				<li>使用TensorFlow的<code>Variable</code>类:<pre>scalar1 = tf.Variable(95, tf.int32) vector1 = tf.Variable([2706, 2799, 5102], \                       tf.int32)</pre>创建两个张量，一个秩为<code>0</code>的标量和一个秩为<code>1</code>的向量</li>
+				<li>Create a new variable as the sum of the scalar and vector created and print the result:<pre>vector_scalar_sum = scalar1 + vector1
+vector_scalar_sum.numpy()</pre><p>这将导致以下输出:</p><pre>array([2801, 2894, 5197])</pre><p>结果是<code>Salesperson 1</code>在<code>Location X</code>的新销售目标。</p></li>
+				<li>现在使用TensorFlow的<code>Variable</code>类:<pre>matrix1 = tf.Variable([[2706, 2799, 5102], \                        [2386, 4089, 5932]], tf.int32) matrix2 = tf.Variable([[5901, 1208, 645], \                        [6235, 1098, 948]], tf.int32) matrix3 = tf.Variable([[3908, 2339, 5520], \                        [4544, 1978, 4729]], tf.int32)</pre>创建三个等级为2的张量，代表每个产品、销售人员和位置的收入</li>
+				<li>Create a new variable as the sum of the three tensors created and print the result:<pre><a id="_idTextAnchor251"/>matrix_sum = matrix1 + matrix2 + matrix3
+matrix_sum.numpy()</pre><p>这将导致以下输出:</p><div><img src="img/B16341_01_42.jpg" alt="Figure 1.42: The output of the matrix summation as a NumPy variable&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图1.42:矩阵求和作为一个NumPy变量的输出</p>
+			<p>结果表示每个位置的每个产品的总收入。</p>
+			<p>在本练习中，您对秩为<code>0</code>、<code>1</code>和<code>2</code>的张量进行了加法运算，并展示了标量(秩为0的张量)可以与其他秩的张量相加，称为标量加法。</p>
+			<h2 id="_idParaDest-227"><a id="_idTextAnchor252"/>活动1.02:在TensorFlow中执行张量整形和变换</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li value="1">导入张量流库:<pre>import tensorflow as tf</pre></li>
+				<li>Create a one-dimensional array with 24 elements using TensorFlow's <code>Variable</code> class. Verify the shape of the matrix:<pre>array1 = tf.Variable([*range(24)])
+array1.shape.as_list()</pre><p>这将导致以下输出:</p><pre>[24]</pre></li>
+				<li>Reshape the matrix so that it has 12 rows and 2 columns using TensorFlow's <code>reshape</code> function. Verify the shape of the new matrix:<pre>reshape1 = tf.reshape(array1, shape=[12, 2])
+reshape1.shape.as_list()</pre><p>这将导致以下输出:</p><pre>[12, 2]</pre></li>
+				<li>Reshape the matrix so that it has a shape of <code>3x4x2</code> using TensorFlow's <code>reshape</code> function. Verify the shape of the new matrix:<pre>reshape2 = tf.reshape(array1, shape=[3, 4, 2])
+reshape2.shape.as_list()</pre><p>这将导致以下输出:</p><pre>[3, 4, 2]</pre></li>
+				<li>Verify that the rank of this new tensor is of rank <code>3</code> by using TensorFlow's <code>rank</code> function:<pre>tf.rank(reshape2).numpy()</pre><p>这将导致以下输出:</p><pre>3</pre></li>
+				<li>Transpose the tensor created in <em class="italic">step 3</em>. Verify the shape of the new tensor:<pre>transpose1 = tf.transpose(reshape1)
+transpose1.shape.as_list()</pre><p>这将导致以下输出:</p><pre>[2, 12]</pre></li>
+			</ol>
+			<p>在本练习中，您已经练习了对不同秩的张量执行张量整形和变换，并学习了如何通过整形张量来改变张量的秩。您使用TensorFlow的<code>reshape</code>和<code>transpose</code>函数模拟了将24名学生分组到不同规模的班级项目中。</p>
+			<h2 id="_idParaDest-228"><a id="_idTextAnchor253"/>活动1.03:应用激活功能</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li value="1">导入张量流库:<pre>import tensorflow as tf</pre></li>
+				<li>创建一个<code>3x4</code>张量作为输入，其中的行代表各销售代表的销售额，列代表经销商处现有的各种车辆，值代表与MSRP的平均百分比差异。这些值可以是正数，也可以是负数，这取决于销售人员的销售价格是高于还是低于建议零售价:<pre>input1 = tf.Variable([[-0.013, 0.024, 0.06, 0.022], \                       [0.001, -0.047, 0.039, 0.016], \                       [0.018, 0.030, -0.021, -0.028]], \                      tf.float32)</pre></li>
+				<li>创建一个<code>4x1</code> <code>weights</code>张量，形状为<code>4x1</code>，代表汽车的建议零售价:<pre>weights = tf.Variable([[19995.95], [24995.50], \                        [36745.50], [29995.95]], \                       tf.float32)</pre></li>
+				<li>创建大小为<code>3x1</code>的偏差张量，表示与每个销售人员相关的固定成本:<pre>bias = tf.Variable([[-2500.0],[-2500.0],[-2500.0]], \                    tf.float32)</pre></li>
+				<li>Matrix multiply the input by the weight to show the average deviation from the MSRP on all cars and add the bias to subtract the fixed costs of the salesperson:<pre>output = tf.matmul(input1,weights) + bias
+output</pre><p>以下是输出:</p><div><img src="img/B16341_01_43.jpg" alt="Figure 1.43: The output of the matrix multiplication&#13;&#10;"/></div><p class="figure-caption">图1.43:矩阵乘法的输出</p></li>
+				<li>Apply a ReLU activation function to highlight the net-positive salespeople:<pre>output = tf.keras.activations.relu(output)
+output </pre><p>这将导致以下输出:</p><div><img src="img/B16341_01_44.jpg" alt="Figure 1.44: The output after applying the activation function&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图1.44:应用激活功能后的输出</p>
+			<p>此结果显示销售人员的净销售额为正的结果；那些净销售额为负的被归零。</p>
+			<p>在本练习中，您对各种大小的张量执行了张量乘法、张量加法，还应用了激活函数。您首先定义了张量，然后对其中两个进行矩阵乘法，然后添加一个偏差张量，最后对结果应用一个激活函数。</p>
+			<h1 id="_idParaDest-229"><a id="_idTextAnchor254"/> 2。加载和处理数据</h1>
+			<h2 id="_idParaDest-230"><a id="_idTextAnchor255"/>活动2.01:加载表格数据并使用最小最大缩放器重新缩放数值字段</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li value="1">打开一个新的Jupyter笔记本来执行此活动。将文件另存为<code>Activity2-01.ipnyb</code>。</li>
+				<li>在一个新的Jupyter笔记本单元格中，导入熊猫库，如下:<pre>import pandas as pd</pre></li>
+				<li>Create a new pandas DataFrame named <code>df</code> and read the <code>Bias_correction_ucl.csv</code> file into it. Examine whether your data is properly loaded by printing the resultant DataFrame:<pre>df = pd.read_csv(<strong class="bold">'Bias_correction_ucl.csv'</strong>)</pre><p class="callout-heading">注意</p><p class="callout">确保根据CSV文件在系统上的位置更改其路径(突出显示)。如果您从存储CSV文件的同一个目录运行Jupyter笔记本，那么您可以不做任何修改就运行前面的代码。</p></li>
+				<li>使用<code>drop</code>方法放下<code>date</code>柱。因为要删除列，所以将<code>1</code>传递给<code>axis</code>参数，将<code>True</code>传递给<code>inplace</code>参数:<pre>df.drop('Date', inplace=True, axis=1)</pre></li>
+				<li>Plot a histogram of the <code>Present_Tmax</code> column that represents the maximum temperature across dates and weather stations across the dataset:<pre>ax = df['Present_Tmax'].hist(color='gray')
+ax.set_xlabel("Normalized Temperature")
+ax.set_ylabel("Frequency")</pre><p>输出如下所示:</p><div><img src="img/B16341_02_20.jpg" alt="Figure 2.20: A Temperature versus Frequency histogram of the Present_Tmax column&#13;&#10;"/></div><p class="figure-caption">图2.20:Present _ Tmax列的温度与频率直方图</p><p>生成的直方图显示了<code>Present_Tmax</code>列的值的分布。</p></li>
+				<li>导入<code>MinMaxScaler</code>并使用它来拟合和转换特征数据帧:<pre>from sklearn.preprocessing import MinMaxScaler scaler = MinMaxScaler() df2 = scaler.fit_transform(df) df2 = pd.DataFrame(df2, columns=df.columns)</pre></li>
+				<li>Plot a histogram of the transformed <code>Present_Tmax</code> column:<pre>ax = df2['Present_Tmax'].hist(color='gray')
+ax.set_xlabel("Normalized Temperature")
+ax.set_ylabel("Frequency")</pre><p>输出如下所示:</p><div><img src="img/B16341_02_21.jpg" alt="Figure 2.21: A histogram of the rescaled Present_Tmax column&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图2.21:重新调整后的Present_Tmax列的直方图</p>
+			<p>结果直方图显示温度值范围从<code>0</code>到<code>1</code>，如直方图的<em class="italic"> x </em>轴上的范围所示。通过使用<code>MinMaxScaler</code>，这些值将始终具有最小值<code>0</code>和最大值<code>1</code>。</p>
+			<p>在本练习中，您已经对数值字段进行了一些进一步的预处理。这里，您缩放了数值字段，使它们具有最小值<code>0</code>和最大值<code>1</code>。如果数值场不是正态分布的，这可能比标准定标器更有利。它还确保生成的字段限制在最小值和最大值之间。</p>
+			<h2 id="_idParaDest-231"><a id="_idTextAnchor256"/>活动2.02:加载图像数据进行批处理</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li value="1">打开一个新的Jupyter笔记本来执行此活动。将文件另存为<code>Activity2-02.ipnyb</code>。</li>
+				<li>在一个新的Jupyter笔记本单元格中，从Keras的预处理包<pre>from tensorflow.keras.preprocessing.image \     import ImageDataGenerator</pre>中导入<code>ImageDataGenerator</code>类</li>
+				<li>实例化<code>ImageDataGenerator</code>类并传递值为<code>1/255</code>的<code>rescale</code>参数来转换图像值，使它们在<code>0</code>和<code>1</code>之间:<pre>train_datagen = ImageDataGenerator(rescale = 1./255,\                                    shear_range = 0.2,\                                    rotation_range= 180,\                                    zoom_range = 0.2,\                                    horizontal_flip = True)</pre></li>
+				<li>使用数据生成器的<code>flow_from_directory</code>方法将数据生成器指向图像数据。传入目标尺寸、批量尺寸和分类模式的参数:<pre>training_set = train_datagen.flow_from_directory\                ('image_data',\                 target_size = (64, 64),\                 batch_size = 25,\                 class_mode = 'binary')</pre></li>
+				<li>创建一个函数来显示批处理中的图像:<pre>import matplotlib.pyplot as plt def show_batch(image_batch, label_batch):\     lookup = {v: k for k, v in          training_set.class_indices.items()}     label_batch = [lookup[label] for label in \                   label_batch]     plt.figure(figsize=(10,10))     for n in range(25):         ax = plt.subplot(5,5,n+1)         plt.imshow(image_batch[n])         plt.title(label_batch[n].title())         plt.axis('off')</pre></li>
+				<li>Take a batch from the data generator and pass it to the function to display the images and their labels:<pre>image_batch, label_batch = next(training_set)
+show_batch(image_batch, label_batch)</pre><p>输出如下所示:</p><div><img src="img/B16341_02_22.jpg" alt="Figure 2.22: Augmented images from a batch&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图2.22:来自一批的增强图像</p>
+			<p>输出显示了一批25个图像和它们各自的标签，它们已经通过旋转、缩放和剪切得到了增强。增强图像显示相同的对象，但具有不同的像素值，这有助于创建更鲁棒的模型。</p>
+			<h2 id="_idParaDest-232"><a id="_idTextAnchor257"/>活动2.03:加载音频数据进行批处理</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li value="1">打开一个新的Jupyter笔记本来执行此活动。将文件另存为<code>Activity2-03.ipnyb</code>。</li>
+				<li>在一个新的Jupyter笔记本单元格中，导入TensorFlow和<code>os</code>库:<pre>import tensorflow as tf import os</pre></li>
+				<li>分别使用TensorFlow的<code>read_file</code>函数和<code>decode_wav</code>函数创建一个加载并返回音频文件的函数。返回合成张量的转置:<pre>def load_audio(file_path, sample_rate=44100):     # Load audio at 44.1kHz sample-rate     audio = tf.io.read_file(file_path)     audio, sample_rate = tf.audio.decode_wav\                          (audio,\                           desired_channels=-1,\                           desired_samples=sample_rate)     return tf.transpose(audio)</pre></li>
+				<li>使用<code>os.list_dir</code> : <pre>prefix = " ../Datasets/data_speech_commands_v0.02"\         "/zero/" paths = [os.path.join(prefix, path) for path in \          os.listdir(prefix)]</pre>将音频数据的路径作为列表载入</li>
+				<li>使用您在<em class="italic">步骤2 </em>中创建的函数创建一个函数，该函数将获取一个数据集对象，混洗它，并加载音频。然后，将绝对值和<code>log1p</code>函数应用于数据集。该函数将<code>1</code>加到每个值上，然后取对数。接下来，重复数据集对象，对其进行批处理，并使用与批处理大小相等的缓冲区大小预取它:<pre>def prep_ds(ds, shuffle_buffer_size=1024, \             batch_size=16):     # Randomly shuffle (file_path, label) dataset     ds = ds.shuffle(buffer_size=shuffle_buffer_size)     # Load and decode audio from file paths     ds = ds.map(load_audio)     # Take the absolute value     ds = ds.map(tf.abs)     # Apply log1p function     ds = ds.map(tf.math.log1p)     # Repeat dataset forever     ds = ds.repeat()     # Prepare batches     ds = ds.batch(batch_size)     # Prefetch     ds = ds.prefetch(buffer_size=batch_size)     return ds</pre></li>
+				<li>使用TensorFlow的<code>from_tensor_slices</code>函数创建一个数据集对象，并传入音频文件的路径。然后，将您在<em class="italic">步骤5 </em>中创建的函数应用到数据集对象:<pre>ds = tf.data.Dataset.from_tensor_slices(paths) train_ds = prep_ds(ds)</pre></li>
+				<li>Take the first batch of the dataset and print it out:<pre>for x in train_ds.take(1):\
+     print(x)</pre><p>输出将如下所示:</p><div><img src="img/B16341_02_23.jpg" alt="Figure 2.23: A batch of the audio data&#13;&#10;"/></div><p class="figure-caption">图2.23:一批音频数据</p><p>输出以张量形式显示第一批MFCC频谱值。</p></li>
+				<li>Plot the first audio file from the batch:<pre>import matplotlib.pyplot as plt
+plt.plot(x[0,:,:].numpy().T, color = 'gray')
+plt.xlabel('Sample')
+plt.ylabel('Value'))</pre><p>输出将如下所示:</p><div><img src="img/B16341_02_24.jpg" alt="Figure 2.24: A visual representation of the batch of the preprocessed audio data&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图2.24:一批预处理音频数据的可视化表示</p>
+			<p>前面的图显示了预处理的音频数据。您可以看到这些值是非负的，最小值为<code>0</code>，并且数据是对数标度的。</p>
+			<h1 id="_idParaDest-233"><a id="_idTextAnchor258"/> 3。张量流发展</h1>
+			<h2 id="_idParaDest-234"><a id="_idTextAnchor259"/>活动3.01:使用张量板可视化张量变换</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li value="1">导入TensorFlow库并设置种子:<pre>import tensorflow as tf tf.random.set_seed(42)</pre></li>
+				<li>设置日志目录并初始化一个文件写入器对象来写入跟踪:<pre>logdir = 'logs/' writer = tf.summary.create_file_writer(logdir)</pre></li>
+				<li>创建一个张量流函数，将两个张量相乘，并使用<code>ones_like</code>函数将值<code>1</code>添加到结果张量中的所有元素，以创建一个与矩阵乘法结果形状相同的张量。然后，对张量的每个值应用sigmoid函数:<pre>@tf.function def my_func(x, y):     r1 = tf.matmul(x, y)     r2 = r1 + tf.ones_like(r1)     r3 = tf.keras.activations.sigmoid(r2)     return r3</pre></li>
+				<li>创建两个形状为<code>5x5x5</code> : <pre>x = tf.random.uniform((5, 5, 5)) y = tf.random.uniform((5, 5, 5))</pre>的张量</li>
+				<li>打开图形跟踪:<pre>tf.summary.trace_on(graph=True, profiler=True)</pre></li>
+				<li>将函数应用于两个张量，并将轨迹导出到日志目录:<pre>z = my_func(x, y) with writer.as_default():     tf.summary.trace_export(name="my_func_trace",\                             step=0,\                             profiler_outdir=logdir)</pre></li>
+				<li>Launch TensorBoard in the command line and view the graph in a browser:<pre>tensorboard --logdir=./logs</pre><p>您应该会看到类似下图的内容:</p><div><img src="img/B16341_03_06.jpg" alt="Figure 3.19: A visual representation of tensor transformation in TensorBoard&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图3.19:张量板中张量变换的可视化表示</p>
+			<p>结果表示为张量变换创建的图形。您可以在图形开始的左下方看到，名为<code>x</code>的张量和名为<code>MatMul</code>的节点上的<code>y</code>执行了矩阵乘法。右下角是使用<code>ones_like</code>功能创建的张量。输入节点表示张量的形状和值，该值是一个常数值。在创建两个张量时，它们被输入到表示加法函数的节点，之后输出被输入到表示sigmoid函数的应用的节点。最终节点代表输出张量的创建。</p>
+			<p>在本练习中，您创建了张量变换的函数，然后在TensorBoard中演示了变换的可视化表示。</p>
+			<h2 id="_idParaDest-235"><a id="_idTextAnchor260"/>活动3.02:从TensorFlow Hub的预训练模型中执行单词嵌入</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li value="1">Import TensorFlow and TensorFlow Hub and print the version of the library:<pre>import tensorflow as tf
+import tensorflow_hub as hub
+print('TF version: ', tf.__version__)
+print('HUB version: ', hub.__version__)</pre><p>你应该得到TensorFlow和TensorFlow Hub的版本。</p><div><img src="img/B16341_03_20.jpg" alt="Figure 3.20: The output of the versions of TensorFlow and TensorFlow Hub in Google Colab&#13;&#10;"/></div><p class="figure-caption">图3.20:Google Colab中TensorFlow和TensorFlow Hub版本的输出</p></li>
+				<li>设置通用语句编码器模块的句柄:<pre>module_handle ="<a href="https://tfhub.dev/google">https://tfhub.dev/google</a>"\                "/universal-sentence-encoder/4"</pre></li>
+				<li>使用TensorFlow Hub <code>KerasLayer</code>类创建一个Hub层，并传入以下参数:<code>module_handle</code>、<code>input_shape</code>和<code>dtype</code> : <pre>hub_layer = hub.KerasLayer(module_handle, input_shape=[],\                             dtype=tf.string)</pre></li>
+				<li>创建一个包含要用编码器编码的字符串的列表:<pre>text = ['The TensorFlow Workshop']</pre></li>
+				<li>Apply <code>hub_layer</code> to the text to embed the sentence as a vector:<pre>hub_layer(text)</pre><p>您应该得到以下输出:</p><div><img src="img/B16341_03_18.jpg" alt="Figure 3.21: The output of the embedding vector&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图3.21:嵌入向量的输出</p>
+			<p>在这里，您可以看到文本已经被转换为512维的嵌入向量。嵌入向量是一维张量，它将文本映射为连续变量的向量，如上图所示。</p>
+			<p>在本活动中，您使用Google Colab环境从TensorFlow Hub下载了一个模型。你用一个通用的句子编码器将一个句子嵌入到一个512维的向量中。这项活动表明，通过强大的远程服务器上的几行代码，您可以访问任何应用程序的最先进的机器学习模型。</p>
+			<h1 id="_idParaDest-236"><a id="_idTextAnchor261"/> 4。回归和分类模型</h1>
+			<h2 id="_idParaDest-237"><a id="_idTextAnchor262"/>活动4.01:使用TensorFlow创建多层人工神经网络</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li value="1">打开一个新的Jupyter笔记本来执行此活动。</li>
+				<li>导入TensorFlow和pandas库:<pre>import tensorflow as tf import pandas as pd</pre></li>
+				<li>Load in the dataset using the pandas <code>read_csv</code> function:<pre>df = pd.read_csv(<strong class="bold">'superconductivity.csv'</strong>)</pre><p class="callout-heading">注意</p><p class="callout">确保根据CSV文件在系统上的位置更改其路径(突出显示)。如果您从存储CSV文件的同一个目录运行Jupyter笔记本，那么您可以不做任何修改就运行前面的代码。</p></li>
+				<li>删除<code>date</code>列，并删除所有包含空值的行:<pre>df.dropna(inplace=True)</pre></li>
+				<li>创建目标和要素数据集:<pre>target = df['critical_temp'] features = df.drop('critical_temp', axis=1)</pre></li>
+				<li>重新缩放要素数据集:<pre>from sklearn.preprocessing import StandardScaler scaler = StandardScaler() feature_array = scaler.fit_transform(features) features = pd.DataFrame(feature_array, columns=features.columns)</pre></li>
+				<li>初始化<code>Sequential</code>类的Keras模型:<pre>model = tf.keras.Sequential()</pre></li>
+				<li>使用模型的<code>add</code>方法向模型添加输入图层，并将<code>input_shape</code>设置为要素数据集中的列数。在第一个具有ReLU激活功能的模型上添加四个大小为<code>64</code>、<code>32</code>、<code>16</code>、<code>8</code>的隐藏层，然后添加一个单位为<pre>model.add(tf.keras.layers.InputLayer\          (input_shape=features.shape[1],), \           name='Input_layer')) model.add(tf.keras.layers.Dense(64, activation='relu', \                                 name='Dense_layer_1')) model.add(tf.keras.layers.Dense(32, name='Dense_layer_2')) model.add(tf.keras.layers.Dense(16, name='Dense_layer_3')) model.add(tf.keras.layers.Dense(8, name='Dense_layer_4')) model.add(tf.keras.layers.Dense(1, name='Output_layer'))</pre>的输出层</li>
+				<li>用RMSprop优化器编译模型，学习率等于<code>0.001</code>，损失的均方误差为<pre>model.compile(tf.optimizers.RMSprop(0.001), loss='mse')</pre></li>
+				<li>创建张量板回调:<pre>tensorboard_callback = tf.keras.callbacks\                          .TensorBoard(log_dir="./logs")</pre></li>
+				<li>Fit the model to the training data for <code>100</code> epochs, with a batch size equal to <code>32</code> and a validation split equal to 20%:<pre>model.fit(x=features.to_numpy(), y=target.to_numpy(), \
+          epochs=100, callbacks=[tensorboard_callback], \
+          batch_size=32, validation_split=0.2)</pre><p>您应该得到以下输出:</p><div><img src="img/B16341_04_16.jpg" alt="Figure 4.16: The output of the fitting process showing the epoch, &#13;&#10;training time per sample, and loss after each epoch&#13;&#10;"/></div><p class="figure-caption">图4.16:拟合过程的输出，显示了时期、每个样本的训练时间以及每个时期后的损失</p></li>
+				<li>Evaluate the model on the training data:<pre>loss = model.evaluate(features.to_numpy(), target.to_numpy())
+print('loss:', loss)</pre><p>这将导致以下输出:</p><pre>loss: 165.735601268987</pre></li>
+				<li>Visualize the model architecture and model-fitting process in TensorBoard by calling the following on the command line:<pre>tensorboard –-logdir=logs/</pre><p>模型架构应该如下所示:</p><div><img src="img/B16341_04_17.jpg" alt="Figure 4.17: A visual representation of the model architecture in TensorBoard&#13;&#10;"/></div><p class="figure-caption">图4.17:tensor board中模型架构的可视化表示</p></li>
+				<li>在TensorBoard中可视化模型拟合过程。您应该得到以下输出:<div> <img src="img/B16341_04_18.jpg" alt="Figure 4.18: A visual representation of the loss as a function of an epoch &#13;&#10;on the training and validation split in TensorBoard&#13;&#10;"/> </div></li>
+			</ol>
+			<p class="figure-caption">图4.18:在TensorBoard中，作为训练和验证分割的历元函数的损失的可视化表示</p>
+			<p>在模型拟合过程中，在每个时期后计算训练和验证集的损失，并显示在<code>SCALARS</code>选项卡的TensorBoard中。从TensorBoard中，您可以看到，在训练集的每个历元后，均方误差持续降低，但在验证集上保持平稳。</p>
+			<p>在本活动中，您进一步练习了在TensorFlow中构建模型，以及在TensorBoard中查看其架构和培训流程。在本节中，您已经学习了如何使用TensorFlow为回归任务构建、训练和评估人工神经网络。您使用了<code>Dense</code>类的Keras层作为一种简单的方法来创建完全连接的层，这些层在层的输出上包含激活功能。可以简单地通过在层中传递所需数量的单元来创建层。Keras配置权重和偏差的初始化，以及机器学习工作流中常见的任何其他附加参数。</p>
+			<h2 id="_idParaDest-238"><a id="_idTextAnchor263"/>活动4.02:使用TensorFlow创建多层分类人工神经网络</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li value="1">打开一个新的Jupyter笔记本来执行此活动。</li>
+				<li>导入TensorFlow和pandas库:<pre>import tensorflow as tf import pandas as pd</pre></li>
+				<li>Load in the dataset using the pandas <code>read_csv</code> function:<pre>df = pd.read_csv(<strong class="bold">'superconductivity.csv'</strong>)</pre><p class="callout-heading">注意</p><p class="callout">确保根据CSV文件在系统上的位置更改其路径(突出显示)。如果您从存储CSV文件的同一个目录运行Jupyter笔记本，那么您可以不做任何修改就运行前面的代码。</p></li>
+				<li>删除任何具有空值的行:<pre>df.dropna(inplace=True)</pre></li>
+				<li>当<code>critical_temp</code>栏的值高于<code>77.36</code>时，将目标值设置为<code>true</code>，低于<code>false</code>时，将目标值设置为<code>false</code>。特征数据集是数据集中剩余的列:<pre>target = df['critical_temp'].apply(lambda x: 1 if x&gt;77.36 else 0) features = df.drop('critical_temp', axis=1)</pre></li>
+				<li>重新缩放要素数据集:<pre>from sklearn.preprocessing import StandardScaler scaler = StandardScaler() feature_array = scaler.fit_transform(features) features = pd.DataFrame(feature_array, columns=features.columns)</pre></li>
+				<li>初始化<code>Sequential</code>类的Keras模型:<pre>model = tf.keras.Sequential()</pre></li>
+				<li>使用模型的<code>add</code>方法向模型添加输入图层，并将<code>input_shape</code>设置为要素数据集中的列数。向模型添加三个尺寸为<code>32</code>、<code>16</code>和<code>8</code>的隐藏层，然后添加一个具有<code>1</code>单位和一个sigmoid激活函数的输出层:<pre>model.add(tf.keras.layers.InputLayer\          (input_shape=features.shape[1], \           name='Input_layer')) model.add(tf.keras.layers.Dense(32, name='Hidden_layer_1')) model.add(tf.keras.layers.Dense(16, name='Hidden_layer_2')) model.add(tf.keras.layers.Dense(8, name='Hidden_layer_3')) model.add(tf.keras.layers.Dense(1, name='Output_layer', \                                 activation='sigmoid'))</pre></li>
+				<li>用RMSprop优化器编译模型，学习率等于<code>0.0001</code>和损失的二进制交叉熵，并计算准确性度量:<pre>model.compile(tf.optimizers.RMSprop(0.0001), \               loss= 'binary_crossentropy', metrics=['accuracy'])</pre></li>
+				<li>创建张量板回调:<pre>tensorboard_callback = tf.keras.callbacks.TensorBoard\                        (log_dir="./logs")</pre></li>
+				<li>Fit the model to the training data for <code>50</code> epochs and a validation split equal to 20%:<pre>model.fit(x=features.to_numpy(), y=target.to_numpy(),\
+          epochs=50, callbacks=[tensorboard_callback],\
+          validation_split=0.2)</pre><p>您应该得到以下输出:</p><div><img src="img/B16341_04_19.jpg" alt="Figure 4.19: The output of the fitting process showing the epoch, training time per sample, loss, and accuracy after each epoch, and evaluated on the validation split&#13;&#10;"/></div><p class="figure-caption">图4.19:拟合过程的输出，显示了历元、每个样本的训练时间、损失和每个历元后的准确度，并在验证分割上进行评估</p></li>
+				<li>Evaluate the model on the training data:<pre>loss, accuracy = model.evaluate(features.to_numpy(), \
+                                target.to_numpy())
+print(f'loss: {loss}, accuracy: {accuracy}')</pre><p>这将显示以下输出:</p><pre>loss: 0.21984571637242145, accuracy: 0.8893383145332336</pre></li>
+				<li>Visualize the model architecture and model-fitting process in TensorBoard by calling the following on the command line:<pre>tensorboard –-logdir=logs/</pre><p>您应该会在浏览器中看到类似如下的屏幕:</p><div><img src="img/B16341_04_20.jpg" alt="Figure 4.20: A visual representation of the model architecture in TensorBoard&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图4.20:tensor board中模型架构的可视化表示</p>
+			<p>损失函数可以如下所示:</p>
+			<div><div><img src="img/B16341_04_21.jpg" alt="Figure 4.21: A visual representation of the accuracy and loss as a function of an epoch on the training and validation split in TensorBoard&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.21:作为TensorBoard中训练和验证分割的历元函数的精确度和损失的直观表示</p>
+			<p>在模型拟合过程中，在每个历元后计算训练和验证集的准确度和损失，并显示在<code>SCALARS</code>选项卡的TensorBoard中。从TensorBoard中，您可以看到损失度量(二进制交叉熵)在训练集上的每个历元后持续降低，但在验证集上保持平稳。</p>
+			<p>在本练习中，您已经在TensorFlow中通过构建多层人工神经网络来练习构建分类模型，以确定材料在高于或低于氮的沸点时是否会表现出超导性。此外，您使用TensorBoard查看模型的架构，并在训练过程中监控关键指标，包括模型的损失和准确性。</p>
+			<h1 id="_idParaDest-239"><a id="_idTextAnchor264"/> 5。分类模型</h1>
+			<h2 id="_idParaDest-240"><a id="_idTextAnchor265"/>活动5.01: Bu <a id="_idTextAnchor266"/>用TensorFlow建立一个字符识别模型</h2>
+			<p><strong class="bold">解决方案</strong>:</p>
+			<ol>
+				<li value="1">打开新的Jupyter笔记本。</li>
+				<li>导入熊猫库并使用<code>pd</code>作为别名:<pre>import pandas as pd</pre></li>
+				<li>创建一个名为<code>file_url</code>的变量，包含数据集的URL:<pre>file_url = 'https://raw.githubusercontent.com/PacktWorkshops'\           '/The-TensorFlow-Workshop/master/Chapter05'\           '/dataset/letter-recognition.data'</pre></li>
+				<li>Load the dataset into a <code>DataFrame()</code> function called <code>data</code> using <code>read_csv()</code> method, provide the URL to the CSV file, and set <code>header=None</code> as the dataset doesn't provide column names. Print the first five rows using <code>head()</code> method.<pre>data = pd.read_csv(file_url, header=None)
+data.head()</pre><p>预期产出如下:</p><div><img src="img/B16341_05_42.jpg" alt="Figure 5.42: First five rows of the data&#13;&#10;"/></div><p class="figure-caption">图5.42:数据的前五行</p><p>您可以看到数据集包含<code>17</code>列，它们都是数字。列<code>0</code>是<code>target</code>变量，每个值对应字母表中的一个字母。</p></li>
+				<li>使用<code>pop()</code>方法提取目标变量(列<code>0</code>，并将其保存在名为<code>target</code> : <pre>target = data.pop(0)</pre>的变量中</li>
+				<li>通过保留前15000个观察值，将<code>data</code>分割成一个训练集，并保存在一个名为<code>X_train</code>的变量中。对<code>target</code>执行相同的分割，并将前15000个案例保存在名为<code>y_train</code> : <pre>X_train = data[:15000] y_train = target[:15000]</pre>的变量中</li>
+				<li>通过保留最后5000次观察将<code>data</code>分割成一个测试集，并保存在一个名为<code>X_test</code>的变量中。对<code>target</code>执行相同的分割，并将最后5000个案例保存在一个名为<code>y_test</code> : <pre>X_test = data[15000:] y_test = target[15000:]</pre>的变量中</li>
+				<li>导入TensorFlow库并使用<code>tf</code>作为别名:<pre>import tensorflow as tf</pre></li>
+				<li>使用<code>tf.random.set_seed()</code>将种子设置为<code>8</code>以获得可重复的结果:<pre>tf.random.set_seed(8)</pre></li>
+				<li>使用<code>tf.keras.Sequential()</code>实例化一个顺序模型，并将其存储在一个名为<code>model</code> : <pre>model = tf.keras.Sequential()</pre>的变量中</li>
+				<li>从<code>tensorflow.keras.layers</code> : <pre>from tensorflow.keras.layers import Dense</pre>导入<code>Dense()</code>类</li>
+				<li>使用<code>Dense()</code>创建一个由<code>512</code>个单元组成的全连接图层，并将ReLu指定为激活函数，将输入形状指定为<code>(16,)</code>，这对应于数据集中的要素数量。将它保存在一个名为<code>fc1</code> : <pre>fc1 = Dense(512, input_shape=(16,), activation='relu')</pre>的变量中</li>
+				<li>用<code>Dense()</code>创建一个全连接的<code>512</code>单元层，并将ReLu指定为激活函数。将其保存在一个名为<code>fc2</code> : <pre>fc2 = Dense(512, activation='relu')</pre>的变量中</li>
+				<li>用<code>Dense()</code>创建一个全连接的<code>128</code>单元层，并将ReLu指定为激活函数。将其保存在名为<code>fc3</code> : <pre>fc3 = Dense(128, activation='relu')</pre>的变量中</li>
+				<li>用<code>Dense()</code>创建一个全连接的<code>128</code>单元层，并指定ReLu为激活函数。将其保存在一个名为<code>fc4</code> : <pre>fc4 = Dense(128, activation='relu')</pre>的变量中</li>
+				<li>用<code>Dense()</code>创建一个完全连接的<code>26</code>单元层，并将softmax指定为激活函数。将其保存在一个名为<code>fc5</code> : <pre>fc5 = Dense(26, activation='softmax')</pre>的变量中</li>
+				<li>使用<code>add()</code>方法依次添加所有五个完全连接的层到模型中。<pre>model.add(fc1) model.add(fc2) model.add(fc3) model.add(fc4) model.add(fc5)</pre></li>
+				<li>Print the summary of the model using <code>summary()</code> method.<pre>model.summary()</pre><p>预期产出如下:</p><div><img src="img/B16341_05_43.jpg" alt="Figure 5.43: Summary of the model architecture&#13;&#10;"/></div><p class="figure-caption">图5.43:模型架构概要</p><p>前面的输出显示了您的模型中有五个层(如预期的那样),并告诉您每个层的参数数量。</p></li>
+				<li>将<code>tf.keras.losses</code>中的<code>SparseCategoricalCrossentropy()</code>实例化并保存在一个名为<code>loss</code> : <pre>loss = tf.keras.losses.SparseCategoricalCrossentropy()</pre>的变量中</li>
+				<li>将<code>tf.keras.optimizers</code>中的<code>Adam()</code>实例化为<code>0.001</code>作为学习率，并保存在一个名为<code>optimizer</code> : <pre>optimizer = tf.keras.optimizers.Adam(0.001)</pre>的变量中</li>
+				<li>使用<code>compile()</code>方法编译模型，指定您刚刚创建的优化器和损耗参数，并使用准确性作为要报告的度量:<pre>model.compile(optimizer=optimizer, loss=loss, \               metrics=['accuracy'])</pre></li>
+				<li>Start the model training process using <code>fit()</code> method on the training set for five epochs:<pre>model.fit(X_train, y_train, epochs=5)</pre><p>预期产出如下:</p><div><img src="img/B16341_05_44.jpg" alt="Figure 5.44: Logs of the training process&#13;&#10;"/></div><p class="figure-caption">图5.44:培训过程的日志</p><p>前面的输出显示了模型训练期间每个时期的日志。注意，处理单个历元花费了大约2秒，并且准确度分数从<code>0.6229</code>(第一历元)增加到<code>0.9011</code>(第五历元)。</p></li>
+				<li>Evaluate the performance of the model on the test set using <code>evaluate()</code> method.<pre>model.evaluate(X_test, y_test)</pre><p>预期产出如下:</p><div><img src="img/B16341_05_45.jpg" alt="Figure 5.45: Performance of the model on the test set&#13;&#10;"/></div><p class="figure-caption">图5.45:模型在测试集上的表现</p></li>
+				<li>使用<code>predict()</code>方法预测测试集上每个类别的概率。保存在一个名为<code>preds_proba</code> : <pre>preds_proba = model.predict(X_test)</pre>的变量中</li>
+				<li>使用带有<code>axis=1</code> : <pre>preds = preds_proba.argmax(axis=1)</pre>的<code>argmax()</code>方法将类别概率转换成单一预测值</li>
+				<li>从<code>tensorflow.math</code>进口<code>confusion_matrix</code>:<pre>from tensorflow.math import confusion_matrix</pre></li>
+				<li>Print the confusion matrix on the test set:<pre>confusion_matrix(y_test, preds)</pre><p>预期产出如下:</p><div><img src="img/B16341_05_39.jpg" alt="Figure 5.46: Confusion matrix of the test set&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图5.46:测试集的混淆矩阵</p>
+			<p>前面的输出显示模型在大多数情况下正确预测了字母表中的26个字母(大多数值位于对角线上)。它在训练集和测试集上都取得了大约0.89的准确率。本活动结束了多类分类部分。在前面的部分中，您将看到另一种称为多标签的分类。</p>
+			<h2 id="_idParaDest-241"><a id="_idTextAnchor267"/>活动5.02:用TensorFlow标记模型，构建电影类型</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li value="1">打开新的Jupyter笔记本。</li>
+				<li>导入熊猫库并使用<code>pd</code>作为别名:<pre>import pandas as pd</pre></li>
+				<li>创建一个名为<code>feature_url</code>的变量，包含数据集的URL:<pre>feature_url = 'https://raw.githubusercontent.com'\               '/PacktWorkshops'/The-TensorFlow-Workshop'\               '/master/Chapter05'/dataset/IMDB-F-features.csv'</pre></li>
+				<li>Load the dataset into a DataFrame called <code>feature</code> using <code>read_csv()</code> method and provide the URL to the CSV file. Print the first five rows using the <code>head()</code> method:<pre>feature = pd.read_csv(feature_url)
+feature.head()</pre><p>预期产出如下:</p><div><img src="img/B16341_05_47.jpg" alt="Figure 5.47: The first five rows of the features&#13;&#10;"/></div><p class="figure-caption">图5.47:特征的前五行</p></li>
+				<li>创建一个名为<code>target_url</code>的变量，包含数据集的URL:<pre>target_url = 'https://raw.githubusercontent.com'\              '/PacktWorkshops/The-TensorFlow-Workshop'\              '/master/Chapter05'/dataset/IMDB-F-targets.csv'</pre></li>
+				<li>Load the dataset into a DataFrame called <code>target</code> using <code>read_csv()</code> method and provide the URL to the CSV file. Print the first five rows using the <code>head()</code> method:<pre>target = pd.read_csv(target_url)
+target.head()</pre><p>预期产出如下:</p><div><img src="img/B16341_05_48.jpg" alt="Figure 5.48: The first five rows of the targets&#13;&#10;"/></div><p class="figure-caption">图5.48:目标的前五行</p></li>
+				<li>通过保留前15，000个观察值，将数据分成一个训练集，并将其保存在一个名为<code>X_train</code>的变量中。对<code>target</code>执行相同的分割，并将前15000个案例保存在名为<code>y_train</code> : <pre>X_train = feature[:15000] y_train = target[:15000]</pre>的变量中</li>
+				<li>通过保留最近的5000次观察将数据分割成一个测试集，并保存在一个名为<code>X_test</code>的变量中。对<code>target</code>执行相同的分割，并将最后5000个案例保存在名为<code>y_test</code> : <pre>X_test = feature[15000:] y_test = target[15000:]</pre>的变量中</li>
+				<li>导入TensorFlow库，使用<code>tf</code>作为别名:<pre>import tensorflow as tf</pre></li>
+				<li>使用<code>tf.random.set_seed()</code>将<code>tensorflow</code>的种子设置为<code>8</code>。这将有助于获得可重复的结果:<pre>tf.random.set_seed(8)</pre></li>
+				<li>使用<code>tf.keras.Sequential()</code>实例化一个顺序模型，并将其存储在一个名为<code>model</code> : <pre>model = tf.keras.Sequential()</pre>的变量中</li>
+				<li>从<code>tensorflow.keras.layers</code> : <pre>from tensorflow.keras.layers import Dense</pre>导入<code>Dense()</code>类</li>
+				<li>使用<code>Dense()</code>创建一个由<code>512</code>个单元组成的全连接图层，并将ReLu指定为激活函数，将输入形状指定为<code>(1001,)</code>，这与数据集中的要素数量相对应。将它保存在一个名为<code>fc1</code> : <pre>fc1 = Dense(512, input_shape=(1001,), activation='relu')</pre>的变量中</li>
+				<li>用<code>Dense()</code>创建一个全连接的<code>512</code>单元层，并将ReLu指定为激活函数。将其保存在一个名为<code>fc2</code> : <pre>fc2 = Dense(512, activation='relu')</pre>的变量中</li>
+				<li>用<code>Dense()</code>创建一个全连接的<code>128</code>单元层，并将ReLu指定为激活函数。将其保存在名为<code>fc3</code> : <pre>fc3 = Dense(128, activation='relu')</pre>的变量中</li>
+				<li>用<code>Dense()</code>创建一个全连接的<code>128</code>单元层，并指定ReLu为激活函数。将其保存在一个名为<code>fc4</code> : <pre>fc4 = Dense(128, activation='relu')</pre>的变量中</li>
+				<li>用<code>Dense()</code>创建一个完全连接的<code>28</code>单元层，并将sigmoid指定为激活函数。将其保存在一个名为<code>fc5</code> : <pre>fc5 = Dense(28, activation='sigmoid')</pre>的变量中</li>
+				<li>使用<code>add()</code>方法依次添加所有五个完全连接的层到模型中。<pre>model.add(fc1) model.add(fc2) model.add(fc3) model.add(fc4) model.add(fc5)</pre></li>
+				<li>Print the summary of the model using <code>summary()</code> method.<pre>model.summary()</pre><p>预期产出如下:</p><div><img src="img/B16341_05_49.jpg" alt="Figure 5.49: Summary of the model architecture&#13;&#10;"/></div><p class="figure-caption">图5.49:模型架构概要</p></li>
+				<li>将<code>tf.keras.losses</code>中的<code>BinaryCrossentropy()</code>实例化并保存在一个名为<code>loss</code> : <pre>loss = tf.keras.losses.BinaryCrossentropy()</pre>的变量中</li>
+				<li>将<code>tf.keras.optimizers</code>中的<code>Adam()</code>实例化为<code>0.001</code>作为学习率，并保存在一个名为<code>optimizer</code> : <pre>optimizer = tf.keras.optimizers.Adam(0.001)</pre>的变量中</li>
+				<li>使用<code>compile()</code>方法编译模型，并指定刚刚创建的优化器和损耗参数，精确度作为要报告的度量:<pre>model.compile(optimizer=optimizer, loss=loss, \               metrics=['accuracy'])</pre></li>
+				<li>Start the model training process using the <code>fit()</code> method on the training set for <code>20</code> epochs:<pre>model.fit(X_train, y_train, epochs=20)</pre><p>预期产出如下:</p><div><img src="img/B16341_05_50.jpg" alt="Figure 5.50: Logs of the training process&#13;&#10;"/></div><p class="figure-caption">图5.50:培训过程的日志</p><p>您可以观察到，该模型经过20个历元的训练，精确度正在提高，在第九个历元后达到<code>61.67%</code>。</p></li>
+				<li>Evaluate the performance of the model on the test set using the <code>evaluate()</code> method:<pre>model.evaluate(X_test, y_test)</pre><p>预期产出如下:</p><div><img src="img/B16341_05_51.jpg" alt="Figure 5.51: Performance of the model on the test set&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图5.51:模型在测试集上的表现</p>
+			<p>前面的输出显示，该模型在测试集上获得了一个非常低的准确度分数<code>0.13</code>，而在训练集上获得了一个准确度分数<code>0.62</code>。该模型正在努力学习相关模式以正确预测不同类型的电影。你可以自己尝试不同的架构和不同数量的隐藏层和单元。也可以尝试不同的学习速率和优化器。由于训练集和测试集上的分数非常不同，该模型过度拟合，并且简单地学习了仅与训练集相关的模式。</p>
+			<h1 id="_idParaDest-242"><a id="_idTextAnchor268"/> 6。正则化和超参数调整</h1>
+			<h2 id="_idParaDest-243"><a id="_idTextAnchor269"/>活动6.01:使用L1和L2正则项预测收入</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li value="1">打开新的Jupyter笔记本。</li>
+				<li>导入熊猫库，使用<code>pd</code>作为别名:<pre>import pandas as pd</pre></li>
+				<li>创建一个名为<code>usecols</code>的列表，包含列名<code>AAGE</code>、<code>ADTIND</code>、<code>ADTOCC</code>、<code>SEOTR</code>、<code>WKSWORK</code>和<code>PTOTVAL</code> : <pre>usecols = ['AAGE','ADTIND','ADTOCC','SEOTR','WKSWORK', 'PTOTVAL']</pre></li>
+				<li>创建一个名为<code>train_url</code>的变量，其中包含训练集的URL:<pre>train_url = 'https://raw.githubusercontent.com/PacktWorkshops'\             '/The-TensorFlow-Workshop/master/Chapter06'\             '/dataset/census-income-train.csv'</pre></li>
+				<li>Load the training dataset into a DataFrame, <code>train_data</code>, using the <code>read_csv()</code> method. Provide the URL to the CSV file and the <code>usecols</code> list to the <code>usecols</code> parameter. Print the first five rows using the <code>head()</code> method:<pre>train_data = pd.read_csv(train_url, usecols=usecols)
+train_data.head()</pre><p>预期产出如下:</p><div><img src="img/B16341_06_23.jpg" alt="Figure 6.23: First five rows of the training set&#13;&#10;"/></div><p class="figure-caption">图6.23:训练集的前五行</p></li>
+				<li>使用<code>pop()</code>方法提取目标变量(<code>PTOTVAL</code>，并保存在一个名为<code>train_target</code> : <pre>train_target = train_data.pop('PTOTVAL')</pre>的变量中</li>
+				<li>创建一个名为<code>test_url</code>的变量，它包含测试集的URL:<pre>test_url = 'https://github.com/PacktWorkshops'\            '/The-TensorFlow-Workshop/blob/master/Chapter06'\            '/dataset/census-income-test.csv?raw=true'</pre></li>
+				<li>Load the test dataset into a DataFrame, <code>X_test</code>, using the <code>read_csv()</code> method. Provide the URL to the CSV file and the <code>usecols</code> list to the <code>usecols</code> parameter. Print the first five rows using the <code>head()</code> method:<pre>test_data = pd.read_csv(test_url, usecols=usecols)
+test_data.head()</pre><p>预期产出如下:</p><div><img src="img/B16341_06_24.jpg" alt="Figure 6.24: First five rows of the test set&#13;&#10;"/></div><p class="figure-caption">图6.24:测试集的前五行</p></li>
+				<li>使用<code>pop()</code>方法提取目标变量(<code>PTOTVAL</code>)并保存在名为<code>test_target</code> : <pre>test_target = test_data.pop('PTOTVAL')</pre>的变量中</li>
+				<li>导入TensorFlow库并使用<code>tf</code>作为别名。然后，从<code>tensorflow.keras.layers</code> : <pre>import tensorflow as tf from tensorflow.keras.layers import Dense</pre>导入<code>Dense</code>类</li>
+				<li>使用<code>tf.random.set_seed()</code>将种子设置为<code>8</code>以获得可重复的结果:<pre>tf.random.set_seed(8)</pre></li>
+				<li>使用<code>tf.keras.Sequential()</code>实例化一个顺序模型，并将其存储在一个名为<code>model</code> : <pre>model = tf.keras.Sequential()</pre>的变量中</li>
+				<li>从<code>tensorflow.keras.layers</code> : <pre>from tensorflow.keras.layers import Dense</pre>导入<code>Dense</code>类</li>
+				<li>使用<code>Dense()</code>创建一个由<code>1048</code>个单元组成的全连接图层，并将ReLu指定为激活函数，将输入形状指定为<code>(5,)</code>，这对应于数据集中的要素数量。将它保存在一个名为<code>fc1</code> : <pre>fc1 = Dense(1048, input_shape=(5,), activation='relu')</pre>的变量中</li>
+				<li>用<code>Dense()</code>创建三层完全连接的<code>512</code>、<code>128</code>和<code>64</code>单元，并指定ReLu为激活函数。保存在三个变量中，分别叫做<code>fc2</code>、<code>fc3</code>和<code>fc4</code>:<pre>fc2 = Dense(512, activation='relu') fc3 = Dense(128, activation='relu') fc4 = Dense(64, activation='relu')</pre></li>
+				<li>用<code>Dense()</code>创建一个由三个单元(对应于类的数量)组成的全连接层，并将softmax指定为激活函数。将其保存在一个名为<code>fc5</code> : <pre>fc5 = Dense(3, activation='softmax')</pre>的变量中</li>
+				<li>用<code>Dense()</code>创建单个单元的全连接层。将其保存在一个名为<code>fc5</code> : <pre>fc5 = Dense(1)</pre>的变量中</li>
+				<li>使用<code>add()</code>方法:<pre>model.add(fc1) model.add(fc2) model.add(fc3) model.add(fc4) model.add(fc5)</pre>将所有五个完全连接的层依次添加到模型中</li>
+				<li>Print the summary of the model:<pre>model.summary()</pre><p>您将获得以下输出:</p><div><img src="img/B16341_06_25.jpg" alt="Figure 6.25: Summary of the model architecture&#13;&#10;"/></div><p class="figure-caption">图6.25:模型架构概要</p></li>
+				<li>用<code>0.05</code>作为学习率实例化<code>tf.keras.optimizers</code>中的<code>Adam()</code>，并保存在一个名为<code>optimizer</code> : <pre>optimizer = tf.keras.optimizers.Adam(0.05)</pre>的变量中</li>
+				<li>编译模型，指定优化器，设置<code>mse</code>为要显示的损耗和度量:<pre>model.compile(optimizer=optimizer, loss='mse', metrics=['mse'])</pre></li>
+				<li>Start the model training process using the <code>fit()</code> method for five epochs and split the data into a validation set with 20% of the data:<pre>model.fit(train_data, train_target, epochs=5, \
+          validation_split=0.2)</pre><p>预期产出如下:</p><div><img src="img/B16341_06_26.jpg" alt="Figure 6.26: Logs of the training process&#13;&#10;"/></div><p class="figure-caption">图6.26:培训过程的日志</p><p>前面的输出显示模型过度拟合。它在训练集上获得了<code>1005740</code>的MSE分数，而在验证集上仅获得了<code>1070237</code>的MSE分数。现在，用L1和L2正则化训练另一个模型。</p></li>
+				<li>创建五个与之前模型相似的全连接层，并为<code>kernel_regularizer</code>参数指定L1和L2正则化子。使用值<code>0.001</code>作为正则因子。保存到五个变量中，分别叫做<code>reg_fc1</code>、<code>reg_fc2</code>、<code>reg_fc3</code>、<code>reg_fc4</code>和<code>reg_fc5</code> : <pre>reg_fc1 = Dense(1048, input_shape=(5,), activation='relu', \                 kernel_regularizer=tf.keras.regularizers\                                      .l1_l2(l1=0.001, l2=0.001)) reg_fc2 = Dense(512, activation='relu', \                 kernel_regularizer=tf.keras.regularizers\                                      .l1_l2(l1=0.001, l2=0.001)) reg_fc3 = Dense(128, activation='relu', \                 kernel_regularizer=tf.keras.regularizers\                                      .l1_l2(l1=0.001, l2=0.001)) reg_fc4 = Dense(64, activation='relu', \                 kernel_regularizer=tf.keras.regularizers\                                      .l1_l2(l1=0.001, l2=0.001)) reg_fc5 = Dense(1, activation='relu')</pre></li>
+				<li>使用<code>tf.keras.Sequential()</code>实例化一个顺序模型，将其存储在一个名为<code>model2</code>的变量中，并使用<code>add()</code>方法将所有五个完全连接的层顺序添加到模型中:<pre>model2 = tf.keras.Sequential() model2.add(reg_fc1) model2.add(reg_fc2) model2.add(reg_fc3) model2.add(reg_fc4) model2.add(reg_fc5)</pre></li>
+				<li>Print the summary of the model:<pre>model2.summary()</pre><p>输出如下所示:</p><div><img src="img/B16341_06_27.jpg" alt="Figure 6.27: Summary of the model architecture&#13;&#10;"/></div><p class="figure-caption">图6.27:模型架构概要</p></li>
+				<li>使用<code>compile()</code>方法编译模型，指定优化器，并将<code>mse</code>设置为要显示的损失和度量:<pre>optimizer = tf.keras.optimizers.Adam(0.1) model2.compile(optimizer=optimizer, loss='mse', metrics=['mse'])</pre></li>
+				<li>Start the model training process using the <code>fit()</code> method for five epochs and split the data into a validation set with 20% of the data:<pre>model2.fit(train_data, train_target, epochs=5, \
+           validation_split=0.2)</pre><p>输出如下所示:</p><div><img src="img/B16341_06_28.jpg" alt="Figure 6.28: Logs of the training process&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图6.28:培训过程的日志</p>
+			<p>通过添加L1和L2正则化，该模型在训练(<code>4028182</code>)和测试(<code>3970020</code>)集之间具有相似的准确度分数。因此，模型并没有过度拟合。</p>
+			<h2 id="_idParaDest-244"><a id="_idTextAnchor270"/>活动6.02:使用Keras Tuner的贝叶斯优化预测收入</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li value="1">打开新的Jupyter笔记本。</li>
+				<li>导入熊猫库并使用<code>pd</code>作为别名:<pre>import pandas as pd</pre></li>
+				<li>创建一个名为<code>usecols</code>的列表，包含以下列名:<code>AAGE</code>、<code>ADTIND</code>、<code>ADTOCC</code>、<code>SEOTR</code>、<code>WKSWORK</code>和<code>PTOTVAL</code> : <pre>usecols = ['AAGE','ADTIND','ADTOCC','SEOTR','WKSWORK', 'PTOTVAL']</pre></li>
+				<li>创建一个名为<code>train_url</code>的变量，其中包含训练集的URL:<pre>train_url = 'https://raw.githubusercontent.com/PacktWorkshops'\             '/The-TensorFlow-Workshop/master/Chapter06'\             '/dataset/census-income-train.csv'</pre></li>
+				<li>使用<code>read_csv()</code>方法将训练数据集加载到名为<code>train_data</code>的数据帧中，并向<code>usecols</code>参数提供CSV文件的URL和<code>usecols</code>列表。使用<code>head()</code>方法打印前五行:<pre>train_data = pd.read_csv(train_url, usecols=usecols) train_data.head()</pre></li>
+				<li>You will get the following output:<div><img src="img/B16341_06_29.jpg" alt="Figure 6.29: First five rows of the training set&#13;&#10;"/></div><p class="figure-caption">图6.29:训练集的前五行</p></li>
+				<li>使用<code>pop()</code>方法提取目标变量(<code>PTOTVAL</code>，并保存在一个名为<code>train_target</code> : <pre>train_target = train_data.pop('PTOTVAL')</pre>的变量中</li>
+				<li>创建一个名为<code>test_url</code>的变量，它包含测试集的URL:<pre>test_url = 'https://github.com/PacktWorkshops'\            '/The-TensorFlow-Workshop/blob/master/Chapter06'\            '/dataset/census-income-test.csv?raw=true'</pre></li>
+				<li>Load the test dataset into a DataFrame called <code>X_test</code> using the <code>read_csv()</code> method and provide the URL to the CSV file and the <code>usecols</code> list to the <code>usecols</code> parameter. Print the first five rows using the <code>head()</code> method:<pre>test_data = pd.read_csv(test_url, usecols=usecols)
+test_data.head()</pre><p>输出如下所示:</p><div><img src="img/B16341_06_30.jpg" alt="Figure 6.30: First five rows of the test set&#13;&#10;"/></div><p class="figure-caption">图6.30:测试集的前五行</p></li>
+				<li>使用<code>pop()</code>方法提取目标变量(<code>PTOTVAL</code>，并保存在一个名为<code>test_target</code> : <pre>test_target = test_data.pop('PTOTVAL')</pre>的变量中</li>
+				<li>导入TensorFlow库并使用<code>tf</code>作为别名。然后，从<code>tensorflow.keras.layers</code> : <pre>import tensorflow as tf from tensorflow.keras.layers import Dense</pre>导入<code>Dense</code>类</li>
+				<li>使用<code>tf.random.set_seed()</code>将种子设置为<code>8</code>以获得可重复的结果:<pre>tf.random.set_seed(8)</pre></li>
+				<li>定义一个名为<code>model_builder</code>的函数，创建一个与<em class="italic">活动6.01 </em>、<em class="italic">使用L1和L2正则化因子</em>预测收入的序列模型。但是这一次，提供一个超参数，<code>hp.Choice</code>用于学习率，<code>hp.Int</code>用于输入层的单元数，<code>hp.Choice</code>用于L2正则化:<pre>def model_builder(hp): model = tf.keras.Sequential() hp_l2 = hp.Choice('l2', values = [0.1, 0.01, 0.001]) hp_units = hp.Int('units', min_value=128, max_value=512, step=64) reg_fc1 = Dense(hp_units, input_shape=(5,), activation='relu', \                 kernel_regularizer=tf.keras.regularizers\                                      .l2(l=hp_l2)) reg_fc2 = Dense(512, activation='relu', \                 kernel_regularizer=tf.keras.regularizers\                                      .l2(l=hp_l2)) reg_fc3 = Dense(128, activation='relu', \                 kernel_regularizer=tf.keras.regularizers\                                      .l2(l=hp_l2)) reg_fc4 = Dense(128, activation='relu', \                 kernel_regularizer=tf.keras.regularizers\                                      .l2(l=hp_l2)) reg_fc5 = Dense(1) model.add(reg_fc1) model.add(reg_fc2) model.add(reg_fc3) model.add(reg_fc4) model.add(reg_fc5) hp_learning_rate = hp.Choice('learning_rate', \                              values = [0.01, 0.001]) optimizer = tf.keras.optimizers.Adam(hp_learning_rate) model.compile(optimizer=optimizer, loss='mse', metrics=['mse']) return model</pre></li>
+				<li>安装<code>keras-tuner</code>包，然后导入并给它分配<code>kt</code>别名:<pre>!pip install keras-tuner import kerastuner as kt</pre></li>
+				<li>实例化一个<code>BayesianOptimization</code>调谐器，将<code>val_mse</code>分配给<code>objective</code>，将<code>10</code>分配给<code>max_trials</code> : <pre>tuner = kt.BayesianOptimization(model_builder, \                                 objective = 'val_mse', \                                 max_trials = 10)</pre></li>
+				<li>在训练和测试集上使用<code>search()</code>启动超参数搜索:<pre>tuner.search(train_data, train_target, \              validation_data=(test_data, test_target))</pre></li>
+				<li>用<code>get_best_hyperparameters()</code>提取最佳超参数组合(索引<code>0</code>)并保存在一个名为<code>best_hps</code> : <pre>best_hps = tuner.get_best_hyperparameters()[0]</pre>的变量中</li>
+				<li>Extract the best value for the number of units for the input layer, save it in a variable called <code>best_units</code>, and print its value:<pre>best_units = best_hps.get('units')
+best_units</pre><p>您将获得以下输出:</p><pre>128</pre><p>Hyperband找到的输入层单元数的最佳值是<code>128</code>。</p></li>
+				<li>Extract the best value for the learning rate, save it in a variable called <code>best_lr</code>, and print its value:<pre>best_lr = best_hps.get('learning_rate')
+best_lr</pre><p>Hyperband找到的学习率超参数的最佳值是<code>0.001</code>:</p><pre>0.001</pre></li>
+				<li>提取L2正则化的最佳值，保存在名为<code>best_l2</code>的变量中，并打印其值:<pre>best_l2 = best_hps.get('l2') best_l2</pre></li>
+				<li>Hyperband找到的学习率超参数的最佳值是<code>0.001</code> : <pre>0.001</pre></li>
+				<li>Start the model training process using the <code>fit()</code> method for five epochs and use the test set for <code>validation_data</code>:<pre>model = tuner.hypermodel.build(best_hps)
+model.fit(X_train, y_train, epochs=5, \
+          validation_data=(X_test, y_test))</pre><p>您应该会得到类似如下的输出:</p><div><img src="img/B16341_06_22.jpg" alt="Figure 6.31: Logs of the training process&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图6.31:培训过程的日志</p>
+			<p>通过贝叶斯优化，您找到了输入图层单元数量(<code>128</code>)、学习率(<code>0.001</code>)和L2正则化(<code>0.001</code>)的超参数的最佳组合。有了这些超参数，最终模型在训练集和测试集上分别获得了<code>994174</code>和<code>989335</code>的MSE分数。这是对<em class="italic">活动6.01 </em>、<em class="italic">用L1和L2正则化子</em>预测收入的一个很大的改进，模型并没有过度拟合太多。</p>
+			<h1 id="_idParaDest-245"><a id="_idTextAnchor271"/> 7。卷积神经网络</h1>
+			<h2 id="_idParaDest-246"><a id="_idTextAnchor272"/>活动7.01:构建具有更多人工神经网络层的CNN</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<p>有几种可能的方法来解决这一活动。以下步骤描述了其中一种方法，类似于本章前面对<code>CIFAR-10</code>数据集使用的方法:</p>
+			<ol>
+				<li value="1">开始一个新的Jupyter笔记本。</li>
+				<li>导入张量流库:<pre>import tensorflow as tf</pre></li>
+				<li>导入所需的附加库:<pre>import numpy as np import matplotlib.pyplot as plt import tensorflow as tf import tensorflow_datasets as tfds from tensorflow.keras.layers import Input, Conv2D, Dense, Flatten, \     Dropout, Activation, Rescaling from tensorflow.keras.models import Model from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay</pre></li>
+				<li>Load the <code>CIFAR-100</code> dataset directly from <code>tensorflow_datasets</code> and view its properties:<pre>(c100_train_dataset, c100_test_dataset), \
+dataset_info = tfds.load('cifar100',\
+                         split = ['train', 'test'],\
+                         data_dir = 'content/Cifar100/',\
+                         shuffle_files = True,\
+                         as_supervised = True,\
+                         with_info = True)
+assert isinstance(c100_train_dataset, tf.data.Dataset)
+image_shape = dataset_info.features["image"].shape
+print(f'Shape of Images in the Dataset: \t{image_shape}')
+num_classes = dataset_info.features["label"].num_classes
+print(f'Number of Classes in the Dataset: \t{num_classes}')
+names_of_classes = dataset_info.features["label"].names
+print(f'Names of Classes in the Dataset: \t{names_of_classes}\n')
+print(f'Total examples in Train Dataset: \
+      \t{len(c100_train_dataset)}')
+print(f'Total examples in Test Dataset: \
+      \t{len(c100_test_dataset)}')</pre><p>这将产生以下输出:</p><div><img src="img/B16341_07_42.jpg" alt="Figure 7.42: Properties of the CIFAR-100 dataset&#13;&#10;"/></div><p class="figure-caption">图7.42:CIFAR-100数据集的属性</p></li>
+				<li>使用重缩放图层来重缩放图像。然后，通过重新缩放、缓存、混排、批处理和预取图像来构建测试和训练数据管道:<pre>normalization_layer = Rescaling(1./255) c100_train_dataset = c100_train_dataset.map\                      (lambda x, y: (normalization_layer(x), y), \                       num_parallel_calls = \                       tf.data.experimental.AUTOTUNE) c100_train_dataset = c100_train_dataset.cache() c100_train_dataset = c100_train_dataset.shuffle\                      (len(c100_train_dataset)) c100_train_dataset = c100_train_dataset.batch(32) c100_train_dataset = c100_train_dataset.prefetch(tf.data.experimental.AUTOTUNE) c100_test_dataset = c100_test_dataset.map\                     (lambda x, y: (normalization_layer(x), y), \                      num_parallel_calls = \                      tf.data.experimental.AUTOTUNE) c100_test_dataset = c100_test_dataset.cache() c100_test_dataset = c100_test_dataset.batch(128) c100_test_dataset = \ c100_test_dataset.prefetch(tf.data.experimental.AUTOTUNE)</pre></li>
+				<li>使用函数API建立模型:<pre>input_layer = Input(shape=image_shape) x = Conv2D(filters = 32, kernel_size = \            (3, 3), strides=2)(input_layer) x = Activation('relu')(x) x = Conv2D(filters = 64, kernel_size = (3, 3), strides=2)(x) x = Activation('relu')(x) x = Conv2D(filters = 128, kernel_size = (3, 3), strides=2)(x) x = Activation('relu')(x) x = Flatten()(x) x = Dropout(rate = 0.5)(x) x = Dense(units = 1024)(x) x = Activation('relu')(x) x = Dropout(rate = 0.2)(x) x = Dense(units = num_classes)(x) output = Activation('softmax')(x) c100_classification_model = Model(input_layer, output)</pre></li>
+				<li>Compile and fit the model:<pre>c100_classification_model.compile(\
+    optimizer='adam', \
+    loss='sparse_categorical_crossentropy', \
+    metrics = ['accuracy'], loss_weights = None, \
+    weighted_metrics = None, run_eagerly = None, \
+    steps_per_execution = None
+)
+history = c100_classification_model.fit\
+          (c100_train_dataset, \
+           validation_data=c100_test_dataset, \
+           epochs=15)</pre><p>输出如下图所示:</p><div><img src="img/B16341_07_43.jpg" alt="Figure 7.43: Model fit&#13;&#10;"/></div><p class="figure-caption">图7.43:模型拟合</p></li>
+				<li>Plot the loss and accuracy by using the following code:<pre>def plot_trend_by_epoch(tr_values, val_values, title):
+    epoch_number = range(len(tr_values))
+    plt.plot(epoch_number, tr_values, 'r')
+    plt.plot(epoch_number, val_values, 'b')
+    plt.title(title)
+    plt.xlabel('epochs')
+    plt.legend(['Training '+title, 'Validation '+title])
+    plt.figure()
+hist_dict = history.history
+tr_loss, val_loss = hist_dict['loss'], \
+                    hist_dict['val_loss']
+plot_trend_by_epoch(tr_loss, val_loss, "Loss")
+tr_accuracy, val_accuracy = hist_dict['accuracy'], \
+                            hist_dict['val_accuracy']
+plot_trend_by_epoch(tr_accuracy, val_accuracy, "Accuracy")</pre><p>损失图如下所示:</p><div><img src="img/B16341_07_44.jpg" alt="Figure 7.44: Loss plot&#13;&#10;"/></div><p> </p><p class="figure-caption">图7.44:损失图</p><p>准确度图如下所示:</p><div><img src="img/B16341_07_45.jpg" alt="Figure 7.45: Accuracy plot&#13;&#10;"/></div><p class="figure-caption">图7.45:精度图</p></li>
+				<li>Display a misclassified example. Use the following code:<pre>test_labels = []
+test_images = []
+for image, label in tfds.as_numpy(c100_test_dataset.unbatch()):
+    test_images.append(image)
+    test_labels.append(label)
+test_labels = np.array(test_labels)
+predictions = c100_classification_model.predict\
+              (c100_test_dataset).argmax(axis=1)
+incorrect_predictions = np.where(predictions != test_labels)[0]
+index = np.random.choice(incorrect_predictions)
+plt.imshow(test_images[index])
+print(f'True label: {names_of_classes[test_labels[index]]}')
+print(f'Predicted label: {names_of_classes[predictions[index]]}')</pre><p>这将产生以下输出:</p><div><img src="img/B16341_07_46.jpg" alt="Figure 7.46: Wrong classification example&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图7.46:错误分类示例</p>
+			<p>输出显示了一个错误分类的例子:预测值是lion，而真实值是mouse。在本练习中，班级数量为100，这比<em class="italic">练习7.05 </em>、<em class="italic">构建CNN </em>中仅有10个班级要困难得多。然而，您可以看到，在15个时期之后，精确度继续增加，即使在验证数据集上，损失也继续减少。如果您让模型训练更多的时期，那么您可以期待更好的模型性能。</p>
+			<h1 id="_idParaDest-247">8。预训练网络</h1>
+			<h2 id="_idParaDest-248"><a id="_idTextAnchor274"/>活动8.01:带有<a id="_idTextAnchor275"/>微调的水果分类</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li value="1">打开新的Jupyter笔记本。</li>
+				<li>将TensorFlow库导入为<code>tf</code> : <pre>import tensorflow as tf</pre></li>
+				<li>创建一个名为<code>file_url</code>的变量，包含一个到数据集的链接:<pre>file_url = 'https://github.com/PacktWorks<a id="_idTextAnchor276"/>hops/'\           'The-TensorFlow-Workshop/blob/master'\           '/Chapter08/dataset/fruits360.zip'</pre></li>
+				<li>使用带有<code>'fruits360.zip'</code>、<code>origin=file_url</code>和<code>extract=True</code>作为参数的<code>tf.keras.get_file</code>下载数据集，并将结果保存到名为<code>zip_dir</code> : <pre>zip_dir = tf.keras.utils.get_file('fruits360.zip', \                                   origin=file_url, extract=True)</pre>的变量中</li>
+				<li>导入<code>pathlib</code>库:<pre>import pathlib</pre></li>
+				<li>使用<code>pathlib.Path(zip_dir).parent</code> : <pre>path = pathlib.Path(zip_dir).parent / 'fruits360_filtered'</pre>创建一个名为<code>path</code>的变量，包含到<code>fruits360_filtered</code>目录的完整路径</li>
+				<li>创建两个名为<code>train_dir</code>和<code>validation_dir</code>的变量，这两个变量分别采用火车(<code>Training</code>)和验证(<code>Test</code>)文件夹的完整路径:<pre>train_dir = path / 'Training' validation_dir = path / 'Test'</pre></li>
+				<li>创建两个名为<code>total_train</code>和<code>total_val</code>的变量，用于获取训练集和验证集的图像数量:<pre>total_train = 11398 total_val = 4752</pre></li>
+				<li>从<code>tensorflow.keras.preprocessing</code>进口<code>ImageDataGenerator</code>:<pre>from tensorflow.keras.preprocessing.image     import ImageDataGenerator</pre></li>
+				<li>创建一个名为<code>train_img_gen</code>的<code>ImageDataGenerator</code>模型，并增加数据:<pre>train_img_gen = ImageDataGenerator(rescale=1./255, \                                    rotation_range=40, \                                    width_shift_range=0.1, \                                    height_shift_range=0.1, \                                    shear_range=0.2, \                                    zoom_range=0.2, \                                    horizontal_flip=True, \                                    fill_mode='nearest'))</pre></li>
+				<li>创建一个名为<code>val_img_gen</code>的<code>ImageDataGenerator</code>模式，通过除以<code>255</code> : <pre>val_img_gen = ImageDataGenerator(rescale=1./255)</pre>进行缩放</li>
+				<li>创建四个名为<code>batch_size</code>、<code>img_height</code>、<code>img_width</code>和<code>channel</code>的变量，分别取值为<code>32</code>、<code>224</code>、<code>224</code>和<code>3</code>:<pre>Batch_size = 32 img_height = 224 img_width = 224 channel = 3</pre></li>
+				<li>使用<code>flow_from_directory()</code>创建一个名为<code>train_data_gen</code>的数据生成器，并指定批量大小、训练文件夹和目标大小:<pre>train_data_gen = train_image_generator.flow_from_directory\                  (batch_size=batch_size, directory=train_dir, \                   target_size=(img_height, img_width))</pre></li>
+				<li>使用<code>flow_from_directory()</code>创建一个名为<code>val_data_gen</code>的数据生成器，并指定批量大小、验证文件夹和目标大小:<pre>val_data_gen = validation_image_generator.flow_from_directory\                (batch_size=batch_size, directory=validation_dir,\                 target_size=(img_height, img_width))</pre></li>
+				<li>导入<code>numpy</code>为<code>np</code>，<code>tensorflow</code>为<code>tf</code>，从<code>tensorflow.keras</code> : <pre>import numpy as np import tensorflow as tf from tensorflow.keras import layers</pre>导入<code>layers</code></li>
+				<li>将<code>8</code>设置为<code>numpy</code>和<code>tensorflow</code> : <pre>np.random.seed(8) tf.random.set_seed(8)</pre>的种子</li>
+				<li>从<code>tensorflow.keras.applications</code>导入<code>NASNetMobile</code>:<pre>from tensorflow.keras.applications import NASNetMobile</pre></li>
+				<li>将一个<code>NASNetMobile</code>模型实例化成一个名为<code>base_model</code> : <pre>base_model = NASNetMobile(input_shape=(img_height, img_width, \                                        channel), \                           weights='imagenet', include_top=False)</pre>的变量</li>
+				<li>Print a summary of this <code>NASNetMobile</code> model:<pre>base_model.summary()</pre><p>预期产出如下:</p><div><img src="img/B16341_08_08.jpg" alt="Figure 8.8: Summary of the model&#13;&#10;"/></div><p class="figure-caption">图8.8:模型总结</p></li>
+				<li>使用<code>tf.keras.Sequential()</code>创建一个新模型，将基础模型添加到<code>Flatten</code>和<code>Dense</code>层。将这个模型保存到一个名为<code>model</code> : <pre>model = tf.keras.Sequential([base_model,\                              layers.Flatten(),\                              layers.Dense(500, \                                           activation='relu'), \                              layers.Dense(120, \                                           activation='softmax')])</pre>的变量中</li>
+				<li>用<code>0.001</code>作为学习率实例化一个<code>tf.keras.optimizers.Adam()</code>类，并保存到一个名为<code>optimizer</code> : <pre>optimizer = tf.keras.optimizers.Adam(0.001)</pre>的变量中</li>
+				<li>使用<code>compile()</code>方法编译神经网络，其中<code>categorical_crossentropy</code>为损失函数，Adam优化器的学习速率为<code>0.001</code>，而<code>accuracy</code>为要显示的度量:<pre>model.compile(loss='categorical_crossentropy', \               optimizer=optimizer, metrics=['accuracy'])</pre></li>
+				<li>Fit the neural networks with <code>fit()</code> method. This model may take a few minutes to train:<pre>model.fit(train_data_gen,
+          steps_per_epoch=len(features_train) // batch_size,\
+          epochs=5,\
+          validation_data=val_data_gen,\
+          validation_steps=len(features_test) // batch_size\
+)</pre><p>预期产出如下:</p><div><img src="img/B16341_08_06.jpg" alt="Figure 8.9: Epochs of the trained model&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图8.9:训练模型的时期</p>
+			<p>在本练习中，您使用微调功能定制了一个<code>NASNetMobile</code>模型，该模型已在ImageNet上对包含水果图像的数据集进行了预训练。你冻结了这个模型的前700层，只训练了最后几层。您在训练集和测试集分别获得了<code>0.9549</code>和<code>0.8264</code>的准确度分数。</p>
+			<h2 id="_idParaDest-249"><a id="_idTextAnchor277"/>活动8.02:使用Tenso <a id="_idTextAnchor278"/> rFlow Hub进行迁移学习</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<ol>
+				<li value="1">打开新的Jupyter笔记本。</li>
+				<li>导入张量流库:<pre>import tensorflow as tf</pre></li>
+				<li>创建一个名为<code>file_url</code>的变量，包含一个到数据集的链接:<pre>file_url = 'https://storage.googleapis.com'\            '/mledu-datasets/cats_and_dogs_filtered.zip'</pre></li>
+				<li>使用带有<code>cats_and_dogs.zip</code>、<code>origin=file_url</code>和<code>extract=True</code>作为参数的<code>tf.keras.get_file</code>下载数据集，并将结果保存到名为<code>zip_dir</code> : <pre>zip_dir = tf.keras.utils.get_file('cats_and_dogs.zip', \                                   origin=file_url, extract=True)</pre>的变量中</li>
+				<li>导入<code>pathlib</code>库:<pre>import pathlib</pre></li>
+				<li>使用<code>pathlib.Path(zip_dir).parent</code> : <pre>path = pathlib.Path(zip_dir).parent / 'cats_and_dogs_filtered'</pre>创建一个名为<code>path</code>的变量，包含到<code>cats_and_dogs_filtered</code>目录的完整路径</li>
+				<li>创建两个名为<code>train_dir</code>和<code>validation_dir</code>的变量，它们采用<code>train</code>和<code>validation</code>文件夹的完整路径:<pre>train_dir = path / 'train' validation_dir = path / 'validation'</pre></li>
+				<li>创建两个名为<code>total_train</code>和<code>total_val</code>的变量，它们将获得训练集和验证集的图像数量(分别为<code>2000</code>和<code>1000</code>):<pre>total_train = 2000 total_val = 1000</pre></li>
+				<li>从<code>tensorflow.keras.preprocessing</code> : <pre>from tensorflow.keras.preprocessing.image  import ImageDataGenerator</pre>导入<code>ImageDataGenerator</code></li>
+				<li>实例化两个<code>ImageDataGenerator</code>类，分别命名为<code>train_image_generator</code>和<code>validation_image_generator</code>。这些将通过除以<code>255</code> : <pre>train_image_generator = ImageDataGenerator(rescale=1./255) validation_image_generator = ImageDataGenerator(rescale=1./255)</pre>来重新缩放图像</li>
+				<li>创建三个名为<code>batch_size</code>、<code>img_height</code>和<code>img_width</code>的变量，分别取值为<code>32</code>、<code>224</code>和<code>224</code>:<pre>batch_size = 32 img_height = 224 img_width = 224</pre></li>
+				<li>使用<code>flow_from_directory()</code>创建一个名为<code>train_data_gen</code>的数据生成器，并指定批量大小、训练文件夹的路径、目标大小和课程模式:<pre>train_data_gen = train_image_generator.flow_from_directory\                  (batch_size=batch_size, directory=train_dir, \                   shuffle=True, target_size=(img_height, \                                              img_width), \                   class_mode='binary')</pre></li>
+				<li>使用<code>flow_from_directory()</code>创建一个名为<code>val_data_gen</code>的数据生成器，并指定批处理大小、验证文件夹的路径、目标大小和类的模式:<pre>val_data_gen = validation_image_generator.flow_from_directory\                (batch_size=batch_size, \                 directory=validation_dir, \                 target_size=(img_height, img_width), \                 class_mode='binary')</pre></li>
+				<li>从<code>tensorflow.keras</code> : <pre>import numpy as np import tensorflow as tf from tensorflow.keras import layers</pre>导入<code>numpy</code>为<code>np</code>，导入<code>tensorflow</code>为<code>tf</code>，导入<code>layers</code></li>
+				<li>为numpy和tensorflow: <pre>np.random.seed(8) tf.random.set_seed(8)</pre>设置<code>8</code>(这完全是任意的)为<code>seed</code></li>
+				<li>导入<code>tensorflow_hub</code>，如下图:<pre>import tensorflow_hub as hub</pre></li>
+				<li>从TensorFlow Hub加载EfficientNet B0特征向量:<pre>MODULE_HANDLE = 'https://tfhub.dev/google/efficientnet/b0'\                 '/feature-vector/1' module = hub.load(MODULE_HANDLE)</pre></li>
+				<li>创建一个新模型，将EfficientNet B0模块与两个新的顶层相结合，以<code>500</code>和<code>1</code>为单位，以ReLu和sigmoid为激活函数:<pre>model = tf.keras.Sequential\         ([hub.KerasLayer(MODULE_HANDLE,\                          input_shape=(224, 224, 3)),           layers.Dense(500, activation='relu'),           layers.Dense(1, activation='sigmoid')])</pre></li>
+				<li>通过提供<code>binary_crossentropy</code>作为<code>loss</code>函数、一个学习速率为<code>0.001</code>的Adam优化器和<code>accuracy</code>作为要显示的度量来编译这个模型:<pre>model.compile(loss='binary_crossentropy', \               optimizer=tf.keras.optimizers.Adam(0.001), \               metrics=['accuracy'])</pre></li>
+				<li>Fit the model and provide the train and validation data generators. Run it for five epochs:<pre>model.fit(train_data_gen, \
+          steps_per_epoch = total_train // batch_size, \
+          epochs=5, \
+          validation_data=val_data_gen, \
+          validation_steps=total_val // batch_size)</pre><p>预期产出如下:</p><div><img src="img/B16341_08_07.jpg" alt="Figure 8.10: Model training output&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图8.10:模型训练输出</p>
+			<p>在本练习中，您使用TensorFlow Hub的迁移学习获得了非常高的准确度分数(训练集和测试集分别为<code>1</code>和<code>0.99</code>)。您使用了<strong class="bold"> EfficientNet B0 </strong>特征向量结合两个自定义最终层，您的最终模型几乎完美地预测了猫和狗的图像。</p>
+			<h1 id="_idParaDest-250"><a id="_idTextAnchor279"/> 9。递归神经网络</h1>
+			<h2 id="_idParaDest-251"><a id="_idTextAnchor280"/>活动9.01:使用多个LSTM图层构建一个RNN来预测功耗</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<p>执行以下步骤来完成本练习。</p>
+			<ol>
+				<li value="1">打开新的Jupyter或Colab笔记本。</li>
+				<li>导入所需的库。使用<code>numpy</code>、<code>pandas</code>、<code>datetime</code>和<code>MinMaxScaler</code>在零和一之间缩放数据集:<pre>import numpy as np import pandas as pd import datetime from sklearn.preprocessing import MinMaxScaler</pre></li>
+				<li>使用<code>read_csv()</code>函数读入您的CSV文件并将您的数据集存储在pandas数据帧中，<code>data</code> : <pre>data = pd.read_csv("household_power_consumption.csv")</pre></li>
+				<li>使用下面的代码通过合并<code>Date</code>和<code>Time</code>列创建一个新列<code>Datetime</code>:<pre>data['Date'] = pd.to_datetime(data['Date'], format="%d/%m/%Y") data['Datetime'] = data['Date'].dt.strftime('%Y-%m-%d') + ' ' \                    +  data['Time'] data['Datetime'] = pd.to_datetime(data['Datetime'])</pre></li>
+				<li>使用<code>Datetime</code>列:<pre>data = data.sort_values(['Datetime'])</pre>对数据帧进行升序排序</li>
+				<li>创建一个名为<code>num_cols</code>的列表，其中包含具有数值的列—<code>Global_active_power</code>、<code>Global_reactive_power</code>、<code>Voltage</code>、<code>Global_intensity</code>、<code>Sub_metering_1</code>、<code>Sub_metering_2</code>和<code>Sub_metering_3</code> : <pre>num_cols = ['Global_active_power', 'Global_reactive_power', \             'Voltage', 'Global_intensity', 'Sub_metering_1', \             'Sub_metering_2', 'Sub_metering_3']</pre></li>
+				<li>将<code>num_cols</code>中列出的所有列转换为数字数据类型:<pre>for col in num_cols:     data[col] = pd.to_numeric(data[col], errors='coerce')</pre></li>
+				<li>Call the <code>head()</code> function on your data to take a look at the first five rows of your DataFrame:<pre>data.head()</pre><p>您应该得到以下输出:</p><div><img src="img/B16341_09_40.jpg" alt="Figure 9.40: First five rows of the DataFrame&#13;&#10;"/></div><p class="figure-caption">图9.40:数据帧的前五行</p></li>
+				<li>Call <code>tail()</code> on your data to take a look at the last five rows of your DataFrame:<pre>data.tail()</pre><p>您应该得到以下输出:</p><div><img src="img/B16341_09_41.jpg" alt="Figure 9.41: Last five rows of the DataFrame&#13;&#10;"/></div><p class="figure-caption">图9.41:数据帧的最后五行</p></li>
+				<li>遍历<code>num_cols</code>中的列，使用下面的代码用平均值填充缺失值:<pre>for col in num_cols:     data[col].fillna(data[col].mean(), inplace=True)</pre></li>
+				<li>使用<code>drop()</code>从数据帧中删除<code>Date</code>、<code>Time</code>、<code>Global_reactive_power</code>和<code>Datetime</code>列，并将结果保存在名为<code>df</code> : <pre>df = data.drop(['Date', 'Time', 'Global_reactive_power', 'Datetime'], \                axis = 1)</pre>的变量中</li>
+				<li>Create a scaler from <code>MinMaxScaler</code> to your DataFrame to numbers between zero and one. Use <code>fit_transform</code> to fit the model to the data and then transform the data according to the fitted model:<pre>scaler = MinMaxScaler()
+scaled_data = scaler.fit_transform(df)
+scaled_data </pre><p>您应该得到以下输出:</p><div><img src="img/B16341_09_42.jpg" alt="Figure 9.42: Standardized training data&#13;&#10;"/></div><p class="figure-caption">图9.42:标准化培训数据</p><p>前面的屏幕截图显示数据已经标准化。值现在介于0和1之间。</p></li>
+				<li>创建两个名为<code>X</code>和<code>y</code>的空列表，用于存储特性和目标变量:<pre>X = [] y = []</pre></li>
+				<li>创建具有前60分钟功耗的训练数据集，以便可以预测下一分钟的值。使用<code>for</code>循环在60个时间步长内创建数据:<pre>for i in range(60, scaled_data.shape[0]):     X.append(scaled_data [i-60:i])     y.append(scaled_data [i, 0])</pre></li>
+				<li>将<code>X</code>和<code>y</code>转换为NumPy数组，为训练您的模型做准备:<pre>X, y = np.array(X), np.array(y)</pre></li>
+				<li>将数据集分成训练集和测试集，分别包含索引<code>217440</code>前后的数据:<pre>X_train = X[:217440] y_train = y[:217440] X_test = X[217440:] y_test = y[217440:]</pre></li>
+				<li>你将需要一些额外的图书馆来建造LSTM。使用<code>Sequential</code>初始化神经网络，<code>Dense</code>添加一个密集层，<code>LSTM</code>添加一个LSTM层，<code>Dropout</code>帮助防止过拟合:<pre>from tensorflow.keras import Sequential from tensorflow.keras.layers import Dense, LSTM, Dropout</pre></li>
+				<li>初始化你的神经网络。用<code>20</code>、<code>40</code>和<code>80</code>单位添加LSTM图层。使用ReLU激活功能并将<code>return_sequences</code>设置为<code>True</code>。<code>input_shape</code>应该是你训练集的维度(特性数和天数)。最后，添加你的辍学层:<pre>regressor = Sequential() regressor.add(LSTM(units= 20, activation = 'relu',\                    return_sequences = True,\                    input_shape = (X_train.shape[1], X_train.shape[2]))) regressor.add(Dropout(0.5)) regressor.add(LSTM(units= 40, \                    activation = 'relu', \                    return_sequences = True)) regressor.add(Dropout(0.5)) regressor.add(LSTM(units= 80, \                    activation = 'relu')) regressor.add(Dropout(0.5)) regressor.add(Dense(units = 1))  </pre></li>
+				<li>Print the architecture of the model using the <code>summary()</code> function:<pre>regressor.summary()</pre><p>前面的命令提供了关于模型、层和参数的有价值的信息:</p><div><img src="img/B16341_09_43.jpg" alt="Figure 9.43: Model summary&#13;&#10;"/></div><p class="figure-caption">图9.43:模型总结</p></li>
+				<li>使用<code>compile()</code>方法配置您的模型进行训练。选择Adam作为您的优化器，并使用均方差来衡量您的损失函数:<pre>regressor.compile(optimizer='adam', loss = 'mean_squared_error')</pre></li>
+				<li>适合您的模型，并将其设置为在两个时期运行。将批量设置为<code>32</code> : <pre>regressor.fit(X_train, y_train, epochs=2, batch_size=32)</pre></li>
+				<li>使用<code>regressor.predict(X_test)</code> : <pre>y_pred = regressor.predict(X_test)</pre>将测试集上的预测保存在名为<code>y_pred</code>的变量中</li>
+				<li>Take a look at the real household power consumption and your predictions for the last hour of data from your test set:<pre>plt.figure(figsize=(14,5))
+plt.plot(y_test[-60:], color = 'black', \
+         label = "Real Power Consumption")
+plt.plot(y_pred[-60:], color = 'gray', \
+         label = 'Predicted Power Consumption')
+plt.title('Power Consumption Prediction')
+plt.xlabel('time')
+plt.ylabel('Power Consumption')
+plt.legend()
+plt.show()</pre><p>您应该得到以下输出:</p><div><img src="img/B16341_09_44.jpg" alt="Figure 9.44: Household power consumption prediction visualization&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图9.44:家庭用电量预测可视化</p>
+			<p>正如你在<em class="italic">图9.44 </em>中看到的，你的结果相当不错。您可以观察到，在大多数情况下，您的预测值接近实际值。</p>
+			<h2 id="_idParaDest-252"><a id="_idTextAnchor281"/>活动9.02:构建预测推文情感的RNN</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<p>执行以下步骤来完成本练习:</p>
+			<ol>
+				<li value="1">打开新的Jupyter或Colab笔记本。</li>
+				<li>导入所需的库。使用<code>numpy</code>进行计算，使用<code>pandas</code>处理数据集:<pre>import numpy as np import pandas as pd</pre></li>
+				<li>使用<code>read_csv</code>方法读入您的CSV文件，并将您的数据集存储在pandas DataFrame中，<code>data</code> : <pre>data = pd.read_csv("<a href="">https://raw.githubusercontent.com"\</a>                    "/PacktWorkshops/The-TensorFlow-Workshop"\                    "/master/Chapter09/Datasets/tweets.csv")</pre></li>
+				<li>Call the <code>head()</code> method on your data to take a look at the first five rows of your DataFrame: <pre>data.head()</pre><p>您应该得到以下输出:</p><div><img src="img/B16341_09_45.jpg" alt="Figure 9.45: First five rows of the DataFrame&#13;&#10;"/></div><p class="figure-caption">图9.45:数据帧的前五行</p><p>在前面的截图中，您可以看到存储在<code>airline_sentiment</code>列中的不同情绪。</p></li>
+				<li>Call <code>tail()</code> on your data to take a look at the last five rows of your DataFrame: <pre><code>data.tail()</code></pre><p>您应该得到以下输出:</p><div><img src="img/B16341_09_46.jpg" alt="Figure 9.46: Last five rows of the DataFrame&#13;&#10;"/></div><p class="figure-caption">图9.46:数据帧的最后五行</p></li>
+				<li>创建一个名为<code>df</code>的新数据框架，它将只有<code>text</code>作为特征，而<code>airline_sentiment</code>作为目标变量:<pre>df = data[['text','airline_sentiment']]</pre></li>
+				<li>子集<code>df</code>通过使用以下命令删除<code>airline_sentiment</code>等于<code>neutral</code>的所有行:<pre>df = df[df['airline_sentiment'] != 'neutral']</pre></li>
+				<li>通过将<code>negative</code>替换为<code>0</code>并将<code>positive</code>替换为<code>1</code>，将<code>airline_sentiment</code>列转换为数字类型。将结果保存到变量中，<code>y</code> : <pre>y = df['airline_sentiment'].map({'negative':0, 'positive':1}).values</pre></li>
+				<li>创建一个变量<code>X</code>，它将包含来自<code>df</code> : <pre>X = df['text']</pre>中文本列的数据</li>
+				<li>从<code>tensorflow.keras.preprocessing.text</code>导入<code>Tokenizer</code>，从<code>tensorflow.keras.preprocessing.sequence</code>导入<code>pad_sequences</code>:<pre>from tensorflow.keras.preprocessing.text import Tokenizer from tensorflow.keras.preprocessing.sequence \     import pad_sequences</pre></li>
+				<li>实例化一个<code>num_words</code>等于<code>10000</code>的<code>Tokenizer()</code>类。这将只保留前10，000个最常用的单词。将其保存到变量中，<code>tokenizer</code> : <pre>tokenizer = Tokenizer(num_words=10000)</pre></li>
+				<li>在数据<code>X</code> : <pre>tokenizer.fit_on_texts(X)</pre>上安装<code>tokenizer</code></li>
+				<li>Print the vocabulary from <code>tokenizer</code>:<pre>tokenizer.word_index</pre><p>您应该得到如下输出:</p><div><img src="img/B16341_09_47.jpg" alt="Figure 9.47: Vocabulary defined by tokenizer&#13;&#10;"/></div><p class="figure-caption">图9.47:由记号赋予器定义的词汇</p><p>从输出词汇表中，您可以看到单词<code>to</code>被分配了索引<code>1</code> , <code>the</code>被分配了<code>2</code>，以此类推。您可以使用它将原始文本映射为数字版本。</p></li>
+				<li>创建<code>vocab_size</code>变量，包含记号赋予器词汇表的长度和一个用于未知单词的额外字符:<pre>vocab_size = len(tokenizer.word_index) + 1</pre></li>
+				<li>使用<code>tokenizer</code>中的词汇将<code>X</code>中的原始文本转换成编码版本。将结果保存在名为<code>encoded_tweets</code> : <pre>encoded_tweets = tokenizer.texts_to_sequences(X)</pre>的变量中</li>
+				<li>以<code>0</code>结尾填充<code>encoded_tweets</code>，最多280个字符。将结果保存在名为<code>padded_tweets</code> : <pre>padded_tweets = pad_sequences(encoded_tweets, maxlen=280, padding='post')</pre>的变量中</li>
+				<li>Print the shape of <code>padded_tweets</code>:<pre>padded_tweets.shape</pre><p>您应该会得到以下结果:</p><pre>(11541, 280)</pre></li>
+				<li>正如你所看到的，准备好的推文现在都有相同的长度，即280个字符。</li>
+				<li>随机排列<code>padded_tweets</code>的索引。将结果保存在<code>indices</code>变量中:<pre>indices = np.random.permutation(padded_tweets.shape[0])</pre></li>
+				<li>创建两个变量<code>train_idx</code>和<code>test_idx</code>，分别包含前10000个指数和其余的指数:<pre>train_idx = indices[:10000] test_idx = indices[10000:]</pre></li>
+				<li>使用<code>padded_tweets</code>和<code>y</code>，将数据分成训练集和测试集。将它们保存到四个不同的变量中，分别叫做<code>X_train</code>、<code>X_test</code>、<code>y_train</code>和<code>y_test</code> : <pre>X_train = padded_tweets[train_idx,] X_test = padded_tweets[test_idx,] y_train = y[train_idx,] y_test = y[test_idx,]</pre></li>
+				<li>您将需要一些额外的库来构建您的模型。使用以下代码导入<code>Sequential</code>、<code>Dense</code>、<code>LSTM</code>、<code>Dropout</code>和<code>Embedding</code>:<pre>from tensorflow.keras import Sequential from tensorflow.keras.layers import Dense, LSTM, Dropout, Embedding</pre></li>
+				<li>初始化你的神经网络。通过提供词汇表的长度、嵌入层的长度和输入长度来添加嵌入层。用<code>50</code>和<code>100</code>单元添加两个LSTM层。使用ReLU激活功能并将<code>return_sequences</code>设置为<code>True</code>。然后，为每个LSTM添加一个落差为20%的落差图层。最后，添加一个全连接层，以sigmoid作为最终激活函数:<pre>model = Sequential()    model.add(Embedding(vocab_size, embedding_vector_length, input_length=280)) model.add(LSTM(units= 50, activation = 'relu', return_sequences = True)) model.add(Dropout(0.2)) model.add(LSTM(100, activation = 'relu')) model.add(Dropout(0.2)) model.add(Dense(1, activation='sigmoid'))</pre></li>
+				<li>Check the summary of the model using the <code>summary()</code> function: <pre>model.summary()</pre><p>您应该得到以下输出:</p><div><img src="img/B16341_09_48.jpg" alt="Figure 9.48: Model summary&#13;&#10;"/></div><p class="figure-caption">图9.48:模型总结</p></li>
+				<li>使用<code>compile()</code>方法来配置你的模型进行训练。选择<code>adam</code>作为您的优化器，<code>binary_crossentropy</code>测量您的损失函数，选择<code>accuracy</code>作为要显示的指标:<pre>model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])</pre></li>
+				<li>Fit your model and set it to run on two epochs. Set your batch size to <code>32</code>:<pre>model.fit(X_train, y_train, epochs=2, batch_size=32)</pre><p>您应该得到以下输出:</p><div><img src="img/B16341_09_49.jpg" alt="Figure 9. 49: Training the model&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图9。49:训练模型</p>
+			<p>正如您在<em class="italic">图9.49 </em>中看到的，您的模型在训练集上以最少的数据准备获得了<code>0.7978</code>的准确度。你可以尝试通过删除停用词或极其频繁的词来改善这一点，例如<code>the</code>和<code>a</code>，这些词并不能真正帮助评估一条推文的情感，看看你是否可以在测试集上实现相同的性能。您可以推断出，该模型可以正确预测训练数据中几乎80%的推文情感。</p>
+			<h1 id="_idParaDest-253"><a id="_idTextAnchor282"/> 10。自定义TensorFlow组件</h1>
+			<h2 id="_idParaDest-254"><a id="_idTextAnchor283"/>活动10.01:使用自定义图层和自定义损失函数构建模型</h2>
+			<p><strong class="bold">解决方案:</strong></p>
+			<p>首先，打开一个新的Colab或Jupyter笔记本。如果您正在使用Google Colab，您需要首先将数据集下载到您的Google Drive中:</p>
+			<ol>
+				<li value="1">打开新的Jupyter笔记本或Google Colab笔记本。</li>
+				<li>如果您正在使用Google Colab，您可以使用以下代码在本地上传您的数据集。否则，转到<em class="italic">步骤4 </em>。点击<code>Choose Files</code>导航至CSV文件，然后点击<code>Open</code>。将文件另存为<code>uploaded</code>。然后，转到保存数据集的文件夹:<pre>from google.colab import files uploaded = files.upload()</pre></li>
+				<li>将数据集解压到当前文件夹:<pre>!unzip \*.zip</pre></li>
+				<li>创建一个变量<code>directory</code>，它包含数据集的路径:<pre>directory = "/content/gdrive/My Drive/Datasets/pneumonia-or-healthy/"</pre></li>
+				<li>导入所有需要的库:<pre>import numpy as np import pandas as pd import pathlib import os import matplotlib.pyplot as plt from keras.models import Sequential from keras import optimizers from tensorflow.keras.preprocessing.image import ImageDataGenerator import tensorflow as tf from tensorflow.keras.layers import Input, Conv2D, ReLU, \     BatchNormalization,Add, AveragePooling2D, Flatten, Dense from tensorflow.keras.models import Model  </pre></li>
+				<li>使用<code>pathlib.Path</code> : <pre>path = pathlib.Path(directory)</pre>创建一个包含数据完整路径的变量<code>path</code></li>
+				<li>创建两个名为<code>train_dir</code>和<code>validation_dir</code>的变量，它们分别获取训练和验证文件夹的完整路径:<pre>train_dir = path / 'training_set' validation_dir = path / 'test_set'</pre></li>
+				<li>创建四个名为<code>train_table_dir</code>、<code>train_glass_dir</code>、<code>validation_table_dir</code>和<code>validation_glass_dir</code>的变量，它们分别采用训练集和验证集的玻璃和表格文件夹的完整路径:<pre>train_table_dir = train_dir / 'table' train_glass_dir = train_dir /'glass' validation_table_dir = validation_dir / 'table' validation_glass_dir = validation_dir / 'glass'</pre></li>
+				<li>为训练集和验证集创建包含眼镜和桌子图像数量的四个变量:<pre>num_train_table = len([f for f in os.listdir(train_table_dir)if \                        os.path.isfile(os.path.join\                                       (train_table_dir, f))]) num_train_glass = len([f for f in os.listdir(train_glass_dir)if \                        os.path.isfile(os.path.join\                                       (train_glass_dir, f))]) num_validation_table = len([f for f in os.listdir\                             (validation_table_dir)if os.path.isfile(os.path.join(validation_table_dir, f))]) num_validation_glass = len([f for f in os.listdir\                             (validation_glass_dir)if \                             os.path.isfile\                             (os.path.join\                             (validation_glass_dir, f))])</pre></li>
+				<li>Display a bar chart with the total number of images of glasses and tables:<pre>plt.bar(['table', 'glass'], \
+        [num_train_table + num_validation_table, \
+         num_train_glass + num_validation_glass], \
+        align='center', \
+        alpha=0.5)
+plt.show()</pre><p>您应该得到以下输出:</p><div><img src="img/B16341_10_12.jpg" alt="Figure 10.12: Number of images of glasses and tables&#13;&#10;"/></div><p class="figure-caption">图10.12:眼镜和桌子的图像数量</p><p>前面的图表向您展示了数据集的良好平衡。眼镜的图像几乎和桌子一样多，每张大约有3500个图像。</p></li>
+				<li>创建两个名为<code>total_train</code>和<code>total_val</code>的变量，分别获取训练集和验证集的图像数量:<pre>total_train = len(os.listdir(train_table_dir)) + \               len(os.listdir(validation_table_dir)) total_val = len(os.listdir(train_glass_dir)) + \             len(os.listdir(validation_glass_dir))</pre></li>
+				<li>导入<code>ImageDataGenerator</code>类:<pre>from tensorflow.keras.preprocessing.image \     import ImageDataGenerator</pre></li>
+				<li>实例化两个<code>ImageDataGenerator</code>类<code>train_image_generator</code>和<code>validation_image_generator</code>，它们将通过除以255来重新缩放图像:<pre>train_image_generator = ImageDataGenerator(rescale=1./255) validation_image_generator = ImageDataGenerator(rescale=1./255)</pre></li>
+				<li>创建三个名为<code>batch_size</code>、<code>img_height</code>和<code>img_width</code>的变量，分别取值为<code>32</code>、<code>100</code>和<code>100</code>:<pre>batch_size = 32 img_height = 100 img_width = 100</pre></li>
+				<li>使用<code>flow_from_directory()</code>方法创建一个名为<code>train_data_gen</code>的数据生成器，并指定批处理大小、训练文件夹的路径、<code>shuffle</code>参数的值、目标的大小和课程模式:<pre>train_data_gen = train_image_generator.flow_from_directory\                  (batch_size=batch_size, directory=train_dir, \                   shuffle=True, \                   target_size=(img_height, img_width), \                   class_mode='binary')</pre></li>
+				<li>使用<code>flow_from_directory()</code>方法创建一个名为<code>val_data_gen</code>的数据生成器，并指定批处理大小、验证文件夹的路径、目标的大小和类模式:<pre>val_data_gen = validation_image_generator.flow_from_directory\                (batch_size=batch_size, directory=validation_dir,\                 target_size=(img_height, img_width), \                 class_mode='binary')</pre></li>
+				<li>创建您的自定义损失函数。在这种情况下，使用<code>def</code>并为您的自定义损失选择一个名称<code>custom_loss_function</code>。然后，加上你的两个参数，<code>y_true</code>和<code>y_pred</code>。现在，创建一个变量<code>squared_difference</code>，来存储<code>y_true</code>减去<code>y_pred</code>的平方。最后，使用<code>squared_difference</code> : <pre>def custom_loss_function(y_true, y_pred):     squared_difference = tf.square(float(y_true) - float(y_pred))     return tf.reduce_mean(squared_difference, axis=-1)</pre>中的<code>tf.reduce_mean</code>返回计算的损失</li>
+				<li>构建一个函数，将您的输入作为一个张量，并添加ReLU和批量标准化:<pre>def relu_batchnorm_layer(input):     return BatchNormalization()(ReLU()(input))</pre></li>
+				<li>Create a function to build the residual block. You will need to take a tensor as your input and pass it to two Conv2D layers. Next, add the input to the output, followed by ReLU and batch normalization.<p>由于您在<code>residual_block</code>中为跳过连接使用了<code>Add</code>层，您需要确保它的输入总是相同的形状。<code>downsample</code>参数用于指定第一个Conv2D层的跨度。如果<code>True</code>则指定<code>strides=2</code>，如果<code>False</code>则指定<code>strides=1</code>。当<code>strides=1</code>时，输出(<code>int_output</code>)与输入大小相同。但是当<code>strides=2</code>时，<code>int_ouput</code>的尺寸减半。考虑到这一点，将带有<code>kernel_size=1</code>的Conv2D层添加到跳过连接:</p><pre>def residual_block(input, downsample: bool, filters: int, \
+                   kernel_size: int = 3):
+    int_output = Conv2D(filters=filters, kernel_size=kernel_size, 
+                        strides= (1 if not downsample else 2), 
+                        padding="same")(input)
+    int_output = relu_batchnorm_layer(int_output)
+    int_output = Conv2D(filters=filters, kernel_size=kernel_size, 
+                        padding="same")(int_output)
+    if downsample:
+        int_output2 = Conv2D(filters=filters, kernel_size=1, strides=2,
+                             padding="same")(input)
+        output = Add()([int_output2, int_output]) 
+    else:
+        output = Add()([input, int_output])
+    output = relu_batchnorm_layer(output)
+    return output</pre></li>
+				<li>现在，使用<code>keras.layers.Input()</code>层来定义你的模型的输入层。这里，你的形状是100像素乘100像素，有三种颜色(RGB)。然后，用您的定制架构创建您的模型。最后，用<code>model = Model (inputs, outputs)</code> : <pre>inputs = Input(shape=(100, 100, 3)) num_filters = 32      t = BatchNormalization()(inputs) t = Conv2D(kernel_size=3,            strides=1,            filters=32,            padding="same")(t) t = relu_batchnorm_layer(t)      num_blocks_list = [1, 3, 5, 6, 1] for i in range(len(num_blocks_list)):     num_blocks = num_blocks_list[i]     for j in range(num_blocks):         t = residual_block(t, downsample=(j==0 and i!=0), filters=num_filters)     num_filters *= 2      t = AveragePooling2D(4)(t) t = Flatten()(t) outputs = Dense(1, activation='sigmoid')(t)      model = Model(inputs, outputs)</pre>引用你的输入和输出张量</li>
+				<li>Get a summary of your model:<pre>model.summary()</pre><p>运行前面的命令时将显示摘要:</p><div><img src="img/B16341_10_13.jpg" alt="Figure 10.13: Model summary&#13;&#10;"/></div><p> </p><p class="figure-caption">图10.13:模型摘要</p></li>
+				<li>通过提供您的自定义损失函数来编译此模型，使用Adam作为优化器，准确性作为要显示的度量:<pre>model.compile(        optimizer='adam',        loss=custom_loss_function,        metrics=['accuracy'] )</pre></li>
+				<li>Fit the model and provide the train and validation data generators, the number of epochs, the steps per epoch, and the validation steps:<pre>history = model.fit(
+    Train_data_gen,
+    steps_per_epoch=total_train // batch_size,
+    epochs=5,
+    validation_data=val_data_gen,
+    validation_steps=total_val // batch_size
+)</pre><p>您应该得到以下输出:</p><div><img src="img/B16341_10_14.jpg" alt="Figure 10.14: Screenshot of the training progress&#13;&#10;"/></div><p class="figure-caption">图10.14:培训进度截图</p><p>前面的屏幕截图显示了TensorFlow在模型训练期间显示的信息。您可以看到每个时期的训练集和验证集所达到的精确度。在第五个时期，模型在训练集上是<code>85.9%</code>准确的，在验证集上是<code>88.5%</code>准确的。</p></li>
+				<li>Plot your training and validation accuracy:<pre>plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('Training Accuracy vs Validation Accuracy')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Validation'], loc='upper left')
+plt.show()</pre><p>您应该得到以下输出:</p><div><img src="img/B16341_10_15.jpg" alt="Figure 10.15: Training and validation accuracy&#13;&#10;"/></div><p class="figure-caption">图10.15:培训和验证准确性</p><p>上图显示了每个时期的训练集和验证集的准确度分数。</p></li>
+				<li>Plot your training and validation loss:<pre>plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Training Loss vs Validation Loss')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Validation'], loc='upper left')
+plt.show()</pre><p>您应该得到以下输出:</p><div><img src="img/B16341_10_16.jpg" alt="Figure 10.16: Training and validation loss&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图10.16:培训和验证损失</p>
+			<p>上图显示了每个时期的训练集和验证集的损失分数。</p>
+			<p>通过此活动，您已经成功构建了自定义MSE损失函数和自定义残差块图层，并在玻璃与桌子数据集上训练了此自定义深度学习模型。你现在知道如何超越TensorFlow提供的默认课程，建立自己的定制深度学习模型。</p>
+			<h1 id="_idParaDest-255"><a id="_idTextAnchor284"/> 11。生成模型</h1>
+			<h2 id="_idParaDest-256"><a id="_idTextAnchor285"/>活动11.01:使用GANs生成图像</h2>
+			<p><strong class="bold">解决方案</strong>:</p>
+			<p>执行以下步骤来完成本练习:</p>
+			<ol>
+				<li value="1">Load Google Colab and Google Drive:<pre>try:
+    from google.colab import drive
+    drive.mount('/content/drive', force_remount=True)
+    COLAB = True
+    print("Note: using Google CoLab")
+    %tensorflow_version 2.x
+except:
+    print("Note: not using Google CoLab")
+    COLAB = False</pre><p>您的输出应该如下所示:</p><pre>Mounted at /content/drive
+Note: using Google CoLab</pre></li>
+				<li>导入将要使用的库:<pre>import tensorflow as tf from tensorflow.keras.models import Sequential, Model, load_model from tensorflow.keras.layers import InputLayer, Reshape, Dropout, Dense  from tensorflow.keras.layers import Flatten, BatchNormalization from tensorflow.keras.layers import UpSampling2D, Conv2D from tensorflow.keras.layers import Activation, ZeroPadding2D from tensorflow.keras.optimizers import Adam from tensorflow.keras.layers import LeakyReLU import zipfile import matplotlib.pyplot as plt import numpy as np from PIL import Image from tqdm import tqdm import os  import time from skimage.io import imread</pre></li>
+				<li>创建一个函数来格式化一个时间字符串来跟踪你的时间使用:<pre>def time_string(sec_elapsed):     hour = int(sec_elapsed / (60 * 60))     minute = int((sec_elapsed % (60 * 60)) / 60)     second = sec_elapsed % 60     return "{}:{:&gt;02}:{:&gt;05.2f}".format(hour, minute, second)</pre></li>
+				<li>Set the generation resolution to <code>3</code>. Also, set <code>img_rows</code> and <code>img_cols</code> to <code>5</code> and <code>img_margin</code> to <code>16</code> so that your preview images will be a <code>5x5</code> array (25 images) with a 16-pixel margin. Set <code>seed_vector</code> equal to <code>200</code>, <code>data_path</code> to where you stored your image dataset, and <code>epochs</code> to <code>500</code>. Finally, print the parameters:<pre>gen_res = 3 
+gen_square = 32 * gen_res
+img_chan = 3
+img_rows = 5
+img_cols = 5
+img_margin = 16
+seed_vector = 200
+data_path = 'banana-or-orange/training_set/'
+epochs = 500
+num_batch = 32
+num_buffer = 60000
+print(f"Will generate a resolution of {gen_res}.")
+print(f"Will generate {gen_square}px square images.")
+print(f"Will generate {img_chan} image channels.")
+print(f"Will generate {img_rows} preview rows.")
+print(f"Will generate {img_cols} preview columns.")
+print(f"Our preview margin equals {img_margin}.")
+print(f"Our data path is: {data_path}.")
+print(f"Our number of epochs are: {epochs}.")
+print(f"Will generate a batch size of {num_batch}.")
+print(f"Will generate a buffer size of {num_buffer}.")</pre><p>您的输出应该如下所示:</p><div><img src="img/B16341_11_30.jpg" alt="Figure 11.30: Output showing the parameters&#13;&#10;"/></div><p class="figure-caption">图11.30:显示参数的输出</p></li>
+				<li>如果NumPy预处理文件存在于之前的执行中，则将它加载到内存中；否则，对数据进行预处理，保存图像二进制:<pre>training_binary_path = os.path.join(data_path,         f'training_data_{gen_square}_{gen_square}.npy') print(f"Looking for file: {training_binary_path}") if not os.path.isfile(training_binary_path):     start = time.time()     print("Loading training images…")     train_data = []     images_path = os.path.join(data_path,'banana')     for filename in tqdm(os.listdir(images_path)):         path = os.path.join(images_path,filename)         images = Image.open(path).resize((gen_square,                                           gen_square),\                                          Image.ANTIALIAS)         train_data.append(np.asarray(images))     train_data = np.reshape(train_data,(-1,gen_square,               gen_square,img_chan))     train_data = train_data.astype(np.float32)     train_data = train_data / 127–5 - 1.     print("Saving training image binary...")     np.save(training_binary_path,train_data)     elapsed = time.time()-start     print (f'Image preprocess time: {time_string(elapsed)}') else:     print("Loading training data...")     train_data = np.load(training_binary_path)</pre></li>
+				<li>对数据进行批处理和洗牌。使用<code>tensorflow.data.Dataset</code>对象库，使用其函数混洗数据集并创建批处理:<pre>train_dataset = tf.data.Dataset.from_tensor_slices(train_data) \                        .shuffle(num_buffer).batch(num_batch)</pre></li>
+				<li>为DCGAN建造发电机:<pre>def create_dc_generator(seed_size, channels):     model = Sequential()     model.add(Dense(4*4*256,activation="relu",input_dim=seed_size))     model.add(Reshape((4,4,256)))     model.add(UpSampling2D())     model.add(Conv2D(256,kernel_size=3,padding="same"))     model.add(BatchNormalization(momentum=0.8))     model.add(Activation("relu"))     model.add(UpSampling2D())     model.add(Conv2D(256,kernel_size=3,padding="same"))     model.add(BatchNormalization(momentum=0.8))     model.add(Activation("relu"))         # Output resolution, additional upsampling     model.add(UpSampling2D())     model.add(Conv2D(128,kernel_size=3,padding="same"))     model.add(BatchNormalization(momentum=0.8))     model.add(Activation("relu"))     if gen_res&gt;1:         model.add(UpSampling2D(size=(gen_res,gen_res)))         model.add(Conv2D(128,kernel_size=3,padding="same"))         model.add(BatchNormalization(momentum=0.8))         model.add(Activation("relu"))     # Final CNN layer     model.add(Conv2D(channels,kernel_size=3,padding="same"))     model.add(Activation("tanh"))     return model</pre></li>
+				<li>为DCGAN构建鉴别器:<pre>def create_dc_discriminator(image_shape):     model = Sequential()     model.add(Conv2D(32, kernel_size=3, strides=2, \                      input_shape=image_shape,                       padding="same"))     model.add(LeakyReLU(alpha=0.2))     model.add(Dropout(0.25))     model.add(Conv2D(64, kernel_size=3, strides=2, padding="same"))     model.add(ZeroPadding2D(padding=((0,1),(0,1))))     model.add(BatchNormalization(momentum=0.8))     model.add(LeakyReLU(alpha=0.2))     model.add(Dropout(0.25))     model.add(Conv2D(128, kernel_size=3, strides=2, padding="same"))     model.add(BatchNormalization(momentum=0.8))     model.add(LeakyReLU(alpha=0.2))     model.add(Dropout(0.25))     model.add(Conv2D(256, kernel_size=3, strides=1, padding="same"))     model.add(BatchNormalization(momentum=0.8))     model.add(LeakyReLU(alpha=0.2))     model.add(Dropout(0.25))     model.add(Conv2D(512, kernel_size=3, strides=1, padding="same"))     model.add(BatchNormalization(momentum=0.8))     model.add(LeakyReLU(alpha=0.2))     model.add(Dropout(0.25))     model.add(Flatten())     model.add(Dense(1, activation='sigmoid'))     return model</pre></li>
+				<li>为香草甘建造发电机:<pre>def create_generator(seed_size, channels):     model = Sequential()     model.add(Dense(96*96*3,activation="tanh",input_dim=seed_size))     model.add(Reshape((96,96,3)))     return model</pre></li>
+				<li>构建香草甘的鉴别器:<pre>def create_discriminator(img_size):     model = Sequential()     model.add(InputLayer(input_shape=img_size))     model.add(Dense(1024, activation="tanh"))     model.add(Flatten())     model.add(Dense(1, activation='sigmoid'))     return model</pre></li>
+				<li>创建一个函数来生成并保存图像，这些图像可用于查看模型训练过程中的进度:<pre>def save_images(generator, cnt, noise, prefix=None):     img_array = np.full((          img_margin + (img_rows * (gen_square+img_margin)),          img_margin + (img_cols * (gen_square+img_margin)), 3),          255, dtype=np.uint8)        gen_imgs = generator.predict(noise)     gen_imgs = 0.5 * gen_imgs + 0.5     img_count = 0     for row in range(img_rows):         for col in range(img_cols):             r = row * (gen_square+16) + img_margin             c = col * (gen_square+16) + img_margin             img_array[r:r+gen_square,c:c+gen_square] \                 = gen_imgs[img_count] * 255             img_count += 1                output_path = os.path.join(data_path,'output')     if not os.path.exists(output_path):         os.makedirs(output_path)        filename = os.path.join(output_path,f"train{prefix}-{cnt}.png")     im = Image.fromarray(img_array)     im.save(filename)</pre></li>
+				<li>Initialize the generator for the DCGAN and view the output:<pre>dc_generator = create_dc_generator(seed_vector, img_chan)
+noise = tf.random.normal([1, seed_vector])
+gen_img = dc_generator(noise, training=False)
+plt.imshow(gen_img[0, :, :, 0])</pre><p>您的输出应该如下所示:</p><div><img src="img/B16341_11_31.jpg" alt="Figure 11.31: Output showing noise from the DCGAN generator&#13;&#10;"/></div><p class="figure-caption">图11.31:显示DCGAN发生器噪声的输出</p></li>
+				<li>Initialize the generator for the vanilla GAN and view the output:<pre>generator = create_generator(seed_vector, img_chan)
+gen_van_img = generator(noise, training=False)
+plt.imshow(gen_van_img[0, :, :, 0])</pre><p>您应该得到以下输出:</p><div><img src="img/B16341_11_32.jpg" alt="Figure 11.31: Output showing noise from the DCGAN generator&#13;&#10;"/></div><p class="figure-caption">图11.32:显示普通GAN发生器噪声的输出</p></li>
+				<li>Print the decision of the DCGAN discriminator evaluated on the seed image:<pre>img_shape = (gen_square,gen_square,img_chan)
+discriminator = create_discriminator(img_shape)
+decision = discriminator(gen_img)
+print (decision)</pre><p>您的输出应该如下所示:</p><pre>tf.Tensor([[0.4994658]], shape=(1,1), dtype=float32)</pre></li>
+				<li>Print the decision of the vanilla GAN evaluated on the seed image:<pre>discriminator = create_discriminator(img_shape)
+decision = discriminator(gen_img)
+print(decision)</pre><p>您的输出应该如下所示:</p><pre>tf.Tensor([[0.5055983]], shape=(1,1), dtype=float32)</pre></li>
+				<li>创建你的损失函数。由于鉴频器和发生器网络的输出是不同的，因此可以为它们定义两个独立的损失函数。此外，他们需要通过网络在独立通道中单独接受培训。两个gan可以利用相同的损失函数作为它们的鉴别器和发生器。可以用<code>tf.keras.losses.BinaryCrossentropy</code>代替<code>cross_entropy</code>。这将计算真实标签和预测标签之间的损失。然后，使用<code>tf.ones</code>和<code>tf.zeros</code>从<code>real_output</code>和<code>fake_output</code>定义<code>discrim_loss</code>函数来计算<code>total_loss</code> : <pre>cross_entropy = tf.keras.losses.BinaryCrossentropy() def discrim_loss(real_output, fake_output):     real_loss = cross_entropy(tf.ones_like(real_output), real_output)     fake_loss = cross_entropy(tf.zeros_like(fake_output), fake_output)     total_loss = real_loss + fake_loss     return total_loss def gen_loss(fake_output):     return cross_entropy(tf.ones_like(fake_output), fake_output)</pre></li>
+				<li>Create two Adam optimizers, one for the generator and one for the discriminator. Use the same learning rate and momentum for each:<pre>gen_optimizer = tf.keras.optimizers.Adam(1.5e-4,0.5)
+disc_optimizer = tf.keras.optimizers.Adam(1.5e-4,0.5)</pre><p>在这里，你有你的个人训练步骤。一次只能修改一个网络的权重，这一点非常重要。使用<code>tf.GradientTape()</code>，您可以同时训练鉴别器和发生器，但彼此分开。TensorFlow就是这么做自动微分的。它计算导数。您会看到它创建了两个“磁带”—<code>gen_tape</code>和<code>disc_tape</code>。把这些想象成每个计算的记录。</p></li>
+				<li>为鉴别器创建<code>real_output</code>和<code>fake_output</code>。将此用于发电机损耗(<code>g_loss</code>)。然后，用<code>gradients_of_generator</code>和<code>gradients_of_discriminator</code>计算鉴频器损耗(<code>d_loss</code>)以及发生器和鉴频器的梯度，并应用它们。将这些步骤封装在一个函数中，传入发生器、鉴别器和图像，并返回发生器损耗(<code>g_loss</code>)和鉴别器损耗(<code>d_loss</code> ): <pre>@tf.function def train_step(generator, discriminator, images):     seed = tf.random.normal([num_batch, seed_vector])     with tf.GradientTape() as gen_tape, \          tf.GradientTape() as disc_tape:          gen_imgs = generator(seed, training=True)         real_output = discriminator(images, training=True)         fake_output = discriminator(gen_imgs, training=True)         g_loss = gen_loss(fake_output)         d_loss = discrim_loss(real_output, fake_output)              gradients_of_generator = gen_tape.gradient(\             g_loss, generator.trainable_variables)         gradients_of_discriminator = disc_tape.gradient(\             d_loss, discriminator.trainable_variables)         gen_optimizer.apply_gradients(zip(             gradients_of_generator, generator.trainable_variables))         disc_optimizer.apply_gradients(zip(             gradients_of_discriminator,              discriminator.trainable_variables))     return g_loss,d_loss</pre></li>
+				<li>使用与要显示的图像数量相等的<code>fixed_seeds</code>创建多个固定种子，以便您可以跟踪相同的图像。这可以让你看到单个种子如何随着时间的推移而进化，用<code>for epoch in range</code>追踪你的时间。现在，用<code>for image_batch in dataset</code>循环每个批次。用<code>generator_loss</code>和<code>discriminator_loss</code>继续跟踪发电机和鉴频器的损耗。现在，在训练过程中，您可以很好地显示所有这些信息:<pre>def train(generator, discriminator, dataset, epochs, prefix=None):     fixed_seed = np.random.normal(0, 1, (img_rows * img_cols,                                           seed_vector))     start = time.time()     for epoch in range(epochs):          epoch_start = time.time()         g_loss_list = []         d_loss_list = []         for image_batch in dataset:             t = train_step(image_batch)             g_loss_list.append(t[0])             d_loss_list.append(t[1])         generator_loss = sum(g_loss_list) / len(g_loss_list)         discriminator_loss = sum(d_loss_list) / len(d_loss_list)         epoch_elapsed = time.time() - epoch_start         if (epoch + 1) % 100 == 0:             print (f'Epoch {epoch+1}, gen loss={generator_loss},         disc loss={discriminator_loss},'\                    f' {time_string(epoch_elapsed)}')         save_images(epoch,fixed_seed)     elapsed = time.time()-start     print (f'Training time: {time_string(elapsed)}')</pre></li>
+				<li>Train the DCGAN model on your training dataset:<pre>train(dc_generator, dc_discriminator, train_dataset, \
+      epochs, prefix='-dc-gan')</pre><p>您的输出应该如下所示:</p><div><img src="img/B16341_11_33.jpg" alt="Figure 11.33: Output during training of the DCGAN model&#13;&#10;"/></div><p class="figure-caption">图11.33:DCGAN模型训练期间的输出</p><p>输出显示了发生器和鉴频器在每个时期的损耗。</p></li>
+				<li>Train the vanilla model on your training dataset:<pre>train(generator, discriminator, train_dataset, epochs, \
+      prefix='-vanilla')</pre><p>您的输出应该如下所示:</p><div><img src="img/B16341_11_34.jpg" alt="Figure 11.34: Output during training of the vanilla GAN model&#13;&#10;"/></div><p class="figure-caption">图11.34:普通GAN模型训练期间的输出</p></li>
+				<li>View your images generated by the DCGAN model after the 100th epoch:<pre>a = imread('banana-or-orange/training_set/output'\
+           '/train-dc-gan-99.png')
+plt.imshow(a)</pre><p>您将得到如下输出:</p><div><img src="img/B16341_11_35.jpg" alt="Figure 11.35: Output images from the DCGAN model after 100 epochs&#13;&#10;"/></div><p class="figure-caption">图11.35:100个时期后DCGAN模型的输出图像</p></li>
+				<li>View your images generated by the DCGAN model after the 500th epoch:<pre>a = imread('/ banana-or-orange/training_set'\
+           '/output/train-dc-gan-499.png')
+plt.imshow(a)</pre><p>您将得到如下输出:</p><div><img src="img/B16341_11_36.jpg" alt="Figure 11.36: Output images from the DCGAN model after 500 epochs&#13;&#10;"/></div><p class="figure-caption">图11.36:500个时期后DCGAN模型的输出图像</p></li>
+				<li>View your images generated by the vanilla GAN model after the 100th epoch: <pre>a = imread('banana-or-orange/training_set'\
+           '/output/train-vanilla-99.png')
+plt.imshow(a)</pre><p>您将得到如下输出:</p><div><img src="img/B16341_11_37.jpg" alt="Figure 11.37: Output images from the vanilla GAN model after 100 epochs&#13;&#10;"/></div><p class="figure-caption">图11.37:100个时期后普通GAN模型的输出图像</p></li>
+				<li>View your images generated by the vanilla GAN model after the 500th epoch:<pre>a = imread('/ banana-or-orange/training_set'\
+           '/output/train-vanilla-499.png')
+plt.imshow(a)</pre><p>您将得到如下输出:</p><div><img src="img/B16341_11_38.jpg" alt="Figure 11.38: Output images from the vanilla GAN model after 500 epochs&#13;&#10;"/></div></li>
+			</ol>
+			<p class="figure-caption">图11.38:500个时期后普通GAN模型的输出图像</p>
+			<p>输出显示了500个时期后由vanilla GAN生成的图像。您可以看到它们与DCGAN生成的非常不同。</p>
+			<p>你刚刚完成了这本书的最后一项活动。您使用DCGAN创建了自己的映像，并将其与普通GAN模型进行了比较。从<em class="italic">图11.36 </em>和<em class="italic">图11.38 </em>中可以看出，结果与DCGAN模型的结果非常不同，后者可以清楚地识别为具有不同变化和方向的香蕉状。使用该模型，尽管一些图像比其他图像更像香蕉，但所有图像都至少显示出一些可识别的香蕉特征，如颜色、形状和黑尖的存在。然而，来自普通GAN模型的结果看起来更像训练数据集的像素平均值，这总体上不是现实生活中香蕉的良好表示。所有图像似乎都具有相同的方向，这可能是结果更像训练数据的像素平均值的另一个指标。</p>
+		</div>
+	
+
+
+
+
+
+	
+		<title>B16341_Authors_Page_ePub</title>
+		
+	
+	
+		<div><div/>
+		</div>
+		<div><div><div><img src="img/Matthew_Moocarme.png" alt="Rayon"/>
+				</div>
+				<div><p class="Paragraph-Style-1"><strong class="bold">马修·穆卡梅</strong></p>
+				</div>
+			</div>
+		</div>
+		<div><div><div><img src="img/Anthony_So.png" alt="Rayon"/>
+				</div>
+				<div><p class="Paragraph-Style-1"><strong class="bold">安东尼So </strong></p>
+				</div>
+			</div>
+		</div>
+		<div><div><div><img src="img/Anthony_Maddalone.png" alt="Rayon"/>
+				</div>
+				<div><p class="Paragraph-Style-1">安东尼·马德兰</p>
+				</div>
+			</div>
+		</div>
+		<div><div/>
+		</div>
+		<div><div/>
+		</div>
+		<div><h2 id="_idParaDest-257"><a id="_idTextAnchor286"/>嘿！</h2>
+			<p>我们是这本书的作者马修·穆卡米、安东尼·索和安东尼·马德兰。我们真的希望你喜欢阅读我们的书，并发现它对学习张量流有用。</p>
+			<p>这将真正帮助我们(和其他潜在的读者！)如果您可以在亚马逊上留下评论，分享您对<em class="italic">tensor flow研讨会</em>的想法。</p>
+			<p>前往链接<a href="https://packt.link/r/1800205252">https://packt.link/r/1800205252</a>。</p>
+			<p>运筹学</p>
+			<p>扫描二维码留下你的评论。</p>
+			<div><div><img src="img/qr-code-https___packt.link_r_1800205252.jpg" alt="Barcode"/>
+				</div>
+			</div>
+			<p>您的评论将有助于我们了解本书中哪些地方做得很好，哪些地方可以在未来的版本中进行改进，因此非常感谢。</p>
+			<p>最美好的祝愿，</p>
+			<p>马修·穆卡米、安东尼·苏和安东尼·马德兰</p>
+		</div>
+		<div><div><img src="img/Packt_Logo.png" alt="Packt Logo"/>
+			</div>
+		</div>
+	
+
+</body></html>

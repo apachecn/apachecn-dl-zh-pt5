@@ -1,0 +1,359 @@
+<html><head/><body>
+
+
+    
+        <title>The TensorFlow Toolbox</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">TensorFlow工具箱</h1>
+                
+            
+            
+                
+<p>大多数机器学习平台都面向学术或工业领域的科学家和从业者。因此，虽然它们非常强大，但往往粗糙，用户体验功能很少。</p>
+<p>相当多的精力花在了查看模型的各个阶段，以及查看和汇总跨模型和运行的性能上。即使是查看神经网络也要付出比预期多得多的努力。</p>
+<p>虽然这在神经网络简单且只有几层深度时是可以接受的，但今天的网络要深得多。2015年，微软利用152层的深度网络赢得了年度<strong> ImageNet </strong>竞赛。可视化这样的网络可能是困难的，偷看重量和偏见可能是压倒性的。</p>
+<p>从业者开始使用自制的可视化工具和引导工具来分析他们的网络和运行性能。TensorFlow改变了这一点，在发布整体平台的同时直接发布了TensorBoard。TensorBoard开箱即用，无需额外安装或设置。</p>
+<p>用户只需要根据他们希望捕获的内容来检测他们的代码。它的特点是绘制事件、学习率和随时间的损失；直方图，用于权重和偏差；和图像。图形浏览器允许对神经网络进行交互式审查。</p>
+<p>在本章中，我们将重点关注以下几个方面:</p>
+<ul>
+<li>我们将使用四个常见的模型和数据集作为示例，从馈送TensorBoard所需的仪器开始，强调所需的更改。</li>
+<li>然后，我们将回顾获取的数据以及解释这些数据的方法。</li>
+<li>最后，我们将回顾图形浏览器显示的常见图形。这将有助于你可视化常见的神经网络设置，这将在后面的章节和项目中介绍。这也是对常见网络的直观介绍。</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>A quick preview</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">快速预览</h1>
+                
+            
+            
+                
+<p>即使没有安装TensorFlow，您也可以使用TensorBoard的参考实现。您可以从这里开始:</p>
+<p><a href="https://www.tensorflow.org/tensorboard/index.html#graphs">https://www.tensorflow.org/tensorboard/index.html#graphs.</a></p>
+<p>您可以跟随此处的代码:</p>
+<p><a href="https://github.com/tensorflow/models/blob/master/tutorials/image/cifar10/cifar10_train.py" target="_blank">https://github . com/tensor flow/tensor flow/blob/master/tensor flow/model<br/>s/image/cifar 10/cifar 10 _ train . py .</a></p>
+<p>该示例使用了<strong> CIFAR-10 </strong>图像集。CIFAR-10数据集由Alex Krizhevsky、Vinod Nair和Geoffrey Hinton编译的10类60，000幅图像组成。该数据集已经成为机器学习工作的几个标准学习工具和基准之一。</p>
+<p>让我们从图形浏览器开始。我们可以立即看到一个卷积网络正在使用。这并不奇怪，因为我们在这里尝试对图像进行分类:</p>
+<div><img height="408" width="610" class=" image-border" src="img/cfe3a5b8-cf8d-4c87-b8de-bc605accc81b.png"/></div>
+<p>这只是图表的一种可能的视图。您也可以尝试图形浏览器。它允许深入研究单个组件。</p>
+<p>快速预览的下一站是事件选项卡。该选项卡显示一段时间内的标量数据。不同的统计数据被分组到右侧的各个选项卡中。下面的屏幕截图显示了一些流行的标量统计数据，如网络多个部分的丢失、学习率、交叉熵和稀疏度:</p>
+<div><img height="351" width="699" class=" image-border" src="img/79150dc7-ed50-4625-92d6-ae45e73df412.png"/></div>
+<p>直方图选项卡是一个近亲，因为它显示一段时间内的张量数据。尽管名为TensorFlow v0.7，但它实际上并不显示直方图。相反，它使用百分位数显示张量数据的摘要。</p>
+<p>下图显示了摘要视图。就像事件选项卡一样，数据被分组到右侧的选项卡中。不同的运行可以切换开和关，运行可以显示重叠，允许有趣的比较。</p>
+<p>它有三个运行，我们可以在左侧看到，我们将只看<kbd>softmax</kbd>函数和相关参数。</p>
+<p>现在，不要太担心这些意味着什么，我们只是看看我们可以为自己的分类器实现什么:</p>
+<div><img height="468" width="662" class=" image-border" src="img/df6ca2ab-fc79-440f-b643-a7b5e04d0387.png"/></div>
+<p>然而，摘要视图并没有很好地利用直方图选项卡。相反，我们将放大一张图来观察发生了什么。如下图所示:</p>
+<div><img height="189" width="691" class=" image-border" src="img/6d7a15f4-8379-4e90-8744-27d72f8ba579.png"/></div>
+<p>请注意，每个直方图显示了一个由九条线组成的时间序列。顶部是最大值，中间是中间值，底部是最小值。中间值正上方和正下方的三条线分别是1标准差、1标准差、标准差标志。</p>
+<p>显然，这确实代表了多峰分布，因为它不是直方图。然而，它确实提供了一个快速的要点，否则这些数据将堆积如山。</p>
+<p>需要注意的几件事是如何通过运行收集和分离数据，如何收集不同的数据流，如何放大视图，以及如何放大每个图表。</p>
+<p>图形已经够多了，让我们直接进入代码，这样我们就可以自己运行了！</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Installing TensorBoard</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">安装张量板</h1>
+                
+            
+            
+                
+<p>TensorFlow预装了TensorBoard，所以已经安装了。它作为本地提供的web应用程序运行，可通过浏览器在<kbd>http://0.0.0.0:6006</kbd>访问。方便的是，不需要服务器端代码或配置。</p>
+<p>根据路径的位置，您可以直接运行它，如下所示:</p>
+<pre><strong>tensorboard --logdir=/tmp/tensorlogs</strong></pre>
+<p>如果路径不正确，您可能需要相应地为应用程序添加前缀，如以下命令行所示:</p>
+<pre><strong>tf_install_dir/ tensorflow/tensorboard --<br/>logdir=/tmp/tensorlogs</strong></pre>
+<p>在Linux上，您可以在后台运行它，并让它继续运行，如下所示:</p>
+<pre><strong>nohup tensorboard --logdir=/tmp/tensorlogs &amp;</strong></pre>
+<p>不过，应该对目录结构进行一些思考。仪表板左侧的运行列表由<kbd>logdir</kbd>位置的子目录驱动。下图显示了两次运行- <kbd>MNIST_Run1</kbd>和<kbd>MNIST_Run2</kbd>。有一个有组织的<kbd>runs</kbd>文件夹将允许并排绘制连续的运行以查看差异:</p>
+<div><img class=" image-border" src="img/35fdd820-9895-4675-9d99-eb11d699cb78.png"/></div>
+<p>初始化<kbd>writer</kbd>时，将日志的目录作为第一个参数传入，如下:</p>
+<pre>   writer = tf.summary.FileWriter("/tmp/tensorlogs",   <br/>   sess.graph) </pre>
+<p>考虑保存一个基本位置，并为每次运行追加特定于运行的子目录。这将有助于组织产出，而无需花费更多的心思。我们稍后会详细讨论这一点。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Incorporating hooks into our code</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">在我们的代码中加入钩子</h1>
+                
+            
+            
+                
+<p>开始使用TensorBoard的最佳方式是采用现有的工作示例，并使用TensorBoard所需的代码对它们进行测试。我们将为几个常见的培训脚本这样做。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Handwritten digits</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">手写数字</h1>
+                
+            
+            
+                
+<p>让我们从图像机器学习的典型Hello World开始——MNIST手写数字分类练习。</p>
+<p>正在使用的MNIST数据库有60，000幅图像用于训练，另有10，000幅图像用于测试。它最初由Chris Burges和Corinna Cortes收集，并由Yann LeCun增强。你可以在Yann LeCun的网站(【http://yann.lecun.com/exdb/mnist/】T21)上找到更多关于数据集的信息。</p>
+<p>TensorFlow方便地附带了一个测试脚本，使用MSNIST手写演示了一个卷积神经网络，可从<a href="https://github.com/tensorflow/models/blob/master/tutorials/image/mnist/convolutional.py">https://github . com/tensor flow/models/blob/master/tutorials/image/mnist/convolutionary . py</a>获得。<a href="https://github.com/tensorflow/tensorflow/blob/master/tensorflow/models/image/mnist/convolutional.py"/></p>
+<p>让我们修改这个脚本以允许TensorBoard的使用。如果你想提前看到，下载一份黄金拷贝或者看看deltas我们所有的改动都可以在这本书的GitHub知识库中找到(<a href="https://github.com/mlwithtf/mlwithtf">https://github.com/mlwithtf/mlwithtf</a>)。</p>
+<p>目前，我们建议跟随并逐步进行更改，以理解该过程。</p>
+<p>在<kbd>main</kbd>类的早期，我们将定义<kbd>convn_weights</kbd>、<kbd>convn_biases</kbd>和其他参数的持有者。紧接着，我们将编写以下代码来将它们添加到<kbd>histogram</kbd>:</p>
+<pre>    tf.summary.histogram('conv1_weights', conv1_weights) 
+    tf.summary.histogram('conv1_biases', conv1_biases) 
+    tf.summary.histogram('conv2_weights', conv2_weights) 
+    tf.summary.histogram('conv2_biases', conv2_biases) 
+    tf.summary.histogram('fc1_weights', fc1_weights) 
+    tf.summary.histogram('fc1_biases', fc1_biases) 
+    tf.summary.histogram('fc2_weights', fc2_weights) 
+    tf.summary.histogram('fc2_biases', fc2_biases) </pre>
+<p>前面几行捕获了直方图选项卡的值。请注意，捕获的值形成了直方图选项卡上的子部分，如下面的屏幕截图所示:</p>
+<div><img height="404" width="647" class=" image-border" src="img/71d949ac-fed1-4f05-9faf-941dace523fb.png"/></div>
+<p>接下来，我们来记录一些<kbd>loss</kbd>数字。我们从下面的代码开始:</p>
+<pre>    loss += 5e-4 * regularizers </pre>
+<p>我们将在前一行之后添加<kbd>loss</kbd>数字的<kbd>scalar</kbd>摘要:</p>
+<pre>    tf.summary.scalar("loss", loss) </pre>
+<p>类似地，我们将从计算<kbd>learning_rate</kbd>的标准代码开始:</p>
+<pre>     learning_rate = tf.train.exponential_decay( 
+        0.01,  # Base learning rate. 
+        batch * BATCH_SIZE,  # Current index into the    <br/>        dataset. 
+        train_size,  # Decay step. 
+        0.95,  # Decay rate. 
+        staircase=True) </pre>
+<p>我们将为<kbd>learning_rate</kbd>图添加一个<kbd>scalar</kbd>摘要，如下所示:</p>
+<pre>    tf.summary.scalar("learning_rate", learning_rate) </pre>
+<p>前面这两行帮助我们在EVENTS选项卡中获取这些重要的标量指标:</p>
+<div><img height="431" width="499" class=" image-border" src="img/53e4b291-5aed-43a5-8b61-de36d742b671.png"/></div>
+<p>最后，让我们指示我们的脚本保存图形设置。让我们找到创建<kbd>session</kbd>的脚本部分:</p>
+<pre>    # Create a local session to run the training. 
+    start_time = time.time() 
+    with tf.Session() as sess: </pre>
+<p>在定义了<kbd>sess</kbd>句柄后，我们将捕获如下图形:</p>
+<pre>    writer = tf.summary.FileWriter("/tmp/tensorlogs",  <br/>    sess.graph) 
+    merged = tf.summary.merge_all() </pre>
+<p>运行会话时，我们需要添加我们的<kbd>merged</kbd>对象。我们最初有以下代码:</p>
+<pre>    l, lr, predictions = sess.run([loss, learning_rate,  <br/>    train_prediction], feed_dict=feed_dict) </pre>
+<p>我们将在运行会话时添加我们的<kbd>merged</kbd>对象:</p>
+<pre>    # Run the graph and fetch some of the nodes.       
+    sum_string, l, lr, predictions = sess.run([merged,  <br/>    loss,  <br/>    learning_rate, train_prediction],  <br/>    feed_dict=feed_dict) </pre>
+<p>最后，我们将需要在指定的步骤编写摘要，就像我们通常定期输出验证集准确性一样。因此，我们在计算完<kbd>sum_string</kbd>后增加了一行:</p>
+<pre>    writer.add_summary(sum_string, step) </pre>
+<p>仅此而已！我们刚刚获得了我们的损失率和学习率、神经网络的关键中间参数以及图表的结构。我们已经检查了事件和直方图选项卡，现在让我们看看图表选项卡:</p>
+<div><img height="391" width="695" class=" image-border" src="img/fab51f74-7ad0-49f0-b2fd-c76ae470ce87.png"/></div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>AlexNet</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">AlexNet</h1>
+                
+            
+            
+                
+<p>任何参与图像深度学习的人都应该熟悉AlexNet。Alex Krizhevsky、Ilya Sutskever和Geoffrey E. Hinton撰写的具有里程碑意义的论文<em>使用深度卷积神经网络进行ImageNet分类</em>中介绍了该网络。论文可以在http://www.cs.toronto.edu/~fritz/absps/imagenet.pdf查看。</p>
+<p>这种网络架构在年度ImageNet竞赛中获得了创纪录的准确性。他们的论文中描述了该架构，如下图所示。我们将在后面的章节中使用这种网络架构，但现在，让我们使用TensorBoard浏览网络:</p>
+<div><img class=" image-border" src="img/fc55270a-7218-4c5c-9351-d3573279583a.png"/></div>
+<p>我们不会逐行回顾现有AlexNet代码的变化，但读者可以通过注意Google提供的原始模型代码和我们在本书代码库中包含的修订代码之间的差异，轻松看到变化。</p>
+<p>Google的原始AlexNet TensorFlow实现可从以下网址获得:</p>
+<p><a href="https://github.com/tensorflow/models/blob/master/tutorials/image/alexnet/alexnet_benchmark.py">https://github . com/tensor flow/models/blob/master/tutorials/image/Alex net/Alex net _ benchmark . py .</a></p>
+<p>使用TensorBoard仪器的修订版AlexNet TensorFlow实现可在以下位置找到:</p>
+<p><a href="https://github.com/mlwithtf/mlwithtf/blob/master/chapter_03/alexnet_benchmark.py">https://github . com/mlwithtf/mlwithtf/blob/master/chapter _ 03/Alex net _ benchmark . py .</a></p>
+<p>引入的更改与我们的MNIST示例非常相似。</p>
+<p>首先，找到这段代码的位置:</p>
+<pre>    sess = tf.Session(config=config) 
+    sess.run(init) </pre>
+<p>然后，用以下代码替换它:</p>
+<pre>    sess = tf.Session(config=config) 
+    writer = tf.summary.FileWriter("/tmp/alexnet_logs",  <br/>    sess.graph) 
+    sess.run(init) </pre>
+<p>最后，您可以运行Python文件<kbd>alexnet_benchmark.py</kbd>和TensorBoard命令来可视化图形:</p>
+<pre><strong>python alexnet_benchmark.py</strong>
+<strong>tensorboard --logdir /tmp/alexnet_logs</strong></pre>
+<p>我们在这一部分的重点只是图表。下图显示了图形浏览器的一部分。我们深入研究了第3层(共5层)的卷积，我们正在研究这一层的权重和偏差。</p>
+<p>单击图上的权重节点很有趣，因为我们可以看到形状等细节:<kbd>{"shape":{"dim":[{"size":3},{"size":3},{"size":192},{"size":384}]}}</kbd>。我们可以将这些细节与原始论文和之前引用的图表进行匹配！我们还可以在代码中追溯网络设置的细节:</p>
+<pre>    with tf.name_scope('conv3') as scope: 
+      kernel = tf.Variable(tf.truncated_normal([3, 3, 192, 384], 
+                               dtype=tf.float32, 
+                               stddev=1e-1), name='weights') 
+      conv = tf.nn.conv2d(pool2, kernel, [1, 1, 1, 1], <br/>       padding='SAME') 
+      biases = tf.Variable(tf.constant(0.0, shape=[384], <br/>       dtype=tf.float32), 
+                         trainable=True, name='biases') 
+      bias = tf.nn.bias_add(conv, biases) 
+      conv3 = tf.nn.relu(bias, name=scope) 
+      parameters += [kernel, biases] </pre>
+<p>图形浏览器中的细节和代码是等效的，但是使用TensorBoard可以非常容易地可视化数据流。折叠重复的部分和展开感兴趣的部分也很容易:</p>
+<div><img height="501" width="644" class=" image-border" src="img/73088eb4-aab7-46fb-86e4-58655412e4e9.png"/></div>
+<p>图表是这一部分最有趣的部分，但是当然，您也可以运行我们修改过的脚本并查看训练表现，以及我们正在捕获的大量其他数据。您甚至可以捕获额外的数据。试试看！</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Automating runs</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">自动化运行</h1>
+                
+            
+            
+                
+<p>当试图训练一个分类器时，我们经常会遇到多个变量，而我们不知道这些变量的一个好的设置。查看类似问题的解决方案所使用的值是一个很好的起点。然而，我们经常会遇到一系列需要测试的可能值。让事情变得更复杂的是，我们经常有几个这样的参数，导致我们可能需要测试许多组合。</p>
+<p>对于这种情况，我们建议将感兴趣的参数作为可以传递给培训师的值。然后，<kbd>wrapper</kbd>脚本可以传入参数的各种组合，以及唯一的输出日志子目录，该子目录可能标有描述性名称。</p>
+<p>这将允许对多次测试的结果和中间值进行简单的比较。下图显示了一起绘制的四次运行的损失。我们很容易看到表现不佳和表现过度的配对:</p>
+<div><img height="380" width="577" class=" image-border" src="img/09e61965-8300-46e9-a02a-9833e1f82cdd.png"/></div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Summary</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">摘要</h1>
+                
+            
+            
+                
+<p>在这一章中，我们讨论了TensorBoard的主要领域——事件、直方图和视图。我们修改了流行的模型，以查看TensorBoard可以启动和运行之前所需的确切变化。这应该已经证明了入门TensorBoard所需的相当少的努力。</p>
+<p>最后，我们通过查看各种流行型号的网络设计来关注它们。我们通过使用TensorBoard钩子检测代码，并使用TensorBoard Graph Explorer深入研究网络设置来实现这一点。</p>
+<p>读者现在应该能够更有效地使用TensorBoard，评估训练表现，计划跑步和修改训练脚本。</p>
+<p>接下来，我们将进入卷积网络。我们将使用我们以前工作的一部分，这样我们就可以立即投入工作。但是，我们将重点关注更高级的神经网络设置，以实现更高的精度。对训练准确性的关注反映了大多数从业者努力的焦点，因此是我们面对挑战的时候了。</p>
+<p class="mce-root"/>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>

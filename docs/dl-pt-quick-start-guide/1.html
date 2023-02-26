@@ -1,0 +1,923 @@
+<html><head/><body>
+
+
+    
+        <title>Introduction to PyTorch</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">PyTorch简介</h1>
+                
+            
+            
+                
+<p>这是使用PyTorch框架对深度学习的逐步介绍。PyTorch是深入学习的一个很好的切入点，如果你对Python有所了解，你会发现PyTorch是一种直观、高效和有启发性的体验。快速原型实验和测试想法的能力是PyTorch的核心优势。再加上能够将实验转化为多产的、可部署的资源的可能性，学习曲线挑战获得了丰厚的回报。</p>
+<p>PyTorch是理解深度学习概念的一种相对容易和有趣的方式。您可能会对解决常见的分类问题(如手写识别和图像分类)只需要几行代码感到惊讶。虽然说PyTorch很简单，但是深度学习在很多方面都很难，这是不争的事实。它涉及一些复杂的数学和一些棘手的逻辑难题。然而，这不应该分散对这项事业的乐趣和有用部分的注意力。毫无疑问，机器学习可以提供深刻的见解，解决我们周围世界的重要问题，但要实现这一点可能需要一些工作。</p>
+<p>这本书是一种尝试，不是为了掩饰重要的观点，而是用一种没有术语的简洁的方式来解释它们。如果解复杂的微分方程的想法让你出一身冷汗，你并不孤单。这可能与一些高中创伤有关，一个坏脾气的数学老师愤怒地要求你引用欧拉公式或三角恒等式。这是一个问题，因为数学本身应该是有趣的，洞察力不是来自公式的费力记忆，而是通过理解关系和基本概念产生的。</p>
+<p>另一个可能使深度学习显得困难的事情是，它具有多样化和动态的研究前沿。这可能会让新手感到困惑，因为它没有提供一个明显的入口点。如果你理解了一些原则，并想测试你的想法，找到一套合适的工具可能是一项令人困惑的任务。开发语言、框架、部署架构等等的组合，呈现了一个重要的决策过程。</p>
+<p>机器学习的科学已经成熟到出现了一套用于解决诸如散列分类和回归等问题的通用算法的程度。随后，一些框架被创建来利用这些算法的能力，并使用它们来解决一般的问题。这意味着进入点处于这样一个水平，即这些技术现在掌握在非计算机科学专业人员的手中。不同领域的专家现在可以使用这些想法来推进他们的努力。到本书结束时，加上一点点奉献，你将能够构建和部署有用的深度学习模型，以帮助解决你感兴趣的问题。</p>
+<p>在本章中，我们将讨论以下主题:</p>
+<ul>
+<li>PyTorch是什么？</li>
+<li>安装PyTorch</li>
+<li>基本操作</li>
+<li>加载数据</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>What is PyTorch?</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">PyTorch是什么？</h1>
+                
+            
+            
+                
+<p>PyTorch是一个基于动态张量的深度学习框架，用于实验、研究和生产。它可以用作NumPy的GPU支持的替代物，或者用于构建神经网络的灵活、高效的平台。动态图形创建和紧密的Python集成使PyTorch成为深度学习框架中的佼佼者。</p>
+<p>如果你对深度学习生态系统非常熟悉，那么像Theano和TensorFlow这样的框架，或者像Keras这样的高级衍生品，都是最受欢迎的。PyTorch是深度学习框架集的相对新人。尽管如此，它现在被谷歌、推特和脸书广泛使用。它从其他框架中脱颖而出，因为Theano和TensorFlow都在静态结构中编码计算图形，需要在自包含会话中运行。相比之下，PyTorch可以动态实现计算图。神经网络的结果是，网络可以在运行时改变行为，而只需很少或不需要开销。在TensorFlow和Theano中，要改变行为，你必须有效地从头开始重建网络。</p>
+<p>这种动态实现是通过一个称为基于磁带的auto-diif的过程实现的，它允许PyTorch表达式被自动区分。这有许多优点。梯度可以在运行中计算，由于计算图形是动态的，它可以在每次函数调用时改变，允许它以有趣的方式用于循环和条件调用中，例如，可以响应输入参数或中间结果。这种动态行为和巨大的灵活性使PyTorch成为深度学习的首选实验平台。</p>
+<p>PyTorch的另一个优势是它与Python语言紧密集成。对于Python编码人员来说，它非常直观，并且可以与其他Python包无缝互操作，比如NumPy和SciPy。PyTorch很容易实验。它不仅是构建和运行有用模型的理想工具，也是通过直接实验理解深度学习原理的一种方式。</p>
+<p>如你所料，PyTorch可以在多个<strong>图形处理单元</strong>(<strong>GPU</strong>)上运行。深度学习算法在计算上可能很昂贵。对于大数据集来说尤其如此。PyTorch拥有强大的GPU支持，进程间张量智能内存共享。这基本上意味着有一种高效且用户友好的方式来在CPU和GPU之间分配处理负载。这对测试和运行大型复杂模型的时间有很大的影响。</p>
+<p>动态图形生成、紧密的Python语言集成和相对简单的API使得PyTorch成为研究和实验的优秀平台。然而，PyTorch 1之前的版本存在一些缺陷，这使得它无法在生产环境中表现出色。PyTorch 1正在解决这一缺陷。</p>
+<p>研究是深度学习的一个重要应用，但越来越多的深度学习被嵌入到在网络、设备或机器人上实时运行的应用中。这样的应用程序可以同时处理数千个查询，并与大量动态数据进行交互。尽管Python是最适合人类使用的语言之一，但其他语言也有特定的效率和优化，最常见的是C++和Java。即使构建特定深度学习模型的最佳方式可能是使用PyTorch，但这可能不是部署它的最佳方式。这不再是一个问题，因为现在有了PyTorch 1，我们可以导出PyTorch模型的Python自由表示。</p>
+<p>这是通过PyTorch的主要利益相关者脸书和微软之间的合作实现的，他们创建了<strong>开放神经网络交换</strong> ( <strong> ONNX </strong>)来帮助开发人员在框架之间转换神经网络模型。这导致了PyTorch与更适合生产的框架CAFFE2的合并。在CAFFE2中，模型由纯文本模式表示，这使得它们与语言无关。这意味着它们更容易部署到Android、iOS或Rasberry Pi设备上。</p>
+<p>考虑到这一点，PyTorch版本1扩展了其API，包括生产就绪功能，例如优化Android和iPhone的代码，一个<strong>just in time</strong>(<strong>JIT</strong>)c++编译器，以及几种使<em> Python免费</em>表示您的模型的方法。</p>
+<p>综上所述，PyTorch具有以下特点:</p>
+<ul>
+<li>动态图形表示</li>
+<li>与Python编程语言紧密集成</li>
+<li>高级和低级API的混合</li>
+<li>在多个GPU上直接实现</li>
+<li>能够为导出和生产构建<em>无Python的</em>模型表示</li>
+<li>使用Caffe框架扩展到海量数据</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Installing PyTorch</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">安装PyTorch</h1>
+                
+            
+            
+                
+<p>PyTorch可以在macOS X、64位Linux和64位Windows上运行。请注意，Windows目前不提供对PyTorch中使用GPU的(简单)支持。在安装PyTorch之前，您需要在计算机上安装Python 2.7或Python 3.5 / 3.6，记住要为每个Python版本安装正确的版本。除非您有理由不安装，否则建议您安装Python的Anaconda发行版。这个这个可以从:<a href="https://anaconda.org/anaconda/python" target="_blank">https://anaconda.org/anaconda/python</a>得到。</p>
+<p>Anaconda包括PyTorch的所有依赖项，以及对您的深度学习工作至关重要的技术、数学和科学库。整本书都会用到它们，所以除非你想单独安装它们，否则就安装Anaconda。</p>
+<p>以下是我们将在本书中使用的软件包和工具的列表。它们都安装了Anaconda:</p>
+<ul>
+<li>一个数学库，主要用于处理多维数组</li>
+<li><kbd>Matplotlib</kbd>:绘图和可视化库</li>
+<li><kbd>SciPy</kbd>:科学技术计算包</li>
+<li><kbd>Skit-Learn</kbd>:机器学习的图书馆</li>
+<li><kbd>Pandas</kbd>:处理数据的库</li>
+<li><kbd>IPython</kbd>:笔记本风格的代码编辑器，用于在浏览器中编写和运行代码</li>
+</ul>
+<p>一旦安装了Anaconda，现在就可以安装PyTorch了。前往PyTorch网站<a href="https://pytorch.org/" target="_blank">https://pytorch.org/</a>。</p>
+<p>这个网站上的安装矩阵非常简单明了。只需选择您的操作系统、Python版本和CUDA版本(如果您有GPU ),然后运行适当的命令。</p>
+<p>和往常一样，在安装PyTorch之前，确保您的操作系统和依赖包是最新的，这是一个很好的做法。Anaconda和PyTorch运行在Windows、Linux和macOS上，尽管Linux可能是最常用和最一致的操作系统。在本书中，我将使用运行在Linux上的Python 3.7和Anaconda 3.6.5</p>
+<p>本书中的代码写在Jupyter笔记本上，这些笔记本可以从本书的网站上获得。</p>
+<p>您可以选择在您自己的机器上本地设置PyTorch环境，或者在云服务器上远程设置。它们各有利弊。在本地工作的好处是通常更容易和更快地开始工作。如果您不熟悉SSH和Linux终端，这一点尤其正确。只需安装Anaconda和PyTorch，您就可以上路了。此外，您可以选择和控制自己的硬件，虽然这是一项前期成本，但从长远来看，它通常更便宜。一旦您开始扩大硬件需求，云解决方案就会变得非常昂贵。在本地工作的另一个好处是，您可以选择和定制您的<strong>集成开发环境</strong> ( <strong> IDE </strong>)。事实上，Anaconda有自己优秀的桌面Spyder。</p>
+<p>在构建自己的深度学习硬件时，有几件事需要记住，并且需要GPU加速:</p>
+<ul>
+<li>使用兼容NVIDIA CUDA的GPU(例如，GTX 1060或GTX 1080)</li>
+<li>至少有16个PCIe通道的芯片组</li>
+<li>至少16 GB的内存</li>
+</ul>
+<p>在云上工作确实提供了在任何机器上工作的灵活性，并且更容易试验不同的操作系统、平台和硬件。您还可以更轻松地共享和协作。开始时通常很便宜，每月只需几美元，甚至免费，但随着项目变得越来越复杂和数据密集，您将需要为更多容量付费。</p>
+<p>让我们简单看一下两个云服务器主机的安装过程:Digital Ocean和Amazon Web Services。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Digital Ocean</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">数字海洋</h1>
+                
+            
+            
+                
+<p>数字海洋为云计算提供了一个最简单的切入点。它提供了可预测的简单支付结构和简单的服务器管理。遗憾的是，数字海洋目前不支持GPU。该功能围绕d <em> roplets </em>，虚拟专用服务器的预建实例。以下是设置droplet所需的步骤:</p>
+<ol>
+<li>注册一个数字海洋帐户。转到<a href="https://www.digitalocean.com/" target="_blank">https://www.digitalocean.com/.</a></li>
+<li>点击创建按钮，选择新建Droplet <strong>。</strong></li>
+<li>选择Linux的Ubuntu发行版，选择2g或以上的计划。</li>
+<li>如果需要，选择CPU优化。默认值应该可以开始使用。</li>
+<li>或者，设置公钥/私钥加密。</li>
+<li>使用发送给您的电子邮件中包含的信息设置SSH客户端(例如PuTTY)。</li>
+<li>通过SSH客户端和最新的Anaconda安装程序<kbd>curl</kbd> <strong> </strong>连接到您的droplet。您可以在<a href="https://repo.continuum.io/" target="_blank">https://repo.continuum.io/</a>找到适合您特定环境的安装程序的地址位置。<a href="https://repo.continuum.io/" target="_blank"/></li>
+<li>使用以下命令安装PyTorch:</li>
+</ol>
+<pre style="padding-left: 60px">conda install pytorch torchvision -c pytorch</pre>
+<p>一旦您启动了droplet，您就可以通过SSH客户端访问Linux命令。在命令提示符下，您可以从<a href="https://www.anaconda.com/download/#linux" target="_blank">https://www.anaconda.com/download/#linux</a>获得最新的Anaconda安装程序。<a href="https://www.anaconda.com/download/#linux" target="_blank"/></p>
+<p>安装脚本也可从https://repo.continuum.io/archive/.的continuum archive获得。完整的分步说明可从数字海洋教程部分获得。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Tunneling in to IPython</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">隧道连接到IPython</h1>
+                
+            
+            
+                
+<p>IPython是一种通过web浏览器编辑代码的简单方便的方法。如果你在台式电脑上工作，你可以启动IPython，将浏览器指向<kbd>localhost:8888</kbd>。这是IPython服务器Jupyter运行的端口。但是，如果您在云服务器上工作，那么处理代码的一种常见方式是使用SSH隧道连接到IPython。到IPython的隧道包括以下步骤:</p>
+<ol>
+<li>在您的SSH客户端中，将您的目的端口设置为<kbd>localhost:8888</kbd>。在PuTTY中，转到连接| SSH |隧道。</li>
+<li>将源端口设置为高于<kbd>8000</kbd>的任何值，以避免与其他服务冲突。单击添加。保存这些设置并打开连接。像往常一样登录您的droplet。</li>
+<li>在服务器实例的命令提示符下输入<kbd>jupyter notebook</kbd>，启动IPython服务器。</li>
+<li>通过将浏览器指向<kbd>localhost: source port</kbd> <em>来访问IPython</em>例如，<kbd>localhost:8001</kbd>。</li>
+<li>启动IPython服务器。</li>
+</ol>
+<p>请注意，您可能需要一个令牌来首次访问服务器。一旦启动Jupyter，就可以从命令输出中获得这一点。您可以将此输出中给出的URL直接复制到浏览器的地址栏中，将端口地址更改为您的本地源端口地址，例如:<kbd>8001</kbd>，或者您可以选择将令牌(即<kbd>token=</kbd>之后的部分)粘贴到Jupyter启动页面中，并替换为密码，以方便将来使用。您现在应该能够打开、运行和保存IPython笔记本了。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Amazon Web Services (AWS)</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">亚马逊网络服务(AWS)</h1>
+                
+            
+            
+                
+<p>AWS是最初的云计算平台，最著名的是其高度可扩展的架构。它提供了大量的产品。我们需要从EC2实例开始。这可以从AWS控制面板的服务选项卡中访问。从那里，选择EC2，然后启动实例。从这里，您可以选择您需要的机器映像。AWS提供了几种专门用于深度学习的机器图像。你可以随意试验其中的任何一个，但是我们这里要用的是Ubuntu version 10的深度学习AMI。它附带了PyTorch和TensorFlow的预安装环境。选择此选项后，您可以选择其他选项。默认的2 GB内存的T2微处理器应该可以试验；然而，如果你想要GPU加速，你将需要使用T2中等实例类型。最后，当您启动实例时，系统会提示您创建并下载您的公钥-私钥对。然后，您可以使用SSH客户机连接到服务器实例，并按照前面的说明隧道连接到Jupyter笔记本。再次检查文档以获得更详细的信息。亚马逊有一个按资源付费的模式，所以重要的是你要监控你正在使用的资源，以确保你不会收到任何不必要的或意想不到的费用。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Basic PyTorch operations</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">基本PyTorch操作</h1>
+                
+            
+            
+                
+<p>张量是PyTorch的主力。如果你懂线性代数，它们就相当于一个矩阵。火炬张量实际上是<kbd>numpy.array</kbd>对象的扩展。张量是深度学习系统中一个必不可少的概念组件，因此很好地理解它们是如何工作的非常重要。</p>
+<p class="mce-root CDPAlignLeft CDPAlign">在第一个例子中，我们将研究大小为2 x 3的张量。在PyTorch中，我们可以像创建NumPy数组一样创建张量。例如，我们可以向它们传递嵌套列表，如下面的代码所示:</p>
+<div><img src="img/a1697600-13b3-4e70-9ffb-5a1412001b98.png" style="width:34.42em;height:15.42em;"/></div>
+<p>这里我们创建了两个张量，每个张量的维数都是2 x 3。你可以看到我们创建了一个简单的线性函数(关于线性函数的更多内容在<a href="fc03f00c-2991-4e13-af19-6afbf2eb6ded.xhtml" target="_blank">第二章</a>、<em>深度学习基础</em>)并将其应用于<kbd>x</kbd>和<kbd>y</kbd>并打印出结果。我们可以通过下图对此进行可视化:</p>
+<div><img src="img/55081296-704a-40a9-a97e-93144dd284d4.png" style="width:32.50em;height:7.67em;"/></div>
+<p>从线性代数中你可能知道，矩阵乘法和加法是逐元素发生的，所以对于<em> x </em>的第一个元素，我们把它写成<em> X <sub> 00 </sub> </em>。这个乘以二加到<em> y </em>的第一个元素，写成<em>Y<sub>00</sub>T19】，给出<em> F <sub> 00 </sub> = 9。X <sub> 01 </sub> = 2 </em>和<em> Y <sub> 01 </sub> = 8所以f <sub> 01 </sub> = 4 + 12 </em>。请注意，索引从零开始。</em></p>
+<p>如果你从未看过任何线性代数，不要太担心这个，因为我们将在第2章、<em>深度学习基础</em>中复习这些概念，并且你将很快练习Python索引。现在，就把我们的2 x 3张量想象成有数字的表格。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Default value initialization</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">默认值初始化</h1>
+                
+            
+            
+                
+<p>在很多情况下，我们需要将torch张量初始化为默认值。这里，我们创建三个2 x 3张量，用0、1和随机浮点数填充它们:</p>
+<div><img src="img/f3f7a218-5282-4259-8555-dca6b25c49d1.png" style="width:22.83em;height:18.00em;"/></div>
+<p>当我们初始化随机数组时，要考虑的一个要点是所谓的可重复性种子。看看当您多次运行前面的代码时会发生什么。每次你都会得到一组不同的随机数。通常在机器学习中，我们需要能够重现结果。我们可以通过使用随机种子来实现这一点。下面的代码演示了这一点:</p>
+<div><img src="img/6e5870c7-2d17-4a52-b52e-de2adc34d8c1.png" style="width:27.83em;height:8.67em;"/></div>
+<p>请注意，当您多次运行此代码时，张量值保持不变。如果您通过删除第一行来删除种子，那么每次运行代码时，张量值将会不同。使用什么数字作为随机数生成器的种子并不重要，只要它是一致的，就能获得可重复的结果。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Converting between tensors and NumPy arrays</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">张量和NumPy数组之间的转换</h1>
+                
+            
+            
+                
+<p>转换NumPy数组就像用torch张量对它执行操作一样简单。下面的代码应该可以说明这一点:</p>
+<div><img src="img/059d7741-b2c3-4413-9141-b188c5376cbf.png" style="width:24.75em;height:15.50em;"/></div>
+<p>我们可以看到torch张量的结果。在许多情况下，我们可以将NumPy数组与张量互换使用，并始终确保结果是张量。然而，有时我们需要从数组中显式地创建一个张量。这是通过<kbd>torch.from_numpy</kbd>功能完成的:</p>
+<div><img src="img/c7a6a214-68bf-40bc-babb-467509972702.png" style="width:23.83em;height:11.50em;"/></div>
+<p>要从张量转换成NumPy数组，只需调用<kbd>torch.numpy()</kbd>函数:</p>
+<div><img src="img/2c22ace0-a823-47f6-a80b-06fb404f96a1.png" style="width:36.83em;height:10.58em;"/></div>
+<p>注意，我们使用Python内置的<kbd>type()</kbd>函数，如在<kbd>type(object)</kbd>中，而不是我们之前使用的<kbd>tensor.type()</kbd>。NumPy数组没有<kbd>type</kbd>属性。另一个需要理解的重要事情是NumPy数组和PyTorch张量共享相同的内存空间。例如，看看当我们更改变量值时会发生什么，如下面的代码所示:</p>
+<div><img src="img/27ffc71b-ccc7-49f0-8ec5-1db41a3ba746.png"/></div>
+<p class="mce-root">还要注意，当我们打印一个张量时，它返回一个由张量本身及其<kbd>dtype</kbd>或数据类型属性组成的元组。这里很重要，因为有些<kbd>dtype</kbd>数组不能转化为张量。例如，考虑以下代码:</p>
+<div><img src="img/4f5282bd-e7be-4cb5-ba0d-b0fa815e2d17.png" style="width:28.42em;height:4.75em;"/></div>
+<p>这将生成一条错误消息，告诉我们只有支持的<kbd>dtype</kbd>才能转换成张量。显然，<kbd>int8</kbd>不是这些受支持的类型之一。我们可以通过将我们的<kbd>int8</kbd>数组转换为<kbd>int64</kbd>数组，然后将其传递给<kbd>torch.from_numpy</kbd>来解决这个问题。我们使用<kbd>numpy.astype</kbd>函数来实现这一点，如以下代码所示:</p>
+<div><img src="img/9def7a81-8194-483d-8b8c-b3e1ba2a5503.png" style="width:38.92em;height:7.25em;"/></div>
+<p>理解<kbd>numpy dtype</kbd>阵列如何转换成火炬<kbd>dtype</kbd>也很重要。在前面的示例中，<kbd>numpy int32</kbd>转换为<kbd>IntTensor</kbd>。下表列出了焊炬<kbd>dtype</kbd>及其等同物<kbd>numpy</kbd>:</p>
+<table style="border-collapse: collapse;width: 100%" border="1">
+<tbody>
+<tr>
+<td style="width: 101px">
+<p><strong> Numpy型</strong></p>
+</td>
+<td style="width: 337px">
+<p><strong>数据类型</strong></p>
+</td>
+<td style="width: 179px">
+<p><strong>焊枪类型</strong></p>
+</td>
+<td style="width: 272px">
+<p><strong>描述</strong></p>
+</td>
+</tr>
+<tr>
+<td style="width: 101px">
+<p><kbd>int64</kbd></p>
+</td>
+<td style="width: 337px">
+<p><kbd>torch.int64</kbd> <kbd>torch.float</kbd></p>
+</td>
+<td style="width: 179px">
+<p><kbd>LongTensor</kbd></p>
+</td>
+<td style="width: 272px">
+<p>64位整数</p>
+</td>
+</tr>
+<tr>
+<td style="width: 101px">
+<p><kbd>int32</kbd></p>
+</td>
+<td style="width: 337px">
+<p><kbd>torch.int32</kbd>T24】</p>
+</td>
+<td style="width: 179px">
+<p><kbd>IntegerTensor</kbd></p>
+</td>
+<td style="width: 272px">
+<p>32位有符号整数</p>
+</td>
+</tr>
+<tr>
+<td style="width: 101px">
+<p><kbd>uint8 </kbd></p>
+</td>
+<td style="width: 337px">
+<p><kbd>torch.uint8</kbd></p>
+</td>
+<td style="width: 179px">
+<p><kbd>ByteTensor</kbd></p>
+</td>
+<td style="width: 272px">
+<p>8位无符号整数</p>
+</td>
+</tr>
+<tr>
+<td style="width: 101px">
+<p><kbd>float64 double</kbd></p>
+</td>
+<td style="width: 337px">
+<p><kbd>torch.float64</kbd> <kbd>torch.double</kbd></p>
+</td>
+<td style="width: 179px">
+<p><kbd>DoubleTensor</kbd></p>
+</td>
+<td style="width: 272px">
+<p>64位浮点</p>
+</td>
+</tr>
+<tr>
+<td style="width: 101px">
+<p><kbd>float32</kbd></p>
+</td>
+<td style="width: 337px">
+<p><kbd>torch.float32</kbd> <kbd>torch.float</kbd></p>
+</td>
+<td style="width: 179px">
+<p><kbd>FloatTensor</kbd></p>
+</td>
+<td style="width: 272px">
+<p>32位浮点</p>
+</td>
+</tr>
+<tr>
+<td style="width: 101px">
+<p> </p>
+</td>
+<td style="width: 337px">
+<p><kbd>torch.int16</kbd> <kbd>torch.short</kbd></p>
+</td>
+<td style="width: 179px">
+<p><kbd>ShortTensor</kbd></p>
+</td>
+<td style="width: 272px">
+<p>16位有符号整数</p>
+</td>
+</tr>
+<tr>
+<td style="width: 101px"/>
+<td style="width: 337px">
+<p><kbd>torch.int8</kbd></p>
+</td>
+<td style="width: 179px">
+<p><kbd>CharTensor</kbd></p>
+</td>
+<td style="width: 272px">
+<p>6位有符号整数</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p> </p>
+<p>张量的默认<kbd>dtype</kbd>为<kbd>FloatTensor</kbd>；然而，我们可以通过使用张量的<kbd>dtype</kbd>属性来指定特定的数据类型。有关示例，请参见以下代码:</p>
+<div><img src="img/b7cc75b7-2a08-4dc3-a313-5df73209c0fb.png" style="width:30.83em;height:7.17em;"/></div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Slicing and indexing and reshaping</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">切片、索引和整形</h1>
+                
+            
+            
+                
+<p><kbd>torch.Tensor</kbd>拥有NumPy的大部分属性和功能。例如，我们可以像NumPy数组一样对张量进行切片和索引:</p>
+<div><img src="img/584f1b15-510a-4415-beaf-b2aa132d370f.png" style="width:14.00em;height:7.83em;"/></div>
+<p>这里我们打印出了<kbd>x</kbd>的第一个元素，写为<em> x <sub> 0 </sub> </em>，在第二个例子中，我们打印出了<kbd>x</kbd>的第二个元素的切片；在这种情况下，<em>x<sub>11</sub>T63<em>x<sub>12</sub>T67】。</em></em></p>
+<p>如果您没有遇到过切片和索引，您可能想再看看这个。请注意，索引是从<kbd>0</kbd>开始的，而不是从<kbd>1</kbd>开始的，我们保留了与此一致的下标符号。还要注意，切片<kbd>[1][0:2]</kbd>是元素<em>x<sub>10</sub>T18】和<em> x <sub> 11 </sub> </em>，包含这两个元素。它不包括切片中指定的结束索引，即索引<kbd>2</kbd>。</em></p>
+<p>我们可以使用<kbd>view()</kbd>函数创建一个现有张量的重塑副本。以下是三个例子:</p>
+<div><img src="img/788c12a0-63ac-4461-a840-c6c29bc848ff.png" style="width:22.92em;height:18.50em;"/></div>
+<p>(<kbd>3</kbd>、<kbd>2</kbd>)和(<kbd>6</kbd>、<kbd>1</kbd>)做什么很清楚，但是第一个例子中的<kbd>–1</kbd>呢？如果您知道需要多少列，但不知道需要多少行，这将非常有用。在这里指示<kbd>–1</kbd>是告诉PyTorch计算需要的行数。在没有其他维度的情况下使用它只会创建一个单行张量。如果您不知道输入张量的形状，但知道它需要有三行，您可以重写前面提到的示例二，如下所示:</p>
+<div><img src="img/08d1e9bd-f6be-4e5f-8986-f245cc2ad3a7.png" style="width:17.25em;height:8.75em;"/></div>
+<p>一个重要的操作是交换轴或换位。对于一个二维张量，我们a可以使用<kbd>tensor.transpose()</kbd>，传递给它我们想要转置的轴。在这个例子中，原来的2 x 3张量变成了3 x 2张量。行只是变成了列:</p>
+<div><img src="img/af234137-04cd-46c9-b648-fb67489a12e8.png" style="width:18.17em;height:9.08em;"/></div>
+<p>在PyTorch中，<kbd>transpose()</kbd>一次只能交换两个轴。我们可以在多个步骤中使用<kbd>transpose</kbd>;然而，更方便的方法是使用<kbd>permute()</kbd>，向它传递我们想要交换的轴。下面的例子应该可以说明这一点:</p>
+<div><img src="img/ae328fc7-ef5a-4580-aa7d-e03727ee5716.png"/></div>
+<p>当我们考虑二维张量时，我们可以把它们想象成平板。当我们移动到更高维度时，这种视觉表现就变得不可能了。我们只是耗尽了空间维度。深度学习的神奇之处在于，就所涉及的数学而言，它并不重要。现实世界的每个特征都被编码到数据结构的一个维度中。所以，我们可能在处理潜在的几千维的张量。虽然这可能会令人不安，但大多数可以在二维或三维空间中展示的想法在更高维空间中同样适用。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>In place operations</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">就地操作</h1>
+                
+            
+            
+                
+<p>理解就地操作和分配操作之间的区别很重要。例如，当我们使用<kbd>transpose(x)</kbd>时，会返回一个值，但<kbd>x</kbd>的值不会改变。在到目前为止的所有例子中，我们都是通过赋值来执行操作的。也就是说，我们已经将一个变量赋给了一个运算的结果，或者只是将它打印到输出中，就像前面的例子一样。在任一情况下，原始变量保持不变。或者，我们可能需要在适当的位置应用一个操作。当然，我们可以给变量本身赋值，比如在<kbd>x = x.transpose(0,1)</kbd>；然而，更方便的方法是就地操作。通常，PyTorch中的就地操作有一个尾随下划线。有关示例，请参见以下代码:</p>
+<div><img src="img/7ca2c271-9c18-47b5-bb20-79974476688d.png" style="width:16.67em;height:12.58em;"/></div>
+<p>作为另一个例子，这是我们在本章开始时在<kbd>y</kbd>上使用就地操作的线性函数:</p>
+<div><img src="img/f6c09eef-fdf6-43d9-b41d-a9dbf0c29950.png" style="width:17.25em;height:12.08em;"/></div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Loading data</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">加载数据</h1>
+                
+            
+            
+                
+<p>你将花在深度学习项目上的大部分时间将用于处理数据，深度学习项目失败的主要原因之一是因为糟糕的或理解不佳的数据。当我们使用众所周知且构造良好的数据集时，这个问题经常被忽略。这里的重点是学习模型。让深度学习模型工作的算法本身就足够复杂，而这种复杂性不会因某些仅部分已知的东西(如不熟悉的数据集)而加剧。真实世界的数据是嘈杂的、不完整的，并且容易出错。这些混杂轴意味着，如果深度学习算法没有给出合理的结果，在代码中的逻辑错误被消除后，坏数据或我们对数据的理解错误可能是罪魁祸首。</p>
+<p>因此，抛开我们与数据的角力，并理解深度学习可以提供有价值的现实世界见解，我们如何学习深度学习？我们的出发点是尽可能多地消除变量。这可以通过使用众所周知的代表特定问题的数据来实现；比如说，分类。这使得我们既有了深度学习任务的起点，也有了检验模型想法的标准。</p>
+<p>最著名的数据集之一是手写数字的MNIST数据集，其中通常的任务是正确地分类每个数字，从0到9。最好的模型误差率在0.2%左右。我们可以将这个表现良好的模型稍加调整，应用到任何视觉分类任务中，得到不同的结果。我们不太可能得到接近0.2%的结果，原因是数据不同。理解如何tweek深度学习模型以考虑这些有时细微的数据差异，是成功的深度学习实践者的关键技能之一。</p>
+<p>考虑从彩色照片进行面部识别的图像分类任务。任务仍然是分类，但是数据类型和结构的不同决定了模型需要如何改变来考虑这一点。如何做到这一点是机器学习的核心。例如，如果我们处理彩色图像，而不是黑白图像，我们将需要两个额外的输入通道。我们还需要每个可能的类的输出通道。在一个笔迹分类任务中，我们需要10个输出通道；每个数字一个通道。对于面部识别任务，我们会考虑为每个目标面部设置一个输出通道(比如，警察数据库中的罪犯)。</p>
+<p>显然，一个重要的考虑因素是数据类型和结构。图像数据在图像中的组织方式与音频信号或医疗设备的输出方式有很大不同。如果我们试图根据人们的声音对他们的名字进行分类，或者根据症状对疾病进行分类，会怎么样呢？都是分类任务；然而，在每一个特定的案例中，代表每一个的模型将会有很大的不同。为了在每种情况下建立合适的模型，我们需要非常熟悉我们正在使用的数据。</p>
+<p>讨论每种数据类型、格式和结构的细微差别已经超出了本书的范围。我们能做的是让您对PyTorch中数据处理的工具、技术和最佳实践有一个简单的了解。深度学习数据集通常非常大，了解它们在内存中的处理方式是一个重要的考虑因素。在将数据输入模型之前，我们需要能够转换数据、批量输出数据、混洗数据以及对数据执行许多其他操作。我们需要能够在不将整个数据集加载到内存中的情况下完成所有这些事情，因为许多数据集实在是太大了。PyTorch在处理数据时采用对象方法，为每个特定的活动创建类对象。我们将在接下来的章节中对此进行更详细的研究。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>PyTorch dataset loaders</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">PyTorch数据集加载器</h1>
+                
+            
+            
+                
+<p>Pytorch包括几个数据集的数据加载器，可以帮助您入门。<kbd>torch.dataloader</kbd>是用于加载数据集的类。以下是包含的torch数据集列表和简要说明:</p>
+<table style="border-collapse: collapse;width: 100%" border="1">
+<tbody>
+<tr>
+<td>
+<p><strong> MNIST </strong></p>
+</td>
+<td>
+<p>手写数字1–9。手写字符NIST数据集的子集。包含60，000个测试图像的训练集和10，000个测试集。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><strong>时尚- MNIST </strong></p>
+</td>
+<td>
+<p>MNIST的嵌入式数据集。包含时尚物品的图像；比如t恤，裤子，套头衫。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><strong> EMNIST </strong></p>
+</td>
+<td>
+<p>基于NIST手写字符，包括字母和数字，并拆分为47、26和10类分类问题。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><strong> COCO </strong></p>
+</td>
+<td>
+<p>超过100，000张图片被分类为日常物品；例如，人、背包和自行车。每个图像可以有多个类别。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><strong> LSUN </strong></p>
+</td>
+<td>
+<p>用于图像的大规模场景分类；比如卧室，桥，教堂。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><strong> Imagenet-12 </strong></p>
+</td>
+<td>
+<p>包含120万幅图像和1，000个类别的大规模视觉识别数据集。用<kbd>ImageFolder</kbd>类实现，其中每个类都在一个文件夹中。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><strong> CIFAR </strong></p>
+</td>
+<td>
+<p>60，000幅低分辨率(32 32)彩色图像，分10个互斥类；例如，飞机、卡车和汽车。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><strong> STL10 </strong></p>
+</td>
+<td>
+<p>类似于CIFAR，但具有更高的分辨率和更大数量的未标记图像。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><strong> SVHN </strong></p>
+</td>
+<td>
+<p>从谷歌街景获取的60万张街道号图片。用于现实世界设置中的数字识别。</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><strong>摄影图</strong></p>
+</td>
+<td>
+<p>学习局部图像描述符。由126个补丁组成的灰度图像和描述符文本文件组成。用于模式识别。</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>下面是我们如何将这些数据集加载到PyTorch中的典型示例:</p>
+<div><img src="img/93a99bb6-b520-4f86-b15f-e7e6122a5413.png"/></div>
+<p><kbd>CIFAR10</kbd>是一个<kbd>torch.utils.dataset</kbd>物体。在这里，我们传递给它四个参数。我们指定了一个相对于代码运行位置的根目录，一个布尔值<kbd>train</kbd>，表示我们是否希望加载测试或训练集，一个布尔值，如果设置为<kbd>True</kbd>，将检查数据集是否已经下载，如果没有下载，以及一个可调用的转换。在这种情况下，我们选择的转换是<kbd>ToTensor()</kbd>。这是一个内置的<kbd>torchvision.transforms</kbd>类，它返回一个张量。我们将在本章后面更详细地讨论转换。</p>
+<p>数据集的内容可以通过简单的索引查找来检索。我们还可以用<kbd>len</kbd>函数检查整个数据集的长度。我们还可以按顺序遍历数据集。下面的代码演示了这一点:</p>
+<div><img src="img/4565604a-7750-4bd0-a56e-86d46624c8d2.png"/></div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Displaying an image</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">显示图像</h1>
+                
+            
+            
+                
+<p><kbd>CIFAR10</kbd> dataset对象返回一个元组，其中包含一个图像对象和一个表示图像标签的数字。从图像数据的大小可以看出，每个样本都是一个3 x 32 x 32的张量，代表图像中322个像素中每个像素的三个颜色值。重要的是要知道这与<kbd>matplotlib</kbd>使用的格式并不完全相同。张量以<kbd>[color, height, width]</kbd>格式处理图像，而<kbd>numpy</kbd>图像以<kbd>[height, width, color]</kbd>格式处理。为了绘制图像，我们需要使用<kbd>permute()</kbd>函数交换轴，或者使用<kbd>transpose</kbd>函数将其转换为NumPy数组。注意，我们不需要将图像转换成NumPy数组，因为<kbd>matplotlib</kbd>将显示正确排列的张量。下面的代码应该可以说明这一点:</p>
+<div><img src="img/4a8d5854-1b40-444c-a7a8-4bee92184871.png"/></div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>DataLoader</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">数据加载器</h1>
+                
+            
+            
+                
+<p>我们将看到，在深度学习模型中，我们可能不总是希望一次加载一个图像，或者每次都以相同的顺序加载图像。出于这个以及其他原因，使用<kbd>torch.utils.data.DataLoader</kbd>对象通常更好。<kbd>DataLoader</kbd>提供了一个多用途的迭代器，以特定的方式对数据进行采样，比如批量采样或者混洗。这也是在多处理器环境中分配工作人员的一个方便的地方。</p>
+<p>在以下示例中，我们分批对数据集进行采样，每批四个样本:</p>
+<div><img src="img/ae7f3089-5874-489b-92e3-dfdb1d30db51.png"/></div>
+<p>这里<kbd>DataLoader</kbd>返回一个两个张量的元组。第一个张量包含该批中所有四个图像的图像数据。第二个张量是图像标签。每批由四个图像标签、图像对或样本组成。在迭代器上调用<kbd>next()</kbd>会生成下一组四个样本。在机器学习术语中，对整个数据集的每一遍都被称为一个时期。这种技术被广泛使用，正如我们将看到的训练和测试深度学习模型。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Creating a custom dataset</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">创建自定义数据集</h1>
+                
+            
+            
+                
+<p><kbd>Dataset</kbd>类是代表数据集的抽象类。其目的是以一致的方式表示数据集的具体特征。当我们处理不熟悉的数据集时，创建一个<kbd>Dataset</kbd>对象是理解和表示数据结构的好方法。它和一个<kbd>data loader</kbd>类一起使用，以一种干净有效的方式从数据集中抽取样本。下图说明了如何使用这些类:</p>
+<div><img src="img/e03c0f94-a8ed-42fe-96a0-1eb2956445be.png" style="width:37.50em;height:16.33em;"/></div>
+<p>我们使用<kbd>Dataset</kbd>类执行的常见操作包括检查数据的一致性、应用转换方法、将数据分成训练集和测试集，以及加载单个样本。</p>
+<p>在下面的例子中，我们使用了一个小的玩具数据集，它由被分类为玩具或非玩具的物体的图像组成。这是一个简单的图像分类问题的代表，其中模型是在一组标记图像上训练的。深度学习模型将需要以一致的方式应用各种转换的数据。可能需要分批抽取样本，并对数据集进行洗牌。拥有一个用于表示这些数据任务的框架，可以极大地简化和增强深度学习模型。</p>
+<p>完整的数据集可在<a href="http://www.vision.caltech.edu/pmoreels/Datasets/Giuseppe_Toys_03/">http://www . vision . Caltech . edu/pmore els/Datasets/Giuseppe _ Toys _ 03/</a>上找到。</p>
+<p>对于这个例子，我创建了一个更小的数据集子集，以及一个<kbd>labels.csv</kbd>文件。这可以在本书的GitHub资源库的<kbd>data/GiuseppeToys</kbd>文件夹中找到。表示该数据集的类如下:</p>
+<div><img src="img/9b8f0b82-c247-4279-a34a-3cc29bba6b52.png" style="width:43.00em;height:43.08em;"/></div>
+<p><kbd>__init__</kbd>函数是我们初始化类的所有属性的地方。因为它只在我们第一次创建实例来做所有事情时被调用一次，所以我们执行所有的内务处理功能，例如读取CSV文件、设置变量和检查数据的一致性。我们只执行发生在整个数据集上的操作，所以我们不下载有效负载(在本例中是一个图像)，但我们确保关于数据集的关键信息，如目录路径、文件名和数据集标签，都存储在变量中。</p>
+<p><kbd>__len__</kbd>函数只允许我们在数据集上调用Python的内置<kbd>len()</kbd>函数。这里，我们简单地返回标签元组列表的长度，指示数据集中图像的数量。我们希望确保它尽可能简单可靠，因为我们依赖它来正确地遍历数据集。</p>
+<p><kbd>__getitem__</kbd>函数是一个内置的Python函数，我们在<kbd>Dataset</kbd>类定义中覆盖了它。这给了<kbd>Dataset</kbd>类Python序列类型的功能，比如使用索引和切片。这个方法经常被调用——每次我们做索引查找时——所以要确保它只做检索样本所需要做的事情。</p>
+<p>为了在我们自己的数据集中利用这一功能，我们需要创建一个自定义数据集的实例，如下所示:</p>
+<div><img src="img/be95d815-120b-4704-94e2-d16de15b2dca.png"/></div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Transforms</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">转换</h1>
+                
+            
+            
+                
+<p>除了<kbd>ToTensor()</kbd>转换之外，<kbd>torchvision</kbd>包还包括许多专门针对Python图像库图像的转换。我们可以使用<kbd>compose</kbd>函数将多个转换应用于数据集对象，如下所示:</p>
+<div><img src="img/6ca9d98a-c422-44d1-98d8-62de1fd2f9e6.png"/></div>
+<p>合成对象本质上是一个转换列表，然后可以作为单个变量传递给数据集。重要的是要注意，图像变换只能应用于PIL图像数据，而不能应用于张量。由于合成中的转换是按照它们被列出的顺序来应用的，所以<kbd>ToTensor</kbd>转换最后出现是很重要的。如果将其放在<kbd>Compose</kbd>列表中的PIL变换之前，将会产生一个错误。</p>
+<p>最后，我们可以通过使用<kbd>DataLoader</kbd>加载一批带有变换的图像来检查它是否正常工作，就像我们之前做的那样:</p>
+<div><img src="img/b49c0780-2f05-4868-abd1-42ec7ea38454.png" style="width:39.50em;height:11.58em;"/></div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>ImageFolder</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">图像文件夹</h1>
+                
+            
+            
+                
+<p>我们可以看到dataset对象的主要作用是从一个数据集中取一个样本，<kbd>DataLoader</kbd>的作用是将一个样本，或者一批样本，交付给深度学习模型进行评估。在编写我们自己的数据集对象时，要考虑的一个主要问题是，我们如何从磁盘上文件中组织的数据在可访问的内存中构建一个数据结构。我们可能希望组织数据的一种常见方式是在按类命名的文件夹中。比方说，在这个例子中，我们有三个名为<kbd>toy</kbd>、<kbd>notoy</kbd>和<kbd>scenes</kbd>的文件夹，包含在父文件夹<kbd>images</kbd>中。这些文件夹中的每一个都代表其中包含的文件的标签。我们需要能够加载它们，同时将它们保留为单独的标签。令人高兴的是，这有一个类，像PyTorch中的大多数东西一样，它非常容易使用。类别为<kbd>torchvision.datasets.ImageFolder</kbd>，其用法如下:</p>
+<div><img src="img/bc47c911-404e-4f29-b1fd-602847da1f6f.png"/></div>
+<p>在<kbd>data/GiuseppeToys/images</kbd>文件夹中，有三个文件夹，<kbd>toys</kbd>、<kbd>notoys</kbd>和<kbd>scenes</kbd>，包含图像，它们的文件夹名称表示标签。注意，使用<kbd>DataLoader</kbd>检索到的标签由整数表示。因为在这个例子中，我们有三个文件夹，代表三个标签，<kbd>DataLoader</kbd>返回整数<kbd>1</kbd>到<kbd>3</kbd>，代表图像标签。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Concatenating datasets</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">串联数据集</h1>
+                
+            
+            
+                
+<p>很明显，将会出现连接数据集的需求——我们可以用<kbd>torch.utils.data.ConcatDataset</kbd>类来实现。<kbd>ConcatDataset</kbd>获取数据集列表并返回串联数据集。在下面的例子中，我们添加了两个转换，删除了蓝色和绿色通道。然后，我们再创建两个dataset对象，应用这些转换，最后将三个数据集连接成一个，如下面的代码所示:</p>
+<div><img src="img/e4e36b79-d23c-4c4e-94ae-78717d5962ab.png"/></div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Summary</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">摘要</h1>
+                
+            
+            
+                
+<p>在本章中，我们介绍了PyTorch的一些特性和操作。我们概述了安装平台和步骤。希望您已经获得了一些张量运算的知识，以及如何在PyTorch中执行它们。你应该清楚就地和按赋值操作之间的区别，现在还应该理解索引和切片张量的基础。在本章的后半部分，我们讨论了如何将数据加载到PyTorch中。我们讨论了数据的重要性以及如何创建一个<kbd>dataset</kbd>对象来表示定制数据集。我们查看了PyTorch中内置的数据加载器，并讨论了使用<kbd>ImageFolder</kbd>对象表示文件夹中的数据。最后，我们看了如何连接数据集。</p>
+<p>在下一章，我们将对深度学习的基础知识及其在机器学习领域的地位进行一次旋风式的考察。我们将让你快速掌握所涉及的数学概念，包括研究线性系统和解决它们的常用技术。</p>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>

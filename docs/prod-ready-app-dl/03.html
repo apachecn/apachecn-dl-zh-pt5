@@ -1,0 +1,1176 @@
+<html><head/><body>
+
+
+
+
+
+	
+
+		<title>B18522_02</title>
+
+		
+
+	
+
+	
+
+		<div><h1 id="_idParaDest-35" class="chapter-number"><a id="_idTextAnchor034"/> 2</h1>
+
+			<h1 id="_idParaDest-36"><a id="_idTextAnchor035"/>深度学习项目的数据准备</h1>
+
+			<p>每个<strong class="bold">机器学习</strong> ( <strong class="bold"> ML </strong>)项目的第一步都是由数据收集和数据准备组成的。作为ML的子集，<strong class="bold">深度学习</strong> ( <strong class="bold"> DL </strong>)涉及相同的数据处理过程。本章一开始，我们将使用Anaconda建立一个标准的DL Python笔记本环境。然后，我们将提供以各种格式(JSON、CSV、HTML和XML)收集数据的具体例子。在许多情况下，收集的数据被清理和预处理，因为它包含不必要的信息或无效的格式。</p>
+
+			<p>本章将介绍这一领域的流行技术:填充缺失值、删除不必要的条目和规范化值。接下来，您将学习常见的特征提取技术:单词袋模型、术语频率-逆文档频率、一键编码和维度缩减。此外，我们将介绍<code>matplotlib</code>和<code>seaborn</code>，它们是最流行的数据可视化库。最后，我们将介绍Docker映像，它是工作环境的快照，通过将应用程序及其依赖项捆绑在一起，最大限度地减少了潜在的兼容性问题。</p>
+
+			<p>在本章中，我们将讨论以下主要话题:</p>
+
+			<ul>
+
+				<li>设置笔记本电脑环境</li>
+
+				<li>数据收集、数据清理和数据预处理</li>
+
+				<li>从数据中提取特征</li>
+
+				<li>执行数据可视化</li>
+
+				<li>Docker简介</li>
+
+			</ul>
+
+			<h1 id="_idParaDest-37"><a id="_idTextAnchor036"/>技术要求</h1>
+
+			<p>本章的补充资料可以从GitHub的<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter_2">https://GitHub . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 2</a>下载。</p>
+
+			<h1 id="_idParaDest-38"><a id="_idTextAnchor037"/>设置笔记本电脑环境</h1>
+
+			<p>Python是最流行的编程语言之一，广泛用于数据分析。它的优势<a id="_idIndexMarker062"/>来自动态类型和免编译。凭借其灵活性，它已经成为数据科学家使用最多的语言。在本节中，我们将介绍如何使用<strong class="bold"> Anaconda </strong>和<strong class="bold">首选安装程序</strong> ( <strong class="bold"> PIP </strong>)为DL项目设置Python环境<a id="_idIndexMarker063"/>。这些<a id="_idIndexMarker064"/>工具允许您为每个项目创建一个独特的环境，同时简化包管理。Anaconda <a id="_idIndexMarker065"/>为<a id="_idIndexMarker066"/>提供了一个桌面应用<a id="_idIndexMarker067"/>和一个叫做Anaconda <a id="_idIndexMarker070"/> Navigator的GUI<a id="_idIndexMarker068"/>。我们将带您了解如何建立Python环境，并为DL项目安装流行的Python库，如:TensorFlow、PyTorch、T21、熊猫、scikit、Matplotlib、Seaborn和。</p>
+
+			<h2 id="_idParaDest-39"><a id="_idTextAnchor038"/>设置Python环境</h2>
+
+			<p>Python可以从<a href="http://www.python.org/downloads">www.python.org/downloads</a>安装。但是Python版本往往可以通过操作系统提供的<a id="_idIndexMarker074"/>包管理器获得，比如Linux上的<strong class="bold">高级包工具</strong> ( <strong class="bold"> APT </strong>)和macOS上的<strong class="bold">家酿</strong>。设置<a id="_idIndexMarker075"/>Python环境从使用PIP安装<a id="_idIndexMarker076"/>必要的包开始，PIP是一个包管理系统，允许你安装和管理各种Python包。</p>
+
+			<h2 id="_idParaDest-40"><a id="_idTextAnchor039"/>安装Anaconda</h2>
+
+			<p>当在一台机器上建立了多个Python项目时，分离环境<a id="_idIndexMarker077"/>将是理想的，因为每个项目可能依赖于这些包的不同版本。Anaconda可以帮助您进行环境管理，因为它是为Python包管理和环境管理而设计的。它允许您创建虚拟环境，其中已安装的软件包被绑定到当前活动的每个环境。此外，Anaconda超越了Python的界限，允许用户安装非Python库依赖项。</p>
+
+			<p>首先，Anaconda可以从它的官方网站安装:<a href="http://www.anaconda.com">www.anaconda.com</a>。为了完整起见，我们用图片描述了安装过程，位于<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter_2/anaconda/anaconda_graphical_installer.md">https://github . com/packt publishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter _ 2/anaconda/anaconda _ graphical _ installer . MD</a>。</p>
+
+			<p>它也可以直接从终端安装。Anaconda为每个操作系统提供安装脚本(<a href="http://repo.anaconda.com/archive">repo.anaconda.com/archive</a>)。您可以简单地下载适合您的系统的脚本版本，并运行它在您的机器上安装Anaconda。作为一个例子，我们将描述如何从macOS的这些脚本之一安装Anaconda:<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter_2/anaconda/anaconda_zsh.md">https://github . com/packt publishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter _ 2/Anaconda/Anaconda _ zsh . MD</a>。</p>
+
+			<h2 id="_idParaDest-41"><a id="_idTextAnchor040"/>使用Anaconda建立一个DL项目</h2>
+
+			<p>此时，您应该已经有了一个可以使用的Anaconda环境。现在，我们将创建<a id="_idIndexMarker079"/>我们的第一个虚拟环境<a id="_idIndexMarker080"/>并为DL项目安装必要的包:</p>
+
+			<pre>conda create --name bookenv python=3.8</pre>
+
+			<p>您可以使用以下命令列出可用的<code>conda</code>环境:</p>
+
+			<pre>conda info --envs</pre>
+
+			<p>您应该会看到我们之前创建的<code>bookenv</code>环境。要激活此环境，您可以使用以下命令:</p>
+
+			<pre>conda activate bookenv</pre>
+
+			<p>类似地，可以使用以下命令取消激活:</p>
+
+			<pre>conda deactivate</pre>
+
+			<p>安装Python包可以通过<code>pip install &lt;package name&gt;</code>或<code>conda install &lt;package name&gt;</code>完成。在下面的代码片段中，首先，我们通过<code>pip</code>命令下载科学计算的基础包NumPy。然后，我们将通过<code>conda</code>命令安装PyTorch。安装PyTorch时，必须提供CUDA的版本，这是一个并行计算平台和编程模型，用于GPU上的一般计算。CUDA可以通过允许GPU并行处理计算来加速DL模型训练:</p>
+
+			<pre>pip install numpy
+conda install pytorch torchvision torchaudio \
+cudatoolkit=&lt;cuda version&gt; -c pytorch -c nvidia</pre>
+
+			<p>TensorFlow是DL项目的另一个流行包。和PyTorch一样，TensorFlow为每个版本的CUDA提供了不同的包。完整的名单可以在网上找到这里:<a href="https://www.tensorflow.org/install/source#gpu">https://www.tensorflow.org/install/source#gpu</a>。为了让所有与DL相关的库无缝地协同工作，Python版本、TensorFlow版本、GCC <a id="_idIndexMarker081"/>编译器版本、CUDA <a id="_idIndexMarker082"/>版本和Bazel构建工具版本之间必须兼容，如下面的截图所示:</p>
+
+			<div><div><img src="img/B18522_02_1.jpg" alt="Figure 2.1 – Compatibility matrix for the TensorFlow, Python, GCC, Bazel, cuDNN, and CUDA versions&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图2.1–tensor flow、Python、GCC、Bazel、cuDNN和CUDA版本的兼容性矩阵</p>
+
+			<p>回到<code>pip</code>命令，不用重复输入<code>install</code>命令，您可以生成一个包含必要软件包的文本文件，并在一个命令中安装所有软件包。为此，您可以为<code>pip install</code>命令提供带有<code>--requirement</code> ( <code>-r</code>)选项的文件名，如下所示:</p>
+
+			<pre>pip install -r requirements.txt</pre>
+
+			<p>所需的常用包在CPU专用环境中列出在示例<code>requirements.txt</code>文件中:<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter_2/anaconda/requirements.txt">https://github . com/packt publishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter _ 2/anaconda/requirements . txt</a>。列表中的主要包是TensorFlow和PyTorch。</p>
+
+			<p>现在，让我们看看一些有用的Anaconda命令。正如<code>pip install</code>可以与<code>requirements.txt</code>文件一起使用一样，您也可以使用YAML文件创建一个包含一组包的环境。在下面的例子中，我们使用一个<code>env.yml</code>文件来保存现有环境中的库列表。稍后，<code>env.yml</code>可以用来创建一个具有相同包的新环境，如下面的代码片段所示:</p>
+
+			<pre>conda create -n env_1
+conda activate env_1
+# save environment to a file
+conda env export &gt; env.yml
+# clone existing environment 
+conda create -n env_2 --clone env_1
+# delete existing environment (env_1)
+conda remove -n env_1 --all
+# create environment (env_1) from the yaml file
+conda env create -f env.yml
+# using conda to install the libraries from requirements.txt
+conda install --force-reinstall -y -q --name py37 -c conda-forge --file requirements.txt</pre>
+
+			<p>下面的<a id="_idIndexMarker083"/>代码片段描述了<a id="_idIndexMarker084"/>从<code>conda env export</code>生成的一个样本YAML文件:</p>
+
+			<pre class="source-code">
+
+# env.yml
+
+name: env_1
+
+channels:
+
+  - defaults
+
+dependencies:
+
+  - appnope=0.1.2=py39hecd8cb5_1001
+
+  - ipykernel=6.4.1=py39hecd8cb5_1
+
+  - ipython=7.29.0=py39h01d92e1_0
+
+prefix: /Users/userA/opt/anaconda3/envs/new_env</pre>
+
+			<p>这个YAML文件<a id="_idIndexMarker086"/>的主要<a id="_idIndexMarker085"/>组件是环境的名称(<code>name</code>)、库的源(<code>channels</code>)和库的列表(<code>dependencies</code>)。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.由于其简单的语法，Python是数据分析的标准语言</p>
+
+			<p class="callout">b.Python不需要显式编译</p>
+
+			<p class="callout">c.PIP用于安装Python包</p>
+
+			<p class="callout">d.Anaconda处理Python包管理和环境管理</p>
+
+			<p>在下一节中，我们将解释如何从各种来源收集数据。然后，我们将为后续流程清理和预处理收集的数据。</p>
+
+			<h1 id="_idParaDest-42"><a id="_idTextAnchor041"/>数据收集、数据清洗和数据预处理</h1>
+
+			<p>在这个<a id="_idIndexMarker087"/>部分，我们将向您介绍数据收集过程中涉及的各种任务。我们将描述如何从多个来源收集数据，并将它们转换成数据科学家可以使用的通用形式，而不管底层任务是什么。这个过程可以分为几个部分:数据收集、数据清理和数据预处理。值得一提的是，特定于任务的转换被认为是特征提取，这将在下一节中讨论。</p>
+
+			<h2 id="_idParaDest-43"><a id="_idTextAnchor042"/>收集数据</h2>
+
+			<p>首先，我们将介绍组成初始数据集的不同数据收集方法。不同的<a id="_idIndexMarker090"/>技术是必要的，这取决于原始数据是如何格式化的。大多数数据集要么以HFML文件的形式在线提供，要么以JSON对象的形式在线提供。一些<a id="_idIndexMarker091"/>数据以<strong class="bold">逗号分隔值</strong> ( <strong class="bold"> CSV </strong>)格式存储，可以通过pandas library(一个流行的数据分析和操作工具)轻松加载。因此，在本节中，我们将主要关注收集HTML和JSON数据并将其保存为CSV格式。此外，我们将介绍一些流行的数据集存储库。</p>
+
+			<h3>抓取网页</h3>
+
+			<p>被认为是网络的基本组成部分的<a id="_idIndexMarker092"/>，<strong class="bold">超文本标记语言</strong> ( <strong class="bold"> HTML </strong>)数据很容易访问，并且由<a id="_idIndexMarker093"/>不同的信息组成。因此，抓取网页的能力可以帮助您收集大量有趣的数据。在这个<a id="_idIndexMarker094"/>部分，我们将使用BeautifulSoup，一个基于Python的web爬行库(<a href="https://www.crummy.com/software/BeautifulSoup/">https://www.crummy.com/software/BeautifulSoup/</a>)。例如，我们将演示如何抓取谷歌学术页面，以及如何将抓取的数据保存为CSV文件。</p>
+
+			<p>在这个例子中，BeautifulSoup的几个函数将用于提取作者的名字、姓氏、电子邮件、研究兴趣、引用计数、h-index(高索引)、合著者和论文标题。下表显示了我们希望在此示例中收集的数据:</p>
+
+			<div><div><img src="img/Table_01.jpg" alt=""/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">表2.1-可以从谷歌学术页面收集的数据</p>
+
+			<p>抓取网页是一个两步的过程:</p>
+
+			<ol>
+
+				<li>利用请求库获取一个<code>response</code>对象中的HTML数据。</li>
+
+				<li>构造一个<code>BeautifulSoup</code>对象，解析<code>response</code>对象中的HTML标签。</li>
+
+			</ol>
+
+			<p>这两个步骤可以总结为下面的代码片段:</p>
+
+			<pre class="source-code">
+
+# url points to the target google scholar page 
+
+response = requests.get(url) 
+
+html_soup = BeautifulSoup(response.text, 'html.parser')</pre>
+
+			<p>下一步是从<code>BeautifulSoup</code>对象中获取感兴趣的内容。<em class="italic">表2.2 </em>总结了常见的<code>BeautifulSoup</code>函数，让您从解析的HTML数据中提取感兴趣的内容。由于我们在本例中的目标是将收集的数据存储为CSV文件，因此我们将简单地生成页面的逗号分隔字符串表示，并将其写入文件。完整的实现可以在<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter_2/google_scholar/google_scholar.py">https://github . com/packt publishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter _ 2/Google _ scholar/Google _ scholar . py</a>找到。</p>
+
+			<p>下表提供了处理谷歌学术页面中的原始数据所需的方法列表:</p>
+
+			<div><div><img src="img/Table_02.jpg" alt=""/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">表2.2–可能的特征提取技术</p>
+
+			<p>接下来，我们<a id="_idIndexMarker096"/>将学习JSON，另一种流行的原始数据格式。</p>
+
+			<h3>收集JSON数据</h3>
+
+			<p>JSON是一种独立于语言的格式，它将数据存储为键值和/或键数组字段。由于大多数<a id="_idIndexMarker097"/>编程语言支持<a id="_idIndexMarker098"/>键值数据结构(例如，Python中的字典或Java中的HashMap)，JSON被认为是可互换的(独立于程序)。以下代码片段显示了一些示例JSON数据:</p>
+
+			<pre class="source-code">
+
+{
+
+    "first_name": "Ryan",
+
+    "last_name": "Smith",
+
+    "phone": [{"type": "home",
+
+               "number": "111 222-3456"}],
+
+    "pets": ["ceasor", "rocky"],
+
+    "job_location": null
+
+}</pre>
+
+			<p>看看令人敬畏的JSON数据集GitHub知识库(【https://github.com/jdorfman/awesome-json-datasets】T4)，它包含有用的JSON数据源列表<a id="_idIndexMarker100"/>。此外，Public API的GitHub存储库(<a href="https://github.com/public-apis/public-apis">https://github.com/public-apis/public-apis</a>)由一个web服务器端点列表组成，在这里可以检索各种JSON数据。此外，我们还提供了一个从端点收集JSON数据并将必要字段存储为CSV文件的脚本:<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter_2/rest/get_rest_api_data.py">https://github . com/packt publishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter _ 2/rest/get _ rest _ API _ data . py</a>。这个例子使用了https://www.reddit.com/r/all.json<a href="https://www.reddit.com/r/all.json">的Reddit数据集。</a></p>
+
+			<p>接下来，我们将介绍数据科学领域中流行的公共数据集。</p>
+
+			<h3>流行的数据集存储库</h3>
+
+			<p>除了web <a id="_idIndexMarker101"/>页面和JSON数据，许多公共数据集<a id="_idIndexMarker102"/>可以用于各种目的。例如，你可以从流行的数据中心<a id="_idIndexMarker103"/>获取数据集，如<em class="italic">ka ggle</em>(<a href="https://www.kaggle.com/datasets">https://www.kaggle.com/datasets</a>)或<em class="italic">麻省理工学院数据中心</em>(<a href="https://datahub.csail.mit.edu/browse/public">https://datahub.csail.mit.edu/browse/public</a>)。这些公共数据集经常被许多研究机构和企业用于各种活动。来自不同领域的数据，如医疗保健、政府、生物学和计算机科学，在研究过程中被收集，并为了更大的利益捐赠给存储库。就像这些组织如何管理和提供多样化的数据集一样，社区也在努力管理各种公共数据集:<a href="https://github.com/awesomedata/awesome-public-datasets#government">https://github.com/awesomedata/awesome-public-datasets</a>。</p>
+
+			<p>数据集的另一个流行的<a id="_idIndexMarker104"/>来源<a id="_idIndexMarker105"/>是<a id="_idIndexMarker106"/>数据分析<a id="_idIndexMarker107"/>库，如<em class="italic"> sklearn </em>、<em class="italic"> Keras </em>和<em class="italic"> TensorFlow </em>。各图书馆提供的数据集列表可分别在<a href="https://scikit-learn.org/stable/datasets">https://scikit-learn.org/stable/datasets</a>、<a href="https://keras.io/api/datasets/">https://keras.io/api/datasets/</a>和<a href="https://www.tensorflow.org/datasets">https://www.tensorflow.org/datasets</a>找到。</p>
+
+			<p>最后，政府组织也向公众提供许多数据集。例如，您可以在AWS托管的数据湖中找到与COVID相关的有趣的精选数据集:<a href="https://dj2taa9i652rf.cloudfront.net/">https://dj2taa9i652rf.cloudfront.net</a>。从该数据集列表中，您可以导航至<code>cdc-moderna-vaccine-distribution</code>页面，轻松下载CSV格式的各州现代疫苗接种分布数据。</p>
+
+			<p>现在您已经收集了一个初始数据集，下一步是清理它。</p>
+
+			<h2 id="_idParaDest-44"><a id="_idTextAnchor043"/>清洗数据</h2>
+
+			<p>数据清洗是<a id="_idIndexMarker108"/>打磨原始数据以保持条目一致的过程。常见的操作包括用默认值填充空字段，删除非字母数字的字符如<code>?</code>或<code>!</code>，删除停用词，删除HTML标签如<code>&lt;p&gt;&lt;/p&gt;</code>。数据清理还侧重于从收集的数据中保留相关信息。例如，用户个人资料页面可能包含广泛的信息，如传记、名字、电子邮件和从属关系。在数据收集过程中，按原样提取目标信息，以便可以将它保存在原始的HTML或JSON标记中。换句话说，已经收集的传记信息可能仍然有新行(<code>&lt;br&gt;</code>)或粗体(<code>&lt;b&gt;&lt;/b&gt;</code>)的HTML标签，这对下面的分析任务没有多大价值。在整个数据清理过程中，应该删除这些不必要的组件。</p>
+
+			<p>在我们讨论单独的数据清理操作之前，最好先了解一下熊猫图书馆(<a href="https://pandas.pydata.org/">https://pandas.pydata.org/</a>)提供的类似表格的数据结构。它们有行和列，就像SQL表或Excel表一样。它们的基本功能之一是<code>pandas.read_csv</code>，它允许您将CSV文件加载到DataFrame中，如下面的代码片段所示。<code>tabulate</code>库是在终端上显示内容的好选择，因为DataFrame以表格格式构造数据。</p>
+
+			<p>下面的<a id="_idIndexMarker110"/>代码片段显示了如何使用<code>tabulate</code>库读取CSV文件并打印数据(在前面的示例中，<code>tabulate</code>将模仿Postgres psql CLI的格式，因为我们使用了<code>tablefmt="psql"</code>选项):</p>
+
+			<pre class="source-code">
+
+import pandas as pd
+
+from tabulate import tabulate
+
+in_file = "../csv_data/data/cdc-moderna-covid-19-vaccine-distribution-by-state.csv"
+
+# read the CSV file and store the returned dataframe to a variable "df_vacc"
+
+df_vacc = pd.read_csv(in_file)
+
+print(tabulate(df_vacc.head(5), headers="keys", tablefmt="psql"))</pre>
+
+			<p>下面的屏幕截图显示了前面代码片段中的DataFrame在使用<code>tabulate</code>库的终端上显示后的内容(您可以使用<code>df_vacc.head(5)</code>查看没有<code>tabulate</code>库的类似输出)。以下截图显示了每个辖区的疫苗剂量分配情况:</p>
+
+			<div><div><img src="img/B18522_02_2.jpg" alt="Figure 2.2 – Loading a CSV file using pandas and displaying the contents using tabulate&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图2.2–使用pandas加载CSV文件，并使用制表显示内容</p>
+
+			<p>我们将讨论的第一个数据清理操作是用默认值填充缺失的字段。</p>
+
+			<h3>用默认值填充空字段</h3>
+
+			<p>我们将使用本章前面爬取的谷歌学术数据来演示如何用默认值填充空字段。在数据检查后，您会发现一些作者<a id="_idIndexMarker111"/>因为未指定而将他们的联系方式留空:</p>
+
+			<div><div><img src="img/B18522_02_3.jpg" alt="Figure 2.3 – The affiliation column contains missing values (nan)&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图2.3–从属关系列包含缺失值(nan)</p>
+
+			<p>每个字段的默认值因上下文和数据类型而异。例如，九点到六点是一个工作小时的典型默认值，对于缺少中间名的情况，空字符串是一个不错的选择。短语不适用(N/A)通常用于明确表示字段为空。在我们的示例中，我们将填写包含<code>na</code>的空字段，以表明这些值在原始web页面中丢失了，并且没有因为整个收集过程中的错误而丢失。我们将在这个例子中演示的技术涉及到<code>pandas</code>库；DataFrame有一个<code>fillna</code>方法，用于填充指定值中的空值。<code>fillna</code>方法接受一个参数值<code>True</code>，用于在不创建对象副本的情况下就地更新对象。</p>
+
+			<p>以下代码片段解释了如何使用<code>fillna</code>方法填充数据帧中缺少的值:</p>
+
+			<pre class="source-code">
+
+df = pd.read_csv(in_file)
+
+# Fill out the empty "affiliation" with "na"
+
+df.affiliation.fillna(value="na", inplace=True)</pre>
+
+			<p>在前面的代码片段中，我们将一个CSV文件加载到一个DataFrame中，并用<code>na</code>设置缺失的附属条目。此操作将就地执行，而不会创建额外的副本。</p>
+
+			<p>在下一节中，我们将描述如何删除停用词。</p>
+
+			<h3>删除停用词</h3>
+
+			<p>停用词是从信息检索的角度来看没有传达太多价值的词。常见的英文停用词有<em class="italic">其</em>、<em class="italic">和</em>、<em class="italic">其</em>、<em class="italic">其</em>、<em class="italic">其</em>。例如，在谷歌学术数据的研究<a id="_idIndexMarker112"/>兴趣字段条目中，我们看到<em class="italic">无线网络的安全和隐私保护</em>。当我们解释这段文字的意思时，像<em class="italic">和</em>以及<em class="italic">代表</em>这样的词是没有用的。因此，建议在<strong class="bold">自然语言处理</strong> ( <strong class="bold"> NLP </strong>)任务中去掉<a id="_idIndexMarker113"/>这些词。最流行的停用词移除特性之一是由<strong class="bold">自然语言工具包</strong> ( <strong class="bold"> NLTK </strong>)提供的，这是一套用于符号和统计NLP的库和程序。以下是NLTK库认为是停用词标记的几个词:</p>
+
+			<p><code>['doesn', "doesn't", 'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't", 'ma', …]</code></p>
+
+			<p>单词标记化是将句子分解成单词标记(单词向量)的过程。一般来说，它在停用词移除之前被应用。以下代码片段演示了如何标记谷歌学术数据的<code>research_interest</code>字段并删除停用词:</p>
+
+			<pre class="source-code">
+
+import pandas as pd
+
+import nltk
+
+from nltk.stem import PorterStemmer
+
+from nltk.tokenize import word_tokenize
+
+import traceback
+
+from nltk.corpus import stopwords
+
+# download nltk corpuses
+
+nltk.download('punkt')
+
+nltk.download('stopwords')
+
+# create a set of stop words
+
+stop_words = set(stopwords.words('english'))
+
+# read each line in dataframe (i.e., each line of input file)
+
+for index, row in df.iterrows():
+
+   curr_research_interest = str(row['research_interest'])\
+
+       .replace("##", " ")\
+
+       .replace("_", " ")
+
+   # tokenize text data.
+
+   curr_res_int_tok = tokenize(curr_research_interest)
+
+   # remove stop words from the word tokens
+
+   curr_filtered_research = [w for w in curr_res_int_tok\
+
+                             if not w.lower() in stop_words]</pre>
+
+			<p>正如您<a id="_idIndexMarker115"/>所看到的，我们首先使用<code>stopwords.words('english')</code>下载NLTK的停用词语料库，并删除语料库中没有的单词标记。完整版可在<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter_2/data_preproessing/bag_of_words_tf_idf.py">https://github . com/packt publishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter _ 2/data _ pre pressing/bag _ of _ words _ TF _ IDF . py</a>获得。</p>
+
+			<p>像停用词一样，非字母数字的文本也不会增加多少价值。因此，我们将在下一节解释如何删除它们。</p>
+
+			<h3>移除非字母数字文本</h3>
+
+			<p>字母数字字符<a id="_idIndexMarker116"/>既不是英文字母字符<a id="_idIndexMarker117"/>也不是数字。比如文中的“<em class="italic">嗨，你好吗？</em>"，有两个非字母数字字符:、和？。就像停用词一样，它们可以被丢弃，因为它们没有传达太多关于上下文的信息。一旦这些字符被删除，文本将显示为<em class="italic">你好</em>。</p>
+
+			<p>要去掉<a id="_idIndexMarker118"/>一组特定的字符，我们可以使用<strong class="bold">正则表达式</strong> ( <strong class="bold"> regex </strong>)。Regex是代表搜索模式的字符序列。下面的<em class="italic">表2.3 </em>显示了一些重要的正则表达式搜索模式，并解释了每种模式的含义:</p>
+
+			<div><div><img src="img/Table_03.jpg" alt=""/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">表2.3-关键正则表达式搜索模式</p>
+
+			<p>你可以在https://docs.python.org/3/library/re.html找到其他有用的图案。</p>
+
+			<p>Python <a id="_idIndexMarker119"/>提供了一个内置的<code>regex</code>库，支持查找和删除一组匹配给定正则表达式的文本。下面的代码片段显示了如何删除非字母数字字符。<code>\W</code>模式匹配任何不是单词字符的字符。<code>+</code>在模式之后表示我们想要一次或多次保留前面的元素。将它们放在一起，我们会在下面的代码片段中找到一个或多个字母数字字符:</p>
+
+			<pre class="source-code">
+
+def clean_text(in_str):
+
+   clean_txt = re.sub(r'\W+', ' ', in_str)
+
+   return clean_txt
+
+# remove non alpha-numeric characters for feature "text"
+
+text = clean_text(text)</pre>
+
+			<p>作为最后的数据<a id="_idIndexMarker120"/>清理操作，我们将介绍如何高效地丢弃换行符。</p>
+
+			<h3>删除换行符</h3>
+
+			<p>最后，收集的文本数据可能有不必要的换行符。在许多情况下，不管下面的任务是什么，结尾的<a id="_idIndexMarker121"/>换行符都可以被删除而没有任何伤害。使用Python内置的<code>replace</code>功能，可以很容易地用空字符串替换这些字符。</p>
+
+			<p>以下代码片段显示了如何删除文本中的换行符:</p>
+
+			<pre class="source-code">
+
+# replace the new line in the given text with empty string. 
+
+text = input_text.replace("\n", "")</pre>
+
+			<p>在前面的代码片段中，<code>"abc\n"</code>将变成<code>"abc"</code>。</p>
+
+			<p>清理后的数据通常会被进一步处理，以便更好地代表底层数据。这个过程称为数据预处理。我们将在下一节更深入地研究这个过程。</p>
+
+			<h2 id="_idParaDest-45"><a id="_idTextAnchor044"/>数据预处理</h2>
+
+			<p><a id="_idIndexMarker122"/>数据预处理的目标是将清理后的数据转换成适用于各种数据分析任务的通用形式。数据清理和数据预处理之间没有明确的区别。因此，替换一组文本或填充缺失值等任务可以归类为数据清理和数据预处理。在这一节中，我们将重点关注在<a id="_idIndexMarker123"/>上一节中没有涉及的技术:规范化、将文本转换成小写、将文本转换成单词包，以及对单词应用词干。</p>
+
+			<p>以下示例的完整实现可以在<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter_2/data_preproessing">https://github . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 2/data _ pre processing</a>找到。</p>
+
+			<h3>正常化</h3>
+
+			<p>有时，一个字段的值可能以不同的方式表示，即使它们表示相同的东西。在谷歌学术数据的情况下，研究兴趣中的条目可能用不同的词，即使它们指的是相似的领域。比如数据科学、ML、<strong class="bold">人工智能</strong> ( <strong class="bold"> AI </strong>)在更大的语境下指的是AI的<a id="_idIndexMarker125"/>同域。在数据预处理阶段，我们通常通过将ML和数据科学转换为AI来规范化它们，这<a id="_idIndexMarker126"/>更好地表示了底层信息。这有助于数据科学算法利用目标任务的功能。</p>
+
+			<p>如示例存储库中的<code>normalize.py</code>脚本所示，通过保存一个将期望值映射到规范化值的字典，可以很容易地实现前一种情况的规范化。在下面的代码片段中，<code>artificial_intelligence</code>将是<code>research_interests</code>的<code>data_scie<a id="_idTextAnchor045"/>nce</code>和<code>machine_learning</code>特征的规范化值:</p>
+
+			<pre class="source-code">
+
+# dictionary mapping the values are commonly used for normalization
+
+dict_norm = {"data_science": "artificial_intelligence",
+
+    "machine_learning": "artificial_intelligence"}
+
+# normalize.py
+
+if curr in dict_norm:
+
+   return dict_norm[curr]
+
+else:
+
+   return curr</pre>
+
+			<p>字段的数值也需要规范化。对于数值，规范化是将每个值重新调整到特定范围的过程。在下面的例子中，我们将每个州每周疫苗分发的平均计数在0和1之间进行缩放。首先，我们计算每个状态的平均计数。然后，我们通过将<a id="_idIndexMarker128"/>平均计数除以最大平均计数来计算<a id="_idIndexMarker127"/>归一化平均计数:</p>
+
+			<pre class="source-code">
+
+# Step 1: calculate state-wise mean number for weekly corora vaccine distribution
+
+df = df_in.groupby("jurisdiction")["_1st_dose_allocations"]\
+
+   .mean().to_frame("mean_vaccine_count").reset_index()
+
+# Step 2: calculate normalized mean vaccine count
+
+df["norm_vaccine_count"] = df["mean_vaccine_count"] / df["mean_vaccine_count"].max()</pre>
+
+			<p>归一化的结果可以在下面的截图中看到。此屏幕截图中的表格由两列组成——标准化前和标准化后的平均疫苗计数:</p>
+
+			<div><div><img src="img/B18522_02_4.jpg" alt="Figure 2.4 – Normalized mean vaccine distribution per state&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图2.4-每个州的标准化平均疫苗分布</p>
+
+			<p>我们将介绍的下一个数据预处理是文本数据的大小写转换。</p>
+
+			<h3>案例转换</h3>
+
+			<p>在许多情况下，文本数据<a id="_idIndexMarker129"/>被转换成小写<a id="_idIndexMarker130"/>或大写作为一种规范化的方式。这带来了某种程度的一致性，尤其是当下面的任务涉及到比较时。在停用词移除示例中，在NLTK库的标准英语停用词中搜索<code>curr_res_int_tok</code>变量中的单词标记。要使比较成功，大小写应该一致。在下面的代码片段中，在停用词搜索之前，标记被转换为小写:</p>
+
+			<pre class="source-code">
+
+# word tokenize
+
+curr_resh_int_tok = word_tokenize(curr_research_interest)
+
+# remove stop words from the word tokens
+
+curr_filtered_research = [w for w in curr_res_int_tok\
+
+                         if not w.lower() in stop_words]</pre>
+
+			<p>另一个<a id="_idIndexMarker131"/>例子可以在<code>get_rest_api_data.py</code>中找到，这里我们有<a id="_idIndexMarker132"/>从Reddit收集和处理数据。在以下取自脚本的代码片段中，每个文本字段在收集时都被转换成小写形式:</p>
+
+			<pre class="source-code">
+
+def convert_lowercase(in_str):
+
+   return str(in_str).lower()
+
+# convert string to lowercase
+
+text = convert_lowercase(text)</pre>
+
+			<p>接下来，您将了解词干如何提高数据质量。</p>
+
+			<h3>堵塞物</h3>
+
+			<p>词干化是将一个单词转化为其词根<a id="_idIndexMarker134"/>单词的<a id="_idIndexMarker133"/>过程。词干提取的好处在于，如果单词的潜在含义相同，则可以保持单词的一致性。比如，“<em class="italic">信息</em>”、“<em class="italic">告知</em>”、“<em class="italic">告知</em>”有同一个词根——“<em class="italic">告知”</em>。下面的例子展示了如何利用NLTK库进行词干分析。NLTK库提供了一个基于<em class="italic">波特词干算法(Porter，Martin F .“后缀剥离算法”)的词干特性程序(1980)) </em>:</p>
+
+			<pre class="source-code">
+
+from nltk.stem import PorterStemmer
+
+# porter stemmer for stemming word tokens
+
+ps = PorterStemmer()
+
+word = "information"
+
+stemmed_word = ps.stem(word) // "inform"</pre>
+
+			<p>在前面的<a id="_idIndexMarker135"/>代码片段中，我们从<code>nltk.stem</code>库<a id="_idIndexMarker136"/>实例化了<code>PosterStemmer</code>，并将文本传递给了<code>stem</code>函数。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.数据有不同的格式，比如JSON、CSV、HTML和XML。有许多数据收集工具可用于每种类型的数据。</p>
+
+			<p class="callout">b.数据清洗是打磨原始数据以保持每个条目一致的过程。常见操作包括用默认值填充空要素、移除非字母数字字符、移除停用词以及移除不必要的标签。</p>
+
+			<p class="callout">c.数据预处理的目标是应用通用数据扩充将清理后的数据转换成任何数据分析任务通用的形式。</p>
+
+			<p class="callout">d.数据清理和数据预处理的领域是重叠的，这意味着某些操作可以用于这两个过程中的任何一个。</p>
+
+			<p>到目前为止，我们已经讨论了数据准备的一般过程。接下来，我们将讨论最后的过程:特征提取。与我们已经讨论过的其他过程不同，特征提取涉及特定于任务的操作。让我们仔细看看。</p>
+
+			<h1 id="_idParaDest-46"><a id="_idTextAnchor046"/>从数据中提取特征</h1>
+
+			<p><strong class="bold">特征提取</strong> ( <strong class="bold">特征工程</strong>)是<a id="_idIndexMarker137"/>针对目标任务，将数据转化为以特定方式表达底层信息<a id="_idIndexMarker138"/>的特征的过程。数据预处理应用大多数数据分析任务经常需要的通用技术。然而，特征提取需要您利用领域知识，因为它是特定于任务的。在本节中，我们将介绍流行的特征提取技术，包括文本数据的词袋、术语频率-逆文档频率、将彩色图像转换为灰度图像、序数<a id="_idIndexMarker139"/>编码、一键编码、维数减少和用于比较两个字符串的模糊匹配。</p>
+
+			<p>这些例子的完整实现可以在<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter_2/data_preproessing">https://github . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 2/data _ pre processing</a>上在线找到。</p>
+
+			<p>首先，我们将从单词袋技术开始。</p>
+
+			<h2 id="_idParaDest-47"><a id="_idTextAnchor047"/>使用单词包转换文本</h2>
+
+			<p>Sklearn的类帮助从文本创建BoW。以下代码演示了如何为BoW使用Sklearn功能:</p>
+
+			<pre class="source-code">
+
+import pandas as pd
+
+from sklearn.feature_extraction.text import CountVectorizer
+
+document_1 = "This is a great place to do holiday shopping"
+
+document_2 = "This is a good place to eat food"
+
+document_3 = "One of the best place to relax is home"
+
+# 1-gram (i.e., single word token used for BoW creation)
+
+count_vector = CountVectorizer(ngram_range=(1, 1), stop_words='english')
+
+# transform the sentences
+
+count_fit = count_vector.fit_transform([document_1, document_2, document_3])
+
+# create dataframe
+
+df = pd.DataFrame(count_fit.toarray(), columns=count_vector.get_feature_names_out())
+
+print(tabulate(df, headers="keys", tablefmt="psql"))</pre>
+
+			<p>下面的截图以表格的形式总结了BoW的输出:</p>
+
+			<div><div><img src="img/B18522_02_5.jpg" alt="Figure 2.5 – Output of BoW on three sample documents&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图2.5–三个样本文档的BoW输出</p>
+
+			<p>接下来我们<a id="_idIndexMarker144"/>将针对文本数据介绍<strong class="bold">词频-逆文档频</strong> ( <strong class="bold"> TF-IDF </strong>)。</p>
+
+			<h2 id="_idParaDest-48"><a id="_idTextAnchor048"/>应用词频-逆文档频率(TF-IDF)变换</h2>
+
+			<p>使用词频的问题是具有较高频率的文档<a id="_idIndexMarker145"/>将主导模型或分析。因此，最好根据一个单词在所有文档中出现的频率来重新调整频率。这样的缩放有助于以文本的数字表示更好地表达上下文的方式惩罚那些高频词(例如<em class="italic">、</em>和<em class="italic">有</em>)。</p>
+
+			<p>在介绍TF-IDF公式之前，我们必须定义一些符号。设<em class="italic"> n </em>为文档总数，<em class="italic"> t </em>为单词(术语)。<em class="italic"> df(t) </em>是指单词<em class="italic"> t </em>的文档频率(单词<em class="italic"> t </em>中有多少个文档co<a id="_idTextAnchor049"/>n)，而<em class="italic"> tf(t，d) </em>是指单词<em class="italic"> t </em>在文档<em class="italic"> d </em>中的频率(文档<em class="italic"> d </em>中出现的次数<em class="italic"> t </em>)。有了这些定义，我们可以将<em class="italic"> idf(t) </em>(逆文档频率)定义为<em class="italic"> log [ n / df(t) ] + 1 </em>。</p>
+
+			<p>总体来说，对于字<em class="italic"> t </em>的<em class="italic"> tf-idf(t，d) </em>、字<em class="italic"> tf-idf </em>和文件<em class="italic"> d </em>可以表示为<em class="italic"> tf(t，d) * idf(t) </em>。</p>
+
+			<p>在示例代码脚本<code>bag_of_words_tf_idf.py</code>中，我们使用谷歌学术数据的研究兴趣字段来计算TF-IDF。这里，我们利用Sklearn的<code>TfidfVectorizer</code>功能。<code>fit_transform</code>函数接收一组文档，并生成一个TF-IDF加权的文档术语矩阵。从这个矩阵中，我们可以打印出排名前<em class="italic"> N </em>的研究兴趣:</p>
+
+			<pre class="source-code">
+
+tfidf_vectorizer = TfidfVectorizer(use_idf=True)
+
+# use the tf-idf instance to fit list of research_interest 
+
+tfidf = tfidf_vectorizer.fit_transform(research_interest_list)
+
+# tfidf[0].T.todense() provides the tf-idf dense vector 
+
+# calculated for the research_interest
+
+df = pd.DataFrame(tfidf[0].T.todense(), index=tfidf_vectorizer.get_feature_names_out(), columns=["tf-idf"])
+
+# sort the tf-idf calculated using 'sort_values' of dataframe.
+
+df = df.sort_values('tf-idf', ascending=False)
+
+# top 3 words with highest tf-idf
+
+print(df.head(3))</pre>
+
+			<p>在前面的<a id="_idIndexMarker146"/>示例中，我们创建了一个<code>TfidfVectorizer</code>实例，并使用研究兴趣文本列表(<code>research_interest_list</code>)触发了<code>fit_transform</code>函数。然后，我们对输出调用<code>todense</code>方法来获得结果矩阵的密集表示。矩阵被转换成数据帧并排序以显示顶部条目。下面的截图显示了<code>df.head(3)</code>的输出——研究兴趣领域中TF-IDF最高的三个词:</p>
+
+			<div><div><img src="img/B18522_02_6.jpg" alt="Figure 2.6 – Three words with the highest TF-IDF from research interest fields&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图2.6-研究兴趣领域中TF-IDF最高的三个词</p>
+
+			<p>接下来，您将学习如何使用一键编码处理分类数据。</p>
+
+			<h2 id="_idParaDest-49"><a id="_idTextAnchor050"/>创建一个热点编码(一个一个的)</h2>
+
+			<p>One-hot <a id="_idIndexMarker147"/>编码(one-of-k)是将离散值转换为二进制值序列的过程。让我们从一个简单的例子开始，其中一个<a id="_idIndexMarker148"/>字段可以有<code>cat</code>或<code>dog</code>的分类值。独热编码将由两位表示，其中一位表示<code>cat</code>，另一位表示<code>dog</code>。编码中值为1的位意味着该字段具有相应的值。所以，1 0代表一只猫，而0 1代表一只狗:</p>
+
+			<table id="table001-1" class="No-Table-Style _idGenTablePara-1">
+
+				<colgroup>
+
+					<col/>
+
+					<col/>
+
+					<col/>
+
+					<col/>
+
+				</colgroup>
+
+				<tbody>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p><strong class="bold">品种</strong></p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p><strong class="bold">宠物_类型</strong></p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p><strong class="bold">狗</strong></p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p><strong class="bold">猫</strong></p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>寻回犬</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>狗</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>一</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>0</p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>缅因库恩猫</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>猫</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>0</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>一</p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>德国牧羊犬</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>狗</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>一</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>0</p>
+
+						</td>
+
+					</tr>
+
+				</tbody>
+
+			</table>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">表2.4–将pet_type中的分类值转换为一个热编码(狗和猫)</p>
+
+			<p>在<code>one_hot_encoding.py</code>中可以找到一键编码的演示。在下面的代码片段中，我们将重点放在核心操作上，这涉及到来自Sklearn的<code>OneHotEncoder</code>:</p>
+
+			<pre class="source-code">
+
+from sklearn.preprocessing import LabelEncoder
+
+labelencoder = LabelEncoder()
+
+encoded_data = labelencoder.fit_transform(df_research ['is_artifical_intelligent'])</pre>
+
+			<p>前面代码片段中使用的<code>is_artificial_intelligence</code>列包含两个不同的值:<code>"yes"</code>和<code>"no"</code>。下面的屏幕截图总结了一键编码的结果:</p>
+
+			<div><div><img src="img/B18522_02_7.jpg" alt="Figure 2.7 – One-hot encoding for the is_artificial_intelligence field&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图2.7–is _ artificial _ intelligence字段的一次性编码</p>
+
+			<p>在下一节中，我们将介绍另一种叫做顺序编码的编码类型。</p>
+
+			<h2 id="_idParaDest-50"><a id="_idTextAnchor051"/>创建序数编码</h2>
+
+			<p>顺序编码是将类别值转换成数值的过程。在<em class="italic">表2.5 </em>中，有两种类型的宠物，狗和猫。狗的值为1，猫的值为2:</p>
+
+			<table id="table002" class="No-Table-Style _idGenTablePara-1">
+
+				<colgroup>
+
+					<col/>
+
+					<col/>
+
+					<col/>
+
+				</colgroup>
+
+				<tbody>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p><strong class="bold">品种</strong></p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p><strong class="bold">宠物_类型</strong></p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p><strong class="bold">序数_编码</strong></p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>寻回犬</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>狗</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>一</p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>缅因库恩猫</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>猫</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>2</p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>德国牧羊犬</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>狗</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>一</p>
+
+						</td>
+
+					</tr>
+
+				</tbody>
+
+			</table>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">表2.5–pet _ type字段中的分类值在ordinal_encoding中编码为序数</p>
+
+			<p>在下面的代码片段中，我们使用Sklearn的<code>LabelEncoder</code>类将研究兴趣字段转换成数值。序号编码的完整示例可在<code>ordinal_encoding.py</code>中找到:</p>
+
+			<pre class="source-code">
+
+from sklearn.preprocessing import LabelEncoder
+
+labelencoder = LabelEncoder()
+
+encoded_data = labelencoder.fit_transform(df_research ['research_interest'])</pre>
+
+			<p>前面的<a id="_idIndexMarker152"/>代码片段几乎是不言自明的——我们简单地构造了一个<code>LabelEncoder</code>实例，并将目标列传递给<code>fit_transform</code>方法。以下屏幕截图显示了生成的数据帧的前三行:</p>
+
+			<div><div><img src="img/B18522_02_8.jpg" alt="Figure 2.8 – Results of ordinal encoding on research interest&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图2.8-研究兴趣的顺序编码结果</p>
+
+			<p>接下来，我们将解释一种用于图像的技术:将彩色图像转换成灰度图像。</p>
+
+			<h2 id="_idParaDest-51"><a id="_idTextAnchor052"/>将彩色图像转换成灰度图像</h2>
+
+			<p>计算机视觉任务中最常见的技术之一是将彩色图像转换成灰度图像。<em class="italic"> OpenCV </em>是<a id="_idIndexMarker154"/>图像处理的标准库(<a href="https://opencv.org/">https://opencv.org/</a>)。在下面的例子中，我们只是导入OpenCV库(<code>import cv2</code>)并使用<code>cvtColor</code>函数将加载的图像转换成灰度:</p>
+
+			<pre class="source-code">
+
+image = cv2.imread('./images/tiger.jpg')
+
+# filter to convert color tiger image to gray one
+
+gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+# write the gray image to a file
+
+cv2.imwrite('./images/tiger_gray.jpg', gray_image)</pre>
+
+			<p>当分析具有多个字段的大量数据时，您通常会发现减少维度的数量是必要的。在下一节中，我们将研究这个过程的可用选项。</p>
+
+			<h2 id="_idParaDest-52"><a id="_idTextAnchor053"/>执行降维</h2>
+
+			<p>在许多情况下，功能比任务需要的更多；并非所有功能都有有用的<a id="_idIndexMarker156"/>信息。在这种情况下，你<a id="_idIndexMarker157"/>可以使用<strong class="bold">主成分分析</strong>(<strong class="bold">PCA</strong>)<strong class="bold">奇异值分解</strong>(<strong class="bold">SVD</strong>)<strong class="bold">线性判别分析</strong>(<strong class="bold">LDA</strong>)<strong class="bold">t-SNE</strong>、<strong class="bold"> UMAP </strong>、<strong class="bold"> ISOMAP </strong>等降维技术<a id="_idIndexMarker158"/>来命名一个另一种选择是使用DL。你<a id="_idIndexMarker159"/>可以为降维<a id="_idIndexMarker160"/>建立一个定制模型<a id="_idIndexMarker161"/>或者使用一个预定义的网络结构<a id="_idIndexMarker162"/>，比如<strong class="bold">自动编码器</strong>。在本节中，我们将详细描述PCA，因为它是我们提到的技术中最受欢迎的<a id="_idIndexMarker163"/>。</p>
+
+			<p><em class="italic">给定一组特征，PCA识别特征之间的关系，并生成一组新的变量，以最有效的方式捕捉样本中的差异</em>。这些新变量被称为主成分，并按重要性排序；在构造第一主成分的时候，它把不重要的变量挤出来，留给第二主成分。因此，第一主成分与其余变量不相关。重复这一过程来构造下列顺序的主成分。</p>
+
+			<p>如果我们更正式地描述PCA过程，我们可以说该过程有两个步骤:</p>
+
+			<ol>
+
+				<li value="1">构建一个表示每对要素相关性的协方差矩阵。</li>
+
+				<li>通过计算协方差矩阵的特征值，生成一组新的要素来获取不同数量的信息。</li>
+
+			</ol>
+
+			<p>新的<a id="_idIndexMarker164"/>功能集是主要组件。通过将相应的特征值从最高到最低排序，您将在顶部获得最有用的新特征。</p>
+
+			<p>为了理解细节，我们来看看虹膜数据集(<a href="https://archive.ics.uci.edu/ml/datasets/iris">https://archive.ics.uci.edu/ml/datasets/iris</a>)。该数据集由三类鸢尾属植物(setosa、versicolor和virginica)以及四个特征(萼片宽度、萼片长度、花瓣宽度和花瓣长度)组成。在下图中，我们使用从PCA构建的两个新特征来绘制每个条目。基于此图，我们可以很容易地得出结论，我们只需要顶部的两个主成分来区分三个类别:</p>
+
+			<div><div><img src="img/B18522_02_09.jpg" alt="Figure 2.9 – The results of PCA on the Iris dataset&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图2.9–Iris数据集上的PCA结果</p>
+
+			<p>在下面的例子中，我们将使用Kaggle的人力资源数据来演示PCA。初始数据集包含多个字段，如工资、过去五年内是否有晋升以及员工是否离开公司。一旦构建了主要组件，就可以使用matplotlib绘制它们:</p>
+
+			<pre class="source-code">
+
+import matplotlib.pyplot as plt
+
+import numpy as np
+
+import pandas as pd
+
+from sklearn.decomposition import PCA
+
+from sklearn.preprocessing import StandardScaler, 
+
+# read the HR data in csv format
+
+df_features = pd.read_csv("./HR.csv")
+
+# Step 1: Standardize features by removing the mean and scaling to unit variance
+
+scaler = StandardScaler()
+
+# train = scaler.fit(X)
+
+X_std = scaler.fit_transform(X)
+
+# Step 2: Instantiate PCA &amp; choose minimum number of 
+
+# components such that it covers 95% variance
+
+pca = PCA(0.95).fit(X_std)</pre>
+
+			<p>在前面的<a id="_idIndexMarker166"/>代码片段中，首先，我们使用pandas库的<code>read_csv</code>函数加载数据，使用来自Sklearn的<code>StandardScaler</code>规范化条目，并使用Sklearn应用PCA。完整的例子可以在<code>pca.py</code>找到。</p>
+
+			<p>作为特征提取的最后一项技术，我们将解释如何有效地计算两个序列之间的距离度量。</p>
+
+			<h2 id="_idParaDest-53"><a id="_idTextAnchor054"/>应用模糊匹配处理字符串之间的相似性</h2>
+
+			<p><strong class="bold">模糊匹配</strong>(<a href="https://pypi.org/project/fuzzywuzzy/">https://pypi.org/project/fuzzywuzzy/</a>)使用一种距离度量来测量<a id="_idIndexMarker167"/>两个序列之间的差异，并且<a id="_idIndexMarker168"/>平等地对待它们，如果它们被认为是相似的话。在本节中，我们将使用<em class="italic"> Levenshtein距离</em>演示如何应用模糊匹配(Levenshtein，Vladimir I .(1966年2月))。能够纠正删除、插入和反转的二进制代码。苏联物理学多克拉迪。10 (8): 707–710.Bibcode: 1966SPhD...10..707L)。</p>
+
+			<p>最流行的模糊字符串匹配库是<code>fuzzywuzzy</code>。<code>ratio</code>函数将提供Levenshtein距离分数，我们可以用它来决定是否要在下面的过程中将两个字符串视为相同。下面的代码片段描述了<code>ratio</code>函数的用法:</p>
+
+			<pre class="source-code">
+
+from fuzzywuzzy import fuzz
+
+# compare strings using ratio method
+
+fuzz.ratio("this is a test", "this is a test!") // 91
+
+fuzz.ratio("this is a test!", "this is a test!") // 100</pre>
+
+			<p>如前面的例子所示，如果两个文本更相似，<code>ratio</code>函数将输出更高的分数。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.<strong class="bold">特征提取</strong>是将数据转换成特征<a id="_idIndexMarker169"/>的过程，这些特征更好地表达了目标任务的潜在信息。</p>
+
+			<p class="callout">b.BoW是基于单词出现的文档的表示。TF-IDF通过惩罚高频词可以更好地表达文档的上下文。</p>
+
+			<p class="callout">c.可以使用OpenCV库将彩色图像更新为灰度图像。</p>
+
+			<p class="callout">d.分类特征可以用顺序编码或一键编码来表示。</p>
+
+			<p class="callout">e.当数据集包含太多要素时，降维可以减少包含最多信息的要素的数量。PCA在保留大部分信息的同时构造新的特征。</p>
+
+			<p class="callout">f.在评估两个文本之间的相似性时，可以应用模糊匹配drop。</p>
+
+			<p>一旦数据被转换成合理的格式，您通常需要可视化数据以了解其特征。在下一节中，我们将介绍流行的数据可视化库。</p>
+
+			<h1 id="_idParaDest-54"><a id="_idTextAnchor055"/>执行数据可视化</h1>
+
+			<p>当应用ML技术分析数据集时，第一步必须是理解可用数据，因为每种算法都有与底层数据密切相关的优势。数据科学家需要了解的数据的关键方面包括数据格式、分布和要素之间的关系。当数据量很小时，可以通过手动分析每个条目来收集必要的信息。然而，随着数据量的增长，可视化在理解数据方面起着至关重要的作用。</p>
+
+			<p>Python中有许多用于<a id="_idIndexMarker171"/>数据可视化的工具。<strong class="bold"> Matplotlib </strong>和<strong class="bold"> Seaborn </strong>是<a id="_idIndexMarker172"/>最流行的统计数据可视化库。我们将在本节中逐一介绍这两个库。</p>
+
+			<h2 id="_idParaDest-55"><a id="_idTextAnchor056"/>使用Matplotlib执行基本可视化</h2>
+
+			<p>在下面的例子中，我们将演示如何使用Matplotlib生成条形图和饼图。我们使用的数据代表COVID疫苗的周分布。要使用<code>matplot</code>功能，您必须首先导入包(<code>import matplotlib.pyplot as plt</code>)。<code>plt.bar</code>函数获取排名前10位的州名列表及其平均分布列表来生成一个条形图。类似地，<code>plt.pie</code>函数用于从字典生成饼图。<code>plt.figure</code>函数可以调整绘图区的大小，并允许用户在同一个画布上绘制多个图表。完整的实施可在<code>visualize_matplotlib.py</code>找到:</p>
+
+			<pre class="source-code">
+
+# PIE CHART PLOTTING
+
+# colors for pie chart
+
+colors = ['orange', 'green', 'cyan', 'skyblue', 'yellow', 'red', 'blue', 'white', 'black', 'pink']
+
+# pie chart plot
+
+plt.pie(list(dict_top10.values()), labels=dict_top10.keys(), colors=colors, autopct='%2.1f%%', shadow=True, startangle=90)
+
+# show the actual plot
+
+plt.show()
+
+# BAR CHART PLOTTING
+
+x_states = dict_top10.keys()
+
+y_vaccine_dist_1 = dict_top10.values()
+
+fig = plt.figure(figsize=(12, 6))  # figure chart with size
+
+ax = fig.add_subplot(111)
+
+# bar values filling with x-axis/y-axis values
+
+ax.bar(np.arange(len(x_states)), y_vaccine_dist_1, log=1)
+
+plt.show()</pre>
+
+			<p>前面代码的<a id="_idIndexMarker175"/>结果<a id="_idIndexMarker176"/>如下:</p>
+
+			<div><div><img src="img/B18522_02_10.jpg" alt="Figure 2.10 – Bar and pie charts generated using Matplotlib&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图2.10-使用Matplotlib生成的条形图和饼图</p>
+
+			<p>在下一节<a id="_idIndexMarker177"/>中，我们将介绍另一个流行的数据可视化库<code><a id="_idIndexMarker178"/></code>。</p>
+
+			<h2 id="_idParaDest-56"><a id="_idTextAnchor057"/>使用Seaborn绘制统计图</h2>
+
+			<p><code>Seaborn</code>是建立在<code>Matplotlib</code>之上的库，为绘制<code>Matplotlib</code>不支持的<a id="_idIndexMarker179"/>统计图形提供高级接口。在本节中，我们将学习如何使用<code>Seaborn</code>为同一数据集生成线图和<a id="_idIndexMarker180"/>直方图。首先，我们需要将<code>Seaborn</code>库和<code>Matplotlib</code> ( <code>import seaborn as sns</code>)一起导入。<code>sns.line_plot</code>函数用于接受数据帧和列名。因此，我们必须为<em class="italic"> X </em>和<em class="italic"> Y </em>轴提供<code>df_mean_sorted_top10</code>，它包含分发的疫苗最高平均值的前10个状态和两个列名<code>state_names</code>和<code>count_vaccine</code>。要绘制直方图，您可以使用<code>sns.dist_plot</code>函数，该函数接收一个DataFrame，其中包含一个用于<em class="italic"> Y </em>轴的列值。如果我们使用相同的平均值，它将是<code>sns.displot(df_mean_sorted_top10['count_vaccine'], kde=False)</code>:</p>
+
+			<pre class="source-code">
+
+import seaborn as sns 
+
+# top 10 stats by largest mean
+
+df_mean_sorted_top10 = ... # top 10 stats by largest mean
+
+# LINE CHART PLOT
+
+sns.lineplot(data=df_mean_sorted_top10, x="state_names", y="count_vaccine")
+
+# show the actual plot
+
+plt.show()
+
+# HISTOGRAM CHART PLOTTING
+
+# plot histogram bars with top 10 states mean distribution count of vaccine
+
+sns.displot(df_mean_sorted_top10['count_vaccine'], kde=False)
+
+plt.show()</pre>
+
+			<p><a id="_idIndexMarker181"/>结果图如下图<a id="_idIndexMarker182"/>所示:</p>
+
+			<div><div><img src="img/B18522_02_11.jpg" alt="Figure 2.11 – Line graph and histogram generated using Seaborn&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图2.11-使用Seaborn生成的折线图和直方图</p>
+
+			<p>完整的实现可以在本书的GitHub资源库(<code>visualize_seaborn.py</code>)中找到。</p>
+
+			<p>许多<a id="_idIndexMarker183"/>库可以用于增强的<a id="_idIndexMarker184"/>可视化:<strong class="bold">pyrot</strong>，一个来自CERN的数据<a id="_idIndexMarker185"/>分析框架，通常<a id="_idIndexMarker186"/>用于研究项目(<a href="https://root.cern/manual/python/">https://root.cern/manual/python</a>)，<strong class="bold"> Streamlit </strong>，用于<a id="_idIndexMarker187"/>简单web应用<a id="_idIndexMarker188"/>创建(<a href="https://streamlit.io/"> https://streamlit.io </a>)，<strong class="bold"> Plotly </strong>，一个免费开源的<a id="_idIndexMarker189"/>图形<a id="_idIndexMarker190"/></p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.可视化数据有助于分析和理解对选择正确的机器学习算法至关重要的数据。</p>
+
+			<p class="callout">b.Matplotlib和Seaborn是最流行的数据可视化工具。其他工具包括pyRoot、Streamlit、Plotly和Bokeh。</p>
+
+			<p>本章的最后一节将描述Docker，它允许你为你的项目实现<strong class="bold">操作系统</strong> ( <strong class="bold"> OS </strong>)级的虚拟化。</p>
+
+			<h1 id="_idParaDest-57"><a id="_idTextAnchor058"/>Docker简介</h1>
+
+			<p>在上一节<em class="italic">设置笔记本环境</em>中，您学习了如何使用<code>conda</code>和<code>pip</code>命令为DL设置带有各种包的虚拟环境。此外，您还知道如何将环境保存到YAML文件中，并重新创建相同的环境。然而，当需要在多台机器上复制环境时，基于虚拟环境的项目可能是不够的，因为可能存在来自不明显的操作系统级依赖性的问题。在这种情况下，Docker将是一个很好的解决方案。使用Docker，您可以创建工作环境的快照，包括操作系统的底层版本。总之，Docker允许您将应用程序从基础设施中分离出来，这样您就可以快速交付软件。按照<a href="https://www.docker.com/get-started">https://www.docker.com/get-started</a>的指示<a id="_idIndexMarker194"/>安装对接器。在本书中，我们将使用3.5.2版本。</p>
+
+			<p>在本节中，我们将介绍Docker映像，它是Docker环境中虚拟环境的一种表示，并解释如何为目标Docker映像创建Docker文件。</p>
+
+			<h2 id="_idParaDest-58"><a id="_idTextAnchor059"/>docker files简介</h2>
+
+			<p>Docker图像是由所谓的docker文件创建的。每个Docker映像都有一个基础(或父)映像。对于DL <a id="_idIndexMarker195"/>环境，为Linux Ubuntu OS开发的映像是一个不错的选择——以下之一应该是一个不错的选择:<em class="italic">Ubuntu:18.04【https://releases.ubuntu.com/18.04】(<a href="https://releases.ubuntu.com/18.04">T6)或<em class="italic">Ubuntu:20.04</em>(</a><a href="https://releases.ubuntu.com/20.04/">https://releases.ubuntu.com/20.04</a>)。除了底层操作系统的映像之外，还有已经安装了特定软件包的映像。例如，设置基于TensorFlow的环境的最简单方法是下载安装了TensorFlow的图像。TensorFlow开发人员已经创建了一个基础映像<a id="_idIndexMarker196"/>，可以使用<code>docker pull tensorflow/serving</code>命令(<a href="https://hub.docker.com/r/tensorflow/serving">https://hub.docker.com/r/tensorflow/serving</a>)轻松下载。也可以用PyTorch的环境:<a href="https://github.com/pytorch/serve/blob/master/docker/README.md">https://github . com/py torch/serve/blob/master/docker/readme . MD</a>。</em></p>
+
+			<p>接下来，您将学习如何使用自定义Docker映像进行构建。</p>
+
+			<h2 id="_idParaDest-59"><a id="_idTextAnchor060"/>构建自定义Docker图像</h2>
+
+			<p>创建一个<a id="_idIndexMarker197"/>定制图像也很简单。但是，它涉及到许多命令，我们将把这些命令的详细信息放到<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter_2/dockerfiles">https://github . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 2/docker files</a>中。一旦构建了Docker映像，就可以用Docker容器实例化它。Docker容器是一个独立的可执行软件包，包含运行目标应用程序所需的一切。通过遵循<code>README.md</code>文件中的指令，您可以创建Docker映像，它将使用我们在本章中描述的标准库运行容器化的Jupyter笔记本服务。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.Docker为您的工作环境创建一个快照，包括底层操作系统。创建的映像可用于在不同的机器上重新创建相同的环境。</p>
+
+			<p class="callout">b.Docker帮助您将环境与基础设施分开。这使您可以毫不费力地将应用程序迁移到不同的云服务提供商(如AWS或Google Cloud)。</p>
+
+			<p>此时，您应该能够为您的DL项目创建一个Docker映像了。通过实例化Docker映像，您应该能够收集您需要的数据，并根据需要在您的本地机器或各种云服务提供商上处理它。</p>
+
+			<h1 id="_idParaDest-60"><a id="_idTextAnchor061"/>总结</h1>
+
+			<p>在本章中，我们描述了如何为数据分析任务准备数据集。第一个关键点是如何使用Anaconda和Docker实现环境虚拟化，以及使用<code>pip</code>实现Python包管理。</p>
+
+			<p>数据准备过程可以分为四个步骤:数据收集、数据清理、数据预处理和特征提取。首先，我们介绍了支持不同数据类型的各种数据收集工具。一旦收集了数据，就对其进行清理和预处理，以便将其转换成通用形式。根据目标任务的不同，我们经常应用各种特定于任务的特征提取技术。此外，我们还引入了许多数据可视化工具，可以帮助您理解准备好的数据的特征。</p>
+
+			<p>既然我们已经学会了如何为分析任务准备数据，在下一章，我们将解释DL模型开发。我们将介绍基本概念以及如何使用两个最流行的DL框架:TensorFlow和PyTorch。</p>
+
+		</div>
+
+		<div><div/>
+
+		</div>
+
+	
+
+
+
+</body></html>

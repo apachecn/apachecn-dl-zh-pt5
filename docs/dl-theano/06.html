@@ -1,0 +1,214 @@
+<html><head/><body>
+<html>
+  <head>
+    <title>Chapter 6. Locating with Spatial Transformer Networks</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div/><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch06" class="calibre1"/>第六章。用空间变压器网络定位</h1></div></div></div><p class="calibre8">在这一章中，NLP领域被留下来回到图像，并得到一个将递归神经网络应用于图像的例子。在<a class="calibre1" title="Chapter 2. Classifying Handwritten Digits with a Feedforward Network" href="part0026_split_000.html#OPEK1-ccdadb29edc54339afcb9bdf9350ba6b">第二章</a>、<em class="calibre12">用前馈网络分类手写数字</em>中，我们讨论了图像分类的情况，包括预测图像的类别。在这里，我们将处理对象定位，这也是计算机视觉中的一个常见任务，包括预测图像中对象的边界框。</p><p class="calibre8"><a class="calibre1" title="Chapter 2. Classifying Handwritten Digits with a Feedforward Network" href="part0026_split_000.html#OPEK1-ccdadb29edc54339afcb9bdf9350ba6b">第2章</a>、<em class="calibre12">使用前馈网络对手写数字进行分类</em>使用线性层、卷积和非线性元素构建的神经网络解决了分类任务，而空间转换器是一个新模块，它建立在专用于定位任务的非常特定的方程上。</p><p class="calibre8">为了定位图像中的多个对象，空间转换器由递归网络组成。本章借此机会展示了如何在<strong class="calibre2">千层面</strong>中使用预构建的递归<a id="id258" class="calibre1"/>网络，这是一个基于ano的库，它带来了额外的模块，并帮助您使用预构建的组件快速开发您的神经网络，同时不改变您使用ano构建和处理网络的方式。</p><p class="calibre8">总而言之，主题列表包括:</p><div><ul class="itemizedlist"><li class="listitem">千层面图书馆简介</li><li class="listitem">空间变压器网络</li><li class="listitem">具有空间转换器的分类网络</li><li class="listitem">带千层面的循环模块</li><li class="listitem">数字的循环读取</li><li class="listitem">基于铰链损失函数的无监督训练</li><li class="listitem">基于区域的目标定位神经网络</li></ul></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Chapter 6. Locating with Spatial Transformer Networks</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h1 class="title" id="calibre_pb_1"><a id="ch06lvl1sec61" class="calibre1"/> MNIST CNN模特配千层面</h1></div></div></div><p class="calibre8">千层面<a id="id259" class="calibre1"/>库已经打包了层和工具来轻松处理神经网络。我们先装最新版的千层面:</p><div><pre class="programlisting">
+<strong class="calibre2">pip</strong> install --upgrade https://github.com/Lasagne/Lasagne/archive/master.zip</pre></div><p class="calibre8">让我们从<a class="calibre1" title="Chapter 2. Classifying Handwritten Digits with a Feedforward Network" href="part0026_split_000.html#OPEK1-ccdadb29edc54339afcb9bdf9350ba6b">第2章</a>、<em class="calibre12">用前馈网络对手写数字进行分类</em>用千层面对MNIST模型进行重新编程:</p><div><pre class="programlisting">
+<strong class="calibre2">def </strong>model(l_input, <strong class="calibre2">input_dim</strong>=28, <strong class="calibre2">num_units</strong>=256, <strong class="calibre2">num_classes</strong>=10, <strong class="calibre2">p</strong>=.5):
+
+
+    network = lasagne.layers.Conv2DLayer(
+            l_input, <strong class="calibre2">num_filters</strong>=32, <strong class="calibre2">filter_size</strong>=(<strong class="calibre2">5</strong>, <strong class="calibre2">5</strong>),
+            <strong class="calibre2">nonlinearity</strong>=lasagne.nonlinearities.rectify,
+            <strong class="calibre2">W</strong>=lasagne.init.GlorotUniform())
+
+    network = lasagne.layers.MaxPool2DLayer(network, <strong class="calibre2">pool_size</strong>=(2, 2))
+
+    network = lasagne.layers.Conv2DLayer(
+            network, <strong class="calibre2">num_filters</strong>=32, <strong class="calibre2">filter_size</strong>=(5, 5),
+            <strong class="calibre2">nonlinearity</strong>=lasagne.nonlinearities.rectify)
+
+    network = lasagne.layers.MaxPool2DLayer(network, <strong class="calibre2">pool_size</strong>=(2, 2))
+
+    <strong class="calibre2">if</strong> num_units <strong class="calibre2">&gt;</strong> 0:
+        network = lasagne.layers.DenseLayer(
+                lasagne.layers.dropout(network, <strong class="calibre2">p</strong>=p),
+                <strong class="calibre2">num_units</strong>=num_units,
+                <strong class="calibre2">nonlinearity</strong>=lasagne.nonlinearities.rectify)
+
+    <strong class="calibre2">if</strong> (num_units &gt; <strong class="calibre2">0</strong>) and (num_classes &gt; <strong class="calibre2">0</strong>):
+        network = lasagne.layers.DenseLayer(
+                lasagne.layers.dropout(network, <strong class="calibre2">p</strong>=p),
+                <strong class="calibre2">num_units</strong>=num_classes,
+                <strong class="calibre2">nonlinearity</strong>=lasagne.nonlinearities.softmax)
+
+    <strong class="calibre2">return</strong> network</pre></div><p class="calibre8">这些层是<code class="email">layer0_input</code>、<code class="email">conv1_out</code>、<code class="email">pooled_out</code>、<code class="email">conv2_out</code>、<code class="email">pooled2_out</code>、<code class="email">hidden_output</code>。它们由预建模块构建，例如，<code class="email">InputLayer</code>、<code class="email">Conv2DLayer</code>、<code class="email">MaxPool2DLayer</code>、<code class="email">DenseLayer</code>、整流或softmax等下降非线性以及<code class="email">GlorotUniform</code>等初始化。</p><p class="calibre8">为了<a id="id261" class="calibre1"/>将模块<a id="id262" class="calibre1"/>组成的网络图与输入符号<code class="email">var</code>连接起来，并得到输出<code class="email">var</code>，使用下面的代码:</p><div><pre class="programlisting">input_var = T.tensor4('inputs')
+l_input = lasagne.layers.InputLayer(shape=(None, 1, 28, 28), <strong class="calibre2">input_var</strong>=input_var)
+network = mnist_cnn.model(l_input)
+prediction = lasagne.layers.get_output(network)</pre></div><p class="calibre8">或者使用以下代码:</p><div><pre class="programlisting">l_input = lasagne.layers.InputLayer(shape=(None, 1, 28, 28))
+network = mnist_cnn.model(l_input)
+
+input_var = T.tensor4('inputs')
+prediction = lasagne.layers.get_output(network, input_var)</pre></div><p class="calibre8">一个非常方便的功能是你可以打印任何模块的输出形状:</p><div><pre class="programlisting">
+<strong class="calibre2">print</strong>(l_input.output_shape)</pre></div><p class="calibre8">Lasagne的<code class="email">get_all_params</code>方法列出了模型的参数:</p><div><pre class="programlisting">params = lasagne.layers.get_all_params(network, <strong class="calibre2">trainable</strong>=True)
+<strong class="calibre2">for</strong> p <strong class="calibre2">in</strong> params:
+    <strong class="calibre2">print</strong> p.name</pre></div><p class="calibre8">最后，千层面有不同的学习规则，如<code class="email">RMSprop</code>、<code class="email">Nesterov</code>、<code class="email">Momentum</code>、<code class="email">Adam</code>和<code class="email">Adagrad</code>:</p><div><pre class="programlisting">target_var = T.ivector('targets')
+loss = lasagne.objectives.categorical_crossentropy(prediction, target_var)
+loss = loss.mean()
+
+updates <strong class="calibre2">= </strong>lasagne.updates.nesterov_momentum(
+        loss, params, <strong class="calibre2">learning_rate</strong>=0.01, <strong class="calibre2">momentum</strong>=0.9)
+
+train_fn = theano.function([input_var, target_var], loss, <strong class="calibre2">updates</strong>=updates)</pre></div><p class="calibre8">所有其他事情保持不变。</p><p class="calibre8">要测试我们的MNIST模型，请下载MNIST数据集:</p><div><pre class="programlisting">
+<strong class="calibre2">wget</strong> http://www.iro.umontreal.ca/~lisa/deep/data/mnist/mnist.pkl.gz -P /sharedfiles</pre></div><p class="calibre8">训练<a id="id263" class="calibre1"/>用于数字分类的MNIST分类器:</p><div><pre class="programlisting">
+<strong class="calibre2">python</strong> 1-train-mnist.py</pre></div><p class="calibre8"><a id="id264" class="calibre1"/>模型参数保存在<code class="email">model.npz</code>中。准确率再次达到99%以上。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>A localization network</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div/><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch06lvl1sec62" class="calibre1"/>本地化网络</h1></div></div></div><p class="calibre8">在<strong class="calibre2">空间变换网络</strong> ( <strong class="calibre2"> STN </strong>)中，不是将网络直接应用于<a id="id265" class="calibre1"/>输入图像信号，而是添加一个模块<a id="id266" class="calibre1"/>来预处理图像，并对其进行裁剪、旋转和缩放以适应对象，以帮助分类:</p><div><img src="img/00089.jpeg" alt="A localization network" class="calibre9"/><div><p class="calibre29">空间变压器网络</p></div></div><p class="calibre10"> </p><p class="calibre8">为此，STNs使用定位网络来预测仿射变换参数并处理输入:</p><div><img src="img/00090.jpeg" alt="A localization network" class="calibre9"/><div><p class="calibre29">空间变压器网络</p></div></div><p class="calibre10"> </p><p class="calibre8">在ano中，通过仿射变换的微分是自动的，我们只需通过仿射变换将定位网络与分类网络的输入连接起来。</p><p class="calibre8">首先，我们<a id="id267" class="calibre1"/>创建一个离MNIST CNN模型不远的定位网络，来预测仿射变换的六个参数:</p><div><pre class="programlisting">l_in <strong class="calibre2">=</strong> lasagne.layers.InputLayer((None, dim, dim))
+l_dim <strong class="calibre2">=</strong> lasagne.layers.DimshuffleLayer(l_in, (0, 'x', 1, 2))
+l_pool0_loc <strong class="calibre2">=</strong> lasagne.layers.MaxPool2DLayer(l_dim, <strong class="calibre2">pool_size</strong>=(2, 2))
+l_dense_loc = mnist_cnn.model(l_pool0_loc, <strong class="calibre2">input_dim</strong>=dim, <strong class="calibre2">num_classes</strong>=0)
+
+b <strong class="calibre2">=</strong> np.zeros((2, 3), <strong class="calibre2">dtype</strong>=theano.config.floatX)
+b[0, 0] = 1.0
+b[1, 1] = 1.0
+
+l_A_net = lasagne.layers.DenseLayer(
+    l_dense_loc,
+    <strong class="calibre2">num_units</strong>=6,
+    <strong class="calibre2">name</strong>='A_net',
+    <strong class="calibre2">b</strong>=b.flatten(),
+    <strong class="calibre2">W</strong>=lasagne.init.Constant(0.0),
+    <strong class="calibre2">nonlinearity</strong>=lasagne.nonlinearities.identity)</pre></div><p class="calibre8">这里，我们简单地用<code class="email">DimshuffleLayer</code>向输入数组添加一个只有值1的通道维度。这种维度添加被称为广播。</p><p class="calibre8">pooling层将输入图像的大小调整为<em class="calibre12"> 50x50 </em>，这足以确定数字的位置。</p><p class="calibre8"><a id="id268" class="calibre1"/>定位层权重以零开始，除了偏置，偏置初始化为恒等仿射参数；STN模块在开始时没有任何影响，完整的输入图像将被传输。</p><p class="calibre8">给定仿射参数进行裁剪:</p><div><pre class="programlisting">l_transform <strong class="calibre2">=</strong> lasagne.layers.TransformerLayer(
+    <strong class="calibre2">incoming</strong>=l_dim,
+    <strong class="calibre2">localization_network</strong>=l_A_net,
+    <strong class="calibre2">downsample_factor</strong>=args.downsample)</pre></div><p class="calibre8"><code class="email">down_sampling_factor</code>使我们能够根据输入定义输出图像的大小。在这种情况下，它是三，这意味着图像将是<em class="calibre12">33x 33</em>——与我们的MNIST数字大小<em class="calibre12"> 28x28 </em>相差不远。最后，我们简单地添加我们的MNIST CNN模型来分类输出:</p><div><pre class="programlisting">l_out <strong class="calibre2">=</strong> mnist_cnn.model(l_transform, <strong class="calibre2">input_dim</strong>=dim, <strong class="calibre2">p</strong>=sh_drp, <strong class="calibre2">num_units</strong>=400)</pre></div><p class="calibre8">为了测试分类器，让我们创建一个<em class="calibre12"> 100x100 </em>像素的图像，带有一些扭曲和一个数字:</p><div><pre class="programlisting">
+<strong class="calibre2">python</strong> create_mnist_sequence.py --nb_digits=1</pre></div><p class="calibre8">绘制前三幅图像(对应于1、0、5):</p><div><pre class="programlisting">
+<strong class="calibre2">python</strong> plot_data.py mnist_sequence1_sample_8distortions_9x9.npz</pre></div><div><img src="img/00091.jpeg" alt="A localization network" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">让我们运行命令来训练模型:</p><div><pre class="programlisting">
+<strong class="calibre2">python</strong> 2-stn-cnn-mnist.py</pre></div><p class="calibre8">在这里<a id="id269" class="calibre1"/>再次，当数字单独没有失真时，准确度达到99%以上，这对于单独使用简单的MNIST CNN模型通常是不可能的，并且当有失真时，准确度达到96.9%以上。</p><p class="calibre8">绘制作物的命令是:</p><div><pre class="programlisting">
+<strong class="calibre2">python</strong> plot_crops.py res_test_2.npz</pre></div><p class="calibre8">它给出了以下结果:</p><div><img src="img/00092.jpeg" alt="A localization network" class="calibre9"/></div><p class="calibre10"> </p><div><img src="img/00093.jpeg" alt="A localization network" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">并且<a id="id270" class="calibre1"/>带有扭曲:</p><div><img src="img/00094.jpeg" alt="A localization network" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">STN可以被认为是一个模块，可以包含在任何网络的两层之间的任何地方。为了进一步改善分类结果，在分类网络的不同层之间添加多个stn有助于获得更好的结果。</p><p class="calibre8">这里的<a id="id271" class="calibre1"/>是一个网络的例子，网络内部有两个分支，每个分支都有自己的SPN，在无人监管的情况下，它会尝试捕捉图像的不同部分来对其进行分类:</p><div><img src="img/00095.jpeg" alt="A localization network" class="calibre9"/><div><p class="calibre29">(空间变压器网络论文，贾德伯格等人，2015年)</p></div></div><p class="calibre10"> </p></div></body></html>
+
+
+<html>
+  <head>
+    <title>A localization network</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_1"><a id="ch06lvl2sec22" class="calibre1"/>应用于图像的递归神经网络</h2></div></div></div><p class="calibre8">想法<a id="id272" class="calibre1"/>是使用递归来读取多个数字，而不是一个数字:</p><div><img src="img/00096.jpeg" alt="Recurrent neural net applied to images" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">为了读取多个数字，我们简单地用递归网络代替定位前馈网络，该递归网络将输出对应于每个数字的多个仿射变换:</p><div><img src="img/00097.jpeg" alt="Recurrent neural net applied to images" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">从<a id="id273" class="calibre1"/>前面的例子中，我们用GRU层替换全连接层:</p><div><pre class="programlisting">l_conv2_loc <strong class="calibre2">=</strong> mnist_cnn.model(l_pool0_loc, <strong class="calibre2">input_dim</strong>=dim, <strong class="calibre2">p</strong>=sh_drp, <strong class="calibre2">num_units</strong>=0)
+
+<strong class="calibre2">class</strong> Repeat(<strong class="calibre2">lasagne.layers.Layer</strong>):
+    <strong class="calibre2">def __init__(</strong>self, incoming, n, **kwargs):
+        super(Repeat, self).<strong class="calibre2">__init__</strong>(incoming, **kwargs)
+        self.n = n
+
+    <strong class="calibre2">def</strong> get_output_shape_for(self, input_shape):
+        <strong class="calibre2">return</strong> tuple([input_shape[0], self.n] + list(input_shape[1:]))
+
+    <strong class="calibre2">def</strong> get_output_for(self, input, <strong class="calibre2">**</strong>kwargs):
+        tensors = [input]*self.n
+        stacked = theano.tensor.stack(*tensors)
+        dim = [1, 0] + range(2, input.ndim+1)
+        <strong class="calibre2">return</strong> stacked.dimshuffle(dim)
+
+l_repeat_loc = Repeat(l_conv2_loc, <strong class="calibre2">n</strong>=num_steps)
+l_gru = lasagne.layers.GRULayer(l_repeat_loc, <strong class="calibre2">num_units</strong>=num_rnn_units,
+<strong class="calibre2">unroll_scan</strong>=True)
+
+l_shp <strong class="calibre2">=</strong> lasagne.layers.ReshapeLayer(l_gru, (-1, num_rnn_units))  </pre></div><p class="calibre8">这将输出一个维度(无，3，256)的张量，其中第一个维度是批量大小，3是GRU中的步骤数，256是隐藏层大小。在这一层之上，我们简单地添加与前面相同的全连接层，以在开始时输出三个身份图像:</p><div><pre class="programlisting">b = np.zeros((2, 3), <strong class="calibre2">dtype</strong>=theano.config.floatX)
+b[0, 0] = 1.0
+b[1, 1] = 1.0
+
+l_A_net = lasagne.layers.DenseLayer(
+    l_shp,
+    <strong class="calibre2">num_units</strong>=6,
+    <strong class="calibre2">name</strong>='A_net',
+    <strong class="calibre2">b</strong>=b.flatten(),
+    <strong class="calibre2">W</strong>=lasagne.init.Constant(0.0),
+    <strong class="calibre2">nonlinearity</strong>=lasagne.nonlinearities.identity)
+
+l_conv_to_transform <strong class="calibre2">=</strong> lasagne.layers.ReshapeLayer(
+    Repeat(l_dim, <strong class="calibre2">n</strong>=num_steps), [-1] + list(l_dim.output_shape[-3:]))
+
+l_transform = lasagne.layers.TransformerLayer(
+    <strong class="calibre2">incoming</strong>=l_conv_to_transform,
+    <strong class="calibre2">localization_network</strong>=l_A_net,
+    <strong class="calibre2">downsample_factor</strong>=args.downsample)
+
+l_out = mnist_cnn.model(l_transform, <strong class="calibre2">input_dim=</strong>dim, <strong class="calibre2">p=</strong>sh_drp, <strong class="calibre2">num_units=</strong>400)</pre></div><p class="calibre8">为了测试<a id="id274" class="calibre1"/>分类器，让我们创建带有一些扭曲的<em class="calibre12"> 100x100 </em>像素的图像，这次是三个数字:</p><div><pre class="programlisting">
+<strong class="calibre2">python</strong> create_mnist_sequence.py --nb_digits=3 --output_dim=100</pre></div><p class="calibre8">绘制前三幅图像(对应于序列<strong class="calibre2"> 296 </strong>、<strong class="calibre2"> 490 </strong>、<strong class="calibre2"> 125 </strong>):</p><div><pre class="programlisting">
+<strong class="calibre2">python</strong> plot_data.py mnist_sequence3_sample_8distortions_9x9.npz</pre></div><div><img src="img/00098.jpeg" alt="Recurrent neural net applied to images" class="calibre9"/></div><p class="calibre10"> </p><div><img src="img/00099.jpeg" alt="Recurrent neural net applied to images" class="calibre9"/></div><p class="calibre10"> </p><div><img src="img/00100.jpeg" alt="Recurrent neural net applied to images" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">让我们运行<a id="id275" class="calibre1"/>命令来训练我们的递归模型:</p><div><pre class="programlisting">
+<strong class="calibre2">python</strong> 3-recurrent-stn-mnist.py
+<em class="calibre12">Epoch 0 Acc Valid 0.268833333333, Acc Train = 0.268777777778, Acc Test = 0.272466666667</em>
+<em class="calibre12">Epoch 1 Acc Valid 0.621733333333, Acc Train = 0.611116666667, Acc Test = 0.6086</em>
+<em class="calibre12">Epoch 2 Acc Valid 0.764066666667, Acc Train = 0.75775, Acc Test = 0.764866666667</em>
+<em class="calibre12">Epoch 3 Acc Valid 0.860233333333, Acc Train = 0.852294444444, Acc Test = 0.859566666667</em>
+<em class="calibre12">Epoch 4 Acc Valid 0.895333333333, Acc Train = 0.892066666667, Acc Test = 0.8977</em>
+<em class="calibre12">Epoch 53 Acc Valid 0.980433333333, Acc Train = 0.984261111111, Acc Test = 0.97926666666</em>
+</pre></div><p class="calibre8"><a id="id276" class="calibre1"/>分类准确率为99.3%。</p><p class="calibre8">绘制作物图:</p><div><pre class="programlisting">
+<strong class="calibre2">python</strong> plot_crops.py res_test_3.npz</pre></div><div><img src="img/00101.jpeg" alt="Recurrent neural net applied to images" class="calibre9"/></div><p class="calibre10"> </p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Unsupervised learning with co-localization</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch06lvl1sec63" class="calibre1"/>协同定位的无监督学习</h1></div></div></div><p class="calibre8"><a class="calibre1" title="Chapter 2. Classifying Handwritten Digits with a Feedforward Network" href="part0026_split_000.html#OPEK1-ccdadb29edc54339afcb9bdf9350ba6b">第二章</a>、<em class="calibre12">训练的<a id="id277" class="calibre1"/>数字分类器的第一层，用前馈网络</em>作为编码函数对手写数字进行分类，在嵌入空间中表示图像，对于文字:</p><div><img src="img/00102.jpeg" alt="Unsupervised learning with co-localization" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">通过最小化假定包含相同数字的两个图像的随机集合上的铰链损失目标函数，可以毫无意外地训练空间变换器网络的定位网络:</p><div><img src="img/00103.jpeg" alt="Unsupervised learning with co-localization" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">最小化这个和导致修改定位网络中的权重，使得两个定位的数字变得比两个随机的裁剪更接近。</p><p class="calibre8">下面是结果:</p><div><img src="img/00104.jpeg" alt="Unsupervised learning with co-localization" class="calibre9"/><div><p class="calibre29">(空间变压器网络论文，贾德伯格等人，2015年)</p></div></div><p class="calibre10"> </p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Region-based localization networks</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch06lvl1sec64" class="calibre1"/>基于区域的本地化网络</h1></div></div></div><p class="calibre8">历史上，物体定位的基本方法是在滑动窗口中使用分类网络；它包括在每个方向上一个像素一个像素地滑动窗口，并在图像的每个位置和每个尺度上应用分类器。分类器学习判断对象是否存在并位于中心。它需要大量的计算，因为模型必须在每个位置和比例进行评估。</p><p class="calibre8">为了加速<a id="id280" class="calibre1"/>这样的过程，研究员Ross Girshick的Fast-R-CNN论文中的<strong class="calibre2">区域建议网络</strong> ( <strong class="calibre2"> RPN </strong>)包括将诸如MNIST CNN的神经网络分类器的完全连接层也转换成卷积层；事实上，在28x28影像上网络密集，当卷积核具有与输入相同的维数时，卷积和线性图层之间没有区别。因此，任何完全连接的层都可以被重写为卷积层，具有相同的权重和适当的核维数，这使网络能够在任何大小的比28x28更宽的图像上工作，输出每个位置都有分类分数的特征图。唯一的区别可能来自整个网络的步距，该步距可以被设置为不同于1，并且可以很大(几个10像素),卷积核被设置为步距不同于1，以便减少评估位置的数量，从而减少计算。这样的变换是值得的，因为卷积非常有效:</p><div><img src="img/00105.jpeg" alt="Region-based localization networks" class="calibre9"/><div><p class="calibre29">更快的R-CNN:用区域提议网络实现实时目标检测</p></div></div><p class="calibre10">已经设计了一个<a id="id281" class="calibre1"/>端到端网络，从反卷积原理中汲取思想，其中输出特征图一次给出所有边界<a id="id282" class="calibre1"/>框:<strong class="calibre2">你只看一次</strong> ( <strong class="calibre2"> YOLO </strong>)架构为特征图中的每个位置预测B个可能的边界框。每个边界框由其坐标(x，y，w，h)与整个图像的比例<a id="id283" class="calibre1"/>定义为回归问题，并且置信度(概率)对应于框和真实框之间的并集 ( <strong class="calibre2"> IOU </strong>)上的<strong class="calibre2">交集。提出了SSD模型的可比方法。</strong></p><p class="calibre8">最后，在第八章<a class="calibre1" title="Chapter 8. Translating and Explaining with Encoding – decoding Networks" href="part0083_split_000.html#2F4UM2-ccdadb29edc54339afcb9bdf9350ba6b">、</a>、<em class="calibre12">中介绍的用编码-解码网络进行翻译和解释的分割网络</em>也可以被认为是针对定位对象的神经网络实现。</p><p class="calibre8"><a id="ch06lvl1sec65" class="calibre1"/>延伸阅读</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Further reading</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0">有关更多信息，您可以进一步参考以下来源:</h1></div></div></div><p class="calibre8">空间变压器网络，马克斯·贾德伯格，卡伦·西蒙扬，安德鲁·齐泽曼，科拉伊·卡武克库奥卢，2015年6月</p><div><ul class="itemizedlist"><li class="listitem">《循环空间变压器网络》,索伦·卡埃·森德比，卡斯珀·卡埃·森德比，拉尔斯·马洛勒，奥勒·温瑟，2015年9月</li><li class="listitem">原代码:<a class="calibre1" href="https://github.com/skaae/recurrent-spatial-transformer-code">https://github.com/skaae/recurrent-spatial-transformer-code</a></li><li class="listitem">谷歌街景字符识别，王，如何</li><li class="listitem">用卷积神经网络在野外阅读文本，马克斯·贾德伯格，卡伦·西蒙扬，安德里亚·维达迪，安德鲁·齐塞曼，2014</li><li class="listitem">使用深度卷积神经网络从街景图像中识别多位数，Ian J. Goodfellow，Yaroslav Bulatov，Julian Ibarz，Sacha Arnoud，Vinay Shet，2013年</li><li class="listitem">从谷歌街景图像中识别字符，张景瑞王官</li><li class="listitem">用于自然场景文本识别的合成数据和人工神经网络，Max Jaderberg，卡伦·西蒙扬，Andrea Vedaldi，Andrew Zisserman，2014</li><li class="listitem">R-CNN减去R，Karel Lenc，Andrea Vedaldi，2015</li><li class="listitem">快速R-CNN，罗斯·吉斯克，2015</li><li class="listitem">更快的R-CNN:通过区域提议网络实现实时对象检测，任，，何，罗斯·吉斯克，，2015</li><li class="listitem">《你只看一次:统一的实时物体检测》，约瑟夫·雷德蒙、桑托什·迪夫瓦拉、罗斯·吉斯克、阿里·法尔哈迪，2015年6月</li><li class="listitem">http://pjreddie.com/darknet/yolo/ YOLO实时演示<a class="calibre1" href="http://pjreddie.com/darknet/yolo/"/></li><li class="listitem">YOLO9000:更好、更快、更强，约瑟夫·雷德蒙，阿里·法尔哈迪，2016年12月</li><li class="listitem">固态硬盘:单次多盒检测器，刘威、德拉戈米尔·安盖洛夫、杜米特鲁·尔汉、克里斯蒂安·塞格迪、斯科特·里德、傅成阳、亚历山大·c·伯格，2015年12月</li><li class="listitem">用于精确对象检测和语义分割的丰富特征层次，Ross Girshick，Jeff Donahue，Trevor Darrell，Jitendra Malik，2013</li><li class="listitem">文本流:自然场景图像中的统一文本检测系统田尚轩，，黄昌，，陆，，陈志林，2016</li><li class="listitem"><a id="ch06lvl1sec66" class="calibre1"/>总结</li></ul></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Summary</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0">空间转换器层是一个原始模块，用于定位图像的某个区域，对其进行裁剪和调整大小，以帮助分类器聚焦于图像中的相关部分，并提高其准确性。该层由可微仿射变换组成，其参数通过另一个模型，即定位网络来计算，并可以像往常一样通过反向传播来学习。</h1></div></div></div><p class="calibre8">使用递归神经单元可以推断出读取图像中多个数字的应用示例。为了简化我们的工作，引入了千层面库。</p><p class="calibre8">空间转换器是众多本地化解决方案中的一种；基于区域的定位，如YOLO、SSD或更快的RCNN，为边界框预测提供了最先进的结果。</p><p class="calibre8">在下一章中，我们将继续讨论图像识别，以了解如何对包含比数字更多信息的全尺寸图像进行分类，例如室内场景和室外景观的自然图像。与此同时，我们将继续千层面的预建层和优化模块。</p><p class="calibre8">In the next chapter, we'll continue with image recognition to discover how to classify full size images that contain a lot more information than digits, such as natural images of indoor scenes and outdoor landscapes. In the meantime, we'll continue with Lasagne's prebuilt layer and optimization modules.</p></div></body></html>
+</body></html>

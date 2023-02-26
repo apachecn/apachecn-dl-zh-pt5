@@ -1,0 +1,1375 @@
+<html><head/><body>
+
+
+
+
+
+	
+
+		<title>B18522_05</title>
+
+		
+
+	
+
+	
+
+		<div><h1 id="_idParaDest-98" class="chapter-number"><a id="_idTextAnchor106"/> 5</h1>
+
+			<h1 id="_idParaDest-99"><a id="_idTextAnchor107"/>云中的数据准备</h1>
+
+			<p>在本章中，我们将了解如何利用各种AWS云服务在云中设置数据准备。考虑到<strong class="bold">提取、转换和加载</strong> ( <strong class="bold"> ETL </strong>)操作在数据准备中的重要性，我们将更深入地研究如何以经济高效的方式设置和调度ETL作业。我们将介绍四种不同的设置:在单节点EC2实例和EMR集群上运行的ETL，然后利用Glue和SageMaker进行ETL作业。本章还将介绍Apache Spark，这是最流行的ETL框架。通过完成本章，您将能够利用所介绍的设置的不同优势，并为您的项目选择正确的工具集。</p>
+
+			<p>在本章中，我们将讨论以下主要话题:</p>
+
+			<ul>
+
+				<li>云中的数据处理</li>
+
+				<li>Apache Spark简介</li>
+
+				<li>为ETL设置单节点EC2实例</li>
+
+				<li>为ETL设置EMR集群</li>
+
+				<li>为ETL创建粘合作业</li>
+
+				<li>利用SageMaker进行ETL</li>
+
+			</ul>
+
+			<h1 id="_idParaDest-100"><a id="_idTextAnchor108"/>技术要求</h1>
+
+			<p>你可以从本书的GitHub资源库下载本章的补充资料:<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter_5">https://GitHub . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 5</a>。</p>
+
+			<h1 id="_idParaDest-101"><a id="_idTextAnchor109"/>云中的数据处理</h1>
+
+			<p><strong class="bold">深度学习</strong> ( <strong class="bold"> DL </strong>)项目<a id="_idIndexMarker433"/>的<a id="_idIndexMarker432"/>成功取决于<a id="_idIndexMarker434"/>数据的质量和数量。因此，用于数据准备的系统必须足够稳定和可伸缩，以便高效地处理数TB和数Pb的数据。这通常需要不止一台机器；必须为数据处理建立一个运行强大ETL引擎的机器集群，以便它能够存储和处理大量数据。</p>
+
+			<p>首先，我们想介绍一下ETL，这是云中数据处理的核心概念。接下来，我们将概述用于数据处理的分布式系统设置。</p>
+
+			<h2 id="_idParaDest-102"><a id="_idTextAnchor110"/>ETL简介</h2>
+
+			<p>在整个ETL过程中，数据将从一个或多个来源收集，根据需要转换成不同的形式，并保存在数据存储中。简而言之，ETL <a id="_idIndexMarker435"/>本身覆盖了整个数据处理管道。ETL始终与三种不同类型的数据交互:<strong class="bold">结构化</strong>、<strong class="bold">非结构化</strong>和<strong class="bold">半结构化</strong>。虽然结构化数据<a id="_idIndexMarker436"/>表示一组具有模式的数据(例如，表格)，但非结构化数据<a id="_idIndexMarker437"/>没有明确定义的模式(例如，文本、图像或PDF文件)。半结构化数据<a id="_idIndexMarker438"/>在数据本身中具有部分结构(例如，HTML或电子邮件)。</p>
+
+			<p>流行的<a id="_idIndexMarker439"/> ETL框架<a id="_idIndexMarker440"/>有<strong class="bold">Apache Hadoop</strong>(<a href="https://hadoop.apache.org/">https://hadoop.apache.org</a>)<strong class="bold">Presto</strong>(<a href="https://prestodb.io/">https://Presto db . io</a>)<strong class="bold">Apache Flink</strong>(<a href="https://flink.apache.org/">https://flink.apache.org</a>)<strong class="bold">Apache Spark</strong>(<a href="https://spark.apache.org/">https://spark.apache.org</a>)。Hadoop是最早利用分布式处理优势的数据处理引擎之一。Presto <a id="_idIndexMarker444"/>专门处理SQL中的数据，<a id="_idIndexMarker445"/> Apache Flink则是为了处理流数据而打造的。在这四个框架中，Apache Spark <a id="_idIndexMarker446"/>是最受欢迎的工具，因为它可以处理每种数据类型。<em class="italic"> Apache Spark利用内存中的数据处理来提高其吞吐量</em>，并提供比Hadoop更具可扩展性的数据处理解决方案。此外，它可以很容易地与其他ML和DL工具集成。出于这些原因，我们将在本书中主要关注Spark。</p>
+
+			<h2 id="_idParaDest-103"><a id="_idTextAnchor111"/>数据处理系统架构</h2>
+
+			<p>为数据处理设置一个系统不是一件简单的工作，因为它涉及到定期采购高端机器，正确连接各种数据处理软件，并确保在出现故障时数据不会丢失。因此，许多公司利用云服务，即通过互联网按需交付的各种软件服务。虽然许多公司提供各种各样的云服务，但亚马逊网络服务 ( <strong class="bold"> AWS </strong>)凭借其稳定且易于使用的服务脱颖而出。</p>
+
+			<p>为了让您更全面地了解现实生活中的数据处理系统有多复杂，我们来看一个基于AWS服务的示例系统架构。这个系统的<em class="italic">核心组件</em>是开源的<em class="italic"> Apache Spark </em>执行主要的ETL逻辑。典型的系统还包含用于调度单个作业、存储数据和可视化已处理数据的组件:</p>
+
+			<div><div><img src="img/B18522_05_01.jpg" alt="Figure 5.1 – A generic architecture for data processing pipelines &#13;&#10;along with visualization and experimentation platforms&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图5.1–数据处理管道以及可视化和实验平台的通用架构</p>
+
+			<p>让我们来看看这些组件:</p>
+
+			<ul>
+
+				<li><strong class="bold">数据存储</strong>:数据存储<a id="_idIndexMarker449"/>负责保存数据和相关元数据；<ul><li><strong class="bold"> Hadoop分布式文件系统</strong>(<strong class="bold">https://hadoop.apache.org</strong>):开源<a id="_idIndexMarker450"/> HDFS是一个<em class="italic">分布式文件系统，可以按需伸缩</em>(<a href="https://hadoop.apache.org/docs/r1.2.1/hdfs_design.html">T16)。HDFS一直是数据存储的传统选择，因为Apache Spark和Apache Hadoop在HDFS表现最佳。</a></li><li><strong class="bold">亚马逊简单存储服务(S3) </strong>:这是AWS【https://aws.amazon.com/s3】(<a href="https://aws.amazon.com/s3/"/>)提供的<em class="italic">数据存储服务。S3使用了对象和<a id="_idIndexMarker452"/>桶的概念，其中<a id="_idIndexMarker453"/>一个对象指的是单个文件，一个桶指的是对象的容器。对于每个项目或子模块，您可以创建一个存储桶，并为读写操作配置不同的权限。存储桶还可以对数据应用版本控制，跟踪变化。</em></li></ul></li>
+
+				<li><code>ml</code>，成本比其他EC2实例(<a href="https://aws.amazon.com/sagemaker/pricing/">https://aws.amazon.com/sagemaker/pricing</a>)高30%到40%左右。在<em class="italic">利用SageMaker进行ETL </em>部分，我们将描述如何在EC2实例上为ETL过程设置SageMaker。</li></ul>
+
+			
+
+			<p>考虑到需要处理的数据量，正确选择的ETL服务以及适当的数据存储选择可以显著提高管道的效率。要考虑的关键因素包括数据源、数据量、可用的硬件资源和可伸缩性等等。</p>
+
+			<ul>
+
+				<li><strong class="bold">调度</strong>:通常，ETL <a id="_idIndexMarker472"/>作业必须定期运行(例如，每天、每周或每月)，因此需要一个调度器:<ul><li><strong class="bold"> AWS Lambda函数</strong> : Lambda <a id="_idIndexMarker473"/>函数(<a href="https://aws.amazon.com/lambda/">https://aws.amazon.com/lambda</a>)被设计为<a id="_idIndexMarker474"/>在EMR上运行作业，而无需供应或管理基础设施。执行时间可以动态配置；该作业可以立即运行，也可以安排在不同的时间运行。<em class="italic">AWS Lambda函数以无服务器方式运行代码，因此不需要维护</em>。如果在执行过程中出现任何错误，EMR集群将自动关闭。</li><li><strong class="bold">气流</strong>:调度器在自动化ETL <a id="_idIndexMarker476"/>过程中扮演<a id="_idIndexMarker475"/>重要角色。air flow(<a href="https://airflow.apache.org/">https://airflow.apache.org</a>)<em class="italic">是数据工程师</em>使用的最流行的调度框架之一。气流的<strong class="bold">有向无环图</strong> ( <strong class="bold"> DAG </strong>)可用于<a id="_idIndexMarker477"/>定期调度流水线。Airflow比AWS Lambda函数更常用于定期运行Spark作业，因为Airflow使得在前面的任何执行失败时回填数据变得容易。</li></ul></li>
+
+				<li><strong class="bold">构建</strong>:构建是将代码包部署到AWS计算资源(如EMR或EC2)或基于预定义规范建立一组AWS服务的<a id="_idIndexMarker478"/>过程；<ul><li><strong class="bold">cloud formation</strong>:cloud formation<a id="_idIndexMarker479"/>模板(<a href="https://aws.amazon.com/cloudformation/">https://aws.amazon.com/cloudformation</a>)<em class="italic">帮助提供云基础设施作为代码</em>。CloudFormation <a id="_idIndexMarker480"/>通常在设置系统时执行特定的任务，例如创建一个EMR集群，准备一个具有特定规范的S3桶，或者终止一个正在运行的EMR集群。它有助于标准化重复性任务。</li><li><strong class="bold">Jenkins</strong>:Jenkins(<a href="https://www.jenkins.io/">https://www . Jenkins . io</a>)构建用Java和Scala编写的<a id="_idIndexMarker481"/>可执行文件。我们<a id="_idIndexMarker482"/>使用<em class="italic">詹金斯构建Spark管道工件(例如。jar文件)并将它们部署到EMR节点</em>。Jenkins还利用CloudFormation模板以标准化的方式执行任务。</li></ul></li>
+
+				<li><strong class="bold">数据库</strong>:数据存储和数据库的<a id="_idIndexMarker483"/>关键区别在于，数据库是用来存储结构化数据的。在这里，我们将讨论两种流行的数据库类型:<em class="italic">关系数据库</em>和<em class="italic">键值存储数据库</em>。我们将描述它们的不同之处，并解释适当的使用案例:<ul><li><strong class="bold">关系型数据库</strong> : <em class="italic">关系型数据库以表的格式用模式存储结构化数据</em>。以结构化方式存储数据<a id="_idIndexMarker485"/>的主要<a id="_idIndexMarker484"/>好处来自于数据管理；存储的数据值受到严格控制，以一致的格式保存这些值。这允许数据库在存储和检索特定数据集时进行额外的优化。ETL作业一般从一个或多个数据存储<a id="_idIndexMarker486"/>服务中读取数据，处理数据，并将处理后的数据存储在关系数据库<a id="_idIndexMarker487"/>中，如<strong class="bold">MySQL</strong>(<a href="https://www.mysql.com/">https://www.mysql.com</a>)，以及<strong class="bold">PostgreSQL</strong>(<a href="https://www.postgresql.org/">https://www.postgresql.org</a>)。AWS <a id="_idIndexMarker488"/>也提供关系数据库服务:<strong class="bold">亚马逊RDS</strong>(<a href="https://aws.amazon.com/rds/">https://aws.amazon.com/rds</a>)。</li><li><strong class="bold">键值存储数据库</strong>:与传统的<a id="_idIndexMarker490"/>关系数据库<a id="_idIndexMarker489"/>不同，这些数据库<em class="italic">针对大量读写操作进行了优化</em>。这种数据库以独特的键值对方式存储数据。通常，数据由一组键和一组保存每个键属性的值组成。许多数据库支持模式，但是它们的主要优势来自于它们也支持非结构化数据。换句话说，你可以存储任何数据，即使每个数据都有不同的结构。这类<a id="_idIndexMarker492"/>的热门数据库有<strong class="bold">Cassandra</strong>(<a href="https://cassandra.apache.org/">https://cassandra.apache.org</a>)和<strong class="bold">MongoDB</strong>(<a href="https://www.mongodb.com/">https://www.mongodb.com</a>)。有趣的是，AWS提供了一个键值存储数据库<a id="_idIndexMarker493"/>，称为<strong class="bold"> DynamoDB </strong>作为服务(<a href="https://aws.amazon.com/dynamodb">https://aws.amazon.com/dynamodb</a>)。</li></ul></li>
+
+				<li><strong class="bold"> Metastore </strong>:在某些<a id="_idIndexMarker494"/>情况下，收集并在数据存储中可用的初始数据集可能不包含任何关于自身的信息:例如，它可能缺少列类型或关于源的细节。当工程师管理和处理数据时，这些信息通常会有所帮助。因此，工程师们引入了<em class="italic"> metastore </em>的概念，metastore<em class="italic">是元数据</em>的存储库。存储为表的元数据提供了它所指向的数据的位置、模式和更新历史。</li>
+
+			</ul>
+
+			<p>在AWS的例子中，<strong class="bold"> Glue Data Catalog </strong>扮演metastore的<a id="_idIndexMarker495"/>角色，为S3提供内置支持。另一方面，hive(<a href="https://hive.apache.org/">https://hive.apache.org</a>)是HDFS的开源metastore。Hive的主要优势来自数据查询、汇总和分析，这是自然而然的，因为它提供了基于类似SQL语言的交互。</p>
+
+			<ul>
+
+				<li><strong class="bold">应用编程接口</strong> ( <strong class="bold"> API </strong> ) <strong class="bold">服务</strong> : <em class="italic"> API端点允许数据科学家和工程师高效地与数据交互</em>。例如，可以设置API <a id="_idIndexMarker497"/>端点，以便轻松访问存储在S3存储桶中的数据。许多框架都是为API服务设计的。以<a id="_idIndexMarker498"/>为例，<strong class="bold">Flask API</strong>(<a href="https://flask.palletsprojects.com/">https://flask.palletsprojects.com</a>)和<strong class="bold">Django</strong>(<a href="https://www.djangoproject.com/">https://www.djangoproject.com</a>)框架<a id="_idIndexMarker499"/>都是基于Python的，而<a id="_idIndexMarker500"/>Play框架(<a href="https://www.playframework.com/">https://www.playframework.com</a>)常用于Scala中的项目。</li>
+
+				<li><strong class="bold">实验平台</strong>:评估系统<a id="_idIndexMarker501"/>在生产中的性能通常是通过一种流行的用户体验研究方法来实现的，这种方法被称为A/B测试。<em class="italic">通过部署两个不同版本的系统并比较用户体验，A/B测试使我们能够了解最近的更改是否对系统产生了积极影响</em>。一般来说，设置A/B测试包括两个部分:<ul><li><strong class="bold">Rest API</strong>:<em class="italic">Rest API在处理带有不同参数的请求和以经过处理的方式返回数据方面提供了更大的灵活性</em>。因此，<a id="_idIndexMarker502"/>建立一个Rest API服务是很常见的，它从数据库或数据存储中聚集必要的数据用于分析目的，并以JSON格式向A/B实验平台提供数据。</li><li><strong class="bold"> A/B实验平台</strong>:数据<a id="_idIndexMarker503"/>科学家经常使用一个带有<strong class="bold">图形用户界面</strong> ( <strong class="bold"> GUI </strong>)的应用程序来<a id="_idIndexMarker504"/>安排各种A/B测试实验，并直观地将汇总的数据可视化以供分析。growth book(<a href="https://www.growthbook.io/">https://www . growth book . io</a>)就是<a id="_idIndexMarker505"/>这样一个平台的开源例子。</li></ul></li>
+
+				<li><strong class="bold">数据可视化工具</strong>:一个公司内有几个不同的团队(例如，营销、销售和高管)，他们可以从直观地可视化数据中受益。数据可视化工具通常支持定制仪表板的创建，这有助于数据分析<a id="_idIndexMarker507"/>过程。tableau(【https://www.tableau.com】)是项目负责人的常用工具，但它是专有软件。另一方面，Apache Superset(<a href="https://superset.apache.org/">https://superset.apache.org</a>)是<a id="_idIndexMarker508"/>一个支持大多数标准数据库的开源数据可视化工具。如果管理成本是一个问题，Apache Superset可以配置为使用存储在AWS Athena(<a href="https://aws.amazon.com/athena/">https://aws.amazon.com/athena</a>)等无服务器数据库中的数据来读取和绘制<a id="_idIndexMarker509"/>可视化。</li>
+
+				<li><strong class="bold">身份访问管理</strong> ( <strong class="bold"> IAM </strong> ): IAM是一个权限系统，规范对AWS <a id="_idIndexMarker510"/>资源的访问。通过<a id="_idIndexMarker511"/> IAM，可以控制用户可以访问的一组资源以及他们可以对所提供的资源进行的一组操作。更多关于IAM的细节可以在<a href="https://aws.amazon.com/iam">https://aws.amazon.com/iam</a>找到。</li>
+
+			</ul>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.在整个ETL过程中，数据将从一个或多个来源收集，根据需要转换成不同的形式，并保存到数据存储或数据库中。</p>
+
+			<p class="callout">b.Apache Spark是一个开源ETL引擎，广泛用于处理各种类型的大量数据:结构化、非结构化和半结构化。</p>
+
+			<p class="callout">c.为数据处理作业设置的典型系统由各种组件组成，包括数据存储、数据库、ETL引擎、数据可视化工具和实验平台。</p>
+
+			<p class="callout">d.ETL引擎可以在多种环境下运行——单台机器、集群、云中完全托管的ETL服务，以及为DL项目设计的端到端服务。</p>
+
+			<p>在下一节中，我们将介绍Apache Spark中的关键编程概念，这是最流行的ETL工具。</p>
+
+			<h1 id="_idParaDest-104"><a id="_idTextAnchor112"/>Apache Spark简介</h1>
+
+			<p>Apache Spark <a id="_idIndexMarker512"/>是一个用于数据处理的开源数据分析引擎。最流行的用例是ETL。作为对Spark的介绍，我们将涵盖围绕Spark的关键概念和一些常见的Spark操作。具体来说，我们将从介绍<strong class="bold">弹性分布式数据集</strong> ( <strong class="bold"> RDDs </strong>)和<a id="_idIndexMarker513"/>数据帧开始。然后，我们将讨论ETL任务需要了解的Spark基础知识:如何从数据存储中加载一组数据，应用各种转换，以及存储处理过的数据。Spark应用程序可以使用多种编程语言实现:Scala、Java、Python和r。在本书中，我们将使用Python，以便与其他实现保持一致。本节的代码片段可以在本书的GitHub知识库中找到:<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter_5/spark">https://GitHub . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 5/spark</a>。我们将在我们的示例中使用的数据集包括我们在<a href="B18522_02.xhtml#_idTextAnchor034"> <em class="italic">第2章</em> </a>、<em class="italic">深度学习</em> <em class="italic">项目的数据准备</em>中爬取的谷歌学术和COVID数据集，以及纽约时报提供的另一个COVID数据集(<a href="https://github.com/nytimes/covid-19-data">https://github.com/nytimes/covid-19-data</a>)。我们将最后一个数据集称为NY乘以COVID。</p>
+
+			<h2 id="_idParaDest-105"><a id="_idTextAnchor113"/>弹性分布式数据集和数据框架</h2>
+
+			<p>Spark的独特优势<a id="_idIndexMarker514"/>来自rdd，<a id="_idIndexMarker515"/>不可变的分布式数据对象集合。通过利用rdd，Spark可以高效地处理利用并行性的数据。Spark在rdd上运行的内置并行处理有助于数据处理，即使在其一个或多个处理器出现故障时也是如此。当一个Spark作业被触发时，输入数据的RDD表示被分割成多个分区，并分发到每个节点进行转换，从而最大化吞吐量。</p>
+
+			<p>像熊猫数据帧一样，Spark也有数据帧的<a id="_idIndexMarker516"/>概念，它用命名列表示关系数据库中的表。数据帧也是RDD，因此我们在下一节中描述的操作也同样适用。可以从结构化为表格的数据中创建数据帧，例如CSV数据、Hive中的表格或现有的rdd。数据帧附带了RDD不提供的模式。因此，RDD用于非结构化和半结构化数据，而DataFrame用于结构化数据。</p>
+
+			<h3>rdd和数据帧之间的转换</h3>
+
+			<p>任何Spark操作的第一步都是创建一个<code>SparkSession</code>对象。具体来说，来自<code>pyspark.sql</code>的<code>SparkSession</code>模块用于创建一个<code>SparkSession</code>对象。模块中的<code>getOrCreate</code>函数用于创建会话对象，如下所示。一个<code>SparkSession</code>对象<a id="_idIndexMarker518"/>是Spark应用程序的入口点。它提供了一种在不同上下文下与Spark应用程序进行交互的方式，例如Spark上下文、Hive上下文和SQL上下文:</p>
+
+			<pre class="source-code">
+
+from pyspark.sql import SparkSession
+
+spark_session = SparkSession.builder\
+
+        .appName("covid_analysis")\
+
+        .getOrCreate()</pre>
+
+			<p>将<a id="_idIndexMarker519"/> RDD <a id="_idIndexMarker520"/>转换成数据帧很简单。假设RDD没有任何方案，您可以创建一个没有任何方案的数据框架，如下所示:</p>
+
+			<pre class="source-code">
+
+# convert to df without schema
+
+df_ri_freq = rdd_ri_freq.toDF() </pre>
+
+			<p>要将RDD转换成带有模式的数据帧，需要使用<code>StructType</code>类，它是<code>pyspark.sql.types</code>模块的一部分。一旦使用<code>StructType</code>方法创建了一个模式，Spark会话对象的<code>createDataFrame</code>方法就可以用于将RDD转换成数据帧:</p>
+
+			<pre class="source-code">
+
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType
+
+# rdd for research interest frequency data
+
+rdd_ri_freq = ... 
+
+# convert to df with schema
+
+schema = StructType(
+
+          [StructField("ri", StringType(), False), 
+
+           StructField("frequency", IntegerType(), False)])
+
+df = spark.createDataFrame(rdd_ri_freq, schema)</pre>
+
+			<p>既然我们<a id="_idIndexMarker521"/>已经学习了如何<a id="_idIndexMarker522"/>在Python中设置Spark环境，让我们学习如何加载数据集作为RDD或数据帧。</p>
+
+			<h2 id="_idParaDest-106"><a id="_idTextAnchor114"/>加载数据</h2>
+
+			<p>Spark可以加载存储在各种数据存储形式中的不同格式的数据。加载以CSV格式存储的数据是Spark的一个基本操作。这可以使用<code>spark_session.read.csv</code>功能轻松实现。它将位于本地或云中的CSV文件作为数据帧读取，例如在S3存储桶中。在下面的代码片段中，我们正在加载存储在S3的谷歌学术数据。<code>header</code>选项可用于指示CSV文件有标题:</p>
+
+			<pre class="source-code">
+
+# datasets location
+
+google_scholar_dataset_path = "s3a://my-bucket/dataset/dataset_csv/dataset-google-scholar/output.csv"
+
+# load google scholar dataset
+
+df_gs = spark_session. \
+
+        .read \
+
+        .option("header", True) \
+
+        .csv(google_scholar_dataset_path)</pre>
+
+			<p>下图显示了<code>df_gs.show(n=3)</code>的结果。<code>show</code>函数打印第一个<em class="italic"> n </em>行，以及列标题:</p>
+
+			<div><div><img src="img/B18522_05_02.jpg" alt="Figure 5.2 – A sample DataFrame created by loading a CSV file&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图5.2–通过加载CSV文件创建的样本数据帧</p>
+
+			<p>同样，可以使用<code>SparkSession</code>模块的<code>read.json</code>函数读取数据存储器中的<a id="_idIndexMarker524"/> JSON文件:</p>
+
+			<pre class="source-code">
+
+# loada json file
+
+json_file_path="s3a://my-bucket/json/cities.json"
+
+df = spark_session.read.json(json_file_path)</pre>
+
+			<p>在下一节中，我们将学习如何使用Spark操作处理加载的数据。</p>
+
+			<h2 id="_idParaDest-107"><a id="_idTextAnchor115"/>使用火花操作处理数据</h2>
+
+			<p>Spark <a id="_idIndexMarker525"/>提供了一组将<a id="_idIndexMarker526"/> RDD转换为不同结构的RDD的操作。实现Spark应用程序是在RDD上链接一组Spark操作以将数据转换成目标格式的过程。在本节中，我们将讨论最常用的——即<code>filter</code>、<code>map</code>、<code>flatMap</code>、<code>reduceByKey</code>、<code>take</code>、<code>groupBy</code>和<code>join</code>。</p>
+
+			<h3>过滤器</h3>
+
+			<p>在大多数情况下，通常首先应用过滤器来丢弃不必要的数据。将<code>filter</code>方法<a id="_idIndexMarker528"/>应用于数据帧可以帮助您从给定的数据帧中选择感兴趣的行。在下面的代码片段中，我们使用这个方法只保留<code>research_interest</code>不是<code>None</code>的行:</p>
+
+			<pre class="source-code">
+
+# research_interest cannot be None
+
+df_gs_clean = df_gs.filter("research_interest != 'None'")</pre>
+
+			<h3>地图</h3>
+
+			<p>像其他编程语言中的<code>map</code>函数<a id="_idIndexMarker529"/>一样，Spark中的<code>map</code>操作将<a id="_idIndexMarker530"/>给定函数应用于每个数据条目。这里，我们使用<code>map</code>函数只保留<code>research_interest</code>列:</p>
+
+			<pre class="source-code">
+
+# we are only interested in research_interest column
+
+rdd_ri = df_gs_clean.rdd.map(lambda x: (x["research_interest"]))</pre>
+
+			<h3>平面地图</h3>
+
+			<p><code>flatMap</code>函数<a id="_idIndexMarker531"/>在将给定函数应用于每个<a id="_idIndexMarker532"/>条目后展平RDD，并返回新的RDD。在本例中，<code>flatMap</code>操作使用<code>##</code>分隔符分割每个数据条目，然后创建一对<code>research_interest</code>和一个值为<code>1</code>的默认频率:</p>
+
+			<pre class="source-code">
+
+# raw research_interest data into pairs of research area and a frequency count
+
+rdd_flattened_ri = rdd_ri.flatMap(lambda x: [(w.lower(), 1) for w in x.split('##')])</pre>
+
+			<h3>reduceByKey</h3>
+
+			<p><code>reduceByKey</code>根据键对输入的RDD进行分组<a id="_idIndexMarker533"/>。这里，<a id="_idIndexMarker534"/>使用<code>reduceByKey</code>对频率求和，以了解每个<code>research_interest</code>的出现次数:</p>
+
+			<pre class="source-code">
+
+# The pairs are grouped based on research area and the frequencies are summed up
+
+rdd_ri_freq = rdd_flattened_ri.reduceByKey(add)</pre>
+
+			<h3>拿</h3>
+
+			<p>Spark的<a id="_idIndexMarker535"/>基本<a id="_idIndexMarker536"/>操作之一是<code>take</code>。该函数用于从RDD中获取第一个<em class="italic"> n </em>元素:</p>
+
+			<pre class="source-code">
+
+# we are interested in the first 5 entries
+
+rdd_ri_freq_5 = rdd_ri_freq.take(5)</pre>
+
+			<h3>分组操作</h3>
+
+			<p>分组<a id="_idIndexMarker537"/>的想法是将数据帧中相同的数据条目收集成组，并对组进行汇总(例如，平均或求和)。</p>
+
+			<p>例如，让我们使用Moderna COVID数据集，通过<code>groupby</code>操作获得每个辖区(州)分配的平均剂量数。这里，我们使用<code>sort</code>函数对各州的平均剂量数进行排序。<code>toDF</code>和<code>alias</code>功能可以帮助添加新数据帧的名称:</p>
+
+			<pre class="source-code">
+
+# calculate average number of 1st corona vaccine per jurisdiction (state)
+
+df_avg_1 = df_covid.groupby("jurisdiction")\
+
+  .agg(F.avg("_1st_dose_allocations")
+
+  .alias("avg"))\
+
+  .sort(F.col("avg").desc())\
+
+  .toDF("state", "avg")</pre>
+
+			<p>应用<code>groupby</code>时，可以在一个命令中应用多个聚合(<code>sum</code>和<code>avg</code>)。从聚合函数(如<code>F.avg</code>或<code>F.sum</code>创建的列可以使用<code>alias</code>重命名。在以下示例中，对Moderna COVID数据集执行聚合，以获得第一次和第二次剂量的平均数和总和:</p>
+
+			<pre class="source-code">
+
+# At jurisdiction (state) level, calculate at average weekly 1st &amp; 2nd dose vaccine distribution. Similarly calculate sum for 1st and 2nd dose
+
+df_avg = df_covid.groupby(F.lower("jurisdiction").alias("state"))\
+
+  .agg(F.avg("_1st_dose_allocations").alias("avg_1"), \
+
+       F.avg("_2nd_dose_allocations").alias("avg_2"), \
+
+       F.sum("_1st_dose_allocations").alias("sum_1"), \
+
+       F.sum("_2nd_dose_allocations").alias("sum_2")
+
+       ) \
+
+  .sort(F.col("avg_1").desc())</pre>
+
+			<p>使用<code>groupby</code>功能在状态级执行<a id="_idIndexMarker538"/>计算。该数据集总共包含63个州，包括作为一个州的某些实体(联邦机构)。</p>
+
+			<h3>加入</h3>
+
+			<p><code>join</code>功能帮助<a id="_idIndexMarker539"/>合并两个数据帧的<a id="_idIndexMarker540"/>行。</p>
+
+			<p>为了演示如何使用<code>join</code>,我们将连接Moderna COVID数据集和NY Times COVID数据集。在我们解释任何<code>join</code>操作之前，我们必须对NY Times COVID数据集应用聚合，就像我们之前处理Moderna COVID数据集一样。在下面的代码片段中，在州级别应用了<code>groupby</code>操作，以获得表示死亡总数和病例总数的聚合(<code>sum</code>)值:</p>
+
+			<pre class="source-code">
+
+# at jurisdiction (state) level, calculate total number of deaths and total number of cases
+
+df_cases = df_covid2 \
+
+          .groupby(F.lower("state").alias("state")) \
+
+          .agg(F.sum("deaths").alias("sum_deaths"), \
+
+               F.sum("cases").alias("sum_cases"))</pre>
+
+			<p><em class="italic">图5.3 </em>显示了<code>df_cases.show(n=3)</code>操作的<a id="_idIndexMarker541"/>结果，可视化了被处理数据帧的顶部<a id="_idIndexMarker542"/>三行:</p>
+
+			<div><div><img src="img/B18522_05_03.jpg" alt="Figure 5.3 – The top three rows of the aggregated results&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图5.3–汇总结果的前三行</p>
+
+			<p>我们现在准备演示两种类型的连接:等连接和左连接。</p>
+
+			<h4>相等联接(内部联接)</h4>
+
+			<p>等价连接，也称为内部连接<a id="_idIndexMarker543"/>，是Spark中默认的<code>join</code>操作。一个<a id="_idIndexMarker544"/>内部连接用于连接公共列值上的两个数据帧。键不匹配的行将在最终的数据帧中被删除。在本例中，equi-join将作为Moderna COVID数据集和NY Times COVID数据集之间的公共列应用于<code>state</code>列。</p>
+
+			<p>第一步是使用<code>alias</code>为数据帧创建别名。然后，我们在一个数据帧上调用<code>join</code>函数，同时传递定义列关系和连接类型的另一个数据帧:</p>
+
+			<pre class="source-code">
+
+# creating an alias for each DataFrame
+
+df_moderna = df_avg.alias("df_moderna")
+
+df_ny = df_cases.alias("df_ny")
+
+df_inner = df_moderna.join(df_ny, F.col("df_moderna.state") == F.col("df_ny.state"), 'inner')</pre>
+
+			<p>以下是<code>df_inner.show(n=3)</code>操作的输出:</p>
+
+			<div><div><img src="img/B18522_05_04.jpg" alt="Figure 5.4 – The output of using the df_inner.show(n=3) operation&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图5.4–使用df_inner.show(n=3)操作的输出</p>
+
+			<p>现在，让我们看看另一种类型的连接，左连接。</p>
+
+			<h4>左连接</h4>
+
+			<p>一个<a id="_idIndexMarker545"/>左连接<a id="_idIndexMarker546"/>是另一个流行的用于数据分析的<code>join</code>操作。左连接返回一个数据帧中的所有行，而不管在另一个数据帧中找到的匹配。当<code>join</code>表达式不匹配时，它为缺少的条目分配<code>null</code>。</p>
+
+			<p>left join语法类似于equi-join。唯一的区别是，在指定连接类型时，需要传递关键字<code>left</code>，而不是<code>inner</code>。左连接获取第一个提到的数据帧(<code>df_m</code>)中提到的列(<code>df_m.state</code>)的所有值。然后，它尝试将条目与第二个提到的数据帧(<code>df_ny.state</code>)在提到的列上进行匹配。在这个例子中，如果一个特定的状态出现在两个数据帧上，<code>join</code>操作的输出将是该状态，以及来自两个数据帧的值。如果某个特定状态仅在第一个数据帧(<code>df_m</code>)中可用，而在第二个数据帧(<code>df_ny</code>)中不可用，那么它将添加仅具有第一个数据帧的值的状态，保持另一个条目为<code>null</code>:</p>
+
+			<pre class="source-code">
+
+# join results in all rows from the left table. Missing entries from the right table will result in "null"
+
+df_left = df_moderna.join(df_ny, F.col("df_m.state") == F.col("df_ny.state"), 'left')</pre>
+
+			<p>这里显示了<code>df_left.show(n=3</code>的输出:</p>
+
+			<div><div><img src="img/B18522_05_05.jpg" alt="Figure 5.5 – The output of the df_inner.show(n=3) operation&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图5.5–df _ inner . show(n = 3)操作的输出</p>
+
+			<p>尽管Spark提供了大量涵盖不同情况的操作，但由于逻辑的复杂性，您可能会发现构建自定义操作更有用。</p>
+
+			<h2 id="_idParaDest-108"><a id="_idTextAnchor116"/>使用用户自定义函数处理数据</h2>
+
+			<p><strong class="bold">用户自定义函数</strong> ( <strong class="bold"> UDF </strong> ) <em class="italic">是一个可重用的自定义函数，对RDD </em>执行转换。一个UDF <a id="_idIndexMarker547"/>函数可以在几个<a id="_idIndexMarker548"/>数据帧上重复使用。在本节中，我们将提供一个使用UDF处理谷歌学术数据集的完整代码示例。</p>
+
+			<p>首先，我们想介绍一下<code>pyspark.sql.function</code>模块，它允许您用<code>udf</code>方法定义一个UDF，并提供各种列操作。<code>pyspark.sql.function</code>还包括用于聚合的函数，如<code>avg</code>或<code>sum</code>，分别用于计算平均值和总数:</p>
+
+			<pre class="source-code">
+
+import pyspark.sql.functions as F</pre>
+
+			<p>在谷歌学术数据集中，<code>data_science</code>、<code>artificial_intelligence</code>和<code>machine_learning</code>都引用<code>research_interest</code>数据的同一个字段，并检查是否有任何数据可以归类为AI。如果找到匹配，它会在新列中放入一个值<code>1</code>。否则它将分配<code>0</code>。使用<code>withColumn</code>方法将UDF的结果存储在名为<code>is_artificial_intelligence</code>的新列中。在下面的代码片段中，<code>@F.udf</code>注释通知Spark该函数是一个UDF。来自<code>pyspark.sql.functions</code>的<code>col</code>方法通常用于传递一列作为UDF的参数。这里，<code>F.col("research_interest")</code>被传递给了UDF <code>is_ai</code>方法，指示UDF应该操作哪一列:</p>
+
+			<pre class="source-code">
+
+# list of research_interests that are under same domain
+
+lst_ai  = ["data_science", "artificial_intelligence",
+
+           "machine_learning"]
+
+@F.udf
+
+def is_ai(research):
+
+    """ return 1 if research in AI domain else 0"""
+
+    try:
+
+      # split the research interest with delimiter "##"  
+
+      lst_research = [w.lower() for w in str(research).split("##")]
+
+      for res in lst_research:
+
+        # if present in AI domain
+
+        if res in lst_ai:
+
+          return 1
+
+      # not present in AI domain
+
+      return 0
+
+    except:
+
+      return -1
+
+# create a new column "is_artificial_intelligence"
+
+df_gs_new = df_gs.withColumn("is_artificial_intelligence",\ is_ai(F.col("research_interest")))</pre>
+
+			<p>在<a id="_idIndexMarker549"/>处理完原始数据后，我们希望将它存储在数据存储器中，以便我们可以将它重新用于其他目的。</p>
+
+			<h2 id="_idParaDest-109"><a id="_idTextAnchor117"/>导出数据</h2>
+
+			<p>在本节中，我们将<a id="_idIndexMarker550"/>学习如何将数据帧保存到S3桶中。在RDD的情况下，它必须被转换成数据帧以被适当地保存。</p>
+
+			<p>通常，数据分析师希望将聚合数据作为CSV文件写入以下操作。要将数据帧导出为CSV文件，必须使用<code>df.write.csv</code>功能。对于文本值，我们建议您使用<code>option("quoteAll", True)</code>，它会用引号将每个值括起来。</p>
+
+			<p>在下面的例子中，我们提供了一个S3路径来在S3桶中生成一个CSV文件。<code>coalesce(1)</code>用于编写单个CSV文件而不是多个CSV文件:</p>
+
+			<pre class="source-code">
+
+S3_output_path = "s3a:\\my-bucket\output\vaccine_state_avg.csv"
+
+# writing a DataFrame as a CSVfile
+
+sample_data_frame.\
+
+        .coalesce(1) \
+
+        .write \
+
+        .mode("overwrite") \
+
+        .option("header", True) \
+
+        .option("quoteAll",True) \
+
+        .csv(s3_output_path)</pre>
+
+			<p>如果您想<a id="_idIndexMarker551"/>将数据帧保存为JSON文件，您可以使用<code>write.json</code>:</p>
+
+			<pre class="source-code">
+
+S3_output_path = "s3a:\\my-bucket\output\vaccine_state_avg.json"
+
+# Writing a DataFrame as a json file
+
+sample_data_frame \
+
+        .write \
+
+        .json(s3_output_path)</pre>
+
+			<p>此时，您应该看到一个文件存储在S3存储桶中。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.RDD是一个不可变的分布式集合，它被分割成多个分区，并在集群的不同节点上进行计算。</p>
+
+			<p class="callout">b.Spark数据帧相当于关系数据库中带有命名列的表。</p>
+
+			<p class="callout">c.Spark提供了一组操作，将RDD转换为具有不同结构的RDD。实现Spark应用程序是在RDD上链接一组Spark操作以将数据转换成目标格式的过程。您可以使用UDF构建一个定制的Spark操作。</p>
+
+			<p>在这一节中，我们描述了Apache Spark的基础知识，它是ETL最常用的工具。从下一节开始，我们将讨论如何在云中为ETL设置一个Spark作业。首先，让我们看看如何在单个EC2实例上运行ETL。</p>
+
+			<h1 id="_idParaDest-110"><a id="_idTextAnchor118"/>为ETL设置单节点EC2实例</h1>
+
+			<p>EC2实例<a id="_idIndexMarker552"/>可以拥有CPU/GPU、内存、存储和网络容量的各种组合<a id="_idIndexMarker553"/>。您可以<a id="_idIndexMarker554"/>在官方文档中找到EC2的可配置选项:<a href="https://aws.amazon.com/ec2/instance-types">https://aws.amazon.com/ec2/instance-types</a>。</p>
+
+			<p>创建EC2实例时，您可以选择一个Docker映像来运行，该映像已经为<a id="_idIndexMarker555"/>各种项目进行了预定义。这些被称为<strong class="bold">亚马逊机器图像</strong> ( <strong class="bold"> AMIs </strong>)。例如，有一个为DL项目安装了TF version 2的图像和一个为一般ML项目安装了Anacond <a id="_idTextAnchor119"/> a的图像，如下面的截图所示。完整的ami列表请参考<a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html">https://docs . AWS . Amazon . com/AWS ec2/latest/user guide/AMIs . html</a>:</p>
+
+			<div><div><img src="img/B18522_05_06.jpg" alt="Figure 5.6 – Selecting an AMI for an EC2 instance&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图5.6–为EC2实例选择AMI</p>
+
+			<p>AWS <a id="_idIndexMarker557"/>提供<strong class="bold">深度学习ami</strong>(<strong class="bold">DLAMIs</strong>)，为DL项目打造的<a id="_idIndexMarker558"/>ami；图像利用不同的CPU和GPU配置以及不同的计算架构(<a href="https://docs.aws.amazon.com/dlami/latest/devguide/options.html">https://docs . AWS . Amazon . com/dlami/latest/dev guide/options . html</a>)。</p>
+
+			<p>正如<a href="B18522_01.xhtml#_idTextAnchor014"> <em class="italic">第一章</em> </a>、<em class="italic">深度学习驱动项目的有效规划</em>中提到的，许多数据科学家利用EC2 <a id="_idIndexMarker560"/>实例来开发他们的算法，利用动态资源分配的灵活性。创建EC2实例和安装Spark的步骤如下:</p>
+
+			<ol>
+
+				<li>出于安全目的，创建一个<strong class="bold">虚拟专用网</strong> ( <strong class="bold"> VPN </strong>)来限制对EC2实例的访问。</li>
+
+				<li>用EC2密钥对创建一个<code>.pem</code>密钥。当用户试图从终端登录EC2实例时，使用一个<code>.pem</code>文件来执行身份验证。</li>
+
+				<li>用必要的工具和包从Docker映像创建EC2实例。</li>
+
+				<li>添加允许从本地终端访问新实例的入站规则。</li>
+
+				<li>使用SSH访问EC2实例和在<em class="italic">步骤2 </em>中创建的<code>.pem</code>文件。</li>
+
+				<li>启动火花壳。</li>
+
+			</ol>
+
+			<p>我们已经在<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter_5/ec2">https://github . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 5/ec2</a>上为<a id="_idIndexMarker561"/>提供了<a id="_idIndexMarker562"/>每个步骤的详细描述和截图。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.EC2实例可以具有CPU/GPU、内存、存储和网络容量的各种组合</p>
+
+			<p class="callout">b.只需在AWS web控制台上点击几次，就可以从预定义的Docker映像(AMI)创建EC2实例</p>
+
+			<p>接下来，我们将学习如何建立一个集群，将一组Spark workers作为一个组来运行。</p>
+
+			<h1 id="_idParaDest-111"><a id="_idTextAnchor120"/>为ETL设置EMR集群</h1>
+
+			<p>在<a id="_idIndexMarker563"/>DL的情况下，单个<a id="_idIndexMarker564"/> EC2实例的计算能力可能不足以进行模型训练或数据处理。因此，通常将一组EC2实例放在一起以增加吞吐量。AWS为此有专门的服务:<strong class="bold">亚马逊弹性MapReduce </strong> ( <strong class="bold"> EMR </strong>)。它是一个<a id="_idIndexMarker565"/>全托管集群平台，为Apache Spark和Hadoop等大数据框架提供分布式系统。通常，为ETL设置的EMR集群从AWS存储(亚马逊S3)读取数据，处理数据，并将其写回AWS存储。Spark作业通常用于处理与S3交互的ETL逻辑。EMR提供了一个有趣的功能<a id="_idIndexMarker566"/>，名为<strong class="bold"> Workspace </strong>，可以帮助开发人员组织笔记本，并与其他EMR用户共享以进行协作。</p>
+
+			<p>典型的EMR <a id="_idIndexMarker567"/>设置包含一个主节点和几个核心节点。在<a id="_idIndexMarker568"/>多节点集群的情况下，必须至少有一个核心节点。主节点管理运行分布式应用程序(例如Spark或Hadoop)的集群。核心节点<a id="_idIndexMarker569"/>由主节点管理，运行数据处理任务，并将数据存储在数据存储器中(例如S3或HDFS)。</p>
+
+			<p>任务节点<a id="_idIndexMarker570"/>由主节点管理，是可选的。它们通过在计算过程中引入另一种并行性来提高集群上运行的分布式应用程序的吞吐量。它们运行数据处理任务，但不在数据存储器中存储数据。</p>
+
+			<p>下面的屏幕截图显示了EMR集群创建页面。在整个表单中，我们需要提供集群的名称、启动模式、EMR版本、在集群上运行的应用程序(例如，用于数据处理的Apache Spark和用于笔记本的Jupyter)以及EC2实例的规范。用DL处理数据通常需要高计算能力的实例。在其他情况下，您可以构建一个具有更大内存限制的集群:</p>
+
+			<div><div><img src="img/B18522_05_07.jpg" alt="Figure 5.7 – EMR cluster creation &#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图5.7–EMR集群创建</p>
+
+			<p>具体步骤如下:</p>
+
+			<ul>
+
+				<li><strong class="bold">步骤1:软件和步骤</strong>:在这里，你<a id="_idIndexMarker571"/>必须选择软件相关的配置——即EMR版本和应用程序(Spark、JupyterHub等)。</li>
+
+				<li><strong class="bold">步骤2:硬件</strong>:在这里，您必须选择与硬件相关的配置，即实例类型、实例数量和VPN网络。</li>
+
+				<li><strong class="bold">第三步:一般集群设置</strong>:选择<a id="_idIndexMarker572"/>操作日志的集群名称和S3桶路径。</li>
+
+				<li><code>.pem</code>文件:<ul><li>只有当您想要登录到EC2主节点并像在单个EC2实例的情况下一样在Spark shell上工作时，才需要文件<a id="_idIndexMarker574"/>。</li></ul></li>
+
+			</ul>
+
+			<p>完成这些步骤后，您需要<a id="_idIndexMarker575"/>等待几分钟，直到集群的状态变为<code>running</code>。然后，您可以导航到EMR集群提供的端点来打开Jupyter笔记本。用户名为<code>jovyan</code>，密码为<code>jupyter</code>。</p>
+
+			<p>我们的GitHub存储库提供了这个过程的逐步说明，以及截图(<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter_5/emr">https://GitHub . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 5/EMR</a>)。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.EMR是一个完全托管的集群平台，运行大数据ETL框架，如Apache Spark</p>
+
+			<p class="callout">b.您可以通过AWS web控制台创建一个包含各种EC2实例的EMR集群</p>
+
+			<p>EMR的缺点在于它需要被明确地管理。一个组织通常有一组开发人员专门处理与EMR集群相关的问题。不幸的是，如果组织很小，这可能很难做到。在下一节中，我们将介绍Glue，它不需要任何显式的集群管理。</p>
+
+			<h1 id="_idParaDest-112"><a id="_idTextAnchor121"/>为ETL创建粘合作业</h1>
+
+			<p>AWS Glue(<a href="https://aws.amazon.com/glue/">https://aws.amazon.com/glue</a>)支持无服务器方式的数据<a id="_idIndexMarker577"/>处理。Glue的<a id="_idIndexMarker578"/>计算资源由<a id="_idIndexMarker579"/> AWS管理，因此不像专用集群(例如，EMR)那样需要更少的维护工作。除了最少的资源维护工作之外，Glue还提供了额外的特性，比如内置的调度器和Glue数据目录，这将在后面讨论。</p>
+
+			<p>首先，让我们学习如何使用Glue设置数据处理作业。在开始定义数据处理逻辑之前，必须创建一个包含S3数据模式的粘合数据目录。一旦为输入数据定义了粘合数据目录，您就可以使用粘合Python编辑器来定义数据处理逻辑的细节(<em class="italic">图5.8 </em>)。该编辑器为您的应用程序提供了一个基本的设置，以降低设置胶合作业的难度:<a href="https://docs.aws.amazon.com/glue/latest/dg/edit-script.html">https://docs.aws.amazon.com/glue/latest/dg/edit-script.html</a>。在这个模板代码之上，您将读入Glue数据目录作为输入，处理它，并存储处理后的输出。由于Glue Data Catalog很好地集成了Spark，因此Glue作业中的操作通常使用Spark来实现:</p>
+
+			<div><div><img src="img/B18522_05_08.jpg" alt="Figure 5.8 – AWS Glue job script editor&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图5.8–AWS粘合作业脚本编辑器</p>
+
+			<p>在以下部分中，您将了解如何使用存储在S3存储桶中的谷歌学术数据集来设置粘合作业。完整的实现可以在<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter_5/glue">https://github . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 5/glue</a>找到。</p>
+
+			<h2 id="_idParaDest-113"><a id="_idTextAnchor122"/>创建胶水数据目录</h2>
+
+			<p>首先，我们将<a id="_idIndexMarker580"/>创建一个胶水数据目录(参见<em class="italic">图5.9 </em>)。Glue只能读取元数据存储在Glue数据目录中的一组数据。数据目录由数据库组成，数据库是表形式的元数据的集合。Glue <a id="_idIndexMarker581"/>提供了一个称为<strong class="bold">爬虫</strong>的特性，它<em class="italic">为数据存储</em>中的数据文件创建元数据(例如，一个S3桶):</p>
+
+			<div><div><img src="img/B18522_05_09.jpg" alt="Figure 5.9 – The first step of setting up a crawler&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图5.9–设置爬虫的第一步</p>
+
+			<p>前面的截图显示了创建爬虫的第一步。每个步骤的细节可以在<a href="https://docs.aws.amazon.com/glue/latest/dg/add-crawler.html">https://docs.aws.amazon.com/glue/latest/dg/add-crawler.html</a>找到。</p>
+
+			<h2 id="_idParaDest-114"><a id="_idTextAnchor123"/>设置粘合上下文</h2>
+
+			<p>如果你看一下AWS为Glue提供的模板代码<a id="_idIndexMarker583"/>，你会发现一些关键包已经被导入了。<code>awsglue.utils</code>模块中的<code>getResolvedOptions</code>有助于利用运行时传递给胶合脚本的参数:</p>
+
+			<pre class="source-code">
+
+from awsglue.utils import getResolvedOptions
+
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])</pre>
+
+			<p>对于使用Spark的胶合作业，必须创建Spark上下文并将其传递给<code>GlueContext</code>。Spark会话对象可以从Glue上下文中访问。可以使用<code>awsglue.job</code>模块通过传递一个粘合上下文对象来实例化粘合作业:</p>
+
+			<pre class="source-code">
+
+from pyspark.context import SparkContext
+
+from awsglue.context import GlueContext
+
+from awsglue.job import Job
+
+# glue_job_google_scholar.py
+
+# spark context
+
+spark_context = SparkContext()
+
+# glue context
+
+glueContext = GlueContext(spark_context)
+
+# spark
+
+spark_session = glueContext.spark_session
+
+# job
+
+job = Job(glueContext)
+
+# initialize job
+
+job.init(args['JOB_NAME'], args)</pre>
+
+			<p>接下来，我们将学习如何从粘合数据目录中读取数据。</p>
+
+			<h2 id="_idParaDest-115"><a id="_idTextAnchor124"/>阅读资料</h2>
+
+			<p>在这个<a id="_idIndexMarker584"/>部分，您将学习在创建Glue表目录之后，如何在Glue上下文中读取位于S3桶中的数据。</p>
+
+			<p><em class="italic">Glue中的数据使用一种称为DynamicFrame </em>的特定数据结构从一个转换传递到另一个转换，DynamicFrame是Apache Spark数据帧的扩展。DynamicFrame具有自描述的特性，不需要任何模式。与Spark数据帧不同，DynamicFrame的这个附加属性有助于容纳不符合固定模式的数据。所需的库可以从<code>awsglue.dynamicframe</code>导入。这个包使得将动态帧转换成Spark数据帧变得容易:</p>
+
+			<pre class="source-code">
+
+from awsglue.dynamicframe import DynamicFrame</pre>
+
+			<p>在下面的例子中，我们在名为<code>google_scholar</code>的数据库中创建一个名为<code>google_authors</code>的粘合数据目录表。一旦数据库可用，<code>glueContext.create_dynamic_frame.from_catalog</code>可以用来读取<code>google_scholar</code>数据库中的<code>google_authors</code>表，并将其作为Glue DynamicFrame加载:</p>
+
+			<pre class="source-code">
+
+# glue context
+
+google_authors = glueContext.create_dynamic_frame.from_catalog(
+
+           database="google_scholar",
+
+           table_name="google_authors")</pre>
+
+			<p>使用<code>toDF</code>方法可将胶水<a id="_idIndexMarker585"/>动态帧转换成火花数据帧。将火花操作应用于数据时，需要进行此转换:</p>
+
+			<pre class="source-code">
+
+# convert the glue DynamicFrame to Spark DataFrame
+
+google_authors_df = google_authors.toDF()</pre>
+
+			<p>现在，让我们定义数据处理逻辑。</p>
+
+			<h2 id="_idParaDest-116"><a id="_idTextAnchor125"/>定义数据处理逻辑</h2>
+
+			<p>可以在Glue DynamicFrame上执行的基本<a id="_idIndexMarker586"/>转换由<code>awsglue.transforms</code>模块提供。这些转换包括<code>join</code>、<code>filter</code>、<code>map</code>以及其他许多转换(<a href="https://docs.aws.amazon.com/glue/latest/dg/built-in-transforms.html">https://docs . AWS . Amazon . com/glue/latest/DG/built-in-transforms . html</a>)。您可以像在<em class="italic">Apache Spark简介</em>一节中介绍的那样使用它们:</p>
+
+			<pre class="source-code">
+
+from awsglue.transforms import *</pre>
+
+			<p>此外，如果胶水动态帧已经被转换成火花数据帧，那么在<em class="italic">使用火花操作</em>处理数据一节中描述的每个火花操作都可以应用于胶水中的数据。</p>
+
+			<h2 id="_idParaDest-117"><a id="_idTextAnchor126"/>写数据</h2>
+
+			<p>在这个<a id="_idIndexMarker587"/>部分中，我们将学习如何将Glue DynamicFrame中的数据写入S3桶。</p>
+
+			<p>给定一个Glue DynamicFrame，您可以使用Glue上下文的<code>write_dynamic_frame.from_options</code>将数据存储在给定的S3路径中。您需要在结束时调用作业的<code>commit</code>方法来执行单独的操作:</p>
+
+			<pre class="source-code">
+
+# path for output file
+
+path_s3_write= "s3://google-scholar-csv/write/"
+
+# write to s3 as a CSV file with separator |
+
+glueContext.write_dynamic_frame.from_options(
+
+    frame = dynamic_frame_write,
+
+    connection_type = "s3",
+
+    connection_options = {
+
+            "path": path_s3_write
+
+                         },
+
+    format = "csv",
+
+    format_options={
+
+            "quoteChar": -1,
+
+            "separator": "|"
+
+                   })
+
+job.commit()</pre>
+
+			<p>对于Spark数据帧，必须先将其转换为DynamicFrame，然后才能存储数据。<code>DynamicFrame.fromDF</code>函数接受一个Spark DataFrame对象、一个Glue上下文对象和新DynamicFrame的名称:</p>
+
+			<pre class="source-code">
+
+# create a DynamicFrame from a Spark DataFrame
+
+dynamic_frame = DynamicFrame.fromDF(df_sort, glueContext, "dynamic_frame")</pre>
+
+			<p>现在，您可以使用Spark操作和Glue转换来处理您的数据。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.AWS Glue是为ETL操作设计的完全托管的服务</p>
+
+			<p class="callout">b.AWS Glue是一个无服务器架构，这意味着底层服务器将由AWS维护</p>
+
+			<p class="callout">c.AWS Glue提供了带有Python样板代码的内置编辑器。在这个编辑器中，您可以定义您的ETL逻辑，也可以利用Spark</p>
+
+			<p>作为ETL的最后一个设置，我们将看看SageMaker。</p>
+
+			<h1 id="_idParaDest-118">利用SageMaker进行ETL</h1>
+
+			<p>在本节中，我们将描述如何使用SageMaker设置ETL过程(下面的屏幕截图显示了SageMaker的web控制台)。SageMaker的主要优势来自于这样一个事实，即它是一个完全托管的基础设施，用于构建、培训和部署ML模型。缺点是比EMR和胶水贵。</p>
+
+			<p>SageMaker Studio <a id="_idIndexMarker589"/>是一个基于web的SageMaker开发环境。SageMaker的理念是，它是数据分析管道的一体化平台。使用SageMaker Studio可以实现ML管道的每个阶段:数据处理、算法设计、调度作业、实验管理、开发和训练模型、创建推理端点、检测数据漂移和可视化模型性能。SageMaker Studio笔记本也可以连接到EMR进行计算，但有一些限制；只能使用有限的Docker图片(如<code>Data Science</code>或<code>SparkMagic</code>)(<a href="https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-emr-cluster.html">https://docs . AWS . Amazon . com/sage maker/latest/DG/studio-notebooks-EMR-cluster . html</a>):</p>
+
+			<div><div><img src="img/B18522_05_10.jpg" alt="Figure 5.10 – The SageMaker web console&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图5.10–sage maker web控制台</p>
+
+			<p>SageMaker <a id="_idIndexMarker590"/>提供了各种预定义的开发环境作为Docker镜像。流行的环境是那些已经安装了PyTorch、TF和Anaconda的DL项目。从基于web的开发环境中，可以很容易地将笔记本附加到这些图像中的任何一个，如下面的屏幕截图所示:</p>
+
+			<div><div><img src="img/B18522_05_11.jpg" alt="Figure 5.11 – Updating the development environment dynamically for a SageMaker notebook&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图5.11-为SageMaker笔记本动态更新开发环境</p>
+
+			<p>创建一个<a id="_idIndexMarker591"/> ETL任务的过程可以分为四个步骤:</p>
+
+			<ol>
+
+				<li value="1">在SageMaker Studio中创建一个用户。</li>
+
+				<li>通过选择正确的Docker图像，在用户下创建一个笔记本。</li>
+
+				<li>定义数据处理逻辑。</li>
+
+				<li>安排作业。</li>
+
+			</ol>
+
+			<p><em class="italic">在SageMaker web控制台中，只需点击一下鼠标，即可完成步骤1 </em>和步骤2 。<em class="italic">第三步</em>可以使用Spark进行设置。要调度一个作业(<em class="italic">步骤4 </em>，首先，您需要通过<code>pip</code>命令安装<code>run-notebook</code>命令行实用程序:</p>
+
+			<pre>pip install https://github.com/aws-samples/sagemaker-run-notebook/releases/download/v0.20.0/sagemaker_run_notebook-0.20.0.tar.gz</pre>
+
+			<p>在查看用于安排笔记本时间的<code>run-notebook</code>命令之前，我们将简要讨论<code>cron</code>命令，它定义了时间表的格式。如下图所示，六个数字用于表示时间戳。例如，<code>45 22 ** 6*</code>表示每周六晚上10:45的时间表。<code>*</code>(星号)通配符代表相应单位的每个值:</p>
+
+			<div><div><img src="img/B18522_05_12.jpg" alt="Figure 5.12 – Cron schedule format&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图5.12–Cron计划格式</p>
+
+			<p><code>run-notebook</code>命令<a id="_idIndexMarker592"/>接收一个用<code>cron</code>表示的时间表和一个笔记本。在以下示例中，<code>notebook.ipynb</code>已被安排在2021年每天上午8点运行:</p>
+
+			<pre>run-notebook schedule --at "cron(0 8 * * * 2021)" --name nightly notebook.ipynb</pre>
+
+			<p>我们在我们的GitHub资源库中提供了一组每一步的截图:<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter_5/sagemaker/sagemaker_studio.md">https://GitHub . com/packt publishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter _ 5/sage maker/sage maker _ studio . MD</a>。</p>
+
+			<p>在接下来的部分中，我们将深入了解如何利用SageMaker笔记本来运行数据处理作业。</p>
+
+			<h2 id="_idParaDest-119"><a id="_idTextAnchor128"/>制作SageMaker笔记本</h2>
+
+			<p>笔记本实例<a id="_idIndexMarker593"/>是运行Jupyter笔记本应用程序的ML计算实例。SageMaker将创建这个实例，以及相关的资源。Jupyter笔记本用于<a id="_idIndexMarker594"/>处理数据、训练模型、部署和验证模型。可以通过几个步骤创建一个笔记本实例。完整的描述可以在<a href="https://docs.aws.amazon.com/sagemaker/latest/dg/howitworks-create-ws.html">https://docs . AWS . Amazon . com/sagemaker/latest/DG/how networks-create-ws . html</a>找到:</p>
+
+			<ol>
+
+				<li value="1">转到SageMaker web控制台:<a href="https://console.aws.amazon.com/sagemaker">https://console.aws.amazon.com/sagemaker</a>。请注意，您需要使用AWS凭据登录。</li>
+
+				<li>在<strong class="bold">笔记本实例</strong>下，选择<a id="_idIndexMarker595"/> <strong class="bold">创建笔记本实例</strong>。</li>
+
+				<li>在每个新笔记本的<code>pip install tensorflow</code>)上。各种这样的例子可以在https://github . com/AWS-samples/Amazon-sage maker-notebook-instance-life cycle-config-samples/tree/master/scripts找到:</li>
+
+			</ol>
+
+			<div><div><img src="img/B18522_05_13.jpg" alt="Figure 5.13 – Life cycle configuration script for a SageMaker notebook&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图5.13-sage maker笔记本的生命周期配置脚本</p>
+
+			<p>虽然直接从SageMaker笔记本运行一组操作是一个选项，但SageMaker笔记本支持在笔记本外部运行明确定义的数据处理作业，以提高吞吐量和可重用性。让我们看看如何从笔记本上运行Spark作业。</p>
+
+			<h2 id="_idParaDest-120">通过SageMaker笔记本运行Spark作业</h2>
+
+			<p>一旦<a id="_idIndexMarker596"/>笔记本准备就绪，您就可以使用<code>sagemaker.processing</code>模块配置一个Spark作业，并使用一组计算资源执行它。SageMaker提供了<code>PySparkProcessor</code>类，该类为Spark作业提供了一个句柄(<a href="https://sagemaker.readthedocs.io/en/stable/amazon_sagemaker_processing.html#data-processing-with-spark">https://SageMaker . readthe docs . io/en/stable/Amazon _ SageMaker _ processing . html # data-processing-with-Spark</a>)。它的构造函数接受基本的设置细节，比如作业的名称和Python版本。它接受三个参数——<code>framework_version</code>、<code>py_version</code>和<code>container_version</code>——这些参数用于固定预先构建的火花容器以运行处理作业。自定义图像可通过<code>image_uri</code>参数<a id="_idIndexMarker597"/>注册并可用。<code>image_uri</code>将覆盖<code>framework_version</code>、<code>py_version</code>和<code>container_version</code>参数:</p>
+
+			<pre class="source-code">
+
+From sagemaker.processing import PySparkProcessor, ProcessingInput
+
+# ecr image URI
+
+ecr_image_uri = '664544806723.dkr.ecr.eu-central-1.amazonaws.com/linear-learner:latest'
+
+# create PySparkProcessor instance with initial job setup
+
+spark_processor = PySparkProcessor(
+
+    base_job_name="my-sparkjob", # job name
+
+    framework_version="2.4", # tensorflow version
+
+    py_version="py37", # python version
+
+    container_version="1", # container version
+
+    role="myiamrole", # IAM role
+
+    instance_count=2, # ec2 instance count
+
+    instance_type="ml.c5.xlarge", # ec2 instance type
+
+    max_runtime_in_seconds=1200, # maximum run time
+
+    image_uri=ecr_image_uri # ECR image
+
+)</pre>
+
+			<p>在前面的<a id="_idIndexMarker598"/>代码中，使用了一个<code>PySparkProcessor</code>类来创建一个Spark实例。它接受<code>base_job_name</code>(作业名:<code>my-sparkjob</code>)、<code>framework_version</code>(tensor flow框架版本:<code>2.0</code>)、<code>py_version</code>(Python版本:<code>py37</code>)、<code>container_version</code>(容器版本:<code>1</code>)、<code>role</code>(SageMaker的IAM角色:<code>myiamrole</code>)、<code>instance_count</code>(EC2实例数:<code>2</code>)、<code>instance_type</code>(EC2实例类型:<code>ml.c5.xlarge</code>)、<code>max_runtime_in_second</code>(超时前的最大运行时间(秒:)</p>
+
+			<p>接下来我们将讨论<code>PySparkProcessor</code>的<code>run</code>方法，它通过Spark启动提供的脚本:</p>
+
+			<pre class="source-code">
+
+# input s3 path
+
+path_input = "s3://mybucket/input/"
+
+# output s3 path
+
+path_output = "s3://mybucket/output/"
+
+# run method to execute job
+
+spark_processor.run(
+
+    submit_app="process.py", # processing python script
+
+    arguments=['input', path_input, # input argument for script
+
+               'output', path_output # input argument for script
+
+              ])</pre>
+
+			<p>在前面的<a id="_idIndexMarker599"/>代码中，<code>PySparkProcessor</code>的<code>run</code>方法执行给定的脚本，以及提供的参数。它接受<code>submit_app</code>(用Python编写的数据处理作业)和参数。在本例中，我们已经定义了输入数据的位置和输出数据的存储位置。</p>
+
+			<h2 id="_idParaDest-121"><a id="_idTextAnchor130"/>通过SageMaker笔记本运行自定义容器中的作业</h2>
+
+			<p>在此<a id="_idIndexMarker600"/>部分，我们将讨论如何从自定义映像运行数据处理作业。为此，SageMaker提供了作为<code>sagemaker.processing</code>模块一部分的<code>Processor</code>类。在这个例子中，我们将使用<code>ProcessingInput</code>和<code>ProcessingOutput</code>类分别创建输入和输出对象。这些对象将被传递给<code>Processor</code>实例的<code>run</code>方法。<code>run</code>方法执行数据处理作业:</p>
+
+			<pre class="source-code">
+
+# ecr image URI
+
+ecr_image_uri = '664544806723.dkr.ecr.eu-central-1.amazonaws.com/linear-learner:latest'
+
+# input data path
+
+path_data = '/opt/ml/processing/input_data'
+
+# output data path
+
+path_data = '/opt/ml/processing/processed_data'
+
+# s3 path for source
+
+path_source = 's3://mybucket/input'
+
+# s3 path for destination
+
+path_dest = 's3://mybucket/output'
+
+# create Processor instance
+
+processor = Processor(image_uri=ecr_image_uri, # ECR image
+
+               role='myiamrole', # IAM role
+
+               instance_count=1, # instance count
+
+               instance_type="ml.m5.xlarge" # instance type
+
+           )
+
+# calling "run" method of Processor instance
+
+processor.run(inputs=[ProcessingInput(
+
+                 source=path_source, # input source
+
+                 destination=path_data # input destination)],
+
+              outputs=[ProcessingOutput(
+
+                 source=path_data, # output source
+
+                 destination=path_dest # output destination)], ))</pre>
+
+			<p>在前面的代码中，首先，我们创建一个<code>Processor</code>实例。它接受<code>image_uri</code>(ECR映像的URL路径:<code>ecr_image_uri</code>)、<code>role</code>(访问ECR <a id="_idIndexMarker601"/>映像的IAM角色:<code>myiamrole</code>)、<code>instance_count</code>(EC2实例计数:<code>1</code>)和<code>instance_type</code>(EC2实例类型:<code>ml.m5.xlarge</code>)。<code>Processor</code>实例的<code>run</code>方法可以执行作业。它接受<code>inputs</code>(作为<code>ProcessingInput</code>对象传递的输入数据)和<code>outputs</code>(作为<code>ProcessingOutput</code>对象传递的输出数据)。虽然<code>Processor</code>提供了一组与<code>PySparkProcessor</code>类似的方法，但主要的区别在于<code>run</code>函数所接受的内容；<code>PySparkProcessor</code>接收一个运行Spark操作的Python脚本，而<code>Processor</code>接收一个支持各种数据处理作业的Docker映像。</p>
+
+			<p>愿意深究细节的，推荐阅读<a href="https://docs.aws.amazon.com/sagemaker/latest/dg/build-your-own-processing-container.html">https://docs . AWS . Amazon . com/sage maker/latest/DG/build-your-own-processing-container . html</a>。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.SageMaker是一个完全托管的基础设施，用于构建、培训和部署ML模型。</p>
+
+			<p class="callout">b.SageMaker提供了一组预定义的开发环境，用户可以根据自己的需要动态地改变这些环境。</p>
+
+			<p class="callout">c.SageMaker笔记本支持通过<code>sagemaker.processing</code>模块在笔记本外部定义的数据处理作业。</p>
+
+			<p>了解了AWS中四种最流行的ETL工具之后，让我们一起比较一下这四个选项。</p>
+
+			<h1 id="_idParaDest-122"><a id="_idTextAnchor131"/>比较AWS中的ETL解决方案</h1>
+
+			<p>到目前为止，我们已经查看了使用AWS建立ETL管道的四种不同方式。在本节中，我们将在一个表格中总结四种设置(<em class="italic">表5.1 </em>)。一些比较点包括对无服务器架构的支持、内置调度程序的可用性以及所支持的EC2实例类型的多样性。</p>
+
+			<table id="table001-2" class="No-Table-Style _idGenTablePara-1">
+
+				<colgroup>
+
+					<col/>
+
+					<col/>
+
+					<col/>
+
+					<col/>
+
+					<col/>
+
+				</colgroup>
+
+				<tbody>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p><strong class="bold">支撑</strong></p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p><strong class="bold">单节点</strong></p>
+
+							<p><strong class="bold"> EC2实例</strong></p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p><strong class="bold">胶水</strong></p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p><strong class="bold"> EMR </strong></p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p><strong class="bold"> SageMaker </strong></p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>支持无服务器架构</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>是</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>为开发人员之间的协作提供内置工作空间</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>是</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>各种EC2实例类型</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>更大的</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>较少的</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>更大的</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>更大的</p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>内置调度程序的可用性</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>是</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>是</p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>内置作业监控用户界面的可用性</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>是</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>是</p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>内置模型监控的可用性</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>是</p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>支持从模型开发到部署的全面托管服务</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>是</p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>用于分析已处理数据的内置可视化工具的可用性</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>是</p>
+
+						</td>
+
+					</tr>
+
+					<tr class="No-Table-Style">
+
+						<td class="No-Table-Style">
+
+							<p>ETL逻辑开发的预定义环境的可用性</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>是</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>不</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>是</p>
+
+						</td>
+
+						<td class="No-Table-Style">
+
+							<p>是</p>
+
+						</td>
+
+					</tr>
+
+				</tbody>
+
+			</table>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">表5.1–各种数据处理设置的比较–单节点EC2实例、Glue、EMR和SageMaker</p>
+
+			<p>正确的<a id="_idIndexMarker604"/>设置取决于技术和非技术因素，包括<a id="_idIndexMarker605"/>数据源、数据量、MLOps的可用性和成本。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.我们在本章中描述的四种ETL设置有明显的优势。</p>
+
+			<p class="callout">b.选择特定设置时，必须考虑各种因素:数据源、数据量、MLOps的可用性和成本。</p>
+
+			<h1 id="_idParaDest-123"><a id="_idTextAnchor132"/>总结</h1>
+
+			<p>DL项目的困难之一来自于数据量。由于训练DL模型需要大量数据，因此数据处理步骤会占用大量资源。因此，在这一章中，我们学习了如何利用最流行的云服务AWS来高效地处理数TB和数Pb的数据。该系统包括调度程序、数据存储、数据库、可视化以及用于运行ETL逻辑的数据处理工具。</p>
+
+			<p>我们花了额外的时间来研究ETL，因为它在数据处理中起着重要的作用。我们介绍了Spark，它是最流行的ETL工具，并描述了使用AWS设置ETL作业的四种不同方式。这四个设置包括使用单节点EC2实例、EMR集群、Glue和SageMaker。每种设置都有明显的优势，正确的设置可能会因情况而异。这是因为您需要同时考虑项目的技术和非技术方面。</p>
+
+			<p>类似于数据量如何成为处理数据的问题，它也在训练模型时引入了多个问题。在下一章，你将学习如何使用分布式系统有效地训练模型。</p>
+
+		</div>
+
+		<div><div/>
+
+		</div>
+
+	
+
+
+
+</body></html>

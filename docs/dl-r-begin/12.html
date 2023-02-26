@@ -1,0 +1,1267 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Handwritten Digit Recognition using Convolutional Neural Networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">基于卷积神经网络的手写数字识别</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在，我们通过深度学习的基本和核心概念，以及深度学习101项目-手写数字识别，深入研究我们的深度学习之旅。我们将从深度学习是什么开始，我们为什么需要它，以及它近年来的演变。我们还将讨论深度学习为什么脱颖而出，以及几种典型的深度学习应用。牢记重要的深度学习概念，我们从图像分类项目开始，首先对数据进行探索性分析，并使用浅层单层神经网络进行初步尝试。然后，我们继续使用更深层次的神经网络，并取得更好的结果。然而，我们认为链接更多的隐藏层不一定会提高分类性能。关键是提取更丰富的表示和更多的信息特征。还有<strong>卷积神经网络</strong>(<strong>CNN</strong>)就是要走的路！我们将展示如何使用CNN将数字识别准确率提高到近99%，CNN非常适合利用区分图像的强大而独特的功能。经过多次实验和验证，我们终于完成了这一章。</p>
+
+<p>我们将详细研究这些主题:</p>
+
+<ul>
+
+<li>什么是深度学习，它有什么特别之处</li>
+
+<li>深度学习的应用</li>
+
+<li>MNIST手写数字数据的探索性分析</li>
+
+<li>使用带有<kbd>nnet</kbd>包的逻辑回归和单层神经网络的手写数字识别</li>
+
+<li>使用具有<kbd>MXNet</kbd>包的深度神经网络进行手写数字识别</li>
+
+<li>整流线性单元</li>
+
+<li>卷积神经网络的机制和结构</li>
+
+<li>利用卷积神经网络和<kbd>MXNet</kbd>包进行手写数字识别</li>
+
+<li>卷积层输出的可视化</li>
+
+<li>深度神经网络中的早期停止</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>What is deep learning and why do we need it?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">什么是深度学习，我们为什么需要它？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>深度学习是机器学习的一个新兴子领域。它采用<strong>人工神经网络</strong> ( <strong> ANN </strong>)算法来处理数据，导出模式或开发抽象概念，模拟生物大脑的思维过程。而那些ann通常包含不止一个<strong>隐藏层</strong>，这就是深度学习得名的原因——用<em>堆叠</em>神经网络的机器学习。超越浅层神经网络(通常只有一个隐藏层)，具有正确架构和参数的深度学习模型可以更好地表示复杂的非线性关系。</p>
+
+<p>下面是一个浅安的例子:</p>
+
+<div><img src="img/43be620a-e941-48c3-b58c-c89c8cbf60a0.png" style="width:23.08em;height:20.17em;"/></div>
+
+<p>深度学习模型的一个例子:</p>
+
+<div><img src="img/e21c5dc4-036a-4159-b808-a6204aa8b390.png" style="width:33.58em;height:22.00em;"/></div>
+
+<p>不管听起来或看起来有多复杂，都不要感到害怕。在本书的五个项目中，我们将由浅入深地探讨深度学习。</p>
+
+<p>首先，作为机器学习大家族的一部分，深度学习可以用于监督学习、半监督学习，以及无监督学习任务，甚至是强化学习任务。那么，它与传统的机器学习算法有什么区别呢？</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>What makes deep learning special?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">深度学习的特别之处在哪里？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>深度学习采用非线性处理单元的多个隐藏层的堆栈。隐藏层的输入是其前一层的输出。这可以从前面示出的浅层神经网络和深层神经网络的例子中容易地观察到。</p>
+
+<p>从每个隐藏层中提取特征。不同层的特征代表不同层次的抽象或模式。因此，较高级别的特征是从较低级别的特征中导出的，较低级别的特征是从先前的层中提取的。所有这些一起形成了从数据中学习的分层表示。</p>
+
+<p>以猫狗图像分类为例，在传统的机器学习解决方案中，分类步骤遵循特征提取过程，该过程通常基于:</p>
+
+<ul>
+
+<li>领域知识，例如颜色、形状、动物的颜色、耳朵的形状，这些通常是手工制作的</li>
+
+<li>降维，如<strong>主成分分析</strong> ( <strong> PCA </strong>)、<strong>潜在狄利克雷分配</strong> ( <strong> LDA </strong>)</li>
+
+<li>特征工程技术，如<strong>方向梯度直方图变换</strong> ( <strong> HOG </strong>)、<strong>尺度不变特征变换</strong> ( <strong> SIFT </strong>)、<strong>加速鲁棒特征</strong> ( <strong> SURF </strong>)</li>
+
+</ul>
+
+<p>传统机器学习解决猫狗分类的工作流程如下图所示:</p>
+
+<div><img src="img/ef55484e-a939-45d4-a49f-cea5443555ad.png" style="width:39.08em;height:15.67em;"/></div>
+
+<p>然而，在基于深度学习的解决方案中(例如CNN，我们将很快学习)，在整个潜在学习过程中导出分层表示，然后将最高级别的特征馈入最终的分类步骤。这些特征捕捉了猫和狗图像中重要的和可区分的细节。取决于隐藏层中的魔法:</p>
+
+<ul>
+
+<li>低级特征可以是胡须、鼻子或眼睛、耳朵等的边缘、线或点</li>
+
+<li>高级特征可以是动物的轮廓或外形</li>
+
+</ul>
+
+<p>深度学习解决方案的整个工作流程如下图所示:</p>
+
+<div><img src="img/8aec344f-cec4-447d-be50-47ecf18c2d17.png" style="width:44.58em;height:15.42em;"/></div>
+
+<p>深度学习消除了那些手动或显式的特征提取步骤，而是依靠训练过程来自动发现输入数据下面的有用模式。通过调整网络的布局(层数、层的隐藏单元数、激活函数等)，我们可以找到最有效的功能集。</p>
+
+<p>回想一下上一节中的浅层人工神经网络和深度学习模型的示例，数据从输入层单向流向输出层。除了前馈架构，深度学习模型允许数据向任何方向前进，甚至循环回到输入层。从前一个输出返回的数据成为下一个输入数据的一部分。<strong>递归神经网络</strong> ( <strong> RNNs </strong>)就是很好的例子。在本书的后面，我们将使用RNNs进行项目。目前，我们仍然可以从如下RNNs图中了解到循环或类似周期的架构是什么样子:</p>
+
+<div><img src="img/f9491f1e-5690-460c-8eaf-bba361c51677.png" style="width:30.25em;height:24.42em;"/></div>
+
+<p>递归架构使模型适用于时间序列数据和输入序列。由于来自先前时间点的数据进入当前时间点的训练，深度学习递归模型以前馈方式有效地解决了时间序列或序列学习问题。在时间序列问题的传统机器学习解决方案中(在<em>时序数据的机器学习:T. Dietterich的综述</em>中阅读更多),以前滞后的滑动窗口通常被提供作为当前输入。这可能是无效的，因为需要确定滑动窗口的大小以及窗口的数量，而递归模型自己计算出时间或顺序关系。</p>
+
+<p>虽然我们在这里讨论了深度学习相对于其他机器学习技术的所有优势，但我们并没有声称或声明<em>现代</em>深度学习优于<em>传统</em>机器学习。没错，这个领域没有<em>免费的午餐</em>，我上本书<em> Python机器学习举例</em>也强调了这一点。没有一种算法可以比其他算法更有效地解决所有机器学习问题。这完全取决于具体的用例——在一些应用中，“传统的”用例更适合，或者深度学习设置没有什么区别；在某些情况下，“现代”的会产生更好的性能。</p>
+
+<p>接下来，我们将看到深度学习的一些典型应用，这些应用将更好地激励我们开始深度学习项目。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>What are the applications of deep learning?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">深度学习有哪些应用？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>计算机视觉和图像识别通常被认为是深度学习发生突破的第一个领域。手写数字识别已经成为该领域的一个Hello World，图像分类算法和技术的一个常见评估集是从<strong>国家标准与技术研究所</strong> ( <strong> NIST </strong>)，称为<strong> MNIST </strong> ( <strong> M </strong>代表<strong>修改后的</strong>，这意味着数据经过预处理，以便于机器学习过程)。</p>
+
+<p>MNIST的一些例子如下:</p>
+
+<div><img src="img/f3813d1e-01af-450f-8d7e-9392eaf05d1e.png" style="width:27.08em;height:23.50em;"/></div>
+
+<p>一些研究人员目前已经使用CNN在MNIST数据集上取得了最好的性能0.21%的错误率。细节可以在2013年<strong>国际机器学习会议</strong> ( <strong> ICML </strong>)上发表的论文<em>使用DropConnect的神经网络正则化</em>中找到。CNN和深度神经网络也产生了其他可比较的结果，例如0.23%、0.27%和0.31%。然而，采用复杂特征工程技术的传统机器学习算法只能产生0.52%至7.6%的错误率，这是通过分别使用<strong>支持向量机</strong> ( <strong> SVMs </strong>)和成对线性分类器实现的。</p>
+
+<p>除了图像识别(如众所周知的人脸识别)，深度学习的应用还扩展到更具挑战性的任务，包括:</p>
+
+<ul>
+
+<li>基于图像的搜索引擎，涵盖图像分类和图像相似性编码，大量利用深度学习技术。</li>
+
+<li>机器视觉，以自动驾驶汽车为例，它解读360°摄像机视图，实时做出决策。</li>
+
+<li>黑白照片的色彩还原——来自<a href="http://hi.cs.waseda.ac.jp/~iizuka/projects/colorization/extra.html" target="_blank">http://hi . cs . waseda . AC . jp/~ iizuka/projects/colorization/extra . html</a>的色彩还原后的例子让人印象深刻。</li>
+
+<li>图像生成，包括笔迹、猫图像，甚至视频游戏图像，或者任何你命名的图像。例如，我们使用一个有趣的操场，<a href="https://www.cs.toronto.edu/~graves/handwriting.html" target="_blank">https://www.cs.toronto.edu/~graves/handwriting.html</a>(由多伦多大学的亚历克斯·格雷夫斯开发)，以三种不同的风格创作这本书的书名:</li>
+
+</ul>
+
+<div><img src="img/872f9ab1-6d0b-4bc4-9585-e08ad12b2673.png" style="width:23.25em;height:9.00em;"/></div>
+
+<p><strong>自然语言处理</strong> ( <strong> NLP </strong>)是深度学习在现代解决方案中占主导地位的另一个领域。回想一下，我们描述过具有递归架构的深度学习模型适用于输入序列，如自然语言和文本。近年来，深度学习极大地帮助改善了:</p>
+
+<ul>
+
+<li>机器翻译，例如基于句子的<strong>谷歌神经机器翻译系统</strong> ( <strong> GNMT </strong>)，它利用深度RNNs来提高准确性和流畅性</li>
+
+<li>情感分析、信息检索、主题检测和许多其他常见的NLP应用，其中深度学习模型由于单词嵌入技术而获得了最先进的性能</li>
+
+<li>文本生成，RNNs学习句子中单词(包括标点符号)之间的复杂关系，并<em>编写</em>文本，成为作者或虚拟的莎士比亚</li>
+
+</ul>
+
+<p>图像字幕生成，也称为图像到文本，结合了计算机视觉和自然语言处理的最新突破。它利用CNN来检测和分类图像中的对象，并为这些对象分配标签。然后，它应用RNNs在一个可理解的句子中描述这些标签。以下示例摘自来自<a href="http://cs.stanford.edu/people/karpathy/deepimagesent/generationdemo/">http://cs . Stanford . edu/people/kar pathy/deepimagesent/generation demo/</a>的web演示(由斯坦福大学的Andrej Karpathy开发):</p>
+
+<div><img src="img/5e18b790-d31f-4341-a585-43d4f673d002.png" style="width:30.75em;height:22.42em;"/></div>
+
+<div><img src="img/b18c1964-b5b7-4a12-9127-859f83d035f6.png" style="width:26.25em;height:21.25em;"/></div>
+
+<p>同样，声音和语音也是序列学习的一个领域，机器学习算法被应用于预测时间序列或标记序列数据。语音识别已经被深度学习极大地革新了。现在，基于深度学习的产品，如苹果的Siri、亚马逊的Alexa、谷歌Home、Skype Translator和许多其他产品正在“入侵”我们的生活，当然是以一种好的方式。除了写文本的作者，深度学习模型也可以是音乐作曲家。例如，来自米兰理工大学的Francesco Marchesani能够训练RNNs演奏肖邦的音乐。</p>
+
+<p>此外，深度学习在视频的许多用例中也表现出色。它以其精确的运动检测能力为虚拟现实的发展做出了重大贡献，并为监控视频中实时行为分析的发展做出了重大贡献。来自谷歌、DeepMind和牛津的科学家甚至建立了一个名为LipNet的计算机唇语阅读器，成功率达到93%。</p>
+
+<p>除了有监督和无监督的学习案例，深度学习在强化学习中被大量使用。能搬运物体、爬楼梯、在厨房操作的机器人对我们来说并不陌生。最近，谷歌的AlphaGo击败了世界精英<em>围棋</em>选手，得到了媒体的广泛报道。如今，每个人都期待在一两年内看到自动驾驶汽车出现在市场上。这些都得益于深度学习在强化学习方面的进步。哦，别忘了电脑是被教会玩这个游戏的，FlappyBird！</p>
+
+<p>我们甚至没有提到生物信息学，药物发现，电子商务中的推荐系统，金融，特别是股票市场，保险和<strong>物联网</strong> ( <strong> IoT </strong>)。事实上，深度学习应用的列表已经很长了，而且只会越来越长。</p>
+
+<p>我希望这一部分让你对深度学习及其为我们面临的许多机器学习问题提供更好解决方案的能力感到兴奋。由于深度学习的进步，人工智能有着更光明的未来。</p>
+
+<p>那么我们还在等什么呢？让我们从手写数字识别开始吧！</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Handwritten digit recognition using CNNs</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">基于细胞神经网络的手写数字识别</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>当然，我们从探索手写数字数据集开始。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Get started with exploring MNIST</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">开始探索MNIST</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>来自http://yann.lecun.com/exdb/mnist/<a href="http://yann.lecun.com/exdb/mnist/" target="_blank">的MNIST数据集</a>由60，000个样本的训练集和10，000个样本的测试集组成。如前所述，图像最初取自NIST，然后居中并调整到相同的高度和宽度(28 * 28)。</p>
+
+<p>我们没有在前面的网站中处理<kbd>ubyte</kbd>文件、<kbd>train-images-idx3-ubyte.gz</kbd>和<kbd>train-labels-idx1-ubyte.gz</kbd>并合并它们，而是使用了一个从Kaggle竞赛数字识别器中格式化好的数据集，<a href="https://www.kaggle.com/c/digit-recognizer/">https://www.kaggle.com/c/digit-recognizer/</a>。我们可以直接从<a href="https://www.kaggle.com/c/digit-recognizer/data">https://www.kaggle.com/c/digit-recognizer/data</a>下载训练数据集<kbd>train.csv</kbd>。它是网站中提供的唯一带标签的数据集，我们将使用它来训练分类模型、评估模型和进行预测。现在让我们开始吧:</p>
+
+<pre>&gt; data &lt;- read.csv ("train.csv")<br/>&gt; dim(data)<br/>[1] 42000 785</pre>
+
+<p>我们有42，000个可用的标记样本，每个样本有784个特征，这意味着每个数字图像有784 (28 * 28)个像素。看一下标签和前6个数据样本的前5个特征(像素):</p>
+
+<pre>&gt; head(data[1:6])<br/>label pixel0 pixel1 pixel2 pixel3 pixel4<br/>1 1 0 0 0 0 0<br/>2 0 0 0 0 0 0<br/>3 1 0 0 0 0 0<br/>4 4 0 0 0 0 0<br/>5 0 0 0 0 0 0<br/>6 0 0 0 0 0 0</pre>
+
+<p>从<kbd>0</kbd>到<kbd>9</kbd>的目标标签表示10位数字:</p>
+
+<pre>&gt; unique(unlist(data[1]))<br/>[1] 1 0 4 7 3 5 8 9 2 6</pre>
+
+<p>像素变量范围从<kbd>0</kbd>到<kbd>255</kbd>，代表像素的亮度，例如<kbd>0</kbd>代表黑色，<kbd>255</kbd>代表白色:</p>
+
+<pre>&gt; min(data[2:785])<br/>[1] 0<br/>&gt; max(data[2:785])<br/>[1] 255</pre>
+
+<p>现在我们来看两个样本，首先，第四张图片:</p>
+
+<pre>&gt; sample_4 &lt;- matrix(as.numeric(data[4,-1]), nrow = 28, byrow = TRUE)<br/>&gt; image(sample_4, col = grey.colors(255))</pre>
+
+<div><img src="img/705b6ff3-c156-48a9-9491-3bd201adeaa6.png" style="width:19.33em;height:13.58em;"/></div>
+
+<p>其中我们将长度为784的特征向量整形为28 * 28的矩阵。</p>
+
+<p>二、第七幅图像:</p>
+
+<pre>&gt; sample_7 &lt;- matrix(as.numeric(data[7,-1]), nrow = 28, byrow = TRUE)<br/>&gt; image(sample_7, col = grey.colors(255))</pre>
+
+<p>结果如下:</p>
+
+<div><img src="img/d5324b41-7935-4b39-b242-668ab5b2bcf1.png" style="width:17.83em;height:12.58em;"/></div>
+
+<p>我们注意到图像向左旋转了90度。为了更好地查看图像，需要顺时针旋转90度。我们只需要在图像矩阵的每一列中保留元素:</p>
+
+<pre>&gt; # Rotate the matrix by reversing elements in each column<br/>&gt; rotate &lt;- function(x) t(apply(x, 2, rev))</pre>
+
+<p class="mce-root">现在想象旋转后的图像:</p>
+
+<pre><br/>&gt; image(rotate(sample_4), col = grey.colors(255))</pre>
+
+<div><img src="img/edf8f5d0-ebc0-40d2-bb4f-0c31c582c1d3.png" style="width:21.67em;height:15.58em;"/></div>
+
+<pre>&gt; image(rotate(sample_7), col = grey.colors(255))</pre>
+
+<div><img src="img/f1989688-3c4e-43e0-b377-1d5b3cb33d1b.png" style="width:21.75em;height:15.00em;"/></div>
+
+<p>在查看了背后的数据和图像之后，我们对标签和特征做了更多的探索性分析。首先，因为这是一个分类问题，我们检查数据中的类是平衡的还是不平衡的，这是一个好的做法。但在此之前，我们应该将标签从整数转换为因子:</p>
+
+<pre>&gt; # Transform target variable "label" from integer to factor, in order to perform classification<br/>&gt; is.factor(data$label)<br/>[1] FALSE<br/>&gt; data$label &lt;- as.factor(data$label)<br/>&gt; is.factor(data$label)<br/>[1] TRUE</pre>
+
+<p>现在，我们可以用计数来总结标签分布:</p>
+
+<pre>&gt; summary(data$label)<br/>0 1 2 3 4 5 6 7 8 9<br/>4132 4684 4177 4351 4072 3795 4137 4401 4063 4188</pre>
+
+<p>或结合比例(%):</p>
+
+<pre>&gt; proportion &lt;- prop.table(table(data$label)) * 100<br/>&gt; cbind(count=table(data$label), proportion=proportion)<br/>count proportion<br/>0 4132 9.838095<br/>1 4684 11.152381<br/>2 4177 9.945238<br/>3 4351 10.359524<br/>4 4072 9.695238<br/>5 3795 9.035714<br/>6 4137 9.850000<br/>7 4401 10.478571<br/>8 4063 9.673810<br/>9 4188 9.971429</pre>
+
+<p>班级平衡。</p>
+
+<p>现在，我们探索特征的分布，像素。例如，我们从每个图像的中心2*2块(即<kbd>pixel376</kbd>、<kbd>pixel377</kbd>、<kbd>pixel404</kbd>和<kbd>pixel405)</kbd>)中取出4个像素，并显示9个数字中每个数字的直方图:</p>
+
+<pre>&gt; central_block &lt;- c("pixel376", "pixel377", "pixel404", "pixel405")<br/>&gt; par(mfrow=c(2, 2))<br/>&gt; for(i in 1:9) {<br/>+ hist(c(as.matrix(data[data$label==i, central_block])),<br/>+ main=sprintf("Histogram for digit %d", i),<br/>+ xlab="Pixel value")<br/>+ }</pre>
+
+<p>数字<kbd>1</kbd>至<kbd>4</kbd>的像素亮度直方图分别显示如下:</p>
+
+<div><img src="img/6a988ded-ded7-44aa-b443-67d5f65072b6.png" style="width:25.42em;height:23.08em;"/></div>
+
+<p>数字<kbd>5</kbd>至<kbd>9</kbd>的直方图:</p>
+
+<div><img src="img/802c460c-4ac3-4e4d-b328-ef2b0ee8bf17.png" style="width:24.50em;height:22.33em;"/></div>
+
+<p>数字<kbd>9</kbd>的含义:</p>
+
+<div><img src="img/52979678-836a-4464-ae0f-3b36f7364527.png" style="width:17.67em;height:15.50em;"/></div>
+
+<p>中心像素的亮度在<kbd>9</kbd>位数之间有不同的分布。例如，大多数中心像素是亮的，因为数字<kbd>8</kbd>通常以笔画穿过中心的方式书写；而数字<kbd>7</kbd>不是这样写的，因此大部分中心像素是暗的。从其他位置获取的像素也可以清楚地分布在不同的数字中。</p>
+
+<p>我们刚刚进行的探索性分析有助于我们建立基于像素的分类模型。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>First attempt – logistic regression</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">第一次尝试-逻辑回归</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们从可能是最基本的分类器逻辑回归开始，具体来说是多项逻辑回归，因为它是多类情况。它是由权重矩阵<em> W </em>(也称为系数矩阵)和偏差(也称为截距)向量<em> b </em>参数化的概率线性分类器。并且它将输入向量<em> x </em>映射到一组概率<em> P(y=1)，P(y=2)，。。。，P(y-K) </em>为<em> K </em>可能的类。</p>
+
+<p>两个可能类别的多项式逻辑回归可以用图形表示如下:</p>
+
+<div><img src="img/c178b8a0-e2b3-43fe-9db1-007afbb6f189.png" style="width:17.50em;height:14.92em;"/></div>
+
+<p>假设<em xmlns:epub="http://www.idpf.org/2007/ops"> x </em>是<em xmlns:epub="http://www.idpf.org/2007/ops"> n </em>维，那么权重矩阵<em xmlns:epub="http://www.idpf.org/2007/ops"> W </em>的大小为<em xmlns:epub="http://www.idpf.org/2007/ops"> n </em>乘以<em xmlns:epub="http://www.idpf.org/2007/ops"> K </em>，其中每列<em xmlns:epub="http://www.idpf.org/2007/ops">W<sub>K</sub>T26】表示与类<em xmlns:epub="http://www.idpf.org/2007/ops"> k </em>相关联的系数；类似地，偏置向量<em xmlns:epub="http://www.idpf.org/2007/ops"> b </em>的长度为<em xmlns:epub="http://www.idpf.org/2007/ops"> K </em>，每个元素<em xmlns:epub="http://www.idpf.org/2007/ops">b<sub>K</sub>T36】用作类<em xmlns:epub="http://www.idpf.org/2007/ops"> k </em>的偏置。为简单起见，偏差<em xmlns:epub="http://www.idpf.org/2007/ops"> b </em>可以被视为权重矩阵<em xmlns:epub="http://www.idpf.org/2007/ops"> W </em>中的附加行。因此<em xmlns:epub="http://www.idpf.org/2007/ops"> x </em>成为类别<em xmlns:epub="http://www.idpf.org/2007/ops"> k </em>的概率可以数学表达为:</em></em></p>
+
+<div><img class="fm-editor-equation" src="img/e384c168-6de6-4caa-87cf-fef4d9cce163.png" style="width:16.75em;height:1.42em;"/></div>
+
+<div><img class="fm-editor-equation" src="img/26c7b2eb-6bd7-4e16-929b-c2db0524be6e.png" style="width:11.00em;height:4.17em;"/></div>
+
+<p>其中<em> softmax() </em>表示softmax函数，这就是多项式逻辑回归通常被称为softmax回归的原因。</p>
+
+<p>给定一组训练样本<img class="fm-editor-equation" src="img/a3b5886a-7e7c-4bb7-aad7-e4fea60fa1cb.png" style="width:29.50em;height:1.92em;"/>，其中<img class="fm-editor-equation" src="img/b7512f1f-c5a8-419b-9f5b-b11a347e04cb.png" style="width:7.17em;height:1.17em;"/>，通过最小化成本(也称为对数损失)获得最优模型<em> w </em>，其定义为:</p>
+
+<div><img class="fm-editor-equation" src="img/d84783bd-92ce-4ab4-8f5c-51e649f34bd4.png" style="width:30.08em;height:3.50em;"/></div>
+
+<p class="CDPAlignCenter CDPAlign">其中<img class="fm-editor-equation" src="img/ccbdfe83-92a5-4ceb-99cd-3ecd44feb896.png" style="width:16.42em;height:3.25em;"/></p>
+
+<p>像往常一样，我们求助于梯度下降，一种迭代优化算法，来求解最优的<em xmlns:epub="http://www.idpf.org/2007/ops"> w </em>。在每次迭代中，<em xmlns:epub="http://www.idpf.org/2007/ops"> w </em>移动一个与目标函数在当前点的负导数δ<em xmlns:epub="http://www.idpf.org/2007/ops">w</em>成比例的步长。即<em xmlns:epub="http://www.idpf.org/2007/ops">w:= w–ƞδw</em>，其中<em xmlns:epub="http://www.idpf.org/2007/ops"> ƞ </em>为学习率。δ<em xmlns:epub="http://www.idpf.org/2007/ops">w</em>的每列δ<em xmlns:epub="http://www.idpf.org/2007/ops">w<sub>k</sub>T21可以计算为:</em></p>
+
+<div><img class="fm-editor-equation" src="img/3104d1af-ceac-49b4-9024-b201cd3c212f.png" style="width:37.75em;height:3.83em;"/></div>
+
+<p>训练有素的模型，最优的<em> w </em>将用于通过以下方式对新样本<em>x’</em>进行分类:</p>
+
+<p style="padding-left: 90px"><img class="aligncenter size-full wp-image-380 image-border" src="img/ab0a4a5f-bfc3-4914-875f-f60d022b2e9d.png" style="width:24.75em;height:4.50em;"/></p>
+
+<p>有了我们刚刚回顾的多项式逻辑回归的机制，我们就可以将它作为数字分类项目的第一个解决方案。</p>
+
+<p>我们首先使用<kbd>caret</kbd>包将数据集分成两个子集，分别用于训练和测试。</p>
+
+<div><strong>caret</strong> stands for <strong>classification and regression training</strong>. The package is designed to facilitate the process for training and evaluating models. It contains tools and methods for data splitting, data pre-processing, feature selection and model tuning. Documentation and a full list of functions can be found in <a href="https://cran.r-project.org/web/packages/caret/caret.pdf" target="_blank">https://cran.r-project.org/web/packages/caret/caret.pdf</a>.</div>
+
+<p>安装并导入包<kbd>caret</kbd>:</p>
+
+<pre>&gt; if (!require("caret"))<br/>+ install.packages("caret")<br/>&gt; library (caret)<br/>Loading required package: lattice<br/>Loading required package: ggplot2</pre>
+
+<p class="mce-root">我们首先使用<kbd>createDataPartition</kbd>函数将数据分成两部分，75%用于训练，25%用于测试:</p>
+
+<pre>&gt; set.seed(42)<br/>&gt; train_perc = 0.75<br/>&gt; train_index &lt;- createDataPartition(data$label, p=train_perc, list=FALSE)
+&gt; data_train &lt;- data[train_index,]<br/>&gt; data_test &lt;- data[-train_index,]</pre>
+
+<p>为了确保实验的可重复性，从随机数生成器中选择一个种子总是一个好的做法。</p>
+
+<p>然后，我们使用<kbd>nnet</kbd>包实现多项式逻辑回归模型。该软件包包含前馈单层神经网络以及多项式逻辑回归模型的功能。更多细节可以在<a href="https://cran.r-project.org/web/packages/nnet/nnet.pdf">https://cran.r-project.org/web/packages/nnet/nnet.pdf</a>:<a href="https://cran.r-project.org/web/packages/nnet/nnet.pdf"/>中找到</p>
+
+<pre>&gt; library(nnet)<br/>&gt; # Multinomial logistic regression<br/>&gt; model_lr &lt;- multinom(label ~ ., data=data_train, MaxNWts=10000,<br/>decay=5e-3, maxit=100)<br/># weights: 7860 (7065 variable)<br/>initial value 72538.338185<br/>iter 10 value 17046.804658<br/>iter 20 value 11166.225504<br/>iter 30 value 9514.340319<br/>iter 40 value 8819.724147<br/>iter 50 value 8405.001712<br/>iter 60 value 8164.997939<br/>iter 70 value 7983.427139<br/>iter 80 value 7897.005940<br/>iter 90 value 7831.663204<br/>iter 100 value 7730.047242<br/>final value 7730.047242<br/>stopped after 100 iterations</pre>
+
+<p>我们在训练子集上拟合多项式逻辑回归模型，其参数包括:</p>
+
+<ul>
+
+<li><kbd>MaxNWts=10000</kbd>:最多允许10000个砝码。在我们的例子中，权重矩阵<em> w </em>中有(784个维度+ 1个偏差)* 10类= 7850个元素</li>
+
+<li><kbd>decay=5e-3</kbd>:正则化强度，权重衰减为0.005</li>
+
+<li><kbd>maxit=100</kbd>:最大迭代次数设定为100次</li>
+
+</ul>
+
+<p>每10次迭代就打印一次误差值，并且误差值是递减的。当达到最大迭代次数时，模型收敛。然后，我们使用训练好的模型来预测测试样本的类别:</p>
+
+<pre>&gt; prediction_lr &lt;- predict(model_lr, data_test, type = "class")</pre>
+
+<p>看一下前五个样本的预测结果:</p>
+
+<pre>&gt; prediction_lr[1:5]<br/>[1] 1 0 7 5 8<br/>Levels: 0 1 2 3 4 5 6 7 8 9</pre>
+
+<p>它们真正的价值是:</p>
+
+<pre>&gt; data_test$label[1:5]<br/>[1] 1 0 7 5 8<br/>Levels: 0 1 2 3 4 5 6 7 8 9</pre>
+
+<p>我们还可以通过下式获得混淆矩阵:</p>
+
+<pre>&gt; cm_lr = table(data_test$label, prediction_lr)<br/>&gt; cm_lr</pre>
+
+<div><img src="img/25523c1e-e431-43d3-b9eb-e66846dd543c.png" style="width:31.42em;height:17.08em;"/></div>
+
+<p>以及分类精度:</p>
+
+<pre>&gt; accuracy_lr = mean(prediction_lr == data_test$label)<br/>&gt; accuracy_lr<br/>[1] 0.8935886</pre>
+
+<p>第一次尝试89.4%。还不错！我们肯定可以通过调整模型参数做得更好，比如<kbd>decay</kbd>和<kbd>maxit</kbd>。但是我们关注的是更高级的模型，它能更好地学习底层模式。因此，我们继续第二个解决方案，具有单一隐藏层的前馈神经网络。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Going from logistic regression to single-layer neural networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">从逻辑回归到单层神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>基本上，逻辑回归是一个无隐含层的前馈神经网络，其中输出层与输入层直接相连。换句话说，逻辑回归是将输入映射到输出层的单个神经元。理论上，在输入层和输出层之间有一个附加隐藏层的神经网络应该能够学习更多关于其下面的关系。</p>
+
+<p>两个可能类别的单层神经网络可以用图形表示如下:</p>
+
+<div><img src="img/4b6f91dc-3f00-4d45-a82d-9b25a29c53d4.png" style="width:28.17em;height:15.58em;"/></div>
+
+<p>假设<em xmlns:epub="http://www.idpf.org/2007/ops"> x </em>是<em xmlns:epub="http://www.idpf.org/2007/ops"> n </em>维，并且在隐藏层中有<em xmlns:epub="http://www.idpf.org/2007/ops"> H </em>个隐藏单元，那么连接输入层和隐藏层的权重矩阵<em xmlns:epub="http://www.idpf.org/2007/ops"> w </em> <sup xmlns:epub="http://www.idpf.org/2007/ops"> (1) </sup>的大小为<em xmlns:epub="http://www.idpf.org/2007/ops"> n </em>乘<em xmlns:epub="http://www.idpf.org/2007/ops"> H </em>，每列<em xmlns:epub="http://www.idpf.org/2007/ops">w<sub>H</sub></em><sup xmlns:epub="http://www.idpf.org/2007/ops">(1)</sup>代表与<em xmlns:epub="http://www.idpf.org/2007/ops">相关联的系数因此，第<em xmlns:epub="http://www.idpf.org/2007/ops">h</em>-第<em xmlns:epub="http://www.idpf.org/2007/ops">个隐藏单元<sub> h </sub> </em> <sup xmlns:epub="http://www.idpf.org/2007/ops"> (2) </sup>的输出(也称为<strong xmlns:epub="http://www.idpf.org/2007/ops">激活</strong>)在数学上可以表示为:</em></p>
+
+<div><img class="fm-editor-equation" src="img/00b54f45-60f0-45ac-9f38-29c591cd7116.png" style="width:12.92em;height:1.83em;"/></div>
+
+<p>例如，对于第一个、第二个和最后一个隐藏单元的输出:</p>
+
+<div><img class="fm-editor-equation" src="img/ee3d3fc4-6cad-454e-8826-411518bf2012.png" style="width:8.25em;height:1.92em;"/></div>
+
+<div><img class="fm-editor-equation" src="img/c3aff54d-8f8b-4c91-883f-64d95349a48c.png" style="width:8.25em;height:1.92em;"/></div>
+
+<div><img class="fm-editor-equation" src="img/fda8a319-7da1-499f-9e57-a0d37c9c7b77.png" style="width:8.25em;height:1.92em;"/></div>
+
+<p>其中<em> f </em> (z)是激活函数。简单网络中激活函数的典型选择包括逻辑函数(通常称为sigmoid函数)和<kbd>tanh</kbd>函数(可视为逻辑函数的缩放版本):</p>
+
+<div><img class="fm-editor-equation" src="img/f86f2e63-3728-4cd0-a7dc-57e9ef90420e.png" style="width:11.33em;height:2.67em;"/></div>
+
+<div><img class="fm-editor-equation" src="img/89a85cb7-9b32-4ed7-a75f-a469aab5101c.png" style="width:18.25em;height:2.75em;"/></div>
+
+<p>这两个函数的曲线图如下:</p>
+
+<div><img src="img/1589b426-1c83-4c9a-85d4-f6198145dc4d.png" style="width:52.08em;height:20.33em;"/></div>
+
+<p>现在，我们将在单层网络中使用逻辑功能。</p>
+
+<p>对于有<em xmlns:epub="http://www.idpf.org/2007/ops"> K </em>个可能的类的情况，连接隐藏层和输出层的权重矩阵<em xmlns:epub="http://www.idpf.org/2007/ops"> w </em> <sup xmlns:epub="http://www.idpf.org/2007/ops"> (2) </sup>的大小为<em xmlns:epub="http://www.idpf.org/2007/ops"> H </em>乘<em xmlns:epub="http://www.idpf.org/2007/ops"> K. </em>每列<em xmlns:epub="http://www.idpf.org/2007/ops">w<sub>K</sub></em><sup xmlns:epub="http://www.idpf.org/2007/ops">(2)</sup>表示与类<em xmlns:epub="http://www.idpf.org/2007/ops"> k </em>相关联的系数。输出层的输入是隐藏层的输出<strong xmlns:epub="http://www.idpf.org/2007/ops"><em>a</em></strong><sup xmlns:epub="http://www.idpf.org/2007/ops">(2)</sup>= {<em xmlns:epub="http://www.idpf.org/2007/ops">a</em><sub xmlns:epub="http://www.idpf.org/2007/ops">1</sub><sup xmlns:epub="http://www.idpf.org/2007/ops">(2)</sup>，<em xmlns:epub="http://www.idpf.org/2007/ops">a</em><sub xmlns:epub="http://www.idpf.org/2007/ops">2</sub><sup xmlns:epub="http://www.idpf.org/2007/ops">(2)</sup>，...、<em xmlns:epub="http://www.idpf.org/2007/ops">a</em><sub xmlns:epub="http://www.idpf.org/2007/ops">I</sub><sup xmlns:epub="http://www.idpf.org/2007/ops">(2)</sup>}，则<em xmlns:epub="http://www.idpf.org/2007/ops"> x </em>为类<em xmlns:epub="http://www.idpf.org/2007/ops"> k </em>的概率在数学上可以表示为(为一致起见，我们将其表示为<em xmlns:epub="http://www.idpf.org/2007/ops">a<sub>k</sub></em><sup xmlns:epub="http://www.idpf.org/2007/ops">(3)【T51):</sup></p>
+
+<div><img class="fm-editor-equation" src="img/171f64c0-f369-4d22-b2b9-a6fd749db65f.png" style="width:20.00em;height:1.92em;"/></div>
+
+<p>类似地，给定<em> m个</em>训练样本，为了训练神经网络，我们使用梯度下降学习所有权重<em>w</em>= {<em>w</em><sup>(1)</sup>，<em>w</em><sup/>}<sup/>，目标是最小化均方误差成本<em> J(w) </em>。</p>
+
+<p>梯度<em>δw</em>的计算可以通过<strong>反向传播算法</strong>来实现。反向传播算法的思想如下，我们首先遍历网络并计算隐藏层和输出层的所有输出；然后从最后一层向后移动，我们计算每个节点在最终输出中对误差的贡献，并将其传播回之前的层。在我们的单层网络中，具体步骤是:</p>
+
+<ol>
+
+<li>计算隐藏层的<em> a </em> <sup> (2) </sup>并将它们馈送到输出层以计算输出<em> a </em> <sup> (3) </sup></li>
+
+<li>对于输出层，计算一个样本的成本函数的导数<em> j( <strong> W </strong> ) </em>关于每个单元，<img class="fm-editor-equation" src="img/5a65fba9-4345-4392-91e0-1a5c6aca4bdf.png" style="width:20.08em;height:3.33em;"/>或<img class="fm-editor-equation" src="img/aa0abb28-7530-483b-9dc8-cb951428ffdc.png" style="width:13.33em;height:1.67em;"/>，为整个层重写</li>
+
+<li>对于隐藏层，我们基于<img class="fm-editor-equation" src="img/681b4a16-f22b-4372-be92-91ef1784a17f.png" style="width:16.67em;height:1.83em;"/>的加权平均值计算误差项δ <sup> (2) </sup></li>
+
+<li>应用链式法则计算梯度:</li>
+
+</ol>
+
+<div><img class="fm-editor-equation" src="img/17e321d1-bc69-4188-8936-9a3c30c6e446.png" style="width:18.83em;height:3.83em;"/></div>
+
+<div><img class="fm-editor-equation" src="img/38987972-2219-4835-919b-652200a23aee.png" style="width:18.50em;height:4.00em;"/></div>
+
+<p>我们通过采取这些步骤反复更新所有权重，直到成本函数收敛。</p>
+
+<p>在简单回顾了单层网络之后，我们可以将它作为第二个解决方案应用到我们的数字分类项目中。</p>
+
+<p>同样，我们使用<kbd>nnet</kbd>包来实现我们的单层网络:</p>
+
+<pre>&gt; model_nn &lt;- nnet(label ~ ., data=data_train, size=50, maxit=300, MaxNWts=100000, decay=1e-4)<br/># weights: 39760<br/>initial value 108597.598656<br/>iter 10 value 27708.286001<br/>iter 20 value 16027.005297<br/>iter 30 value 14058.141050<br/>iter 40 value 12615.442747<br/>iter 50 value 11793.700937<br/>iter 60 value 11026.672273<br/>iter 70 value 10654.855058<br/>iter 80 value 10193.580947<br/>iter 90 value 9854.836168<br/>iter 100 value 9544.973159<br/>iter 110 value 9307.192737<br/>iter 120 value 9043.028253<br/>iter 130 value 8845.069307<br/>iter 140 value 8686.707561<br/>iter 150 value 8525.104362<br/>iter 160 value 8281.609223<br/>iter 170 value 8140.051273<br/>iter 180 value 7998.721024<br/>iter 190 value 7854.388240<br/>iter 200 value 7712.459027<br/>iter 210 value 7636.945553<br/>iter 220 value 7557.675909<br/>iter 230 value 7449.854506<br/>iter 240 value 7355.021651<br/>iter 250 value 7259.186906<br/>iter 260 value 7192.798089<br/>iter 270 value 7055.027833<br/>iter 280 value 6957.926522<br/>iter 290 value 6866.641511<br/>iter 300 value 6778.342997<br/>final value 6778.342997<br/>stopped after 300 iterations</pre>
+
+<p>我们用以下参数拟合模型:</p>
+
+<ul>
+
+<li><kbd>size=50</kbd>:隐藏层有50个隐藏单元。</li>
+
+<li><kbd>MaxNWts=100000</kbd>:最多允许10万个砝码。在我们的例子中，权重矩阵<em>w</em><sup>【1】</sup>中有(784个输入维度+ 1个偏差)* 50个隐藏单元= 39250个元素，权重矩阵<em>w</em><sup>【1】</sup>中有(50个隐藏单元+ 1个偏差)* 10个输出单元= 510个元素。所以总共有39760个重量。</li>
+
+<li><kbd>decay=1e-4</kbd>:正则化强度，权重衰减为<kbd>0.0001</kbd>。</li>
+
+<li><kbd>maxit=300</kbd>:设定最大迭代次数为300次。</li>
+
+</ul>
+
+<p>我们将训练好的网络模型应用于测试集:</p>
+
+<pre>&gt; prediction_nn &lt;- predict(model_nn, data_test, type = "class")<br/>&gt; cm_nn = table(data_test$label, prediction_nn)<br/>&gt; cm_nn<br/>prediction_nn<br/>0 1 2 3 4 5 6 7 8 9<br/>0 987 0 3 3 2 11 10 7 5 5<br/>1 0 1134 9 6 0 2 0 5 11 4<br/>2 14 9 918 31 11 11 7 15 22 6<br/>3 3 1 17 966 0 41 3 14 24 18<br/>4 4 3 8 2 929 4 11 11 5 41<br/>5 12 2 6 17 5 851 15 9 26 5<br/>6 10 1 14 0 9 14 970 0 15 1<br/>7 4 4 23 6 5 2 0 1010 7 39<br/>8 5 15 9 18 5 31 9 4 912 7<br/>9 11 2 1 20 52 4 0 36 8 913<br/>&gt; accuracy_nn = mean(prediction_nn == data_test$label)<br/>&gt; accuracy_nn<br/>[1] 0.9135944</pre>
+
+<p>比我们第一次尝试要好！我们可以用深度学习模型做得更好吗，直观地说，更多的隐藏层？当然可以。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Adding more hidden layers to the networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">向网络添加更多隐藏层</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们刚刚用单层神经网络模型实现了91.3%的准确率。理论上，我们可以得到一个更好的一个以上的隐藏层。作为示例，我们提供了具有两个隐藏层的深度神经网络模型的解决方案:</p>
+
+<div><img src="img/430a1881-d266-4100-baa1-df66861e9021.png" style="width:26.92em;height:15.92em;"/></div>
+
+<p>前馈深度神经网络中的权重优化也通过反向传播算法来实现，这与单层网络相同。然而，层数越多，计算复杂度越高，并且模型收敛越慢。加速权重优化的一种方式是使用计算效率更高的激活函数。近几年最流行的是<strong>整流线性单元</strong> ( <strong> ReLU </strong>):</p>
+
+<div><img class="fm-editor-equation" src="img/55886d5b-b7dc-4701-b626-f047d0ecbeaf.png" style="width:14.08em;height:1.58em;"/></div>
+
+<p>ReLU函数的图形如下:</p>
+
+<div><img src="img/0d5b55f4-2de8-430c-879e-84310722c25a.png" style="width:26.25em;height:18.83em;"/></div>
+
+<p>由于其导数<img class="fm-editor-equation" src="img/0ff84e62-3f65-457a-a2cc-17d9c47cf9f8.png" style="width:9.25em;height:2.67em;"/>的特性，使用ReLU激活函数相对于sigmoid有两个主要优势:</p>
+
+<ul>
+
+<li>与逻辑函数<img class="fm-editor-equation" src="img/dc23350b-4458-4ba2-a8a0-61a9ec633c2d.png" style="width:30.08em;height:2.17em;"/>相比，由于<em>relu’(z)</em>的恒定值，学习速度更快。</li>
+
+<li>不太可能出现梯度消失、梯度指数下降的问题，这种问题可以在具有多个堆叠的sigmoid层的网络中发现。当我们在计算每层的误差δ时乘以激活函数的导数，并且<em> sigmoid'(z) </em>的最大值是，当我们堆叠越来越多的sigmoid层时，梯度将呈指数下降。</li>
+
+</ul>
+
+<p>我们在前面章节中使用的<kbd>nnet</kbd>包(到目前为止)只能模拟单层网络。在本章中，我们使用<kbd>MXNet</kbd>包来实现具有多个隐藏层的深度神经网络。<kbd>MXNet</kbd>(<a href="https://mxnet.incubator.apache.org/">https://mxnet.incubator.apache.org/</a>)是一个深度学习框架，支持编程语言包括R、Scala、Python、Julia、C++和Perl。它是由DMLC(<a href="http://dmlc.ml/)">http://dmlc.ml/</a>)团队开发的，该团队是一群在开源机器学习项目上合作的专家。它是可移植的，可以扩展到多个CPU、多个GPU和多台机器，例如，在云中。最重要的是，它允许我们灵活高效地构建最先进的深度学习模型，包括深度神经网络、CNN和RNNs。</p>
+
+<p>先装<kbd>MXNet</kbd>吧:</p>
+
+<pre>&gt; cran &lt;- getOption("repos")<br/>&gt; cran["dmlc"] &lt;- "https://s3-us-west-2.amazonaws.com/apache-mxnet/R/CRAN/"<br/>&gt; options(repos = cran)<br/>&gt; if (!require("mxnet"))<br/>install.packages("mxnet")</pre>
+
+<p>现在我们可以导入<kbd>MXNet</kbd>并将数据转换成<kbd>MXNet</kbd>中神经网络模型首选的格式:</p>
+
+<pre>&gt; require(mxnet)<br/>&gt; data_train &lt;- data.matrix(data_train)<br/>&gt; data_train.x &lt;- data_train[,-1]<br/>&gt; data_train.x &lt;- t(data_train.x/255)<br/>&gt; data_train.y &lt;- data_train[,1]</pre>
+
+<p>注意我们通过除以最大可能值<kbd>255</kbd>，将输入特征缩放到从<kbd>0</kbd>到<kbd>1</kbd>的范围。否则，深度神经网络可能偏向某些特征，并且这种偏斜将在层上累积。</p>
+
+<p>既然训练数据集已经准备好了，我们就可以通过如下定义其架构来开始构建网络:</p>
+
+<pre>&gt; data &lt;- mx.symbol.Variable("data")<br/>&gt; fc1 &lt;- mx.symbol.FullyConnected(data, name="fc1", num_hidden=128)<br/>&gt; act1 &lt;- mx.symbol.Activation(fc1, name="relu1", act_type="relu")<br/>&gt; fc2 &lt;- mx.symbol.FullyConnected(act1, name="fc2", num_hidden=64)<br/>&gt; act2 &lt;- mx.symbol.Activation(fc2, name="relu2", act_type="relu")<br/>&gt; fc3 &lt;- mx.symbol.FullyConnected(act2, name="fc3", num_hidden=10)<br/>&gt; softmax &lt;- mx.symbol.SoftmaxOutput(fc3, name="sm")</pre>
+
+<p>在MXNet的符号API中，我们用数据类型符号来表示网络。我们从输入层数据开始，输入数据，接着是第一个隐藏层<kbd>fc1</kbd>，有128个节点，完全连接输入层。然后，我们将ReLU函数附加到<kbd>fc1</kbd>并输出该层的激活<kbd>act1</kbd>。同样，我们链另一个隐藏层<kbd>fc2</kbd>，这次64个节点，输出ReLU-based activates <kbd>act2</kbd>。最后，我们用一个softmax函数结束输出层，生成对应于10个类别的10个概率。整体结构看起来像这样:</p>
+
+<div><img src="img/85161171-17e7-4fe6-8469-081ba513deba.png" style="width:27.17em;height:17.42em;"/></div>
+
+<p>造好骨骼之后，就是训练模型的时候了。我们可以选择我们的计算设备、CPU和/或GPU，下面是一个CPU示例:</p>
+
+<pre>&gt; devices &lt;- mx.cpu()</pre>
+
+<p>在训练之前，不要忘记设置随机种子，以使建模过程可重复:</p>
+
+<pre>&gt; mx.set.seed(42)<br/>&gt; model_dnn &lt;- mx.model.FeedForward.create(softmax, X=data_train.x,<br/>y=data_train.y, ctx=devices, num.round=30, array.batch.size=100,<br/>learning.rate=0.01, momentum=0.9, eval.metric=mx.metric.accuracy,<br/>initializer=mx.init.uniform(0.1),<br/>epoch.end.callback=mx.callback.log.train.metric(100))<br/>Start training with 1 devices<br/>[1] Train-accuracy=0.724793650793651<br/>[2] Train-accuracy=0.904715189873417<br/>[3] Train-accuracy=0.925537974683544<br/>[4] Train-accuracy=0.939936708860759<br/>[5] Train-accuracy=0.950379746835443<br/>[6] Train-accuracy=0.95873417721519<br/>[7] Train-accuracy=0.96509493670886<br/>[8] Train-accuracy=0.969905063291139<br/>[9] Train-accuracy=0.974303797468355<br/>[10] Train-accuracy=0.977784810126584<br/>[11] Train-accuracy=0.980696202531648<br/>[12] Train-accuracy=0.983164556962027<br/>[13] Train-accuracy=0.985284810126584<br/>[14] Train-accuracy=0.987405063291141<br/>[15] Train-accuracy=0.988924050632913<br/>[16] Train-accuracy=0.990727848101267<br/>[17] Train-accuracy=0.992088607594938<br/>[18] Train-accuracy=0.993227848101268<br/>[19] Train-accuracy=0.994398734177217<br/>[20] Train-accuracy=0.995284810126584<br/>[21] Train-accuracy=0.995854430379748<br/>[22] Train-accuracy=0.996835443037975<br/>[23] Train-accuracy=0.997183544303798<br/>[24] Train-accuracy=0.997848101265823<br/>[25] Train-accuracy=0.998164556962026<br/>[26] Train-accuracy=0.998575949367089<br/>[27] Train-accuracy=0.998924050632912<br/>[28] Train-accuracy=0.999177215189874<br/>[29] Train-accuracy=0.999367088607595<br/>[30] Train-accuracy=0.999525316455696</pre>
+
+<p>我们只是用超参数来拟合模型，包括:</p>
+
+<ul>
+
+<li><kbd>num.round = 30</kbd>:最大迭代次数设定为<kbd>30</kbd>。</li>
+
+<li><kbd>array.batch.size = 100</kbd>:小批量梯度下降的批量为100。作为随机梯度下降的变体，小批量梯度下降算法通过小批量计算成本和梯度，而不是单个训练样本。因此，它在计算上更有效，并允许更快的模型收敛。因此，小批量梯度下降更常用于训练深度神经网络。</li>
+
+<li><kbd>learning.rate = 0.01</kbd>:学习率为<kbd>0.01</kbd>。</li>
+
+<li>一般来说，深层架构的成本函数具有一个或多个浅沟壑(局部最小值)的形式，从而导致全局最优。<strong>物理运动定律中的动量</strong>用于避免陷入次优，并加快收敛速度。对于动量，权重更新如下:</li>
+
+</ul>
+
+<div><img class="fm-editor-equation" src="img/eb5756a7-9e47-4d03-8d5a-3a9cade8ac28.png" style="width:7.67em;height:1.25em;"/></div>
+
+<div><img class="fm-editor-equation" src="img/0c7101ea-ae0e-4702-b317-647d1b37f0b4.png" style="width:5.67em;height:1.00em;"/></div>
+
+<p>其中左边和右边的<em> v </em>分别是前一个和当前速度，γ ∈ (0，1)是动量因子，确定有多少前一个速度被合并到当前速度中。</p>
+
+<ul>
+
+<li><kbd>eval.metric=mx.metric.accuracy</kbd>:使用分类准确率作为评价指标</li>
+
+<li><kbd>initializer=mx.init.uniform(0.1)</kbd>:初始权值从0到1的均匀分布中随机产生，以降低权值在深度网络中爆炸和消失的几率</li>
+
+</ul>
+
+<p>模型训练完成后，让我们看看它在测试集上的表现如何。首先，记住对测试数据集进行相同的预处理:</p>
+
+<pre>&gt; data_test.x &lt;- data_test[,-1]<br/>&gt; data_test.x &lt;- t(data_test.x/255)</pre>
+
+<p>然后，预测测试用例并评估性能:</p>
+
+<pre>&gt; prob_dnn &lt;- predict(model_dnn, data_test.x)<br/>&gt; prediction_dnn &lt;- max.col(t(prob_dnn)) - 1<br/>&gt; cm_dnn = table(data_test$label, prediction_dnn)
+&gt; cm_dnn
+
+   prediction_dnn
+
+       0    1    2    3    4    5    6    7    8    9
+
+  0 1041    0    2    0    0    1    3    0    8    1
+
+  1    0 1157    3    1    1    0    1    3    1    0
+
+  2    2    1  993    3    3    1    2   13    5    2
+
+  3    1    3   14 1033    1   13    0    5   14    6
+
+  4    0    2    1    0  991    0    4    4    1   12
+
+  5    4    2    3   12    3  892    4    3    6    8
+
+  6   10    0    1    0    3    4  988    0    4    0
+
+  7    0    5    9    1    2    0    0 1116    2    1
+
+  8    4    8    3    5    0    8    3    2 1020   12
+
+  9    1    1    0    4   13    3    0   16    2  957
+
+&gt; accuracy_dnn = mean(prediction_dnn == data_test$label)
+
+&gt; accuracy_dnn
+
+[1] 0.9704706 </pre>
+
+<p>通过增加一个隐藏层，准确率从91.4%提高到97.0%！由于深层神经网络中的每个隐藏层都提供了特定级别的数据表示，我们是否可以简单地得出结论:隐藏层越多(例如100、1，000、10，000...)，发现的底层模式越多，分类精度越好？如果我们有充足的资源和时间来实现计算，并确保在如此复杂的网络中不会发生过度拟合，这可能是真的。除了简单地链接更多的隐藏层之外，有没有什么方法可以让我们提取更丰富、更有信息量的表示，同时又不会过度扩大我们的网络？答案是CNN。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Extracting richer representation with CNNs</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">用CNN提取更丰富的表示</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>虽然常规隐藏层(我们也称之为全连接层)在某些级别上完成了获取表示的工作，但是这些表示可能能够帮助我们区分不同类别的图像。我们需要提取更丰富和可区分的表示，例如，使“9”成为“9”，使“4”成为“4”，或者使猫成为猫，狗成为狗。我们求助于CNN<strong/>作为多层神经网络的变体，这是由人类视觉皮层产生的生物学灵感。基本上，CNN从以下两个神经科学发现中获得灵感:</p>
+
+<ul>
+
+<li>视觉皮层有一个复杂的神经元细胞系统，对视野的特定子区域很敏感，称为<strong>感受野</strong>。例如，一些细胞只在垂直边缘出现时才作出反应；有些细胞只有暴露在水平边缘时才会放电；当显示某个方向的边缘时，一些反应更强烈。这些细胞被组织在一起以产生整个视觉感知，而每个单独的细胞都有特定的组成部分。</li>
+
+<li>简单细胞只有在边缘样模式出现在它们的感受亚区时才会有反应。更复杂的细胞对更大的子区域敏感，因此，在整个视野中，这些边缘状图案的局部位置变化较小。</li>
+
+</ul>
+
+<p>类似地，CNN通过首先导出低级表示、局部边缘和曲线来对图像进行分类，然后通过一系列低级表示来合成高级表示、整体形状和轮廓。CNN非常适合利用强大而独特的特征来区分图像。</p>
+
+<p>一般来说，CNN接收一个图像，通过一系列卷积层、非线性层、池层和全连接层，最后输出每个可能类别的概率。现在，我们将详细地单独查看每种类型的层。</p>
+
+<p><strong>卷积层</strong>是CNN的第一层。它通过对输入应用卷积运算来模拟神经元细胞对感受野的反应方式。具体来说，它计算卷积层的权重与输入层中它们所连接的小区域之间的点积。这个小区域是感受野，权重可以看作是过滤器上的值。当过滤器从输入层的开始滑动到结束时，计算权重和当前感受野之间的点积。在对所有子区域进行卷积之后，获得一个新的层，称为<strong>特征图</strong>。看一下下面的例子:</p>
+
+<div><img src="img/c3e25e4a-ab13-4508-847c-0a3b9b1621f7.png" style="width:16.25em;height:19.42em;"/></div>
+
+<p>层<em xmlns:epub="http://www.idpf.org/2007/ops"> m </em>有五个节点，过滤器有三个单元<em xmlns:epub="http://www.idpf.org/2007/ops">w</em>T4】1、<em xmlns:epub="http://www.idpf.org/2007/ops">w</em>T8】2、<em xmlns:epub="http://www.idpf.org/2007/ops">w</em>T12】3。我们计算过滤器和层<em xmlns:epub="http://www.idpf.org/2007/ops"> m </em>中的前三个节点之间的点积，并获得特征图中的第一个节点；然后，我们计算过滤器和中间三个节点之间的点积，并生成第二个节点；最后，我们从层<em xmlns:epub="http://www.idpf.org/2007/ops"> m </em>中的最后三个节点得到第三个节点。</p>
+
+<p>帮助我们更好地理解卷积层如何处理图像的另一个例子如下:</p>
+
+<div><img src="img/e94341ff-1839-462a-9933-53523cff9a78.png" style="width:28.17em;height:12.92em;"/></div>
+
+<p>一个3×3的过滤器在一个5×5的图像周围从左上的子区域滑动到右下。对于每个子区域，用滤波器计算点积。结果产生了3×3的特征图。</p>
+
+<p>卷积层实际上用于提取特征，例如边缘和曲线。如果相应的感受野包含由过滤器指定的边缘或曲线，则特征图中的输出像素将具有高值。例如，在前面的例子中，过滤器描绘了反斜杠形状的对角线边缘，蓝色矩形中的感受野包含类似的曲线，因此，产生了最高强度<em>3(1 * 1+1 * 1+1 * 1 = 3)</em>；然而，左下角的感受野不包含这样的形状，这导致值为1的像素。卷积层充当曲线检测器，模拟我们视觉细胞的工作方式。</p>
+
+<p>请记住，在前面的案例中，我们仅应用了一个过滤器并生成了一个特征图，该图显示了输入图像中的形状与过滤器中表示的曲线的相似程度。为了实现更丰富的数据表示，我们可以使用更多的过滤器，如水平、垂直曲线、30度或直角形状，以便由特征图组成的隐藏层可以检测更多的模式。此外，堆叠许多卷积层可以产生更高级别的表示，例如整体形状和轮廓。为了确保捕捉到强的空间局部模式，层中的每个滤光器仅响应于相应的感受野。链接更多的层导致更大的感受域，从而捕捉更多的全局模式。</p>
+
+<p>显然，在每个卷积层之后，我们通常会应用一个非线性层(也称为<strong xmlns:epub="http://www.idpf.org/2007/ops">激活层</strong>，以便引入非线性。这是因为在卷积层中只进行线性运算(乘法和加法)。只有线性隐藏层的神经网络的行为就像单层感知器一样，不管有多少层。同样，ReLu是深度神经网络中非线性层的最受欢迎的候选者。</p>
+
+<p>通常，在通过一对或多对卷积层和非线性层获得特征后，我们可以使用输出进行分类，例如在我们的多类情况下应用softmax层。让我们做一些数学计算，假设我们在第一卷积层中应用20个5*5滤波器，那么这一层的输出大小将是<em>20 *(28-5+1)*(28-5+1)= 20 * 24 * 24 = 11520</em>，这意味着作为下一层输入的特征数量从784变为11520；然后，我们在第二个卷积层中应用50个5*5滤波器，输出的大小增长到50 * 20 * (24 - 5 + 1) * (24 - 5 + 1) = 400，000，与我们的初始大小784相比，这是高维的。我们可以看到，在用于分类的softmax层之前，维度随着每个卷积层而急剧增加。这很容易导致过拟合，更不用说在相应的非线性层中训练大量的权重。</p>
+
+<p>为了解决维度增长问题，我们通常在一对卷积和非线性层之后采用一个<strong>池层</strong>(也称为<strong>下采样层</strong>)。顾名思义，它按子区域聚集特征的统计数据，以生成低得多的维度特征。典型的池化方法包括最大池化和平均池化，它们分别在所有不重叠的子区域上取最大值和平均值。例如，我们将2*2最大池过滤器应用于4*4特征地图，并输出2*2过滤器:</p>
+
+<div><img src="img/5567fb89-6fc4-4696-a549-7ca96e3a7091.png" style="width:14.25em;height:9.00em;"/></div>
+
+<p>除了减少低维输出的过度拟合，汇集层聚合区域统计数据还有另一个优势—平移不变性。这意味着，如果输入图像进行少量平移，输出不会改变。例如，假设我们将输入图像向左或向右、向上或向下移动几个像素，只要最高像素在子区域中保持不变，max pooling层的输出仍然不变。换句话说，对于合并图层，预测变得对位置不太敏感。</p>
+
+<p>将这三种类型的卷积相关层以及全连接层放在一起，我们可以将CNN模型构建如下:</p>
+
+<div><img src="img/13534aa7-d074-4f64-80ca-011be1faf768.png" style="width:40.00em;height:16.17em;"/></div>
+
+<p>它从第一卷积层、ReLu非线性层和池层开始。这里，我们使用20个5*5卷积滤波器和一个2*2最大池滤波器:</p>
+
+<pre>&gt; # first convolution<br/>&gt; conv1 &lt;- mx.symbol.Convolution(data=data, kernel=c(5,5),<br/>num_filter=20)<br/>&gt; act1 &lt;- mx.symbol.Activation(data=conv1, act_type="relu")<br/>&gt; pool1 &lt;- mx.symbol.Pooling(data=act1, pool_type="max",<br/>+ kernel=c(2,2), stride=c(2,2))</pre>
+
+<p>接着是第二卷积、ReLu非线性和池层，其中使用了50个5*5卷积滤波器和一个2*2最大池滤波器:</p>
+
+<pre>&gt; # second convolution<br/>&gt; conv2 &lt;- mx.symbol.Convolution(data=pool1, kernel=c(5,5),<br/>num_filter=50)<br/>&gt; act2 &lt;- mx.symbol.Activation(data=conv2, act_type="relu")<br/>&gt; pool2 &lt;- mx.symbol.Pooling(data=act2, pool_type="max",<br/>+ kernel=c(2,2), stride=c(2,2))</pre>
+
+<p>现在，我们通过检测边缘、曲线和形状来提取输入图像的丰富表示，我们继续处理完全连接的层。但在此之前，我们需要展平来自先前卷积图层的结果特征图:</p>
+
+<pre>&gt; flatten &lt;- mx.symbol.Flatten(data=pool2)</pre>
+
+<p>在完全连接部分，我们应用两个ReLu隐藏层，分别为500和10个单元:</p>
+
+<pre>&gt; # first fully connected layer<br/>&gt; fc1 &lt;- mx.symbol.FullyConnected(data=flatten, num_hidden=500)<br/>&gt; act3 &lt;- mx.symbol.Activation(data=fc1, act_type="relu")<br/>&gt; # second fully connected layer<br/>&gt; fc2 &lt;- mx.symbol.FullyConnected(data=act3, num_hidden=10)</pre>
+
+<p>最后，softmax层产生10个类的输出:</p>
+
+<pre>&gt; # softmax output<br/>&gt; softmax &lt;- mx.symbol.SoftmaxOutput(data=fc2, name="sm")</pre>
+
+<p>现在，骨头已经造好了。是时候设置随机种子并开始训练模型了:</p>
+
+<p>我们需要首先按照<kbd>MXNet</kbd>中卷积层的要求将矩阵<kbd>data_train.x</kbd>整形为一个数组:</p>
+
+<pre>&gt; train.array &lt;- data_train.x<br/>&gt; dim(train.array) &lt;- c(28, 28, 1, ncol(data_train.x))<br/>&gt; mx.set.seed(42)<br/>&gt; model_cnn &lt;- mx.model.FeedForward.create(softmax, X=train.array,<br/>y=data_train.y, ctx=devices, num.round=30,<br/>array.batch.size=100, learning.rate=0.05,<br/>momentum=0.9, wd=0.00001,<br/>eval.metric=mx.metric.accuracy,<br/>epoch.end.callback=mx.callback.log.train.metric(100))<br/>Start training with 1 devices<br/>[1] Train-accuracy=0.306984126984127<br/>[2] Train-accuracy=0.961898734177216<br/>[3] Train-accuracy=0.981139240506331<br/>[4] Train-accuracy=0.987151898734179<br/>[5] Train-accuracy=0.990348101265825<br/>[6] Train-accuracy=0.992689873417723<br/>[7] Train-accuracy=0.994493670886077<br/>[8] Train-accuracy=0.995822784810128<br/>[9] Train-accuracy=0.995601265822786<br/>[10] Train-accuracy=0.997246835443039<br/>[11] Train-accuracy=0.997341772151899<br/>[12] Train-accuracy=0.998006329113925<br/>[13] Train-accuracy=0.997626582278482<br/>[14] Train-accuracy=0.998069620253165<br/>[15] Train-accuracy=0.998765822784811<br/>[16] Train-accuracy=0.998449367088608<br/>[17] Train-accuracy=0.998765822784811<br/>[18] Train-accuracy=0.998955696202532<br/>[19] Train-accuracy=0.999746835443038<br/>[20] Train-accuracy=0.999841772151899<br/>[21] Train-accuracy=0.999905063291139<br/>[22] Train-accuracy=1<br/>[23] Train-accuracy=1<br/>[24] Train-accuracy=1<br/>[25] Train-accuracy=1<br/>[26] Train-accuracy=1<br/>[27] Train-accuracy=1<br/>[28] Train-accuracy=1<br/>[29] Train-accuracy=1<br/>[30] Train-accuracy=1</pre>
+
+<p>除了我们在之前的深度神经网络模型中使用的那些超参数之外，我们使用L2正则化权重衰减<kbd>wd = 0.00001</kbd>来拟合CNN模型，这为大权重增加了惩罚，以避免过度拟合。</p>
+
+<p>同样，CNN模型的训练与其他网络没有什么不同。通过反向传播算法获得最佳权重。</p>
+
+<p>模型训练完成后，让我们看看它在测试集上的表现如何。首先，记住对测试数据集进行相同的预处理:</p>
+
+<pre>&gt; test.array &lt;- data_test.x<br/>&gt; dim(test.array) &lt;- c(28, 28, 1, ncol(data_test.x))</pre>
+
+<p>预测测试用例并评估性能:</p>
+
+<pre>&gt; prob_cnn &lt;- predict(model_cnn, test.array)<br/>&gt; prediction_cnn &lt;- max.col(t(prob_cnn)) - 1<br/>&gt; cm_cnn = table(data_test$label, prediction_cnn)<br/>&gt; cm_cnn<br/>prediction_cnn<br/>0 1 2 3 4 5 6 7 8 9<br/>0 1051 0 1 0 0 1 1 0 2 0<br/>1 0 1161 0 0 0 1 1 3 1 0<br/>2 0 0 1014 4 0 0 0 7 0 0<br/>3 0 0 2 1075 0 6 0 2 3 2<br/>4 0 0 0 0 1000 0 4 2 2 7<br/>5 1 0 0 4 0 923 3 0 3 3<br/>6 3 0 0 0 0 0 1006 0 1 0<br/>7 0 1 2 0 3 0 0 1129 1 0<br/>8 3 3 1 1 2 5 1 0 1043 6<br/>9 2 0 2 0 3 3 1 2 0 984<br/>&gt; accuracy_cnn = mean(prediction_cnn == data_test$label)<br/>&gt; accuracy_cnn<br/>[1] 0.9893313</pre>
+
+<p class="mce-root">我们的CNN模型进一步将准确率提高到接近99%！</p>
+
+<p class="mce-root">我们还可以通过以下方式查看网络结构:</p>
+
+<pre>&gt; graph.viz(model_cnn$symbol)</pre>
+
+<p>让我们再做一些检查，以确保一切顺利。我们从学习曲线开始，例如模型在训练集和测试集上在训练迭代次数上的分类性能。一般来说，<em>绘制学习曲线是一个很好的做法，我们可以在曲线上直观地看到是否出现过拟合或欠拟合问题</em>:</p>
+
+<pre>&gt; data_test.y &lt;- data_test[,1]<br/>&gt; logger &lt;- mx.metric.logger$new()<br/>&gt; model_cnn &lt;- mx.model.FeedForward.create(softmax, X=train.array,<br/>y=data_train.y,eval.data=list(data=test.array,<br/>label=data_test.y), ctx=devices, num.round=30,<br/>array.batch.size=100, learning.rate=0.05,<br/>momentum=0.9, wd=0.00001,eval.metric=<br/>mx.metric.accuracy, epoch.end.callback =<br/>mx.callback.log.train.metric(1, logger))<br/>Start training with 1 devices<br/>[1] Train-accuracy=0.279936507936508<br/>[1] Validation-accuracy=0.912857142857143<br/>[2] Train-accuracy=0.959462025316456<br/>[2] Validation-accuracy=0.973523809523809<br/>[3] Train-accuracy=0.979841772151899<br/>[3] Validation-accuracy=0.980666666666666<br/>[4] Train-accuracy=0.986677215189875<br/>[4] Validation-accuracy=0.983428571428571<br/>[5] Train-accuracy=0.990822784810129<br/>[5] Validation-accuracy=0.981809523809523<br/>[6] Train-accuracy=0.992626582278482<br/>[6] Validation-accuracy=0.983904761904761<br/>[7] Train-accuracy=0.993322784810128<br/>[7] Validation-accuracy=0.986<br/>[8] Train-accuracy=0.995474683544305<br/>[8] Validation-accuracy=0.987619047619047<br/>[9] Train-accuracy=0.996487341772153<br/>[9] Validation-accuracy=0.983904761904762<br/>[10] Train-accuracy=0.995949367088608<br/>[10] Validation-accuracy=0.984761904761904<br/>[11] Train-accuracy=0.997310126582279<br/>[11] Validation-accuracy=0.985142857142856<br/>[12] Train-accuracy=0.997658227848102<br/>[12] Validation-accuracy=0.986857142857142<br/>[13] Train-accuracy=0.997848101265824<br/>[13] Validation-accuracy=0.984095238095238<br/>[14] Train-accuracy=0.998006329113924<br/>[14] Validation-accuracy=0.985238095238094<br/>[15] Train-accuracy=0.998607594936709<br/>[15] Validation-accuracy=0.987619047619047<br/>[16] Train-accuracy=0.99863924050633<br/>[16] Validation-accuracy=0.987428571428571<br/>[17] Train-accuracy=0.998987341772152<br/>[17] Validation-accuracy=0.985142857142857<br/>[18] Train-accuracy=0.998765822784811<br/>[18] Validation-accuracy=0.986285714285713<br/>[19] Train-accuracy=0.999240506329114<br/>[19] Validation-accuracy=0.988761904761905<br/>[20] Train-accuracy=0.999335443037975<br/>[20] Validation-accuracy=0.98847619047619<br/>[21] Train-accuracy=0.999841772151899<br/>[21] Validation-accuracy=0.987809523809523<br/>[22] Train-accuracy=0.99993670886076<br/>[22] Validation-accuracy=0.990095238095237<br/>[23] Train-accuracy=1<br/>[23] Validation-accuracy=0.989999999999999<br/>[24] Train-accuracy=1<br/>[24] Validation-accuracy=0.989999999999999<br/>[25] Train-accuracy=1<br/>[25] Validation-accuracy=0.990190476190476<br/>[26] Train-accuracy=1<br/>[26] Validation-accuracy=0.990190476190476<br/>[27] Train-accuracy=1<br/>[27] Validation-accuracy=0.990095238095237<br/>[28] Train-accuracy=1<br/>[28] Validation-accuracy=0.990095238095237<br/>[29] Train-accuracy=1<br/>[29] Validation-accuracy=0.990095238095237<br/>[30] Train-accuracy=1<br/>[30] Validation-accuracy=0.990190476190475</pre>
+
+<p>我们可以在每轮训练后获得训练集上的表现:</p>
+
+<pre>&gt; logger$train<br/>[1] 0.2799365 0.9594620 0.9798418 0.9866772 0.9908228 0.9926266 0.9933228 0.9954747 0.9964873 0.9959494 0.9973101<br/>[12] 0.9976582 0.9978481 0.9980063 0.9986076 0.9986392 0.9989873 0.9987658 0.9992405 0.9993354 0.9998418 0.9999367<br/>[23] 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000</pre>
+
+<p>以及每轮训练后在测试集上的表现:</p>
+
+<pre>&gt; logger$eval<br/>[1] 0.9128571 0.9735238 0.9806667 0.9834286 0.9818095 0.9839048 0.9860000 0.9876190 0.9839048 0.9847619 0.9851429<br/>[12] 0.9868571 0.9840952 0.9852381 0.9876190 0.9874286 0.9851429 0.9862857 0.9887619 0.9884762 0.9878095 0.9900952<br/>[23] 0.9900000 0.9900000 0.9901905 0.9901905 0.9900952 0.9900952 0.9900952 0.9901905</pre>
+
+<p>学习曲线可以通过以下代码可视化:</p>
+
+<pre>&gt; plot(logger$train,type="l",col="red", ann=FALSE)<br/>&gt; lines(logger$eval,type="l", col="blue")<br/>&gt; title(main="Learning curve")<br/>&gt; title(xlab="Iterations")<br/>&gt; title(ylab="Accuary")<br/>&gt; legend(20, 0.5, c("training","testing"), cex=0.8,<br/>col=c("red","blue"), pch=21:22, lty=1:2);</pre>
+
+<p>我们会得到:</p>
+
+<div><img src="img/2ad35a1e-7141-45f7-8ce1-3566620996b6.png" style="width:28.25em;height:22.50em;"/></div>
+
+<p>学习曲线表明过拟合或欠拟合的可能性很小。</p>
+
+<p>既然模型工作得很好，为什么我们不把训练好的模型的卷积层的输出可视化，这样我们可以更好地了解CNN。让我们以测试集中的前两个样本为例。他们是<kbd>1</kbd>和<kbd>0</kbd>:</p>
+
+<pre>&gt; par(mfrow=c(1,2))<br/>&gt; test_1 &lt;- matrix(as.numeric(data_test[1,-1]), nrow = 28,<br/>byrow = TRUE)<br/>&gt; image(rotate(test_1), col = grey.colors(255))<br/>&gt; test_2 &lt;- matrix(as.numeric(data_test[2,-1]), nrow = 28,<br/>byrow = TRUE)<br/>&gt; image(rotate(test_2), col = grey.colors(255))</pre>
+
+<p>作为参考，它们显示为:</p>
+
+<div><img src="img/a42097fe-860e-4090-8c88-18f5daded126.png" style="width:19.67em;height:13.75em;"/></div>
+
+<p>为了可视化卷积层的激活，我们首先通过将所有具有激活的层分组来创建一个执行器(可以粗略地视为我们训练的CNN模型的副本):</p>
+
+<pre>&gt; layerss_for_viz &lt;- mx.symbol.Group(mx.symbol.Group(c(conv1, act1, pool1, conv2, act2, pool2, fc1, fc2)))<br/>&gt; executor &lt;- mx.simple.bind(symbol=layerss_for_viz,<br/>data=dim(test.array), ctx=mx.cpu())</pre>
+
+<p>现在，用训练模型中的权重更新执行器中的权重:</p>
+
+<pre>&gt; mx.exec.update.arg.arrays(executor, model_cnn$arg.params, match.name=TRUE)<br/>&gt; mx.exec.update.aux.arrays(executor, model_cnn$aux.params,<br/>match.name=TRUE)</pre>
+
+<p>并通过前馈传递将执行器应用于测试集:</p>
+
+<pre>&gt; mx.exec.update.arg.arrays(executor,<br/>list(data=mx.nd.array(test.array)), match.name=TRUE)<br/>&gt; mx.exec.forward(executor, is.train=FALSE)</pre>
+
+<p>我们可以看到executor中记录的层的名称，因为我们将通过名称提取层的激活(注意名称可以不同，我们应该使用相应的名称):</p>
+
+<pre>&gt; names(executor$ref.outputs)<br/>[1] "convolution10_output" "activation15_output"<br/>"pooling10_output" "convolution11_output"<br/>[5] "activation16_output" "pooling11_output"<br/>"fullyconnected10_output" "fullyconnected11_output"</pre>
+
+<p>现在，我们可以看到第一个、第二个卷积层和ReLu层以及第一个池层的激活。</p>
+
+<p>让我们从第一个卷积层中的前16个滤波器的ReLu激活开始，在我们的例子中称为<kbd>activation15_output</kbd>(同样，名称可能不同)。对于第一个示例<kbd>(a "1")</kbd>，我们运行以下脚本:</p>
+
+<pre>&gt; par(mfrow=c(4,4), mar=c(0.1,0.1,0.1,0.1))<br/>&gt; for (i in 1:16) {<br/>+ outputData &lt;- as.array<br/>(executor$ref.outputs$activation15_output)[,,i,1]<br/>+ image(outputData, xaxt='n', yaxt='n',<br/>col=grey.colors(255)<br/>+ )<br/>+ }</pre>
+
+<p>同样，对于第二个样本<kbd>(a "0")</kbd>，我们运行:</p>
+
+<pre>&gt; par(mfrow=c(4,4), mar=c(0.1,0.1,0.1,0.1))<br/>&gt; for (i in 1:16) {<br/>+ outputData &lt;- as.array<br/>(executor$ref.outputs$activation15_output)[,,i,2]<br/>+ image(outputData, xaxt='n', yaxt='n',<br/>col=grey.colors(255)<br/>+ )<br/>+ }</pre>
+
+<p>我们分别绘制了1(左)和0(右)输入图像的第一卷积层的激活:</p>
+
+<div><img src="img/12c73230-6b13-440b-a369-df846190f37a.png" style="width:25.92em;height:12.25em;"/></div>
+
+<p>我们可以观察到，每个特征图都有效地提取了手指的边缘、曲线和走向。</p>
+
+<p>我们继续讨论名为<kbd>pooling10_output</kbd>的第一个池层的相应输出:</p>
+
+<pre>&gt; par(mfrow=c(4,4), mar=c(0.1,0.1,0.1,0.1))<br/>&gt; for (i in 1:16) {<br/>+ outputData &lt;-as.array<br/>(executor$ref.outputs$pooling10_output)[,,i,1]<br/>+ image(outputData, xaxt='n', yaxt='n',<br/>col=grey.colors(255)<br/>+ )<br/>+ }<br/>&gt; par(mfrow=c(4,4), mar=c(0.1,0.1,0.1,0.1))<br/>&gt; for (i in 1:16) {<br/>+ outputData &lt;- as.array<br/>(executor$ref.outputs$pooling10_output)[,,i,2]<br/>+ image(outputData, xaxt='n', yaxt='n',<br/>col=grey.colors(255)<br/>+ )<br/>+ }</pre>
+
+<p>我们绘制了第一个最大池层的输出:</p>
+
+<div><img src="img/28086bcb-32c0-4e4d-bb70-31e503a220e6.png" style="width:27.58em;height:13.42em;"/></div>
+
+<p>我们很容易看出，它们是卷积输出的降采样版本。</p>
+
+<p>最后，我们可视化一层，第二卷积层，它被标记为<kbd>convolution11_output</kbd>。以前16张特征图为例:</p>
+
+<pre>&gt; par(mfrow=c(4,4), mar=c(0.1,0.1,0.1,0.1))<br/>&gt; for (i in 1:16) {<br/>+ outputData &lt;- as.array<br/>(executor$ref.outputs$convolution11_output)[,,i,1]<br/>+ image(outputData, xaxt='n', yaxt='n',<br/>col=grey.colors(255)<br/>+ )<br/>+ }<br/>&gt; par(mfrow=c(4,4), mar=c(0.1,0.1,0.1,0.1))<br/>&gt; for (i in 1:16) {<br/>+ outputData &lt;- as.array<br/>(executor$ref.outputs$convolution11_output)[,,i,2]<br/>+ image(outputData, xaxt='n', yaxt='n',<br/>col=grey.colors(255)<br/>+ )<br/>+ }</pre>
+
+<p>我们分别为两幅图像绘制第二卷积层的输出:</p>
+
+<div><img src="img/67405946-94ea-4a55-becc-39484e859ca5.png" style="width:30.25em;height:14.58em;"/></div>
+
+<p>第二卷积层提取输入图像的高级特征，例如形状和轮廓。所有这50个特征地图组合在一起，提供丰富的表示，然后输入到完全连接的图层中。因此，由于卷积运算，分类性能得到了提高。</p>
+
+<p>到目前为止，我们已经通过绘制学习曲线和可视化卷积提取的特征来检查我们的CNN模型的有效性。我们可以对我们的模型的推广再做一次检查。例如，我们可以从测试集中取出一个数据子集来模拟一个验证集，并将剩余部分作为新的测试集。我们基于验证集执行<strong>提前停止</strong>，这提供了关于多少次迭代足够好并且不会过度拟合模型的指令。最后，我们使用在测试集上提前停止的训练模型，并观察该模型能够多好地推广到看不见的数据。</p>
+
+<p>我们首先将测试集分为验证集(40%)和最终测试集(60%):</p>
+
+<pre>&gt; validation_perc = 0.4<br/>&gt; validation_index &lt;- createDataPartition(data_test.y, p=validation_perc, list=FALSE)<br/>&gt;<br/>&gt; validation.array &lt;- test.array[, , , validation_index]<br/>&gt; dim(validation.array) &lt;- c(28, 28, 1,<br/>length(validation.array[1,1,]))<br/>&gt; data_validation.y &lt;- data_test.y[validation_index]<br/>&gt; final_test.array &lt;- test.array[, , , -validation_index]<br/>&gt; dim(final_test.array) &lt;- c(28, 28, 1,<br/>length(final_test.array[1,1,]))<br/>&gt; data_final_test.y &lt;- data_test.y[-validation_index]</pre>
+
+<p>为了进行提前停止，我们编写了自定义回调函数，并将它赋给参数<kbd>epoch.end.callback</kbd>。回调函数检查验证集的分类性能，如果它大于我们设置的阈值，则训练停止:</p>
+
+<pre>&gt; mx.callback.early.stop &lt;- function(eval.metric) {<br/>+ function(iteration, nbatch, env, verbose) {<br/>+ if (!is.null(env$metric)) {<br/>+ if (!is.null(eval.metric)) {<br/>+ result &lt;- env$metric$get(env$eval.metric)<br/>+ if (result$value &gt;= eval.metric) {<br/>+ return(FALSE)<br/>+ }<br/>+ }<br/>+ }<br/>+ return(TRUE)<br/>+ }<br/>+ }</pre>
+
+<p>现在，我们基于验证集训练具有早期停止的CNN模型，其中我们将停止标准设置为验证准确度大于<kbd>0.985</kbd>:</p>
+
+<pre>&gt; model_cnn_earlystop &lt;- mx.model.FeedForward.create(softmax,<br/>X=train.array, y=data_train.y,<br/>eval.data=list(data=validation.array, label=data_validation.y),<br/>+ ctx=devices, num.round=30, array.batch.size=100,<br/>+ learning.rate=0.05, momentum=0.9, wd=0.00001,<br/>eval.metric=mx.metric.accuracy,<br/>+ epoch.end.callback = mx.callback.early.stop(0.985))<br/>Start training with 1 devices<br/>[1] Train-accuracy=0.284571428571429<br/>[1] Validation-accuracy=0.921395348837209<br/>[2] Train-accuracy=0.959145569620254<br/>[2] Validation-accuracy=0.972325581395349<br/>[3] Train-accuracy=0.980221518987343<br/>[3] Validation-accuracy=0.97906976744186<br/>[4] Train-accuracy=0.986613924050634<br/>[4] Validation-accuracy=0.982790697674419<br/>[5] Train-accuracy=0.990537974683546<br/>[5] Validation-accuracy=0.981627906976744<br/>[6] Train-accuracy=0.992848101265824<br/>[6] Validation-accuracy=0.985348837209302</pre>
+
+<p class="mce-root">当满足标准时，在第六次迭代之后训练停止。最后，对新测试集的性能进行了检查:</p>
+
+<pre class="mce-root">&gt; prob_cnn &lt;- predict(model_cnn_earlystop, final_test.array)<br/>&gt; prediction_cnn &lt;- max.col(t(prob_cnn)) - 1<br/>&gt; cm_cnn = table(data_final_test.y, prediction_cnn)<br/>&gt; cm_cnn<br/>prediction_cnn<br/>data_final_test.y 0 1 2 3 4 5 6 7 8 9<br/>0 626 0 0 0 0 0 0 0 1 0<br/>1 0 701 1 0 0 2 1 3 4 0<br/>2 1 0 598 4 0 0 0 6 0 0<br/>3 0 0 0 658 0 5 0 0 2 1<br/>4 0 0 0 0 585 1 3 3 1 4<br/>5 1 0 1 3 0 558 5 0 0 2<br/>6 4 0 0 0 0 0 595 0 0 0<br/>7 0 1 3 0 1 0 0 675 0 0<br/>8 4 0 1 1 1 7 3 0 621 2<br/>9 1 0 0 0 2 1 0 4 0 589<br/>&gt; accuracy_cnn = mean(prediction_cnn == data_final_test.y)<br/>&gt; accuracy_cnn<br/>[1] 0.9855487</pre>
+
+<p>我们的CNN模型能够体面地概括。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">摘要</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们刚刚完成了R和深度学习之旅的第一英里！通过这一章，我们更加熟悉了深度学习的重要概念。我们从深度学习是什么开始，为什么它很重要，以及最近的成功应用。在我们准备好之后，我们依次使用浅层神经网络、深层神经网络和CNN来解决手写数字，并证明了CNN最适合于利用区分不同类别图像的强大而独特的特征。</p>
+
+<p>受人类视觉皮层的启发，CNN通过首先导出丰富的表示(如边缘、曲线和形状)来对图像进行分类，这在卷积层输出的可视化中得到了证明。此外，我们使用早期停止作为避免过度拟合的技术，验证了CNN模型的性能和泛化能力。总的来说，我们不仅讨论了CNN的机制，包括卷积和池的概念，还用<kbd>MXNet</kbd>实现了一个CNN模型，作为r中最流行的深度学习包之一</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

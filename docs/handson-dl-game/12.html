@@ -1,0 +1,1229 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Imitation and Transfer Learning</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">模仿和迁移学习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">在撰写本文时，一个名为AlphaStar的新AI，一个<strong>深度强化学习</strong> ( <strong> DRL </strong>)代理，使用<strong>模仿学习</strong> ( <strong> IL </strong>)在玩实时策略游戏《星际争霸2》时以五比零击败了一个人类对手。AlphaStar是大卫·西尔弗和谷歌DeepMind工作的延续，旨在建立一个更聪明、更智能的人工智能。AlphaStar用来获胜的具体技术可以写一本书，IL和学习模仿人类游戏的使用现在引起了浓厚的兴趣。好在Unity已经以线下和线上训练场景的形式实现了IL。虽然我们不会在本章中达到AlphaStar的水平，但我们仍然会了解IL和其他形式的迁移学习的基础技术。</p>
+
+<p>在这一章中，我们将看看在ML-agent中IL的实现，然后看看迁移学习的其他应用。我们将在本章中讨论以下主题:</p>
+
+<ul>
+
+<li>IL或行为克隆</li>
+
+<li>在线培训</li>
+
+<li>离线培训</li>
+
+<li>迁移学习</li>
+
+<li>模仿迁移学习</li>
+
+</ul>
+
+<p>尽管AlphaStar在一场RTS游戏中击败了一名人类职业玩家，取得了惊人的战术胜利，但它仍然因其使用的游戏类型和动作受到了审查。许多人类玩家表示，人工智能的战术能力显然更胜一筹，但整体战略和规划却糟糕透顶。看看谷歌DeepMind如何应对这种批评应该很有趣。</p>
+
+<p>这将是令人兴奋的一章，并将为你未来的发展提供大量的培训机会，这些都将在下一节开始。</p>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>IL, or behavioral cloning</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">行为克隆</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>IL，或行为克隆，是从一个人或另一个人工智能获取观察和动作，并用作训练智能体的输入的过程。代理本质上由人类引导，并通过他们的行为和观察来学习。一组学习观察可以通过实时游戏(在线)接收，或者从保存的游戏中提取(离线)。这提供了从多个代理捕捉游戏并一前一后或单独训练他们的能力。IL提供了训练或者实际上编程代理的能力，这些任务你可能发现使用常规的RL是不可能训练的，正因为如此，它很可能成为一种关键的RL技术，在不久的将来，我们将在大多数任务中使用它。</p>
+
+<p>在你看到没有它时的情况之前，很难衡量某样东西给你带来的价值。记住这一点，我们将首先看一个不使用IL，但肯定可以从中受益的例子。打开Unity编辑器，并遵循以下练习:</p>
+
+<ol>
+
+<li>从资产| ML-代理|示例|网球|场景文件夹中打开网球场景。</li>
+
+<li>选择并禁用额外的座席代表培训区域，从TennisArea(1)到TennisArea(17)。</li>
+
+<li>选择AgentA并确保网球代理| Brain设置为TennisLearning。在这个例子中，我们希望每个代理都与另一个代理对抗。</li>
+
+<li>选择AgentB并确保网球代理| Brain设置为TennisLearning。<br/>在本例中，我们在同一个环境中培训多个代理。我们将在<a href="15e7adeb-8b67-4b93-81d4-5f129772cd97.xhtml">第11章</a>、<em>构建多代理环境</em>中讨论更多代理扮演其他代理作为学习方式的场景。</li>
+
+<li>选择学院，并确保网球学院| Brains设置为TennisLearning，并启用控制选项，如以下屏幕截图所示:</li>
+
+</ol>
+
+<div><img src="img/cd61436d-3edf-44b8-9966-13f9ab48b633.png"/></div>
+
+<p>在Academy上将控制设置为启用</p>
+
+<ol start="6">
+
+<li>打开一个Python/Anaconda窗口，准备进行训练。我们将使用以下命令启动培训:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>mlagents-learn config/trainer_config.yaml --run-id=tennis --train</strong></pre>
+
+<ol start="7">
+
+<li>观看数千次迭代的训练，足以让你自己相信代理不会轻易学会这项任务。当你确信后，停止训练，继续前进。</li>
+
+</ol>
+
+<p>只看第一个例子，你就会发现普通的培训和我们所看到的其他高级方法，如课程和好奇心学习，很难实施，在这种情况下可能会适得其反。在下一节中，我们将研究如何在在线培训模式下使用IL运行这个示例。</p>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Online training</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">在线培训</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在线模仿学习是你教代理实时学习一个玩家或另一个代理的观察。这也是训练代理或机器人最有趣、最吸引人的方式之一。在下一个练习中，让我们开始为在线模仿学习设置网球环境:</p>
+
+<ol>
+
+<li>选择TennisArea | AgentA对象并将Tennis Agent | Brain设置为TennisPlayer。在这个IL场景中，我们有一个大脑作为老师，玩家，第二个大脑作为学生，学习者。</li>
+
+<li>选择AgentB对象，并确保将网球代理|大脑设置为TennisLearning。这将是学生大脑。</li>
+
+<li>从<kbd>ML-Agents/ml-agents/config</kbd>文件夹中打开<kbd>online_bc_config.yaml</kbd>文件。IL不使用与PPO相同的配置，因此参数将具有相似的名称，但可能不会响应您已经习惯的内容。</li>
+
+<li>在文件中向下滚动到<strong> <kbd>TennisLearning</kbd> </strong>大脑配置如下面的代码片段所示:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"> TennisLearning:<br/>    <strong>trainer: online_bc</strong><br/>    max_steps: 10000<br/>    summary_freq: 1000<br/>    <strong>brain_to_imitate: TennisPlayer</strong><br/>    batch_size: 16<br/>    batches_per_epoch: 5<br/>    num_layers: 4<br/>    hidden_units: 64<br/>    use_recurrent: false<br/>    sequence_length: 16</pre>
+
+<ol start="5">
+
+<li>纵观超参数，我们可以看到有两个新的参数感兴趣。这些参数汇总如下:<ul>
+
+<li><kbd>trainer</kbd> : <kbd>online_</kbd> <em>或</em><kbd>offline_bc</kbd>——使用在线或离线行为克隆。在这种情况下，我们在网上表演。</li>
+
+<li><kbd>brain_to_imitate</kbd>:<kbd>TennisPlayer</kbd>—这设置了学习大脑应该尝试模仿的大脑。<br/> <em>此时我们不会对文件做任何修改。</em></li>
+
+</ul>
+
+</li>
+
+<li>打开准备好的Python/Anaconda窗口，使用以下命令启动培训:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>mlagents-learn config/online_bc_config.yaml --run-id=tennis_il --train --slow</strong></pre>
+
+<ol start="7">
+
+<li>在编辑器中按下Play后，您就可以用<em> W </em>、<em> A </em>、<em> S </em>、<em> D </em>键来控制左拨片了。玩这个游戏，你可能会惊讶于代理学习的速度有多快，并且可以变得相当好。下面是一个正在玩的游戏的例子:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/77df8273-6f46-4876-aa07-4564b8092696.png"/></p>
+
+<p>用IL玩和教代理</p>
+
+<ol start="8">
+
+<li>如果你愿意，继续播放这个例子直到完成。在比赛中交换球员也很有趣，甚至可以训练大脑，然后使用训练好的模型进行比赛。你还记得如何操作一个训练有素的模型吧？</li>
+
+</ol>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p>在玩最后一个练习的时候，你可能想知道为什么我们不这样训练所有的RL代理。很好的问题，但是你可以想象，这要看情况。虽然IL非常强大，是一个相当有能力的学习者，但它并不总是做我们期望它做的事情。此外，一个IL代理只会学习它所显示的搜索空间(观察值),并保持在这些限制内。在AlphaStar的情况下，IL是训练的主要输入，但该团队也提到，AI确实有足够的时间自我发挥，这可能解释了它的许多获胜策略。因此，虽然IL很酷，也很强大，但它不是解决我们所有RL问题的金鹅。然而，在这个练习之后，你可能会对RL，尤其是IL，有一个新的更大的评价。在下一节中，我们将探索如何使用离线IL。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Offline training</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">离线培训</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>离线训练是从玩游戏或执行任务的玩家或代理生成记录的游戏性文件，然后作为训练观察反馈，以帮助代理稍后学习。虽然在线学习肯定更有趣，而且在某些方面更适用于网球或其他多人游戏，但它不太实用。毕竟你一般需要实时打一个代理几个小时，一个代理才会变好。同样，在在线培训场景中，您通常仅限于单个代理培训，而在离线培训中，可以将演示回放提供给多个代理，以便更好地进行整体学习。这也允许我们执行有趣的训练场景，类似于AlphaStar训练，我们可以教会一个代理，以便它可以教会其他代理。</p>
+
+<p>我们将在第十一章、<em xmlns:epub="http://www.idpf.org/2007/ops">构建多智能体环境</em>中学习更多关于多智能体游戏的知识。</p>
+
+<p>在下一个练习中，我们将重温我们的老朋友走廊/可视走廊的例子。同样，我们这样做是为了将我们的结果与之前在此环境下运行的示例练习进行比较。按照本练习设置新的离线培训课程:</p>
+
+<ol>
+
+<li>将ML-Agents代码克隆并下载到一个新文件夹中，可以选择<kbd>ml-agents_b</kbd>、<kbd>ml-agents_c</kbd>或其他名称。我们这样做的原因是为了确保我们在一个干净的环境中进行这些新的练习。此外，有时回到旧环境并回忆起您可能忘记更新的设置或配置也会有所帮助。</li>
+
+<li>启动Unity并打开<strong> UnitySDK </strong>项目和走廊或VisualHallway场景，你的选择。</li>
+
+</ol>
+
+<ol start="3">
+
+<li>场景应该设置为在玩家模式下运行。只要确认这一点。如果你需要改变它，那就去做吧。</li>
+
+<li>如果其他环境处于活动状态，则禁用场景中的任何其他代理训练环境。</li>
+
+<li>在“层次结构”窗口中选择“走廊区域|座席”。</li>
+
+<li>单击检查器窗口底部的添加组件按钮，键入<kbd>demo</kbd>，并选择演示记录器组件，如下图所示:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/76cb16eb-4858-4a5c-b6a5-a95d32b15a5f.png"/></p>
+
+<p>添加演示记录器</p>
+
+<ol start="7">
+
+<li>在新的演示记录器组件上单击Record，如前面的屏幕截图所示。此外，还要填写录音的演示名称属性，该属性也会显示出来。</li>
+
+<li>保存场景和项目。</li>
+
+<li>按下播放键，在相当长的时间内播放场景，超过几分钟，但可能不到几个小时。当然，你玩的有多好也会决定代理学的有多好。你打得差，经纪人也会。</li>
+
+<li>当你认为足够的时间过去了，并且你已经尽你所能玩好了，停止游戏。</li>
+
+</ol>
+
+<p>玩完游戏后，您应该会看到在项目窗口的资产根文件夹中创建了一个名为“演示”的新文件夹。文件夹里是你的演示录音。这是我们将在下一部分提供给代理的录音。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Setting up for training</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">为培训做准备</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在我们有了演示录音，我们可以在培训部分做更多的工作。但是，这一次，我们将向多个环境中的多个代理回放我们的观察文件。打开走廊/visual hallow示例场景，并按照下一个练习进行训练设置:</p>
+
+<ol>
+
+<li>选择并启用所有走廊区域训练环境走廊区域(1)到走廊区域(15)</li>
+
+<li>在层次结构中选择HallwayArea | Agent，然后将Hallway Agent | Brain切换到HallwayLearning，如下图所示:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/984fc851-9110-491a-83b8-37da2b240c42.png" style="width:30.67em;height:41.17em;"/></p>
+
+<p>设置代理组件</p>
+
+<ol start="3">
+
+<li>此外，选择并禁用演示录制组件，如前面的屏幕摘录所示</li>
+
+<li>确保场景中的所有代理都在使用走廊学习大脑</li>
+
+</ol>
+
+<ol start="5">
+
+<li>在层级中选择学院，然后启用走廊学院|大脑|控制选项，如下图所示:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/85138784-78f7-4990-ab15-0c0b38439ae5.png" style="width:31.50em;height:25.92em;"/></p>
+
+<p>让学院能够控制大脑</p>
+
+<ol start="6">
+
+<li>保存场景和项目</li>
+
+</ol>
+
+<p>现在我们已经为代理学习配置了场景，我们可以在下一节继续为代理喂食。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Feeding the agent</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">给代理喂食</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>当我们在网上表演IL时，我们在网球场景中一次只喂一个特工。但是，这一次，我们将从同一个演示录音中训练多个代理，以提高训练效果。</p>
+
+<p>我们已经为培训做好了准备，所以让我们在下面的练习中开始喂养代理:</p>
+
+<ol>
+
+<li>打开一个Python/Anaconda窗口，并从新的<kbd>ML-Agents</kbd>文件夹中设置它进行训练。你重新克隆了来源，对吗？</li>
+
+<li>从<kbd>ML-Agents/ml-agents_b/config</kbd>文件夹中打开<kbd>offline_bc_config.yaml</kbd>文件。文件内容如下，供参考:</li>
+
+</ol>
+
+<pre style="padding-left: 60px">default:<br/>    trainer: offline_bc<br/>    batch_size: 64<br/>    summary_freq: 1000<br/>    max_steps: 5.0e4<br/>    batches_per_epoch: 10<br/>    use_recurrent: false<br/>    hidden_units: 128<br/>    learning_rate: 3.0e-4<br/>    num_layers: 2<br/>    sequence_length: 32<br/>    memory_size: 256<br/>    demo_path: ./UnitySDK/Assets/Demonstrations/&lt;Your_Demo_File&gt;.demo<br/><br/>HallwayLearning:<br/>    trainer: offline_bc<br/>    max_steps: 5.0e5<br/>    num_epoch: 5<br/>    batch_size: 64<br/>    batches_per_epoch: 5<br/>    num_layers: 2<br/>    hidden_units: 128<br/>    sequence_length: 16<br/>    use_recurrent: true<br/>    memory_size: 256<br/>    sequence_length: 32<br/>    <strong>demo_path: ./UnitySDK/Assets/Demonstrations/demo.demo</strong></pre>
+
+<ol start="3">
+
+<li>将<kbd>HallwayLearning</kbd>或<kbd>VisualHallwayLearning</kbd>大脑的最后一行改为如下:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>HallwayLearning:</strong><br/>    trainer: offline_bc<br/>    max_steps: 5.0e5<br/>    num_epoch: 5<br/>    batch_size: 64<br/>    batches_per_epoch: 5<br/>    num_layers: 2<br/>    hidden_units: 128<br/>    sequence_length: 16<br/>    use_recurrent: true<br/>    memory_size: 256<br/>    sequence_length: 32<br/>    <strong>demo_path: ./UnitySDK/Assets/Demonstrations/AgentRecording.demo</strong></pre>
+
+<ol start="4">
+
+<li>注意，如果您使用的是<kbd>VisualHallwayLearning</kbd>大脑，您还需要更改前面配置脚本中的名称。</li>
+
+<li>完成编辑后保存您的更改。</li>
+
+<li>返回Python/Anaconda窗口，使用以下命令启动培训:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>mlagents-learn config/offline_bc_config.yaml --run-id=hallway_il --train</strong></pre>
+
+<ol start="7">
+
+<li>出现提示时，在编辑器中按Play，观看培训的展开。你会看到代理使用与你非常相似的动作，如果你玩得好，代理会很快开始学习，你会看到一些令人印象深刻的训练，这都要感谢IL。</li>
+
+</ol>
+
+<p>RL可以被认为是学习的蛮力方法，而模仿学习和通过观察进行训练的细化显然将主导代理训练的未来。当然，这真的有什么奇怪的吗？毕竟，我们简单的人类就是这样学习的。</p>
+
+<p>在下一部分，我们将关注深度学习的另一个令人兴奋的领域，迁移学习，以及它如何应用于游戏和DRL。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Transfer learning</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">迁移学习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>模仿学习，顾名思义，属于<strong>迁移学习</strong> ( <strong> TL </strong>)的范畴。我们可以把迁移学习定义为这样一个过程，通过这一过程，一个代理或DL网络通过从一个到另一个的经验迁移而得到训练。这可以像我们刚刚执行的观察训练一样简单，也可以像在代理的大脑中交换层/层权重一样复杂，或者只是训练代理完成类似的任务。</p>
+
+<p>在转移学习中，我们需要确保我们使用的经验或以前的权重是通用的。通过本书的基础章节(第1-3章),我们学习了使用诸如丢弃和批量标准化等技术进行一般化的价值。我们了解到这些技术对于更一般的训练很重要；允许代理/网络更好地推断测试数据的培训形式。这与我们使用一个在一项任务上受过训练的代理来学习另一项任务没有什么不同。实际上，一个更通用的代理将比一个专业代理更容易传递知识。</p>
+
+<p>我们可以用一个简单的例子来证明这一点，从训练以下简单的练习开始:</p>
+
+<ol>
+
+<li>在Unity编辑器中打开VisualHallway场景。</li>
+
+<li>禁用任何额外的训练区域。</li>
+
+<li>确认学会控制大脑。</li>
+
+<li>从hallow/Brains文件夹中选择VisualHallwayLearning brain，将Vector Action | Branches Size | Branch 0 Size设置为<kbd>7</kbd>，如下图所示:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/4d4cb9a9-503a-43d5-8c7f-bdb2c1970824.png" style="width:32.08em;height:23.17em;"/></p>
+
+<p>增加代理的向量动作空间</p>
+
+<ol start="5">
+
+<li>我们增加大脑的活动空间，使它与我们的迁移学习环境所需的活动空间相适应，这一点我们将在后面讲到。</li>
+
+<li>保存场景和项目。</li>
+
+<li>打开准备用于训练的Python/Anaconda窗口。</li>
+
+<li>使用以下代码启动培训会话:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>mlagents-learn config/trainer_config.yaml --run-id=vishall --train  --save-freq=10000</strong></pre>
+
+<ol start="9">
+
+<li>在这里，我们引入了一个新的参数来控制创建模型检查点的频率。默认设置为50，000，但是我们不想等那么久。</li>
+
+<li>在编辑器中运行agent in training，至少保存一个模型检查点，如以下屏幕摘录所示:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/32d4ca69-78e1-4a52-b2a4-f386d69cf508.png"/></p>
+
+<p>ML-代理培训师创建检查点</p>
+
+<ol start="11">
+
+<li>检查点是拍摄大脑快照并保存下来以备后用的一种方式。这可以让你回到你离开的地方继续训练。</li>
+
+<li>让代理训练到一个检查点，然后在Python/Anaconda窗口中按下Mac上的<em> Ctrl </em> + <em> C </em>或c <em> ommand </em> + <em> C </em>来终止训练。</li>
+
+</ol>
+
+<p>当你终止了训练，是时候在下一节的另一个学习环境中尝试这个节省下来的大脑了。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Transferring a brain</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">转移大脑</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们现在想把我们刚刚训练过的大脑放在一个新的但相似的环境中重新使用。由于我们的代理使用视觉观察，这使得我们的任务更容易，但是您也可以尝试使用其他代理来执行此示例。</p>
+
+<p>让我们打开Unity并导航到VisualPushBlock示例场景，然后进行以下练习:</p>
+
+<ol>
+
+<li>选择学院并启用它来控制大脑。</li>
+
+<li>选择代理并将其设置为使用visual推块学习大脑。您还应该确认这个大脑的配置方式与我们刚刚运行的VisualHallwayLearning大脑相同，这意味着视觉观察和矢量动作空间是匹配的。</li>
+
+<li>在文件浏览器或其他文件浏览器中打开<kbd>ML-Agents/ml-agents_b/models/vishall-0</kbd>文件夹。</li>
+
+<li>将文件和文件夹的名称从<kbd>VisualHallwayLearning</kbd>更改为<kbd>VisualPushBlockLearning</kbd>，如下图所示:</li>
+
+</ol>
+
+<div><img src="img/d71f90f1-f500-4065-bc70-994600137b07.png"/></div>
+
+<p>手动更改模型路径</p>
+
+<ol start="5">
+
+<li>通过更改文件夹的名称，我们实际上是告诉模型加载系统将我们的VisualHallway brain恢复为VisualPushBlockBrain。这里的诀窍是确保两个大脑都有相同的超参数和配置设置。</li>
+
+</ol>
+
+<ol start="6">
+
+<li>说到超参数，打开<kbd>trainer_config.yaml</kbd>文件并确保VisualHallwayLearning和VisualPushBlockLearning参数是相同的。以下代码片段显示了两者的配置，以供参考:</li>
+
+</ol>
+
+<pre style="padding-left: 60px">VisualHallwayLearning:<br/>    use_recurrent: true<br/>    sequence_length: 64<br/>    num_layers: 1<br/>    hidden_units: 128<br/>    memory_size: 256<br/>    beta: 1.0e-2<br/>    gamma: 0.99<br/>    num_epoch: 3<br/>    buffer_size: 1024<br/>    batch_size: 64<br/>    max_steps: 5.0e5<br/>    summary_freq: 1000<br/>    time_horizon: 64<br/><br/>VisualPushBlockLearning:<br/>    use_recurrent: true<br/>    <strong>sequence_length: 64</strong><br/>    num_layers: 1<br/>    hidden_units: 128<br/>    memory_size: 256<br/>    beta: 1.0e-2<br/>    gamma: 0.99<br/>    num_epoch: 3<br/>    buffer_size: 1024<br/>    batch_size: 64<br/>    max_steps: 5.0e5<br/>    summary_freq: 1000<br/>    time_horizon: 64</pre>
+
+<ol start="7">
+
+<li>完成编辑后，保存配置文件。</li>
+
+<li>打开Python/Anaconda窗口，使用以下代码启动培训:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>mlagents-learn config/trainer_config.yaml --run-id=vishall --train --save-freq=10000 --load</strong></pre>
+
+<ol start="9">
+
+<li>前面的代码不是印刷错误；这是我们用来运行VisualHallway示例的完全相同的命令，除了在末尾附加了<kbd>--load</kbd>。这将启动培训并提示您运行编辑器。</li>
+
+<li>您可以随意运行培训，只要您喜欢，但请记住，我们几乎没有培训原始代理。</li>
+
+</ol>
+
+<p>现在，在本例中，即使我们已经培训代理完成VisualHallway，这可能也不会非常有效地将知识转移到VisualPushBlock。出于这个例子的目的，我们选择了两者，因为它们非常相似，并且将一个经过训练的大脑转移到另一个大脑不太复杂。出于你自己的目的，能够转移受过训练的大脑可能更多的是在新的或修改的水平上重新训练代理人，甚至可能允许代理人在逐渐更困难的水平上训练。</p>
+
+<p>根据您的ML-Agents版本的不同，这个例子可能工作得很好，也可能不太好。特别的问题是模型的复杂性、超参数的数量、输入空间和我们正在运行的奖励系统。保持所有这些因素不变也需要对细节的高度关注。在下一节中，我们将花点时间来探索这些模型有多复杂。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Exploring TensorFlow checkpoints</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">探索张量流检查点</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>TensorFlow正迅速成为支持大多数深度学习基础设施的底层图形计算引擎。虽然我们还没有详细介绍这些图形引擎是如何构建的，但直观地回顾一下这些张量流模型可能会有所帮助。我们不仅可以开始更好地欣赏这些系统的复杂性，而且一个好的视觉效果往往胜过千言万语。让我们打开web浏览器，进行下一个练习:</p>
+
+<ol>
+
+<li>用你最喜欢的搜索引擎在浏览器中搜索短语<kbd>netron tensorflow</kbd>。Netron是一款开源TensorFlow模型查看器，非常适合我们的需求。</li>
+
+<li>找到GitHub页面的链接，并在页面上找到下载二进制安装程序的链接。为您的平台选择安装程序，然后单击下载。这将带您到另一个下载页面，您可以在那里选择要下载的文件。</li>
+
+<li>使用您平台的安装程序来安装Netron应用程序。在Windows上，这就像下载exe安装程序并运行它一样简单。</li>
+
+</ol>
+
+<ol start="4">
+
+<li>运行Netron应用程序，在它启动后，您将看到以下内容:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/95bc6be0-a29e-4677-9a94-c3686ce9f21f.png" style="width:39.33em;height:29.67em;"/></p>
+
+<p>Netron应用程序</p>
+
+<ol start="5">
+
+<li>单击打开的模型...窗口中间的按钮</li>
+
+</ol>
+
+<ol start="6">
+
+<li>使用文件资源管理器找到<kbd>ML-Agents/ml-agents/models/vishall-0\VisualHallwayLearning</kbd>文件夹，找到<kbd>raw_graph.def</kbd>文件，如下图所示:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/ef7efa51-c1a1-4b3d-b189-619ab4a4f0c4.png"/></p>
+
+<p>选择要加载的模型图定义</p>
+
+<ol start="7">
+
+<li>加载图表后，使用右上角的-按钮尽可能放大视图，类似于下面的屏幕截图:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/091ce181-d2c3-428c-bc00-a6ce885bb62c.png"/></p>
+
+<p>我们代理人大脑的张量流图模型</p>
+
+<ol start="8">
+
+<li>如插图所示，这个图表非常复杂，我们很难理解。然而，仔细观察模型/图形是如何构建的会很有趣。</li>
+
+</ol>
+
+<ol start="9">
+
+<li>滚动到图形的顶部，找到名为advantages的节点，然后选择该节点，注意图形和输入、模型属性，如下面的屏幕截图所示:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/366e58fa-35bf-4cb4-be05-4b6c39f238fa.png"/></p>
+
+<p>优势图模型的属性</p>
+
+<ol start="10">
+
+<li>在这个模型的properties视图中，您应该能够看到一些非常熟悉的术语和设置，比如visual_observation_0，它显示了模型输入是一个形状为[84，84，3]的张量。</li>
+
+</ol>
+
+<p>完成后，可以随意查看其他模型，甚至可以探索Unity之外的其他模型。虽然这个工具不太能够像我们一样总结一个复杂的模型，但它确实显示了这些类型的工具变得多么强大。更重要的是，如果你能找到周围的路，你甚至可以导出变量供以后检查或使用。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Imitation Transfer Learning</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">模仿迁移学习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>模仿学习的一个问题是，它经常使代理人走上一条限制其未来可能行动的道路。这与你被告知执行一项任务的不适当的方法，然后就那样做了，也许没有思考，只是后来发现有一个更好的方法。事实上，人类在历史上一次又一次地倾向于这种类型的问题。也许你小时候就知道刚吃完饭就游泳是危险的，但后来通过你自己的实验或常识才知道，那只是一个神话，一个在很长一段时间里被当作事实的神话。通过观察来训练一个代理没什么不同，你在很多方面限制了代理的视野，使其局限于一个狭窄的焦点，这个焦点受到了所学内容的限制。然而，有一种方法允许代理回复到部分蛮力或试错探索，以便扩展其训练。</p>
+
+<p>有了ML-agent，我们可以将IL与一种迁移学习的形式结合起来，以允许agent首先从观察中学习，然后通过向曾经的学生学习来进一步训练。如果您愿意，这种形式的IL链接允许您训练一个代理自动训练多个代理。让我们将Unity开放给TennisIL场景，然后进行下一个练习:</p>
+
+<ol>
+
+<li>选择TennisArea | Agent对象，并在检查器中禁用BC Teacher Helper组件，然后添加一个新的演示记录器，如下图所示:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/65d19e63-93e6-436c-85c1-02a528d4c683.png" style="width:33.25em;height:40.83em;"/></p>
+
+<p class="mce-root"/>
+
+<p>检查BC教师是否连接到代理</p>
+
+<ol start="2">
+
+<li>BC教师助手是一个记录器，它的工作方式就像演示记录器一样。BC记录器允许您在代理运行时打开和关闭记录，这非常适合在线培训，但是在编写本文时，该组件还没有工作。</li>
+
+</ol>
+
+<ol start="3">
+
+<li>确保学院设置为控制网球学习大脑。</li>
+
+<li>保存场景和项目。</li>
+
+<li>打开Python/Anaconda窗口，使用以下命令启动培训:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>mlagents-learn config/online_bc_config.yaml --run-id=tennis_il --train --slow</strong></pre>
+
+<ol start="6">
+
+<li>当提示在编辑器中运行游戏时，按Play。用<em> W </em>、<em> A </em>、<em> S </em>、<em> D </em>键控制蓝色拨片，弹奏几秒钟进行预热。</li>
+
+<li>热身后，按下<em> R </em>键开始录制演示观察。玩几分钟游戏，让代理变得有能力。在代理能够回球后，停止培训课程。</li>
+
+</ol>
+
+<p>这不仅会训练代理，这很好，而且还会创建一个演示录音回放，我们可以用它来进一步训练代理，以学习如何以类似于训练AlphaStar的方式互相扮演。在下一节中，我们将设置我们的网球场景，使其在离线训练模式下运行，并有多个代理。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Training multiple agents with one demonstration</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">通过一次演示培训多个代理</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在，有了我们打网球的录音，我们可以用它来训练多个代理人，反馈到一个政策中。将Unity打开到网球场景，即具有多个环境的场景，然后进行下一个练习:</p>
+
+<ol>
+
+<li>在层级窗口顶部的过滤栏中键入<kbd>agent</kbd>，如下图所示:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/88535449-155c-425c-911b-f57a448b2b5d.png" style="width:32.08em;height:42.67em;"/></p>
+
+<p>搜索场景中的所有代理</p>
+
+<ol start="2">
+
+<li>选择场景中的所有代理对象，并批量更改他们的大脑以使用TennisLearning而不是TennisPlayer。</li>
+
+<li>选择学院，并确保使其能够控制大脑。</li>
+
+<li>打开<kbd>config/offline_bc_config.yaml</kbd>文件。</li>
+
+</ol>
+
+<ol start="5">
+
+<li>为底部的<kbd>TennisLearning</kbd>大脑添加以下新部分:</li>
+
+</ol>
+
+<pre style="padding-left: 60px">TennisLearning:<br/>    trainer: offline_bc<br/>    max_steps: 5.0e5<br/>    num_epoch: 5<br/>    batch_size: 64<br/>    batches_per_epoch: 5<br/>    num_layers: 2<br/>    hidden_units: 128<br/>    sequence_length: 16<br/>    use_recurrent: true<br/>    memory_size: 256<br/>    sequence_length: 32<br/>    demo_path: ./UnitySDK/Assets/Demonstrations/TennisAgent.demo</pre>
+
+<ol start="6">
+
+<li>保存场景和项目。</li>
+
+<li>打开Python/Anaconda窗口，使用以下代码运行培训:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>mlagents-learn config/offline_bc_config.yaml --run-id=tennis_ma --train</strong></pre>
+
+<ol start="8">
+
+<li>为了观看训练，您可能想要添加<kbd>--slow</kbd>开关，但它应该不是必需的。</li>
+
+<li>让代理训练一段时间，并注意到它的进步。即使只有很短的观察记录输入，代理也能很快成为有能力的玩家。</li>
+
+</ol>
+
+<p>有多种方法可以执行这种类型的IL和transfer learningchaining，这将使您的代理在培训中具有一定的灵活性。您甚至可以在没有IL的情况下使用已训练模型的检查点，并像我们之前所做的那样运行具有迁移学习的代理。可能性是无限的，什么将成为最佳实践还有待观察。</p>
+
+<p>在下一节中，我们将提供一些练习，供您个人学习使用。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Exercises</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">练习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>本章末尾的练习可能会提供几个小时的乐趣。试着只完成一两个练习，因为我们还需要完成这本书:</p>
+
+<ol>
+
+<li>设置并运行PyramidsIL场景以运行在线IL。</li>
+
+<li>设置并运行推块IL场景以运行在线IL。</li>
+
+<li>设置并运行WallJump场景以运行在线IL。这需要你修改场景。</li>
+
+<li>设置并运行visual金字塔场景以使用脱机录制。录制培训课程，然后培训代理。</li>
+
+<li>设置并运行VisualPushBlock场景以使用离线录制。使用离线IL培训代理。</li>
+
+<li>设置推块场景以录制观察演示。然后使用此离线培训在常规推块场景中培训多个代理。</li>
+
+<li>设置PyramidsIL场景以录制演示录音。然后将其用于离线训练，在常规金字塔场景中训练多个代理。</li>
+
+<li>使用您喜欢的任何学习形式，在可视走廊场景中培训代理。训练后，修改VisualHallway场景以在墙壁和地板上使用不同的材质。在Unity对象上改变材质是非常容易的。然后，使用交换模型检查点的技术，作为将先前训练的大脑转移到新环境中学习的一种方式。</li>
+
+<li>做练习八，但是使用可视化金字塔场景。你也可以在这个场景中添加其他物体或块。</li>
+
+<li>做练习八，但是使用视觉推块场景。尝试添加代理可能需要解决的其他块或其他对象。</li>
+
+</ol>
+
+<p>请记住，如果你正在尝试任何迁移学习练习，在匹配复杂的图表时，注意细节是很重要的。在下一节中，我们将总结本章所讲的内容。</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">摘要</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在这一章中，我们介绍了RL中的一种新兴技术，称为模仿学习或行为克隆。正如我们所了解的，这种技术获取玩家玩游戏的观察结果，然后在在线或离线环境中使用这些观察结果来进一步训练代理。我们进一步了解到，IL只是迁移学习的一种形式。然后，我们介绍了一种使用ML-Agents的技术，这种技术可以让你跨环境转移大脑。最后，我们研究了如何将IL和迁移学习联系起来，作为一种刺激代理训练自己开发新策略的方式。</p>
+
+<p>在下一章中，我们将通过观察多个代理训练场景来进一步理解游戏中的DRL。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

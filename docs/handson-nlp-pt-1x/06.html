@@ -1,0 +1,240 @@
+<html><head/><body>
+
+
+	
+		<title>B12365_04_Final_JC_ePub</title>
+		
+	
+	
+		<div><h1><em class="italic"> <a id="_idTextAnchor070"/>第四章</em>:文本预处理、词干提取和词汇化</h1>
+			<p>文本数据可以从许多不同的来源收集，并采取许多不同的形式。文本可以是整洁易读的，也可以是粗糙杂乱的，还可以有许多不同的风格和格式。我们将在本章中探讨如何对这些数据进行预处理，以便在它们到达我们的NLP模型之前将其转换成标准格式。</p>
+			<p>词干化和词汇化，类似于标记化，是NLP预处理的另一种形式。然而，与将文档简化为单个单词的标记化不同，词干化和词汇化是试图将这些单词进一步简化为它们的词根。例如，英语中几乎任何动词都有许多不同的变体，这取决于时态:</p>
+			<p><em class="italic">他跳了</em></p>
+			<p>他正在跳跃</p>
+			<p>他跳起来了</p>
+			<p>虽然所有这些单词都不相同，但它们都与同一个词根相关——<strong class="bold">jump</strong>。词干化和词汇化都是我们可以用来将单词变化减少到它们的共同词根的技术。</p>
+			<p>在这一章中，我们将解释如何对文本数据进行预处理，探索词干化和词汇化，并展示如何在Python中实现它们。</p>
+			<p>在本章中，我们将讨论以下主题:</p>
+			<ul>
+				<li>文本预处理</li>
+				<li>堵塞物</li>
+				<li>词汇化</li>
+				<li>词干化和词汇化的使用</li>
+			</ul>
+			<h1><a id="_idTextAnchor071"/>技术要求</h1>
+			<p>对于本章中的文本预处理，我们将主要使用内置的Python函数，但是我们也将使用外部的<code>BeautifulSoup</code>包。对于词干化和词汇化，我们将使用NLTK Python包。本章的所有代码都可以在<a href="https://github.com/PacktPublishing/Hands-On-Natural-Language-Processing-with-PyTorch-1.x/tree/master/Chapter4">https://github . com/packt publishing/Hands-On-Natural Language-Processing-with-py torch-1 . x/tree/master/chapter 4</a>找到。</p>
+			<h1><a id="_idTextAnchor072"/>文本预处理</h1>
+			<p>文本数据可以有多种格式和样式。文本可以是结构化的可读格式<a id="_idIndexMarker201"/>或更原始的非结构化格式。我们的文本可能包含我们不希望包含在模型中的标点和符号，或者可能包含HTML和其他非文本格式。当从在线资源中抓取文本时，这一点尤为重要。为了准备我们的文本，以便它可以输入到任何NLP模型中，我们必须执行预处理。这将清理我们的数据，使其成为标准格式。在本节中，我们将更详细地说明这些预处理步骤。<a id="_idTextAnchor073"/></p>
+			<h2><a id="_idTextAnchor074"/>删除HTML</h2>
+			<p>当从在线资源中抓取文本时，您可能会发现您的文本包含HTML标记和<a id="_idIndexMarker202"/>其他非文本工件。我们通常不希望在模型的NLP输入中包含这些内容，因此默认情况下应该删除这些内容。例如，在HTML中，<code>&lt;b&gt;</code>标记表示它后面的文本应该是粗体。但是，这不包含任何关于句子内容的文本信息，所以我们应该删除它。幸运的是，在Python中，有一个名为<code>BeautifulSoup</code>的包，它允许我们用几行代码删除所有HTML:</p>
+			<pre>input_text = "&lt;b&gt; This text is in bold&lt;/br&gt;, &lt;i&gt; This text is in italics &lt;/i&gt;"
+output_text =  BeautifulSoup(input_text, "html.parser").get_text()
+print('Input: ' + input_text)
+print('Output: ' + output_text)</pre>
+			<p>这将返回以下输出:</p>
+			<div><div><img src="img/B12365_04_01.jpg" alt="Figure 4.1 – Removing HTML&#13;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.1–删除HTML</p>
+			<p>前面的屏幕截图显示HTML已被成功删除。这在HTML代码可能出现在原始文本数据中的任何情况下都是有用的，比如当抓取网页中的数据时<a id="_idTextAnchor075"/>。</p>
+			<h2><a id="_idTextAnchor076"/>将文本转换成小写</h2>
+			<p>预处理文本时将所有内容转换成小写是标准做法。这是因为<a id="_idIndexMarker203"/>任何两个相同的单词都应该被认为是语义相同的，不管它们是否大写。<code>Cat</code>、<code>cat</code>、<code>CAT</code>都是同一个词，只是元素大写不同。我们的模型通常将这三个词视为独立的实体，因为它们并不相同。因此，标准做法是将所有单词都转换成小写，以便这些单词在语义和结构上完全相同。这可以在Python中使用下面几行代码非常容易地完成:</p>
+			<pre>input_text = ['Cat','cat','CAT']
+output_text =  [x.lower() for x in input_text]
+print('Input: ' + str(input_text))
+print('Output: ' + str(output_text))</pre>
+			<p>这将返回以下输出:</p>
+			<div><div><img src="img/B12365_04_02.jpg" alt="Figure 4.2 – Converting input into lowercase&#13;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.2–将输入转换成小写</p>
+			<p>这表明输入已经全部转换成相同的小写表示。有几个例子，大写字母实际上可以提供额外的语义信息。例如，<em class="italic"> May </em>(月份)和<em class="italic"> may </em>(意为<em class="italic">可能</em>)语义不同，<em class="italic"> May </em>(月份)将始终大写。然而，像这样的例子非常少见，将所有内容都转换成小写比试图解释这些罕见的例子要有效得多。</p>
+			<p>值得注意的是，大写可能在一些任务中有用，例如词性标注，其中大写字母可以指示单词在句子中的作用，以及命名实体识别，其中大写字母可以指示单词是专有名词而不是非专有名词的替代物；比如<em class="italic">土耳其</em>(国家)和<em class="italic">土耳其</em>(鸟<a id="_idTextAnchor077"/>)。</p>
+			<h2><a id="_idTextAnchor078"/>去掉标点符号</h2>
+			<p>有时，根据正在构建的模型的类型，我们可能希望从输入文本中删除标点符号<a id="_idIndexMarker205"/>。这在我们聚合字数的模型中特别有用，比如单词袋表示。句子中出现句号或逗号并不能增加任何关于句子语义内容的有用信息。然而，考虑标点在句子中的位置的更复杂的模型实际上可以使用标点的位置来推断不同的意思。一个经典的例子如下:</p>
+			<p><em class="italic">熊猫吃嫩枝和树叶</em></p>
+			<p><em class="italic">熊猫吃东西，射击，然后离开</em></p>
+			<p>这里加一个逗号就把描述熊猫饮食习惯的句子变成了描述熊猫武装抢劫餐厅的句子！然而，为了保持一致性，去掉句子中的标点符号仍然很重要。在Python中，我们可以这样做:使用<code>re</code>库，使用正则表达式匹配任何标点符号，使用<code>sub()</code>方法，用空字符替换任何匹配的标点符号:</p>
+			<pre>input_text = "This ,sentence.'' contains-£ no:: punctuation?"
+output_text = re.sub(r'[^\w\s]', '', input_text)
+print('Input: ' + input_text)
+print('Output: ' + output_text)</pre>
+			<p>这将返回以下输出:</p>
+			<div><div><img src="img/B12365_04_03.jpg" alt="Figure 4.3 – Removing punctuation from input&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.3–删除输入中的标点符号</p>
+			<p>这表明标点符号已从输入的句子中删除。</p>
+			<p>有些情况下，我们可能不希望直接删除标点符号。一个很好的例子就是使用“&amp;”符号(<code>&amp;</code>)，它几乎在所有情况下都可以和单词“<code>and</code>”互换使用。因此，与其完全去掉&amp;符号，我们不如选择直接用单词“<code>and</code>”来代替它。我们可以使用<code> .replace()</code>函数在Python中轻松实现这一点:</p>
+			<pre>input_text = "Cats &amp; dogs"
+output_text = input_text.replace("&amp;", "and")
+print('Input: ' + input_text)
+print('Output: ' + output_text)</pre>
+			<p>这将返回以下输出:</p>
+			<div><div><img src="img/B12365_04_04.jpg" alt="Figure 4.4 – Removing and replacing punctuation&#13;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.4–删除和替换标点符号</p>
+			<p>同样值得考虑的是标点符号对于句子表达的特殊情况。一个重要的例子是电子邮件地址。从电子邮件地址中删除<code>@</code>并不会使地址变得更加可读:</p>
+			<p class="author-quote"><code>name@gmail.com</code></p>
+			<p>删除标点符号会返回以下内容:</p>
+			<p class="author-quote">namegmailcom</p>
+			<p>因此，在这种情况下，根据NLP mod <a id="_idTextAnchor079"/> el的要求和目的，最好将整个项目一起删除。</p>
+			<h2><a id="_idTextAnchor080"/>替换数字</h2>
+			<p>同样，对于数字，我们也想标准化我们的输出。数字可以写成数字(9，8，7)，也可以写成实际的字(9，8，7)。可能值得将这些都转换成一个单一的标准化表示，这样1和1就不会被视为独立的实体。我们可以使用以下方法在Python中实现这一点:</p>
+			<pre>def to_digit(digit):
+    i = inflect.engine()
+    if digit.isdigit():
+        output = i.number_to_words(digit)
+    else:
+        output = digit
+    return output
+input_text = ["1","two","3"]
+output_text = [to_digit(x) for x in input_text]
+print('Input: ' + str(input_text))
+print('Output: ' + str(output_text))</pre>
+			<p>这将返回以下输出:</p>
+			<div><div><img src="img/B12365_04_05.jpg" alt="Figure 4.5 – Replacing numbers with text&#13;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.5–用文本替换数字</p>
+			<p>这表明我们已经成功地将数字转换成了文本。</p>
+			<p>然而，与处理电子邮件地址类似，处理电话号码可能不需要与普通号码相同的表示。下面的例子说明了这一点:</p>
+			<pre>input_text = ["0800118118"]
+output_text = [to_digit(x) for x in input_text]
+print('Input: ' + str(input_text))
+print('Output: ' + str(output_text))</pre>
+			<p>这将返回以下输出:</p>
+			<div><div><img src="img/B12365_04_06.jpg" alt="Figure 4.6 – Converting a phone number into text&#13;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.6–将电话号码转换成文本</p>
+			<p>很明显，前面例子中的输入<a id="_idIndexMarker210"/>是一个电话号码，所以完整的文本表示不一定适合这个目的。在这种情况下，最好从我们的输入t <a id="_idTextAnchor081"/> ext中删除任何长数字。</p>
+			<h1><a id="_idTextAnchor082"/>词干化和词汇化</h1>
+			<p>在语言中，<strong class="bold">词尾变化</strong>是指不同的语法范畴，如时态、语气或性别，可以通过修饰一个共同的词根来表达。这通常涉及到改变单词的前缀或后缀，但也可能涉及到修改整个单词。例如，我们可以修改一个动词来改变它的时态:</p>
+			<p><em class="italic">运行- &gt;运行(添加“s”后缀使其成为现在时)</em></p>
+			<p><em class="italic"> Run - &gt; Ran(将中间字母修改为“a”使其成为过去式)</em></p>
+			<p>但是在某些情况下，整个单词都变了:</p>
+			<p><em class="italic">To be——&gt;Is(现在时态)</em></p>
+			<p><em class="italic"> To be - &gt; Was(过去式)</em></p>
+			<p><em class="italic"> To be - &gt; Will(将来时-情态的添加)</em></p>
+			<p>名词也可能有词汇上的变化:</p>
+			<p><em class="italic">猫- &gt;猫(复数)</em></p>
+			<p><em class="italic">猫- &gt;猫的(所有格)</em></p>
+			<p><em class="italic">猫- &gt;猫(复数所有格)</em></p>
+			<p>所有这些单词都可以追溯到词根cat。我们可以计算句子中所有单词的根，以将整个句子简化为其词汇根:</p>
+			<p><em class="italic">“他的猫毛是不同的颜色”——&gt;“他的猫毛是不同的颜色”</em></p>
+			<p>词干化和词汇化是我们得到这些词根的过程。<strong class="bold">词干化</strong>是一个算法过程，其中单词的词尾被切断以获得共同的词根，而词汇化使用真实的词汇和对单词本身的结构分析来获得单词的真正词根，或<strong class="bold">词条</strong>。我们将在下面的章节中详细介绍这两种方法。</p>
+			<h2><a id="_idTextAnchor084"/>炮泥</h2>
+			<p><strong class="bold">词干</strong>是<a id="_idIndexMarker213"/>算法过程，我们通过它来修剪词尾，以达到它们的词根，或<strong class="bold">词干</strong>。为此，我们可以使用不同的<strong class="bold">词干分析器</strong>，每一个词干分析器都遵循一种特定的算法，以便返回单词的词干。在英语中，最常见的词干分析器是波特·斯特梅尔。</p>
+			<p><strong class="bold">波特斯特梅尔</strong>是一个<a id="_idIndexMarker215"/>算法，具有大量逻辑规则，可用于返回单词的词干。我们将首先展示如何使用NLTK在Python中实现波特斯特梅尔，然后继续更详细地讨论该算法:</p>
+			<ol>
+				<li>首先，我们创建一个搬运工斯特梅尔的实例:<pre>porter = PorterStemmer()</pre></li>
+				<li>We then simply call this instance of the stemmer on individual words and print the results. Here, we can see an example of the stems returned by the Porter Stemmer:<pre>word_list = ["see","saw","cat", "cats", "stem", "stemming","lemma","lemmatization","known","knowing","time", "timing","football", "footballers"]
+for word in word_list:
+    print(word + ' -&gt; ' + porter.stem(word))</pre><p>这会产生以下输出:</p><div><img src="img/B12365_04_07.jpg" alt="Figure 4.7 – Returning the stems of words&#13;"/></div><p class="figure-caption">图4.7-返回单词的词干</p></li>
+				<li>我们也可以<a id="_idIndexMarker216"/>将词干应用于整个句子，首先对句子进行分词，然后分别对每个词进行词干:<pre>def SentenceStemmer(sentence):     tokens=word_tokenize(sentence)     stems=[porter.stem(word) for word in tokens]     return " ".join(stems) SentenceStemmer('The cats and dogs are running')</pre></li>
+			</ol>
+			<p>这将返回以下输出:</p>
+			<div><div><img src="img/B12365_04_08.jpg" alt="Figure 4.8 – Applying stemming to a sentence&#13;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.8-对句子应用词干</p>
+			<p>在这里，我们可以看到不同的单词是如何使用波特斯特梅尔词干。有些词，如<code>stemming</code>和<code>timing</code>，会被简化为<code>stem</code>和<code>time</code>的词干。但是有些词，比如<code>saw</code>，并没有还原到它们的逻辑词干(<code>see</code>)。这说明了波特·斯特梅尔的局限性。由于词干处理将一系列逻辑规则应用于单词，因此很难定义一组规则来正确地对所有单词进行词干处理。这在英语单词的情况下尤其如此，在这种情况下，单词根据时态(is/was/be)而完全改变。这是因为没有适用于这些单词的通用规则来将它们全部转换成相同的词根。</p>
+			<p>我们可以更详细地研究波特·斯特梅尔应用的一些规则，以准确理解向词干的转化是如何发生的。虽然实际的波特算法有许多详细的步骤，但为了便于理解，我们将简化一些规则:</p>
+			<div><div><img src="img/B12365_04_09.jpg" alt="Figure 4.9 – Rules of the Porter Stemmer algorithm&#13;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.9–波特斯特梅尔算法的规则</p>
+			<p>虽然理解波特斯特梅尔的每一条规则并不重要，但理解它的局限性是关键。虽然波特斯特梅尔已经被证明可以很好地处理一个语料库，但总会有一些词无法正确还原到它们真正的词干。由于波特斯特梅尔的规则集依赖于英语单词结构的惯例，所以总会有不属于常规单词结构的单词，并且这些规则不能正确地转换这些单词。幸运的是，其中一些限制可以通过使用lemmati <a id="_idTextAnchor085"/>化来克服。</p>
+			<h2><a id="_idTextAnchor086"/>词汇化</h2>
+			<p><code>ran</code>将只是<em class="italic">冉</em>，它的引理才是单词的真正词根，也就是<code>run</code>。</p>
+			<p>词条化过程使用内置的预先计算的词条和相关单词，以及句子中单词的上下文来确定给定单词的正确词条。在这个<a id="_idIndexMarker219"/>的例子中，我们将看看如何在NLTK中使用<strong class="bold">WordNet</strong><strong class="bold">lemma tizer</strong>。WordNet是一个关于英语单词和它们之间词汇关系的大型数据库。它包含了英语语言中最健壮和最全面的映射之一，特别是关于单词与其词条的关系。</p>
+			<p>我们将首先创建一个lemmatizer的实例，并在一组单词上调用它:</p>
+			<pre>wordnet_lemmatizer = WordNetLemmatizer()
+print(wordnet_lemmatizer.lemmatize('horses'))
+print(wordnet_lemmatizer.lemmatize('wolves'))
+print(wordnet_lemmatizer.lemmatize('mice'))
+print(wordnet_lemmatizer.lemmatize('cacti'))</pre>
+			<p>这会产生以下输出:</p>
+			<div><div><img src="img/B12365_04_10.jpg" alt="Figure 4.10 – Lemmatization output&#13;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.10–词汇化输出</p>
+			<p>在这里，我们已经开始看到使用词汇化比词干化更有优势。由于WordNet Lemmatizer是建立在英语中所有单词的数据库上，它知道<code>mice</code>是<code>mouse</code>的复数形式。我们不可能使用词干来找到这个相同的根。虽然词汇化在大多数情况下效果更好，因为它依赖于内置的单词索引，但它不能推广到新单词或自创单词:</p>
+			<pre>print(wordnet_lemmatizer.lemmatize('madeupwords'))
+print(porter.stem('madeupwords'))</pre>
+			<p>这会产生以下输出:</p>
+			<div><div><img src="img/B12365_04_11.jpg" alt="Figure 4.11 – Lemmatization output for made-up words&#13;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.11-造词的词汇化输出</p>
+			<p>在这里，我们可以看到，在这种情况下，我们的词干分析器能够更好地概括以前看不到的单词。因此，如果我们对语言不一定与真正的英语语言相匹配的<a id="_idIndexMarker220"/>来源进行词汇化，比如人们可能经常缩写语言的社交媒体网站，那么使用词汇化器可能会是一个问题。</p>
+			<p>如果我们在两个动词上调用我们的引理器，我们将会看到，这并没有将它们简化为它们期望的公共引理:</p>
+			<pre>print(wordnet_lemmatizer.lemmatize('run'))
+print(wordnet_lemmatizer.lemmatize('ran'))</pre>
+			<p>这会产生以下输出:</p>
+			<div><div><img src="img/B12365_04_12.jpg" alt="Figure 4.12 – Running lemmatization on verbs&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.12-对动词进行词汇化</p>
+			<p>这是因为我们的lemmastizer依赖于单词的上下文来返回lemma。回想一下我们的词性分析，我们可以很容易地返回一个单词在句子中的上下文，并确定给定的单词是名词、动词还是形容词。现在，让我们手动指定我们的单词是动词。我们可以看到，这现在正确地返回了引理:</p>
+			<pre>print(wordnet_lemmatizer.lemmatize('ran', pos='v'))
+print(wordnet_lemmatizer.lemmatize('run', pos='v'))</pre>
+			<p>这会产生以下输出:</p>
+			<div><div><img src="img/B12365_04_13.jpg" alt="Figure 4.13 – Implementing POS in the function&#13;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.13–在函数中实现POS</p>
+			<p>这意味着<a id="_idIndexMarker221"/>为了返回任何给定句子的正确词汇化，我们必须首先执行词性标注以获得句子中单词的上下文，然后通过词汇化器来获得句子中每个单词的词汇。我们首先创建一个函数，它将返回句子中每个单词的词性标注:</p>
+			<pre>sentence = 'The cats and dogs are running'
+def return_word_pos_tuples(sentence):
+    return nltk.pos_tag(nltk.word_tokenize(sentence))
+return_word_pos_tuples(sentence)</pre>
+			<p>这会产生以下输出:</p>
+			<div><div><img src="img/B12365_04_14.jpg" alt="Figure 4.14 – Output of POS tagging on a sentence&#13;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.14-句子的词性标注输出</p>
+			<p>注意这是如何为句子中的每个单词返回NLTK POS标记的。我们的WordNet lemmatizer需要一个稍微不同的POS输入。这意味着我们首先创建<a id="_idIndexMarker222"/>一个将NLTK POS标签映射到所需WordNet POS标签的函数:</p>
+			<pre>def get_pos_wordnet(pos_tag):
+    pos_dict = {"N": wordnet.NOUN,
+                "V": wordnet.VERB,
+                "J": wordnet.ADJ,
+                "R": wordnet.ADV}
+    return pos_dict.get(pos_tag[0].upper(), wordnet.NOUN)
+get_pos_wordnet('VBG')</pre>
+			<p>这会产生以下输出:</p>
+			<div><div><img src="img/B12365_04_15.jpg" alt="Figure 4.15 – Mapping NTLK POS tags to WordNet POS tags&#13;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.15–将NTLK位置标签映射到WordNet位置标签</p>
+			<p>最后，我们将这些函数组合成一个最终函数，该函数将对整个句子执行词汇化:</p>
+			<pre>def lemmatize_with_pos(sentence):
+    new_sentence = []
+    tuples = return_word_pos_tuples(sentence)
+    for tup in tuples:
+        pos = get_pos_wordnet(tup[1])
+        lemma = wordnet_lemmatizer.lemmatize(tup[0], pos=pos)
+        new_sentence.append(lemma)
+    return new_sentence
+lemmatize_with_pos(sentence)</pre>
+			<p>这会产生以下输出:</p>
+			<div><div><img src="img/B12365_04_16.jpg" alt="Figure 4.16 – Output of the finalized lemmatization function&#13;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图4.16–最终的引理化函数的输出</p>
+			<p>在这里，我们可以看到，一般来说，与词干相比，词条通常能更好地表示单词的真正词根，但也有一些明显的例外。我们何时决定使用词干化和词汇化取决于手头任务的需求，现在我们将解释其中的一些<a id="_idTextAnchor087"/>。</p>
+			<h1><a id="_idTextAnchor088"/>词干化和词汇化的用途</h1>
+			<p>词干分析<a id="_idIndexMarker224"/>和词汇化都是自然语言处理的一种形式，可以用来从文本中提取信息。这个<a id="_idIndexMarker225"/>被称为<strong class="bold">文本挖掘</strong>。文本挖掘任务有多种类别，包括文本聚类、分类、文档汇总和情感分析。词干化和词汇化可以与深度学习结合使用来解决其中的一些任务，我们将在本书的后面部分看到。</p>
+			<p>通过使用词干化和词汇化进行预处理，加上删除停用词，我们可以更好地简化我们的句子，以理解它们的核心含义。通过删除对句子<a id="_idIndexMarker227"/>的意义没有显著贡献的单词，并通过将单词减少到它们的词根或词条，我们可以在我们的深度学习框架内有效地分析句子。如果我们能够将一个10个单词的句子缩减为5个单词，由多个核心词条组成，而不是相似单词的多个变体，这意味着我们需要通过神经网络输入的数据要少得多。如果我们使用词袋表示，我们的语料库将显著变小，因为多个词都减少到相同的词条，而如果我们计算嵌入表示，对于减少的词语料库，捕获我们的词的真实表示所需的维度将更小。</p>
+			<h2><a id="_idTextAnchor089"/>词汇化和词干化的差异</h2>
+			<p>既然我们已经看到了变元化和词干化的实际应用，问题仍然是在什么情况下我们应该使用这两种技术。我们看到这两种技术都试图将每个单词简化到它的词根。在词干分析中，这个<a id="_idIndexMarker230"/>可能只是目标房间的简化形式，而在词汇化中，它简化为一个真正的英语词根。</p>
+			<p>因为词汇化需要在WordNet语料库中交叉引用目标单词，以及执行词性分析来确定词汇的形式，如果必须对大量单词进行词汇化，这可能需要大量的处理时间。这与词干法相反，词干法使用详细但相对快速的算法来词干。最终，就像计算中的许多问题一样，这是一个权衡速度和细节的问题。当选择将这些方法中的哪一种纳入我们的深度学习管道时，可能需要在速度和准确性之间进行权衡。如果时间是至关重要的，那么堵塞可能是要走的路。另一方面，如果您需要您的模型尽可能的详细和准确，那么术语化很可能会产生更好的模型。</p>
+			<h1><a id="_idTextAnchor090"/>总结</h1>
+			<p>在这一章中，我们已经通过探索这两种方法的功能、它们的用例以及它们是如何实现的，详细地讨论了词干化和词汇化。现在我们已经涵盖了深度学习和NLP预处理的所有基础知识，我们准备从头开始训练我们自己的深度学习模型。</p>
+			<p>在下一章中，我们将探索NLP的基本原理，并演示如何构建深度NLP领域中最广泛使用的模型:递归神经网络。</p>
+		</div>
+	
+
+</body></html>

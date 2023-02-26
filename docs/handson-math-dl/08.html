@@ -1,0 +1,172 @@
+<html><head/><body>
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">线性神经网络</h1>
+                
+            
+            
+                
+<p>在这一章中，我们将回顾机器学习中的一些概念。预计你以前学习过，并对机器学习有所了解。因此，这一章将作为整本书需要的一些概念的复习，而不是对所有机器学习方法的全面研究。</p>
+<p>在本章中，我们将重点关注线性神经网络，它是最简单的神经网络类型，用于线性回归、多项式回归、逻辑回归和softmax回归等任务，这些任务在统计学习中最常用。</p>
+<p>我们用回归来解释一个或多个自变量和因变量之间的关系。在下一章深入研究深度神经网络之前，我们将在本章学习的概念对于加深我们对机器学习如何工作的理解至关重要。</p>
+<p>本章将涵盖以下主题:</p>
+<ul>
+<li>线性回归</li>
+<li>多项式回归</li>
+<li>逻辑回归</li>
+</ul>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">线性回归</h1>
+                
+            
+            
+                
+<p>回归的目的是找出数据(用<em> x </em>表示)与其对应的输出(用<em> y </em>表示)之间的关系，并对其进行预测。所有回归问题的输出都是实数(<sub> <img class="fm-editor-equation" src="img/7efc43e8-d5e1-4eb3-87fe-f9ca8505fbb6.png" style="width:3.42em;height:1.50em;"/> </sub>)。这可以应用于一系列问题，例如预测房子的价格或电影的评级。</p>
+<p>为了让我们利用回归，我们需要使用以下内容:</p>
+<ul>
+<li>输入数据，可以是标量值或向量。这有时被称为<strong>特征</strong>。</li>
+<li>训练实例，包括良好数量的(<em> x <sub> i </sub>，y <sub> i </sub> </em>)对；即每个输入的输出。</li>
+<li>捕捉输入和输出(模型)之间关系的函数。</li>
+<li>一个损失或者一个目标函数，它告诉我们我们的模型有多精确。</li>
+<li>优化，使损失或目标函数最小化。</li>
+</ul>
+<p>在我们继续之前，让我们先回顾一下<a href="3ce71171-c5fc-46c8-8124-4cb71c9dd92e.xhtml">第一章</a>、<em>向量微积分</em>，在这里我们注意到直线的方程如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/03e99142-929a-483a-a117-8c5bbf4cd01d.png" style="width:5.08em;height:1.17em;"/></p>
+<p>这里，<em> m </em>是梯度(或斜率)<em> b </em>是校正项。我们使用直线上的两对点，通过以下等式得出斜率:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/96e28355-1c7e-4e21-b50c-dfbb297181f0.png" style="width:5.83em;height:2.25em;"/></p>
+<p>我们知道，这很容易做到。然而，在线性回归中，我们被给定许多(<em> x <sub> i </sub>，y <sub> i </sub> </em>)点，我们的目标是找到最佳拟合的线，该线最好地捕捉了关系。这条线是我们的模型学习的。我们可以这样表示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/ccc299b3-996f-466a-aa27-0d79e448d6c3.png" style="width:7.67em;height:1.25em;"/></p>
+<p>这里，<em> ε </em>代表一个误差，我们假设它是高斯的，<em> y </em>是真实的标签，<sub> <img class="fm-editor-equation" src="img/9b75ef25-3a95-4910-adc3-9f65764a128f.png" style="width:0.83em;height:1.50em;"/> </sub>是我们的模型提供的预测。</p>
+<p>现在让我们考虑这样一种情况，我们有多个自变量，我们想找出一个因变量之间的关系。这种回归被称为<strong>多元回归</strong>。在这种情况下，每个独立变量都会对预测输出产生影响。</p>
+<p>在这种情况下，我们的输入将采用以下形式:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/c93c9b31-e539-48b7-aeee-0034b9e6e53f.png" style="width:7.17em;height:1.25em;"/></p>
+<p>这里，<em> n </em>是自变量的个数。</p>
+<p>为了找到<sub> <img class="fm-editor-equation" src="img/60f67eb9-ce2a-4ae4-97bc-3ca0cb11d226.png" style="width:0.75em;height:1.33em;"/> </sub>，我们可以对所有因变量进行平均或求和，但这不可能给出我们想要的结果。假设我们想预测一栋房子的价格；我们的输入可以是场地的平方英尺，卧室的数量，浴室的数量，以及它是否有游泳池。</p>
+<p>每个输入都将具有相应的权重，模型将从数据点中学习该权重，该权重最能描述每个输入的重要性。这就变成了以下内容:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/fd5f2d12-81cb-4dc4-a89c-469792047467.png" style="width:15.50em;height:1.17em;"/></p>
+<p>或者，我们有以下内容:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/4d84d7a6-3064-41ce-95a2-041b17f3b191.png" style="width:7.25em;height:3.00em;"/></p>
+<p class="mce-root">我们也可以用矩阵的形式改写它:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/8744799f-898d-41e7-9bdb-9e06e6f48bc0.png" style="width:20.25em;height:5.92em;"/></p>
+<p>但是现在，一个明显的问题出现了— <em>我们的模型如何学习这些权重和这种关系？这对我们来说很容易做到，因为我们的大脑能立即发现模式，我们可以通过分析发现关系。然而，如果我们的机器要学习这种关系，它需要一个向导。这个向导就是损失函数，它告诉模型它的预测有多差，以及需要向哪个方向改进。</em></p>
+<p class="mce-root">损失一般是预测值(<sub> <img class="fm-editor-equation" src="img/83b719ec-1803-448b-8545-dbefd29cbeb4.png" style="width:1.33em;height:1.58em;"/> </sub>)与真实值(<em> y <sub> i </sub> </em>)之间的距离，我们可以写成:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/a2e32feb-4a43-48c6-ba93-67919c751f52.png" style="width:9.67em;height:2.25em;"/></p>
+<p>但这仍不能让我们了解全貌。我们的目标是最小化模型训练的所有数据样本的损失，因此我们对所有数据样本的损失总和进行平均。这看起来如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/56c0c641-3f99-4185-9e46-f457657b0c31.png" style="width:14.83em;height:2.92em;"/></p>
+<p>训练的目标是找到最佳参数:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/9a48ee26-6d2b-424e-b15f-75728bda8228.png" style="width:10.92em;height:1.92em;"/></p>
+<p>学习了什么是线性回归，现在让我们在下一节看看多项式回归是什么。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">多项式回归</h1>
+                
+            
+            
+                
+<p>正如你可能想象的那样，线性回归不是一个我们可以用来解决任何问题的万能解决方案。现实世界中变量之间的许多关系不是线性的；也就是说，一条直线不能描述这种关系。对于这些问题，我们使用前述线性回归的一种变体，称为<strong>多项式回归</strong>，它可以捕捉更多的复杂性，如曲线。这种方法利用对解释变量应用不同的幂来发现非线性问题。这看起来如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/3421bf9d-521d-4462-8fc5-9da468a13ab3.png" style="width:17.00em;height:1.42em;"/></p>
+<p>或者，我们可以有以下内容:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/adcf6e47-e525-4804-a39c-85748eb667ed.png" style="width:7.42em;height:3.08em;"/></p>
+<p><sub> <img class="fm-editor-equation" src="img/76d7c0d5-2e79-4a23-8894-87157a9444be.png" style="width:6.83em;height:1.17em;"/> </sub>就是这种情况。</p>
+<p>从前面的等式可以看出，这样的模型不仅能够捕捉直线(如果需要的话)，还可以生成适合数据点的二阶、三阶或<em> n <sup> th </sup> - </em>阶等式。</p>
+<p>假设我们有以下数据点:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1045 image-border" src="img/57eeebcf-d187-4f30-9f18-35ec13d15f45.png" style="width:31.50em;height:19.92em;"/></p>
+<p>我们可以立即看出直线不能完成这项工作，但在我们对它应用多项式回归后，我们可以看到我们的模型学会了拟合曲线，这类似于正弦波。我们可以在下图中观察到这一点:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1046 image-border" src="img/84e5960a-bcf8-43c7-9fd5-2987fcbdd39e.png" style="width:31.42em;height:20.17em;"/></p>
+<p>现在让我们来看一个例子，我们试图学习一个曲面，我们有两个输入，<sub> <img class="fm-editor-equation" src="img/84a44442-ce63-47b7-a866-8db81fae6ea6.png" style="width:7.00em;height:1.67em;"/> </sub>，和一个输出，<em> y </em>。同样，正如我们在下图中看到的，表面并不平坦；事实上，它相当坎坷:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1047 image-border" src="img/39c2e48d-16a4-4568-822c-e1c8f934b7c7.png" style="width:29.58em;height:19.33em;"/></p>
+<p>我们可以使用以下三阶多项式对此进行近似建模:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/89bb7807-34c1-4707-9c30-ed689c514603.png" style="width:36.58em;height:1.33em;"/></p>
+<p>如果这给我们一个满意的结果，我们可以添加另一个高次多项式(等等)，直到有一个模拟表面。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">逻辑回归</h1>
+                
+            
+            
+                
+<p>还有另一种我们在实践中经常使用的回归——<strong>logistic回归</strong>。假设我们想要确定一封电子邮件是否是垃圾邮件。在这种情况下，我们的<em> x </em> <em> (s) </em>值可能会出现<em>！</em>或电子邮件中拼写错误的总数。然后，<em> y </em>可以取值1(表示垃圾邮件)和0(表示非垃圾邮件)。</p>
+<p>在这种情况下，线性回归根本不起作用，因为我们不是在预测真实值，而是在尝试预测电子邮件属于哪个类。</p>
+<p>这通常会以如下形式结束:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1048 image-border" src="img/01bd01b2-49ee-42d4-866e-8d2f08bc04f4.png" style="width:23.50em;height:13.17em;"/></p>
+<p>如您所见，数据分为两个区域—一个代表非垃圾邮件，另一个代表垃圾邮件。</p>
+<p>我们可以这样计算:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/ecd42f71-3b83-4fbb-ae7f-908e0f070183.png" style="width:5.33em;height:2.50em;"/></p>
+<p>这里，<sub> <img class="fm-editor-equation" src="img/998103ce-5957-4ba8-8240-06606f4d11f3.png" style="width:6.58em;height:2.75em;"/> </sub>。</p>
+<p>但是，这只适用于二进制分类。如果要分类多个类呢？然后，我们可以使用softmax回归，它是logistic回归的扩展。这将如下所示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/a32f1773-9136-4f13-b444-72dd19877d15.png" style="width:6.92em;height:3.33em;"/></p>
+<p><sub><img class="fm-editor-equation" src="img/b75a1fe0-065b-4db0-999f-2ffab4675152.png" style="width:5.67em;height:1.08em;"/></sub><sub><img class="fm-editor-equation" src="img/93f8591c-8ab0-4b16-b862-a352eca326e4.png" style="width:6.58em;height:0.83em;"/></sub>就是这种情况。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">摘要</h1>
+                
+            
+            
+                
+<p>在本章中，我们学习了各种形式的回归，例如(多元)线性回归、多项式回归、逻辑回归和softmax回归。这些模型中的每一个都帮助我们弄清楚一个或多个自变量和因变量之间的关系。对你们中的一些人来说，这些概念可能看起来非常基础，但它们将在我们阅读本书的过程中很好地为我们服务，并有助于我们更深入地理解即将到来的概念。</p>
+<p>在下一章，我们将学习前馈神经网络。</p>
+
+
+            
+
+            
+        
+    </div>
+</body></html>

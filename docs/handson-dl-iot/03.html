@@ -1,0 +1,2069 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Deep Learning Architectures for IoT</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">物联网深度学习架构</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在<strong>物联网</strong> ( <strong>物联网</strong>)时代，从众多传感设备中产生并收集了大量的传感数据，这些数据适用于广泛的领域和应用。对这些数据流进行分析以发现新信息、预测未来洞察力并做出可控决策是一项具有挑战性的任务，这使得物联网成为商业智能和生活质量改善技术的重要范例。然而，在支持物联网的设备上进行分析需要一个由<strong>机器学习</strong> ( <strong> ML </strong>)和<strong>深度学习</strong> ( <strong> DL </strong>)框架、软件堆栈和硬件(例如，<strong>图形处理单元</strong> ( <strong> GPU </strong>)和<strong>张量处理单元</strong> ( <strong> TPU </strong>))组成的平台。</p>
+
+<p>在这一章中，我们将讨论DL架构和平台的一些基本概念，这些概念将在后面的章节中用到。我们将从简单介绍ML开始。然后，我们将转向DL，它是ML的一个分支，基于一组算法，试图对数据中的高级抽象进行建模。我们将简要讨论一些最著名和最广泛使用的神经网络架构。然后，我们将了解可用于在物联网设备上开发DL应用的DL框架和库的各种特性。简而言之，将涵盖以下主题:</p>
+
+<ul>
+
+<li>ML的软介绍</li>
+
+<li>人工神经网络</li>
+
+<li>深度神经网络架构</li>
+
+<li>DL框架</li>
+
+</ul>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>A soft introduction to ML</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">ML的软介绍</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>ML方法基于一组统计和数学算法来执行任务，例如分类、回归分析、概念学习、预测建模、聚类和有用模式的挖掘。使用ML，我们的目标是自动改进整个学习过程，这样我们可能不需要完全的人类交互，或者这样我们至少可以尽可能地减少这种交互的水平。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Working principle of a learning algorithm</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">学习算法的工作原理</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">Tom M. Mitchell从计算机科学的角度解释了学习的真正含义:</p>
+
+<p>如果一个计算机程序在某类任务T和性能测量P上的性能(由P测量)随着经验E而提高，则称它从经验E中学习。</p>
+
+<p class="mce-root">基于这个定义，我们可以得出结论，计算机程序或机器可以做到以下几点:</p>
+
+<ul>
+
+<li class="mce-root">从数据和历史中学习</li>
+
+<li class="mce-root">随着经验而提高</li>
+
+<li class="mce-root">迭代增强可用于预测问题结果的模型</li>
+
+</ul>
+
+<p class="mce-root">由于上述几点是预测分析的核心，我们使用的几乎每一个ML算法都可以被视为一个优化问题。这是关于寻找最小化目标函数的参数；例如，诸如成本函数和正则化的两个项的加权和。通常，目标函数有两个组成部分:</p>
+
+<ul>
+
+<li class="mce-root">控制模型复杂性的正则化子</li>
+
+<li class="mce-root">度量模型在训练数据上的误差的损失</li>
+
+</ul>
+
+<p class="mce-root">另一方面，正则化参数定义了最小化训练误差和模型复杂性之间的权衡，以避免过度拟合问题。现在，如果这两个分量都是凸的，那么它们的和也是凸的。因此，当使用最大似然算法时，目标是获得在进行预测时返回最小误差的函数的最佳超参数。因此，通过使用凸优化技术，我们可以最小化该函数，直到它向最小误差收敛。</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root">给定一个问题是凸的，通常更容易分析算法的渐近行为，这表明随着模型观察到越来越多的训练数据，它收敛得有多快。ML的任务是训练一个模型，使它能够从给定的输入数据中识别复杂的模式，并以自动化的方式做出决策。因此，进行预测就是根据新的(即未观察到的)数据测试模型，并评估模型本身的性能。然而，在整个过程中，为了使预测模型成功，数据在所有ML任务中充当一等公民。事实上，我们提供给ML系统的数据必须由数学对象组成，比如向量，这样它们才能使用这些数据。</p>
+
+<p class="mce-root">根据可用数据和要素类型的不同，预测模型的性能可能会大幅波动。因此，在进行模型评估之前，选择正确的特征是最重要的步骤之一。这被称为<strong>特征工程</strong>，其中与数据相关的领域知识被用于仅创建选择性的或有用的特征，这些特征有助于准备要使用的特征向量，以便ML算法工作。</p>
+
+<p class="mce-root">例如，比较酒店是相当困难的，除非我们已经有住在多家酒店的亲身经历。然而，在一个ML模型的帮助下，它已经从成千上万的评论和特征中训练出质量特征(例如，一家酒店有多少星级，房间的大小，位置和客房服务，等等)，现在它是非常可行的。我们将在整个章节中看到几个例子。然而，在开发这样一个ML模型之前，了解一些ML概念也是很重要的。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>General ML rule of thumb</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">一般ML经验法则</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">一般的ML经验法则是数据越多，预测模型越好。但是，拥有更多要素通常会造成混乱，甚至会导致性能大幅下降，尤其是在数据集是多维数据集的情况下。整个学习过程需要输入数据集，这些数据集可以分为三种类型(或者已经这样提供了):</p>
+
+<ul>
+
+<li class="mce-root"><strong>训练集</strong>是来自历史或实时数据的知识库，用于拟合ML算法的参数。在训练阶段，ML模型利用训练集来寻找网络的最佳权重，并通过最小化训练误差来达到目标函数。这里，反向传播规则或优化算法用于训练模型，但是需要在学习过程开始之前设置所有的超参数。</li>
+
+<li class="mce-root"><strong>验证集</strong>是用于调整ML模型参数的一组示例。它确保模型得到良好的训练，并朝着避免过度拟合的方向推广。一些ML从业者称之为开发集，或者dev set。</li>
+
+<li class="mce-root"><strong>测试集</strong>用于评估已训练模型在未知数据上的性能。这个步骤也被称为<strong>模型推理</strong>。在对测试集上的最终模型进行评估之后(也就是说，当我们对模型的性能完全满意时)，我们不必对模型进行任何进一步的调整，但是经过训练的模型可以部署到生产就绪环境中。</li>
+
+</ul>
+
+<p class="mce-root">一种常见的做法是将输入数据(在必要的预处理和特性工程之后)分成60%用于训练，10%用于验证，20%用于测试，但这实际上取决于用例。有时，我们还需要根据数据集的可用性和质量对数据进行上采样或下采样。这种在不同类型的训练集上学习的经验法则在不同的ML任务中会有所不同，我们将在下一节中介绍。不过，在此之前，我们先来快速了解一下ML中的几个常见现象。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>General issues in ML models</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">ML模型中的一般问题</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>当我们使用这些输入数据进行训练、验证和测试时，通常，学习算法不能100%准确地学习，这涉及训练、验证和测试错误(或损失)。在ML模型中，您可能会遇到两种类型的错误:</p>
+
+<ul>
+
+<li>不可约误差</li>
+
+<li>可减少的误差</li>
+
+</ul>
+
+<p>即使使用最稳健、最复杂的模型，也无法减少不可约误差。然而，可减少的误差，它有两个组成部分，称为偏差和方差，可以减少。因此，为了理解模型(即预测误差)，我们只需要关注偏差和方差。偏差是指预测值与实际值的差距。通常，如果平均预测值与实际值(标签)相差很大，则偏差较高。</p>
+
+<p>一个ML模型会有很高的偏差，因为它不能对输入和输出变量之间的关系建模(不能很好地捕捉数据的复杂性)，变得非常简单。因此，具有高方差的过于简单的模型会导致数据拟合不足。下图给出了一些高层次的见解，也显示了恰到好处的模型应该是什么样子:</p>
+
+<p class="mce-root"/>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/4e475e9e-0922-45e1-8a36-afdca4dc93cd.png" style="width:67.42em;height:12.83em;"/></p>
+
+<p class="CDPAlignLeft CDPAlign">方差表示预测值和实际值之间的可变性(它们有多分散)。如果模型具有高训练误差，并且验证误差或测试误差与训练误差相同，则该模型具有高偏差。另一方面，如果模型具有低训练误差，但是具有高验证或高测试误差，则模型具有高方差。ML模型通常在训练集上表现很好，但在测试集上表现不佳(因为高错误率)。最终，它导致了一个欠拟合模型。我们可以再次回顾一下过度拟合和欠拟合:</p>
+
+<ul>
+
+<li class="CDPAlignLeft CDPAlign"><strong>欠拟合</strong>:如果你的训练和验证误差相对相等并且非常高，那么你的模型很可能欠拟合你的训练数据。</li>
+
+<li class="CDPAlignLeft CDPAlign"><strong>过度拟合</strong>:如果你的训练误差低，而你的验证误差高，那么你的模型很可能过度拟合你的训练数据。恰到好处的模型学习得非常好，在看不见的数据上也表现得更好。</li>
+
+</ul>
+
+<p>偏差-方差权衡:高偏差和高方差问题通常被称为偏差-方差权衡，因为一个模型不能同时太复杂或太简单。理想情况下，我们努力寻找既有低偏差又有低方差的最佳模型。</p>
+
+<p class="CDPAlignLeft CDPAlign">现在我们知道了ML算法的基本工作原理。然而，基于问题类型和解决问题的方法，ML任务可能是不同的；比如监督学习，无监督学习，强化学习。我们将在下一节更详细地讨论这些学习任务。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>ML tasks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">ML任务</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>虽然每一个ML问题或多或少都是一个优化问题，但是解决它们的方式可以不同。事实上，学习任务可以分为三种类型:监督学习、非监督学习和强化学习。</p>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Supervised learning</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">监督学习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>监督学习是最简单和最著名的自动学习任务。它基于许多预定义的示例，其中每个输入所属的类别都是已知的，如下图所示:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/7da0267f-7bf5-4811-bf54-5a19375ab274.png" style="width:51.25em;height:22.25em;"/></p>
+
+<p>上图显示了监督学习的典型工作流程。一个参与者(例如，一个数据科学家或数据工程师)执行<strong>提取</strong>、<strong>转换</strong>、<strong>和加载</strong> ( <strong> ETL </strong>)以及必要的特征工程(包括特征提取、选择等等)来获得带有特征和标签的适当数据，以便将它们输入到模型中。然后，他们将数据分成训练集、开发集和测试集。训练集用于训练ML模型，验证集用于针对过拟合问题和正则化来验证训练，然后参与者将在测试集(即，看不见的数据)上评估模型的性能。</p>
+
+<p>但是，如果性能不令人满意，参与者可以执行额外的调优，以获得基于超参数优化的最佳模型。最后，他们将在生产就绪环境中部署最佳模型。在整个生命周期中，可能会涉及许多参与者(例如，数据工程师、数据科学家或ML工程师)，独立或协作地执行每个步骤。监督学习环境包括分类和回归任务；分类用于预测数据点属于哪个类(离散值)。它还用于预测类属性的标签。下图概括了这些步骤:</p>
+
+<p class="mce-root"/>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/3ec8d6c2-8f14-485a-a124-40e74f65de64.png" style="width:53.75em;height:17.75em;"/></p>
+
+<p>另一方面，回归用于预测连续值，并对类属性进行数值预测。在监督学习的背景下，输入数据集所需的学习过程被随机分成三组；例如，60%用于定型集，10%用于验证集，剩下的30%用于测试集。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Unsupervised learning</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">无监督学习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>如果没有给定标签，您将如何对数据集进行汇总和分组？您可能会尝试通过找到数据集的底层结构并测量统计属性(如频率分布、平均值和标准差)来回答这个问题。如果问题是你如何有效地以压缩格式表示数据，你可能会回答说你将使用一些软件来进行压缩，尽管你可能不知道该软件将如何做。下图显示了无监督学习任务的典型工作流程:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/cf93f6bf-f0b4-486d-aae2-4e13e70a2012.png" style="width:57.58em;height:18.25em;"/></p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mceNonEditable"/>
+
+<p>这正是无监督学习的两个主要目标，无监督学习在很大程度上是一个数据驱动的过程。我们称这种类型的学习为无监督学习，因为你将不得不处理未标记的数据。以下引文来自人工智能研究主任Yann LeCun(来源:<em>预测学习</em>，NIPS 2016，Yann LeCun，脸书研究):</p>
+
+<div><br/>
+
+"Most human and animal learning is unsupervised learning. If intelligence was a cake, unsupervised learning would be the cake, supervised learning would be the icing on the cake, and reinforcement learning would be the cherry on the cake. We know how to make the icing and the cherry, but we don't know how to make the cake. We need to solve the unsupervised learning problem before we can even think of getting to true AI."</div>
+
+<p>一些最广泛使用的无监督学习任务包括:</p>
+
+<ul>
+
+<li><strong>聚类</strong>:根据相似性(或统计属性)对数据点进行分组，例如，像Airbnb这样的公司经常将其公寓和房屋分组到社区中，以便客户可以更容易地浏览列出的那些</li>
+
+<li><strong>降维</strong>:压缩数据，尽可能保留数据的结构和统计特性，例如，为了建模和可视化，往往需要降低数据集的维数</li>
+
+<li><strong>异常检测</strong>:适用于多种应用，如识别信用卡欺诈检测、识别工业工程过程中的硬件故障，以及识别大规模数据集中的异常值</li>
+
+<li><strong>关联规则挖掘</strong>:常用于购物篮分析，例如询问哪些物品是经常一起购买的<strong> <br/> </strong></li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Reinforcement learning</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">强化学习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">强化学习是一种人工智能方法，专注于通过系统与环境的交互来学习系统。在强化学习中，系统的参数根据从环境中获得的反馈进行调整，反过来，环境又对系统做出的决策提供反馈。下图显示了一个人为了到达目的地而做出的决定。让我们以你从家到工作的路线为例:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-862 image-border" src="img/78d85aba-6e21-4d7d-9256-878b8542d641.png" style="width:30.17em;height:18.92em;"/></p>
+
+<p>我们可以再看一个例子，用一个系统来模拟一个棋手。为了提高其性能，系统利用其先前移动的结果；这样的系统被称为强化学习系统。在这种情况下，你每天走同样的路线上班。然而，突然有一天，你感到好奇，决定尝试不同的路线，以期找到最短的路径。同样，根据你的经验和不同路线所花费的时间，你会决定你是否应该更经常地走那条特定的路线。我们可以再看一个例子，用一个系统来模拟一个棋手。</p>
+
+<p>到目前为止，我们已经学习了ML的基本工作原理和不同的学习任务。在下一节中，我们来看一看每个学习任务以及一些示例用例。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Learning types with applications</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">学习类型与应用</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们已经看到了ML算法的基本工作原理，并且我们已经看到了什么是基本的ML任务，以及它们如何制定特定领域的问题。然而，这些学习任务中的每一个都可以使用不同的算法来解决。下图对此进行了简要介绍:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/4352c6ad-bcbf-4f21-9866-b0a6537c871e.png" style="width:51.33em;height:25.67em;"/></p>
+
+<p>然而，上图仅列出了一些使用不同ML任务的用例及应用。在实践中，ML被用在许多用例及应用中。我们将在本书中尝试涵盖其中的一些。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Delving into DL</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">钻研数字图书馆</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>用于正常大小数据分析的简单ML方法不再有效，应被更稳健的ML方法所取代。尽管经典的ML技术允许研究人员识别相关变量的组或簇，但是这些方法的准确性和有效性随着大量和多维数据而降低。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>How did DL take ML to the next level?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">DL是如何让ML更上一层楼的？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在小规模数据分析中使用的简单ML方法在处理大型和高维数据集时并不有效。然而，深度学习(DL)是ML的一个分支，它基于一组试图对数据中的高级抽象进行建模的算法，可以处理这个问题。Ian Goodfellow在他的书《<em>深度学习</em>，麻省理工出版社，2016》中对DL的定义如下:</p>
+
+<p>“深度学习是一种特殊的机器学习，它通过学习将世界表示为嵌套的概念层次结构，每个概念都是相对于更简单的概念定义的，而更抽象的表示是根据更抽象的概念计算的，从而实现了强大的功能和灵活性。”</p>
+
+<p>与ML模型类似，DL模型也接受输入<kbd>X</kbd>，并从中学习高级抽象或模式来预测输出<kbd>Y</kbd>。例如，基于过去一周的股票价格，DL模型可以预测第二天的股票价格。当对这样的历史股票数据执行训练时，DL模型试图最小化预测值和实际值之间的差异。通过这种方式，DL模型试图对以前没有见过的输入进行归纳，并对测试数据进行预测。<br/>现在，你可能想知道，如果一个ML模型可以做同样的任务，为什么我们需要DL来做这个？嗯，DL模型往往在处理大量数据时表现良好，而旧的ML模型在某个点之后就停止了改进。DL的核心概念，灵感来自大脑的结构和功能，叫做<strong>人工神经网络</strong> ( <strong> ANNs </strong>)。</p>
+
+<p>作为数字逻辑的核心，人工神经网络帮助你学习输入和输出之间的联系，以便做出更可靠和准确的预测。但是，DL不仅仅局限于ANNs有许多理论上的进步、软件栈和硬件改进将DL带给了大众。让我们看一个例子，在这个例子中，我们想要开发一个预测分析模型，例如动物识别器，我们的系统必须解决两个问题:</p>
+
+<ul>
+
+<li>若要对图像表示猫还是狗进行分类</li>
+
+<li>把狗和猫的图像聚集在一起。</li>
+
+</ul>
+
+<p>如果我们使用典型的ML方法来解决第一个问题，我们必须定义面部特征(耳朵、眼睛、胡须等)并编写一个方法来确定在对特定动物进行分类时哪些特征(通常是非线性的)更重要。然而，与此同时，我们不能解决第二个问题，因为用于聚类图像的经典ML算法(例如k-means)不能处理非线性特征。请看下图，它显示了一个工作流，如果给定的图像是一只猫，我们将按照该工作流进行分类:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/6774fd8b-9b85-47e3-af7e-f9b28f882e9f.png" style="width:70.83em;height:21.08em;"/></p>
+
+<p>DL算法将这两个问题更进一步，在确定哪些特征对分类或聚类最重要后，将自动提取最重要的特征。相反，当使用经典的ML算法时，我们必须手动提供这些特征。DL算法需要更复杂的步骤。例如，首先，它识别在聚类猫或狗时最相关的边。然后，它会尝试分层查找形状和边缘的各种组合，这被称为ETL。</p>
+
+<p>然后，经过几次迭代，它进行复杂概念和特征的分层识别。接下来，基于所识别的特征，DL算法将决定哪些特征对于动物分类是最重要的。这一步被称为特征提取。最后，它取出标签列，并使用<strong>自动编码器</strong> ( <strong> AEs </strong>)进行无监督训练，以提取要重新分配给k-means进行聚类的潜在特征。然后，<strong>聚类分配硬化损失</strong> ( <strong> CAH损失</strong>)和重建损失被联合优化为最优聚类分配。</p>
+
+<p>然而，在实践中，DL算法被提供了原始图像表示，它看不到我们所看到的图像，因为它只知道每个像素的位置及其颜色。图像被分成不同的分析层。例如，在较低的层次上，有软件分析——由几个像素组成的网格，其任务是检测一种颜色或各种细微差别。如果它发现了什么，它就通知下一级，下一级在这一点上检查给定的颜色是否属于一个更大的形式，比如一条线。该过程继续到更高的级别，直到算法理解下图所示的内容:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/6be27318-8090-42f0-8d8c-005086271f80.png" style="width:35.67em;height:13.67em;"/></p>
+
+<p class="CDPAlignLeft CDPAlign">虽然狗和猫是一个非常简单的分类器的例子，但能够做这些类型事情的软件现在已经很普遍，可以在识别人脸的系统中找到，或者在谷歌上搜索图像的系统中找到。这种软件是基于DL算法的。相比之下，如果我们使用线性ML算法，我们就不能构建这样的应用程序，因为这些算法不能处理非线性图像特征。</p>
+
+<p>此外，使用ML方法，我们通常只处理几个超参数。然而，当神经网络被纳入其中时，事情就变得太复杂了。在每一层中，都有数百万甚至数十亿个超参数需要调整——数量如此之多，以至于成本函数变得非凸。另一个原因是隐藏层中使用的激活函数是非线性的，因此成本是非凸的。我们将在后面的章节中更详细地讨论这种现象，但是让我们快速地看一下ann。</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Artificial neural networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">人工神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>人工神经网络受人类大脑工作方式的启发，构成了DL及其真正实现的核心。没有人工神经网络，今天围绕数字图书馆的变革是不可能的。因此，为了理解DL，我们需要理解神经网络是如何工作的。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>ANN and the human brain</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">安和人类大脑</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>ann代表了人类神经系统的一个方面，以及神经系统是如何由许多使用轴突相互通信的神经元组成的。感受器接收来自内部或外部世界的刺激。然后，它们将这些信息传递给生物神经元进行进一步处理。除了称为轴突的另一个长延伸外，还有许多树突。在轴突的末端，有称为突触末端的微小结构，用于将一个神经元连接到其他神经元的树突。生物神经元从其他神经元接收被称为信号的短电脉冲，作为响应，它们触发自己的信号。</p>
+
+<p>因此，我们可以总结出，神经元包括一个细胞体(也称为<strong>细胞体</strong>)、一个或多个用于接收来自其他神经元的信号的树突，以及一个用于执行神经元产生的信号的轴突。当一个神经元向其他神经元发送信号时，它就处于活跃状态。然而，当它从其他神经元接收信号时，它处于非活动状态。在空闲状态下，神经元在达到某个激活阈值之前积累所有接收到的信号。这整个过程促使研究人员测试人工神经网络。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>A brief history of ANNs</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">人工神经网络简史</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>受生物神经元工作原理的启发，沃伦麦卡洛克和沃尔特皮茨在1943年根据神经活动的计算模型提出了第一个人工神经元模型。这个简单的生物神经元模型，也被称为<strong>人工神经元</strong> ( <strong>安</strong>)，只有一个或多个二进制(开/关)输入和一个输出。当超过一定数量的输入有效时，An仅激活其输出。</p>
+
+<p>这个例子听起来太琐碎了，但是即使有这样一个简化的模型，也有可能建立一个ANs网络。然而，这些网络也可以组合起来计算复杂的逻辑表达式。这个简化的模型启发了约翰·冯·诺依曼、马文·明斯基、弗兰克·罗森布拉特和其他许多人，他们在1957年提出了另一个叫做<strong xmlns:epub="http://www.idpf.org/2007/ops">感知器的模型。感知器是我们在过去60年中见过的最简单的人工神经网络架构之一。它基于一个稍微不同的AN，称为<strong xmlns:epub="http://www.idpf.org/2007/ops">线性阈值单元</strong> ( <strong xmlns:epub="http://www.idpf.org/2007/ops"> LTU </strong>)。唯一的区别是输入和输出现在是数字，而不是二进制开/关值。每个输入连接都与一个权重相关联。LTU计算其输入的加权和，然后将阶跃函数(类似于激活函数的作用)应用于该和，并输出结果。</strong></p>
+
+<p>感知器的一个缺点是它的决策边界是线性的。因此，他们无法学习复杂的模式。他们也无力解决一些简单的问题，比如<strong>异或</strong> ( <strong>异或</strong>)。然而，后来，通过堆叠多个感知机，称为<strong> MLP </strong>，感知机的局限性在某种程度上被消除了。因此，在人工神经网络和DL中最重要的进展可以用下面的时间表来描述。我们已经分别在1943年和1958年讨论了人工神经元和感知器是如何提供基础的。1969年，Marvin <em> Minsky </em>和Seymour <em> Papert </em>将XOR公式化为线性不可分问题，后来在1974年，Paul <em> Werbos </em>演示了用于训练感知器的反向传播算法。</p>
+
+<p class="mce-root">然而，最重大的进步发生在1982年，当时约翰·霍普菲尔德提出了霍普菲尔德网络。然后，神经网络和DL的教父之一——辛顿和他的团队——在1985年提出了玻尔兹曼机器。然而，1986年Geoffrey Hinton成功地训练了MLP和约旦提出的RNNs。同年，保罗·斯摩棱斯基也提出了玻尔兹曼机的改进版本，称为<strong>受限玻尔兹曼机</strong> ( <strong> RBM </strong>)。然后在1990年，Lecun等人提出了LeNet，这是一种深度神经网络架构。如需简要了解，请参考下图:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-863 image-border" src="img/cb122a6b-b05d-4691-8b20-edad562ebfa2.png" style="width:162.50em;height:45.00em;"/></p>
+
+<p class="mce-root"/>
+
+<p>90年代最重要的一年是1997年，乔丹等人提出了一个<strong>递归神经网络</strong> ( <strong> RNN </strong>)。同年，舒斯特等人提出了<strong>长短时记忆</strong> ( <strong> LSTM </strong>)的改进版本和被称为双向RNN的原RNN的改进版本。</p>
+
+<p>尽管从1997年到2005年，计算机技术取得了重大进步，但我们并没有经历太多的进步。然后，在2006年，辛顿再次出击，他和他的团队提出了一个通过堆叠多个RBM的<strong>深度信念网络</strong>(<strong/>)。然后在2012年，Hinton发明了显著改善深度神经网络中正则化和过拟合的dropout。之后，Ian Goodfellow等人推出了GANs，这是图像识别领域的一个重要里程碑。2017年，Hinton提出了CapsNet，以克服常规CNN的限制，这是迄今为止最显著的里程碑之一。我们将在本章后面讨论这些体系结构。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>How does an ANN learn?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">安是怎么学习的？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">基于生物神经元的概念，出现了人工神经网络的概念。类似于生物神经元，人工神经元由以下部分组成:</p>
+
+<ul>
+
+<li class="mce-root">聚集来自神经元的信号的一个或多个传入连接</li>
+
+<li class="mce-root">一个或多个输出连接，用于将信号传送到其他神经元</li>
+
+<li class="mce-root">确定输出信号数值的激活函数</li>
+
+</ul>
+
+<p class="mce-root">除了神经元的状态，突触权重也被考虑，它影响网络内的连接。每个权重都有一个数值，用<em xmlns:epub="http://www.idpf.org/2007/ops">W<sub>ij</sub>T7】表示，这是连接神经元<em xmlns:epub="http://www.idpf.org/2007/ops"> i </em>到神经元<em xmlns:epub="http://www.idpf.org/2007/ops"> j </em>的突触权重。现在，对于每个神经元<em xmlns:epub="http://www.idpf.org/2007/ops"> i </em>，一个输入<br xmlns:epub="http://www.idpf.org/2007/ops"/>向量可以由<em xmlns:epub="http://www.idpf.org/2007/ops"> x <sub> i </sub> = (x <sub> 1 </sub>，x <sub> 2 </sub>定义，...x <sub> n </sub> ) </em>，可以用<em xmlns:epub="http://www.idpf.org/2007/ops"> w <sub> i </sub> = (w <sub> i1 </sub>，x <sub> i2 </sub>，... ) </em>中的x <sub>。现在，根据神经元的位置，权重和输出函数决定了单个神经元的行为。然后，在前向传播期间，隐藏层中的每个单元得到以下信号:</sub></em></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/239e1275-0719-40b1-9689-eb3ea9bcf6a1.png" style="width:15.75em;height:2.92em;"/></p>
+
+<p>然而，在这些砝码中，还有一种特殊类型的砝码，称为偏置单元，<em> b </em>。从技术上讲，偏置单元没有连接到任何先前的层，所以它们没有真正的活动。但是，bias <em> b </em>值允许神经网络将激活函数向左或向右移动。考虑到偏置单元，修改后的网络输出公式如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/dc603183-bf05-4ad0-b110-7847a8084d82.png" style="width:16.92em;height:3.00em;"/></p>
+
+<p>前面的等式表示每个隐藏单元得到输入的总和，乘以相应的权重——这被称为<strong>求和点</strong>。然后，<strong>求和点</strong>的合成输出通过激活函数，该函数抑制输出，如下图所示:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/2401dc9f-11f6-42e3-90e0-f31f4f14bfb7.png" style="width:29.83em;height:15.00em;"/></p>
+
+<p>然而，实际的神经网络体系结构由输入层、隐藏层和输出层组成，这些层由构成网络结构的节点组成。它仍然遵循人工神经元模型的工作原理，如上图所示。输入图层仅接受数字数据，例如实数形式的要素和具有像素值的图像。下图显示了基于具有784个要素的数据来解决多类分类(即10个类)问题的神经网络体系结构:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/e3fd76b9-b477-4275-8b19-8217f4a4483a.png" style="width:40.17em;height:23.58em;"/></p>
+
+<p>具有一个输入层、三个隐藏层和一个输出层的神经网络</p>
+
+<p>在这里，隐藏层执行大部分计算来学习模式，网络使用一种称为损失函数的特殊数学函数来评估其预测与实际输出相比的准确性。它可以是复杂的误差，也可以是非常简单的均方误差，定义如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/bea114d3-df9b-4ac8-98b1-41acf87a2dc2.png" style="width:13.17em;height:3.33em;"/></p>
+
+<p>在上式中，<img class="fm-editor-equation" src="img/4058e15e-01a0-4db0-9f89-4de3196c76f3.png" style="width:0.83em;height:1.17em;"/>是网络做出的预测，而<em> Y </em>代表实际或预期输出。最后，当误差不再减小时，神经网络收敛并通过输出层进行预测。</p>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Training a neural network</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">训练神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>神经网络的学习过程被配置为权重优化的迭代过程。权重在每个时期被更新。一旦训练开始，目标是通过最小化损失函数来生成预测。然后在测试集上评估网络的性能。我们已经知道了人工神经元的简单概念。然而，仅仅产生一些人工信号不足以学习一项复杂的任务。因此，一种常用的监督学习算法是反向传播算法，它经常用于训练复杂的人工神经网络。</p>
+
+<p>最终，训练这样的神经网络也是一个优化问题，其中我们试图通过迭代调整网络权重和偏差来最小化误差，通过<strong>梯度下降</strong> ( <strong> GD </strong>)使用反向传播。这种方法迫使网络回溯其所有层，以在损失函数的相反方向上更新节点间的权重和偏差。</p>
+
+<p>然而，这个使用GD的过程并不能保证达到全局最小值。隐藏单元的存在和输出函数的非线性意味着误差的行为非常复杂并且具有许多局部最小值。该反向传播步骤通常使用许多训练批次执行数千次或数百万次，直到模型参数收敛到最小化成本函数的值。当验证集上的误差开始增加时，训练过程结束，因为这可能标志着过度拟合阶段的开始:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-864 image-border" src="img/964eadcf-5c58-41d9-92a5-2122d399085d.png" style="width:24.67em;height:17.42em;"/></p>
+
+<p>寻找误差函数E的最小值，我们沿着E的梯度G最小的方向移动</p>
+
+<p>使用GD的缺点是收敛时间太长，无法满足处理大规模训练数据的需求。因此，提出了一种更快的GD，称为<strong>随机梯度下降</strong> ( <strong> SGD </strong>)，这也是DNN训练中广泛使用的优化器。在SGD中，我们每次迭代只使用来自训练集的一个训练样本来更新网络参数，这是真实成本梯度的随机近似。</p>
+
+<div><br/>
+
+There are other advanced optimizers nowadays such as Adam, RMSProp, ADAGrad, and Momentum. Each of them is either a direct or indirect optimized version of SGD.</div>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Weight and bias initialization</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">权重和偏差初始化</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在，这里有一个棘手的问题:我们如何初始化权重？好吧，如果我们将所有的权重初始化为相同的值(例如0或1)，那么每个隐藏的神经元都会得到相同的信号。让我们试着分解一下:</p>
+
+<ul>
+
+<li>如果所有权重都初始化为1，则每个单元得到的信号等于输入之和。</li>
+
+<li>如果所有的权重都是0，这就更糟糕了，那么隐藏层中的每个神经元都会得到零信号。</li>
+
+</ul>
+
+<p>对于网络权值初始化，Xavier初始化被广泛使用。它类似于随机初始化，但通常效果更好，因为它可以根据默认输入和输出神经元的总数来确定初始化的速率。你可能想知道在训练一个常规的DNN时是否能摆脱随机初始化。</p>
+
+<p>嗯，最近，一些研究人员一直在谈论随机正交矩阵初始化，它比任何用于训练DNNs的随机初始化都表现得更好。当初始化偏差时，我们可以将它们初始化为零。但是将偏置设置为小的恒定值，例如对于所有偏置为0.01，确保所有的<strong>整流线性单元</strong> ( <strong> ReLU </strong>)可以传播梯度。然而，它既不表现良好，也没有显示出持续的改善。所以建议坚持用零。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Activation functions</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">激活功能</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>为了允许神经网络学习复杂的决策边界，我们对它的一些层应用非线性激活函数。常用的函数包括Tanh、ReLU、softmax及其变体。更专业地说，每个神经元接收突触权重的加权和信号以及作为输入连接的神经元的激活值。为此目的最广泛使用的函数之一是所谓的sigmoid逻辑函数，其定义如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/d18ee45f-3d01-4f2c-9ce3-8ffc88c9d079.png" style="width:8.42em;height:2.67em;"/></p>
+
+<p class="mce-root">该函数的定义域包括所有实数，共定义域为(0，1)。这意味着从神经元输出的任何值(根据其激活状态的计算)将总是在0和1之间。如下图所示的【The Sigmoid函数提供了对神经元饱和率的解释，从不活动(等于0)到完全饱和，这发生在预定的最大值(等于1)处:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/09c9bd66-be56-4e39-8322-365a9339cfcc.png" style="width:25.00em;height:17.17em;"/></p>
+
+<p>乙状结肠与双曲正切活化函数</p>
+
+<p class="mce-root">另一方面，双曲正切，或<strong> Tanh </strong>，是激活函数的另一种形式。<strong> Tanh </strong>拉平<strong> -1 </strong>和<strong> 1 </strong>之间的一个实数值。上图显示了<strong> Tanh </strong>和<strong> Sigmoid </strong>激活功能之间的差异。具体来说，从数学上讲，tanh激活函数可以表示如下:</p>
+
+<p class="mce-root"><img class="fm-editor-equation" src="img/a31a5802-f491-4761-a390-73b2cbc778c3.png" style="width:9.75em;height:1.25em;"/></p>
+
+<p class="mce-root">通常，在<strong>前馈神经网络</strong> ( <strong> FFNN </strong>)的最后一级中，softmax函数被用作判定边界。这是一种常见的情况，尤其是在解决分类问题时。softmax函数用于多类别分类问题中可能类别的概率分布。总之，选择合适的激活函数和网络权重初始化是使网络发挥最佳性能并帮助获得良好训练的两个问题。现在我们知道了神经网络的简史，让我们在下一节深入研究不同的架构，这将让我们对它们的用法有一个概念。</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign">神经网络架构</p>
+
+<p class="mce-root CDPAlignLeft CDPAlign">到目前为止，已经提出了许多神经网络结构并且正在使用中。然而，它们或多或少都是基于一些核心神经网络架构。我们可以将DL架构分为四类:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Neural network architectures</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">深度神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>卷积神经网络</p>
+
+<ul>
+
+<li>递归神经网络</li>
+
+<li>新兴建筑</li>
+
+<li>然而，DNNs、CNN和RNNs有许多改进的变体。虽然大多数变体是为解决特定领域的研究问题而提出或开发的，但基本工作原理仍然遵循最初的DNN、CNN和RNN架构。以下小节将向您简要介绍这些架构。</li>
+
+<li>深度神经网络</li>
+
+</ul>
+
+<p>dnn是一种神经网络，具有复杂和更深层次的架构，每层都有大量的神经元，神经元之间有许多连接。虽然DNN提到了非常深的网络，但为了简单起见，我们将MLP、<strong>堆栈自动编码器</strong> ( <strong> SAE </strong>)和<strong>深度信念网络</strong> ( <strong> DBNs </strong>)视为DNN架构。这些架构大多作为FFNN工作，意味着信息从输入层传播到输出层。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Deep neural networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">多个感知器堆叠在一起成为多层感知器，其中各层连接成一个有向图。基本上，MLP是最简单的FFNNs之一，因为它有三层:输入层、隐藏层和输出层。这样，信号以一种方式传播，从输入层到隐藏层，再到输出层，如下图所示:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root"><img src="img/2b984dc6-a80d-4037-adc9-dc61d4be1b5a.png" style="width:35.75em;height:20.92em;"/></p>
+
+<p class="mce-root">自动编码器和RBM分别是SAE和dbn的基本构件。与MLP不同，它是一个以监督方式训练的FFNN，SAE和DBNs都是分两个阶段训练的:无监督的预训练和有监督的微调。在无监督的预训练中，层按顺序堆叠，并使用未标记的数据以逐层的方式进行训练。</p>
+
+<p class="CDPAlignCenter CDPAlign">在监督微调中，输出分类器层被堆叠，并且通过用标记数据进行再训练来优化完整的神经网络。MLP的一个问题是它经常过度拟合数据，所以它不能很好地概括。为了克服这个问题，Hinton等人提出了DBN，它使用一种贪婪的逐层预训练算法。DBNs由一个可见层和多个隐藏单元层组成。DBN的构造块是RBM，如下图所示，其中几个RBM一个接一个地堆叠在一起:</p>
+
+<p><img src="img/6a7b0c86-7732-461b-93b4-3512d208d1b8.png" style="width:32.92em;height:20.67em;"/></p>
+
+<p>最上面的两层之间有无向对称连接，但是下面的两层有来自前一层的有向连接。尽管取得了许多成功，dbn现在正被AEs所取代。</p>
+
+<p class="CDPAlignCenter CDPAlign">自动编码器</p>
+
+<p>AEs也是从输入数据中自动学习的特殊类型的神经网络。AEs由两部分组成:编码器和解码器。编码器将输入压缩成潜在空间表示。然后，解码器部分尝试从该表示中重建原始输入数据:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Autoencoders</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title"><strong>编码器</strong>:使用函数<em> h = f(x) </em>将输入编码或压缩成潜在空间表示</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p><strong>解码器</strong>:使用被称为<em> r = g(h) </em>的函数从潜在空间表示中解码或重建输入</p>
+
+<ul>
+
+<li>因此，AE可以通过函数<em> g(f(x)) = 0 </em>来描述，其中我们希望0接近于<em> x </em>的原始输入。下图显示了AE的典型工作方式:</li>
+
+<li><img src="img/bcbf8bbf-53d7-4d16-9fdc-0bf5612e3e25.png" style="width:29.83em;height:9.00em;"/></li>
+
+</ul>
+
+<p>AEs对于数据去噪和数据可视化的降维非常有用，因为它们可以比PCA更有效地学习称为表示的数据投影。</p>
+
+<p class="CDPAlignCenter CDPAlign">卷积神经网络</p>
+
+<p class="CDPAlignLeft CDPAlign">CNN已经取得了很大的成就，并在计算机视觉(例如，图像识别)中被广泛采用。在CNN网络中，与MLP或DBN相比，连接方案有很大不同。一些卷积层以级联方式连接。每层都由一个ReLU层、一个池层、附加卷积层(+ReLU)和另一个池层支持，池层之后是一个全连接层和一个softmax层。下图是用于面部识别的CNN架构示意图，它将面部图像作为输入，并预测愤怒、厌恶、恐惧、快乐和悲伤等情绪:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Convolutional neural networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title"><img src="img/2a4a34db-3397-44cb-8825-78eb3053eae0.png" style="width:53.92em;height:17.00em;"/></h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">用于面部识别的CNN的示意性架构</p>
+
+<p class="CDPAlignCenter CDPAlign">重要的是，dnn不知道像素是如何组织的，因为它们不知道附近的像素是接近的。CNN通过在图像的小区域中使用特征地图，使用较低层来嵌入这种先验知识，而较高层将较低层的特征组合成较大的特征。</p>
+
+<p>这个设置可以很好地处理大多数自然图像，给CNN一个决定性的领先优势。每个卷积层的输出是一组对象，称为特征图，由单个内核过滤器生成。然后，特征图可用于定义下一层的新输入。CNN网络中的每个神经元都会产生一个输出，后面跟着一个激活阈值，这个阈值与输入成正比，不受限制。</p>
+
+<div><p>递归神经网络</p>
+
+<p>在RNNs中，单元之间的连接形成一个有向循环。RNN建筑最初是由Hochreiter和Schmidhuber在1997年构思的。RNN架构有标准的MLP，加上附加的环路，因此它们可以利用MLP强大的非线性映射能力。它们也有某种形式的记忆。下图显示了一个非常基本的RNN，它具有一个输入图层、两个递归图层和一个输出图层:</p>
+
+</div>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Recurrent neural networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title"><img src="img/77b89365-780e-4461-a58b-6e3c4e492336.png" style="width:35.83em;height:15.75em;"/></h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>然而，这种基本的RNN受到梯度消失和爆炸问题的困扰，并且不能对长期依赖性进行建模。这些架构包括LSTM、<strong>门控循环单元</strong> ( <strong> GRUs </strong>)、双向LSTM以及其他变体。因此，LSTM和GRU可以克服常规递归神经网络的缺点:梯度消失/爆炸问题和长短期依赖性。</p>
+
+<p class="CDPAlignCenter CDPAlign">新兴建筑</p>
+
+<p>还有很多其他涌现的DL架构被提出，比如<strong>深度时空神经网络</strong>(<strong>DST-NNs</strong>)<strong>多维递归神经网络</strong>(<strong>MD-RNNs</strong>)<strong>卷积自动编码器</strong> ( <strong> CAEs </strong>)。然而，还有一些新兴的网络，如<strong> CapsNets </strong>(这是CNN的改进版本，旨在消除常规CNN的缺点)，用于图像识别的RNN，以及用于简单图像生成的<strong>生成对抗网络</strong> ( <strong> GANs </strong>)。除此之外，用于个性化和深度强化学习的因子分解机器也在广泛使用。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Emergent architectures</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">残差神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>由于有时会有数以百万计的超参数和其他实际方面，所以训练更深层次的神经网络真的很难。为了克服这一限制，https://arxiv.org/abs/1512.03385v1等人提出了一个剩余学习框架，以简化比以前使用的网络更深的网络的训练。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Residual neural networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">他们还明确地将各层重构为参考层输入的学习剩余函数，而不是学习非参考函数。这样，这些残差网络更容易优化，并且可以从显著增加的深度中获得精度。不足之处在于，简单地通过堆叠剩余块来构建网络，不可避免地限制了优化能力。为了克服这一限制，张可等人还提出使用多级残差网络(<a href="https://arxiv.org/abs/1608.02908">https://arxiv.org/abs/1608.02908</a>)。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>生成对抗网络</p>
+
+<p>gan是深度神经网络架构，由两个相互对抗的网络组成(因此得名<em>对抗性</em>)。伊恩·古德费勒等人在一篇论文中介绍了甘斯(详见https://arxiv.org/abs/1406.2661v1<a href="https://arxiv.org/abs/1406.2661v1"/>)。在GANs中，两个主要部件是<strong>发生器和鉴别器</strong>:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Generative adversarial networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title"><img src="img/4920409b-74a3-482e-a9f8-638542cdeab9.png" style="width:54.00em;height:25.50em;"/></h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>生成性对抗网络的工作原理</p>
+
+<p class="CDPAlignCenter CDPAlign">在GAN架构中，发生器和鉴别器相互对立，因此得名对立:</p>
+
+<p>生成器试图从特定的概率分布中生成数据样本，并且与实际对象非常相似。</p>
+
+<p>鉴别器将判断其输入是来自原始训练集还是来自生成器部分。</p>
+
+<ul>
+
+<li>许多DL实践者认为GANs是最重要的进步之一，因为GANs可以用来模拟任何数据分布，并且，基于数据分布，可以教会它们创建机器人艺术家图像、超分辨率图像、文本到图像合成、音乐、语音等等。例如，由于对抗性训练的概念，脸书的人工智能研究主任Yann LeCun提出，在ML的最后10年中，GANs是最有趣的想法。</li>
+
+<li>The discriminator will judge whether its input is coming from the original training set or from the generator part.</li>
+
+</ul>
+
+<p>Many DL practitioners think that GANs were one of the most important advancements because GANs can be used to mimic any distribution of data, and, based on the data distribution, they can be taught to create robot artist images, super-resolution images, text-to-image synthesis, music, speech, and more. For example, because of the concept of adversarial training, Facebook's AI research director, Yann LeCun, suggested that GANs are the most interesting idea in the last 10 years of ML.</p>
+
+<p class="mce-root">胶囊网络</p>
+
+<p class="mce-root">在CNN中，每一层通过慢感受野或最大池操作在更细粒度的水平上理解图像。如果图像有旋转、倾斜或非常不同的形状或方向，CNN无法提取这样的空间信息，并且在图像处理任务中表现非常差。即使是CNN中的池操作也不能对这种位置不变性有多大帮助。通过Geoffrey Hinton等人题为<em>胶囊之间的动态路由</em>(详见<a href="https://arxiv.org/abs/1710.09829">https://arxiv.org/abs/1710.09829</a>)的论文，CNN的这一期让我们看到了CapsNet的最新进展:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Capsule networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">胶囊是一组神经元，其活动向量代表特定类型实体(如对象或对象部分)的实例化参数</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">与常规的DNN不同，在CapsNet中，我们不断添加层，我们的想法是在一个层中添加更多的层。这样，顶网就是一组嵌套的神经层。在CapsNet中，胶囊的矢量输入和输出使用物理学中使用的路由算法进行计算，该算法迭代地传输信息并处理<strong>自洽场</strong> ( <strong> SCF </strong>)过程:</p>
+
+<p><img src="img/14df1eb2-37d6-4291-b0c9-453194b85145.png" style="width:64.08em;height:18.08em;"/></p>
+
+<p class="mce-root">上图显示了一个简单的三层顶网的示意图。DigiCaps层中每个胶囊的活动向量的长度指示每个类的实例的存在，用于计算损失。既然我们已经了解了神经网络的工作原理和不同的神经网络架构，那么动手实现一些东西将会很棒。然而，在此之前，我们先来看看一些流行的DL库和框架，它们是这些网络架构的实现所附带的。</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/14df1eb2-37d6-4291-b0c9-453194b85145.png" style="width:64.08em;height:18.08em;"/></p>
+
+<p>用于聚类分析的神经网络</p>
+
+<p class="mce-root">已经提出了k-means的几个变体来解决高维输入空间的问题。然而，它们基本上限于线性嵌入。因此，我们不能对非线性关系建模。然而，这些方法中的微调仅基于集群分配强化损失(请参见本节后面的内容)。因此，无法实现细粒度的聚类准确性。因为聚类结果的质量取决于数据分布，所以深度架构可以帮助模型学习从数据空间到低维特征空间的映射，在该低维特征空间中，它迭代地优化聚类目标。在过去的几年中，已经提出了几种方法，试图使用深度神经网络的表示能力来预处理聚类输入。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Neural networks for clustering analysis</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">一些值得注意的方法包括深度嵌入聚类、深度聚类网络、区别性增强聚类、聚类CNN、深度嵌入网络、卷积深度嵌入聚类和图像深度表示的联合无监督学习。其他方法包括具有非参数聚类的DL、具有特征漂移补偿的基于CNN的联合聚类和表示学习、学习用于聚类的神经网络中的潜在表示、使用卷积神经网络的聚类以及具有卷积自动编码器嵌入的深度聚类。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>这些方法中的大多数或多或少遵循相同的原则:即，表示学习使用深度架构将输入转换为潜在表示，并将这些表示用作特定聚类方法的输入。这样的深度架构包括MLP、CNN、DBN、GAN和变分自动编码器。下图显示了如何使用卷积自动编码器并联合优化重建和CAH损耗来提高DEC网络的聚类性能的示例。编码器层之外的潜在空间被馈送给K-means用于软聚类分配。模糊的遗传变异意味着重建错误的存在:</p>
+
+<p><img class="aligncenter size-full wp-image-865 image-border" src="img/2d1aa2d3-1e6d-407c-9349-98e368b48591.png" style="width:162.50em;height:61.00em;"/></p>
+
+<p>基于DL的聚类(来源:Karim等人，用于基因型聚类和种族预测的递归深度嵌入网络，arXiv:1805.12218)</p>
+
+<p class="mce-root">总之，在这些方法中，涉及三个重要步骤——使用深度架构提取集群友好的深度特征，组合集群和非集群损失，以及最后，网络更新以联合优化集群和非集群损失。</p>
+
+<p class="CDPAlignCenter CDPAlign">面向物联网的DL框架和云平台</p>
+
+<p>有几种流行的DL框架。它们中的每一个都有一些优点和缺点。有些是基于桌面的，有些是基于云的平台，您可以在那里部署/运行您的DL应用程序。然而，大多数在开放许可下发布的库在人们使用图形处理器时会有所帮助，这最终会有助于加快学习过程。这样的框架和库包括TensorFlow、PyTorch、Keras、Deeplearning4j、H2O以及<strong>微软认知工具包</strong> ( <strong> CNTK </strong>)。甚至在几年前，包括Theano、Caffee和Neon在内的其他实现也被广泛使用。然而，这些现在都过时了。</p>
+
+<p>In summary, in these approaches, there are three important steps involved—extracting cluster-friendly deep features using deep architectures, combining clustering and non-clustering losses, and, finally, network updates to optimize clustering and non-clustering losses jointly.</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>DL frameworks and cloud platforms for IoT</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">Deeplearning4j  ( <strong xmlns:epub="http://www.idpf.org/2007/ops"> DL4J </strong>)是第一个为Java和Scala构建的商业级、开源、分布式DL库之一。这也为Hadoop和Spark提供了集成支持。DL4J是为在分布式GPU和CPU上的业务环境中使用而构建的。DL4J的目标是尖端和<em xmlns:epub="http://www.idpf.org/2007/ops">即插即用</em>，更多的是约定而不是配置，这允许非研究人员快速原型制作。它的众多库可以与DL4J集成，并且将使您的JVM体验更容易，无论您是用Java还是Scala开发ML应用程序。与JVM的NumPy类似，ND4J提供了线性代数的基本操作(矩阵创建、加法和乘法)。但是，ND4S是一个用于<br xmlns:epub="http://www.idpf.org/2007/ops"/>线性代数和矩阵操作的科学计算库。它还为基于JVM的语言提供了n维数组。下图显示了去年的谷歌趋势，说明了TensorFlow有多受欢迎:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p><img src="img/be613e47-6b26-477a-a6ca-d92333a53d42.png" style="width:73.17em;height:16.83em;"/></p>
+
+<p class="mce-root">除了这些框架，Chainer还是一个强大、灵活、直观的DL框架，它支持CUDA计算。它只需要几行代码就可以利用GPU。它还可以毫不费力地运行在多个GPU上。最重要的是，Chainer支持各种网络架构，包括前馈网络、convnets、递归网络和递归网络。它还支持每批架构。Chainer中一个更有趣的特性是它支持正向计算，通过它可以包含Python的任何控制流语句，而不缺乏反向传播的能力。它使代码直观且易于调试。</p>
+
+<p>DL框架power scores 2018还显示TensorFlow、Keras、PyTorch遥遥领先于其他框架(见<a href="https://towardsdatascience.com/deep-learning-framework-power-scores-2018-23607ddf297a">https://towardsdatascience . com/deep-learning-framework-power-scores-2018-23607 ddf 297 a</a>)。分数是根据DL框架的使用、受欢迎程度和兴趣通过以下来源计算的。除了前面提到的库之外，最近还有一些关于云中DL的计划。这个想法是将DL能力带到具有数十亿个数据点和高维数据的大数据中。例如，<strong>亚马逊Web服务</strong> ( <strong> AWS </strong>)、微软Azure、谷歌云平台、<strong>英伟达GPU云</strong> ( <strong> NGC </strong>)都提供了原生于其公共云的机器和DL服务。</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/be613e47-6b26-477a-a6ca-d92333a53d42.png" style="width:73.17em;height:16.83em;"/></p>
+
+<p>As well as these frameworks, Chainer is a powerful, flexible, and intuitive DL framework, which supports CUDA computation. It only requires a few lines of code to leverage a GPU. It also runs on multiple GPUs with little effort. Most importantly, Chainer supports various network architectures, including feed-forward nets, convnets, recurrent nets, and recursive nets. It also supports per-batch architectures. One more interesting feature in Chainer is that it supports forward computation, by which any control flow statements of Python can be included without lacking the ability of backpropagation. It makes code intuitive and easy to debug.</p>
+
+<p class="mce-root">2017年10月，AWS发布了针对<strong>亚马逊弹性计算云</strong> ( <strong>亚马逊EC2 </strong> ) P3实例的<strong>深度学习AMIs </strong> ( <strong> DLAMIs </strong>)。这些ami预装了DL框架，如TensorFlow、Gluon和Apache MXNet，这些框架针对亚马逊EC2 P3实例中的NVIDIA Volta V100 GPUs进行了优化。DL服务目前提供三种类型的AMI:Conda AMI、Base AMI和带源代码的AMI。CNTK是Azure的开源DL服务。与AWS产品类似，它专注于可以帮助开发人员构建和部署DL应用程序的工具。Azure还提供了一个模型库，其中包括代码样本等资源，以帮助企业开始使用该服务。</p>
+
+<p class="mce-root">另一方面，NGC为人工智能科学家和研究人员提供了GPU加速的容器(见<a href="https://www.nvidia.com/en-us/data-center/gpu-cloud-computing/"> https://www。英伟达。com/en-us/data-center/GPU-云计算/ </a>。NGC采用了容器化的DL框架，如TensorFlow、PyTorch、MXNet等，这些框架经过英伟达的调整、测试和认证，可以在参与云服务提供商的最新英伟达GPU上运行。然而，也有第三方服务可以通过他们各自的市场获得。</p>
+
+<p class="mce-root"><strong>谈到基于云的物联网系统开发市场，目前它分为三条明显的路线:</strong>现成的平台(例如，AWS物联网核心、Azure物联网套件和谷歌云物联网核心)，这些平台在供应商锁定和高端批量定价与经济高效的可扩展性和更短的交付周期之间进行权衡；Linux栈上相当完善的MQTT配置(例如:Eclipse Mosquitto)；以及更奇特的新兴协议和产品(例如，Nabto的P2P协议),这些协议和产品正在发展足够的吸收、兴趣和社区投资，以在未来赢得强大的市场份额。</p>
+
+<p class="mce-root">作为一个DL框架，Chainer神经网络是所有基于英特尔凌动、英伟达Jetson TX2和Raspberry Pi的设备的绝佳选择。因此，使用Chainer，我们不需要从头开始为我们的设备构建和配置ML框架。它为三个流行的ML框架提供了预构建的包，包括TensorFlow、Apache MXNet和Chainer。Chainer以类似的方式工作，它依赖于Greengrass上的一个库和一组使用Amazon SageMaker生成和/或直接存储在Amazon S3桶中的模型文件。从亚马逊SageMaker或亚马逊S3，ML模型可以部署到AWS Greengrass，用作ML推理的本地资源。从概念上来说，AWS物联网核心充当将ML推理部署到边缘的管理平面。</p>
+
+<p class="mce-root">On the other hand, NGC empowers AI scientists and researchers with GPU-accelerated containers (see <a href="https://www.nvidia.com/en-us/data-center/gpu-cloud-computing/">https://www. nvidia. com/en-us/data-center/gpu-cloud-computing/</a>). The NGC features containerized DL frameworks, such as TensorFlow, PyTorch, MXNet, and more that are tuned, tested, and certified by NVIDIA to run on the latest NVIDIA GPUs on participating cloud-service providers. Nevertheless, there are also third-party services available through their respective marketplaces.</p>
+
+<p><strong>When it comes to cloud-based IoT system-development markets, currently it forks into three obvious routes:</strong> off-the-shelf platforms (for example, AWS IoT Core, Azure IoT Suite, and Google Cloud IoT Core), which trade off vendor lock-in and higher-end volume pricing against cost-effective scalability and shorter lead times; reasonably well-established MQTT configurations over the Linux stack (example: Eclipse Mosquitto); and the more exotic emerging protocols and products (for example, Nabto's P2P protocol) that are developing enough uptake, interest, and community investment to stake a claim for strong market presence in the future.</p>
+
+<p>As a DL framework, Chainer Neural Network is a great choice for all devices powered by Intel Atom, NVIDIA Jetson TX2, and Raspberry Pi. Therefore, using Chainer, we don't need to build and configure the ML framework for our devices from scratch. It provides prebuilt packages for three popular ML frameworks, including TensorFlow, Apache MXNet, and Chainer. Chainer works in a similar fashion, which depends on a library on the Greengrass and a set of model files generated using Amazon SageMaker and/or stored directly in an Amazon S3 bucket. From Amazon SageMaker or Amazon S3, the ML models can be deployed to AWS Greengrass to be used as a local resource for ML inference. Conceptually, AWS IoT Core functions as the managing plane for deploying ML inference to the edge.</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mceNonEditable"/>
+
+<p class="mceNonEditable">摘要</p>
+
+<p class="mceNonEditable">在本章中，我们介绍了一些基本的DL主题。我们从对ML的基本但全面的介绍开始了我们的旅程。然后，我们逐渐转向DL和不同的神经架构。然后，我们简要概述了最重要的DL框架，这些框架可用于为支持物联网的设备开发基于DL的应用。</p>
+
+<p class="mceNonEditable">智能家居、智能城市和智能医疗等物联网应用严重依赖视频或图像数据处理进行决策。在下一章中，我们将讨论面向物联网应用的基于DL的图像处理，包括图像识别、分类和对象检测。此外，我们还将讨论物联网应用中的动手视频数据处理。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">Summary</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>In this chapter, we introduced a number of fundamental DL themes. We started our journey with a basic, but comprehensive, introduction to ML. Then, we gradually moved on to DL and different neural architectures. We then had a brief overview of the most important DL frameworks that can be utilized to develop DL-based applications for IoT-enabled devices.</p>
+
+<p>IoT applications, such as smart home, smart city, and smart healthcare, heavily rely on video or image data processing for decision making. In the next chapter, we will cover DL-based image processing for IoT applications, including image recognition, classification, and object detection. Additionally, we will cover hands-on video data processing in IoT applications.</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

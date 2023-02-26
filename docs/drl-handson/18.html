@@ -1,0 +1,888 @@
+<html><head/><body>
+<html>
+  <head>
+    <title>Chapter 18. AlphaGo Zero</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch18" class="calibre1"/>第十八章。AlphaGo Zero</h1></div></div></div><p class="calibre8">在本书的最后一章，我们将继续讨论基于模型的方法，并检查当我们有一个环境模型，但这个环境被两个竞争方使用时的情况。这种情况在棋盘游戏中非常常见，游戏规则是固定的，满员位置是可观察的，但我们有一个对手，他的首要目标是阻止我们赢得游戏。</p><p class="calibre8">最近，DeepMind提出了一种非常优雅的方法来解决这类问题，这种方法不需要任何先验领域知识，但代理仅通过自我发挥来改进其策略。这种方法被称为<strong class="calibre2"> AlphaGo Zero、</strong>，它将是本章的主要焦点，因为我们实现了玩游戏的方法<em class="calibre11"> Connect4 </em>。</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Chapter 18. AlphaGo Zero</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h1 class="title" id="calibre_pb_1"><a id="ch18lvl1sec92" class="calibre1"/>桌游</h1></div></div></div><p class="calibre8">大多数桌游<a id="id739" class="calibre1"/>提供了一个不同于街机场景的设置。Atari游戏套件假设一个玩家正在复杂的动态环境中做出决策。通过总结和学习他们行动的结果，玩家提高了他们的技能，增加了最终得分。</p><p class="calibre8">在棋盘游戏中，游戏规则通常非常简单紧凑。让游戏变得复杂的是棋盘上不同位置的数量，以及存在一个策略未知的对手，他试图在游戏中击败我们。观察游戏状态和明确规则的能力为分析当前位置提供了可能性，而雅达利没有这种能力。分析意味着考虑游戏的当前状态，评估我们可以采取的所有可能的行动，然后选择最佳的行动。</p><p class="calibre8">最简单的评估方法是迭代可能的动作，并在采取动作后递归评估位置。最终，这个过程会把我们带到最终的位置，那时我们不可能再移动了。通过把博弈结果传播回去，我们可以估算出任何位置任何动作的期望值。这种方法的一种可能的变体是被称为<strong class="calibre2"> minimax </strong>的<a id="id740" class="calibre1"/>，这是当我们试图做出最强的移动，但是我们的对手试图对我们采取最差的移动，所以我们迭代地最小化和最大化沿着游戏状态树向下走的最终游戏目标(这将在后面详细描述)。</p><p class="calibre8">如果不同位置的数量足够少，可以进行全面分析，就像在<em class="calibre11"> TicTacToe </em>游戏中一样(它只有138个终端状态)，从我们拥有的任何状态开始沿着博弈树向下走，并找出采取什么行动是最好的，这不是问题。</p><p class="calibre8">不幸的是，这种<a id="id741" class="calibre1"/>蛮力方法甚至对中等复杂度的游戏都不起作用，因为配置的数量呈指数增长。比如在<em class="calibre11">跳棋</em>(又名<em class="calibre11">跳棋</em>的游戏中，整个游戏树有5*1020个节点，即使对现代硬件来说也是相当大的挑战。在更复杂的游戏中，如<em class="calibre11">象棋</em>或<em class="calibre11">围棋</em>，这个数字要大得多，所以不可能分析每个状态下所有可到达的位置。为了处理这一点，当我们分析树到一定深度时，通常使用某种近似。通过仔细的搜索停止标准、<a id="id742" class="calibre1"/>称为<strong class="calibre2">树修剪</strong>和位置的智能预定义评估的组合，我们可以制作一个在相当好的水平上玩复杂游戏的计算机程序。</p><p class="calibre8">2017年底，DeepMind在期刊<em class="calibre11"> Nature </em>上发表了一篇文章，介绍了一种叫做AlphaGo Zero的新颖方法，这种方法能够在复杂的游戏中达到超人的水平，像<em class="calibre11">围棋</em>和<em class="calibre11">象棋</em>，除了游戏规则之外，没有任何先验知识。代理人能够通过不断与自己作对和反思结果来改进其策略。不需要大型游戏数据库、手工制作的特征或预先训练的模型。该方法的另一个优点是它的简单和优雅。</p><p class="calibre8">在本章的例子中，我们将尝试理解并实现游戏<em class="calibre11"> Connect4 </em>(也称为<em class="calibre11">四个一排</em>或<em class="calibre11">四个一排</em>)的这种方法，来自己评估它。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>The AlphaGo Zero method</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch18lvl1sec93" class="calibre1"/>alpha go归零法</h1></div></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>The AlphaGo Zero method</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_1"><a id="ch18lvl2sec121" class="calibre1"/>概述</h2></div></div></div><p class="calibre8">从高层次来看，<a id="id743" class="calibre1"/>方法由三个部分组成，稍后将详细解释所有这些部分，因此，如果本节有些内容不完全清楚，请不要担心:</p><div><ul class="itemizedlist"><li class="listitem">我们不断地遍历博弈树，使用<strong class="calibre2">蒙特卡罗树搜索</strong> ( <strong class="calibre2"> MCTS </strong> ) <a id="id744" class="calibre1"/>算法，其核心思想是半随机地遍历博弈状态，扩展它们并收集关于移动频率和潜在博弈结果的统计数据。由于博弈树在深度和宽度上都很大，我们并不试图构建完整的博弈树，只是随机抽取其中最有希望的路径(这就是该方法名称的来源)。</li><li class="listitem">在每一个时刻，我们都有一个<em class="calibre11">最佳玩家</em>，这是用于通过自我游戏生成数据的模型。最初，这个模型有随机的权重，所以它随机地移动，就像一个四岁的孩子刚刚学会如何移动<em class="calibre11">国际象棋</em>棋子。然而，随着时间的推移，我们会用更好的版本取代这个最好的玩家，<a id="id745" class="calibre1"/>，这将产生越来越多有意义和复杂的游戏场景。自玩意味着相同的<em class="calibre11">当前最佳</em>型号被用于棋盘的两侧。这可能看起来不是很有用，因为让同一个模型与自己对战有大约50%的机会，但这实际上是我们需要的:我们的最佳模型可以展示其最佳技能的游戏样本。打个比方很简单:看局外人和领先者的比赛通常没什么意思。领导者会轻松获胜。更有趣、更耐人寻味的是水平大致相当的玩家在竞争。这就是为什么任何锦标赛的决赛都比之前的比赛吸引更多的注意力:决赛中的两支球队或球员通常都在比赛中表现出色，所以他们需要发挥出最佳水平才能获胜。</li><li class="listitem">该方法的第三个组成部分是另一个<em class="calibre11">学徒</em>模型的训练过程，该模型正在根据最佳模型在自我游戏期间收集的数据进行训练。这可以比作一个孩子坐着不停地分析两个成年人玩的国际象棋。我们会定期在这个经过训练的模型和我们当前的最佳模型之间进行几次比赛，如果受训者能够在大量比赛中击败最佳模型，我们会宣布经过训练的模型为新的最佳模型，并继续这个过程。</li></ul></div><p class="calibre8">尽管这很简单，甚至很幼稚，但AlphaGo Zero能够击败之前所有的AlphaGo版本，成为世界上最好的围棋选手，除了游戏规则，没有任何先验知识。在名为<em class="calibre11">在没有人类知识的情况下掌握围棋游戏</em>【1】的论文发表后，DeepMind采用了同样的方法来拟合<em class="calibre11">象棋</em>，并发表了名为<em class="calibre11">利用通用强化学习算法</em>【2】通过自我对弈掌握象棋和Shogi的论文，其中从零开始训练的模型击败了Stockfish，这是最好的<em class="calibre11">象棋</em>程序，花费了人类专家十多年的时间来开发。</p><p class="calibre8">现在让我们详细检查该方法的所有三个组成部分。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>The AlphaGo Zero method</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_2"><a id="ch18lvl2sec122" class="calibre1"/>蒙特卡罗树搜索</h2></div></div></div><p class="calibre8">为了理解MCTS <a id="id746" class="calibre1"/>做什么，让我们考虑一下<em class="calibre11"> TicTacToe </em>游戏的一个简单子树，如下图所示。一开始，游戏场是空的，十字架需要选择移动的位置。第一步有九个不同的选项，所以我们的根状态有九个不同的分支通向相应的状态。</p><div><img src="img/00379.jpeg" alt="Monte-Carlo Tree Search" class="calibre9"/><div><p class="calibre14">图TicTacToe的游戏树</p></div></div><p class="calibre10"> </p><p class="calibre8">在某个特定的<a id="id748" class="calibre1"/>游戏状态下<a id="id747" class="calibre1"/>的可能动作的数量被称为<strong class="calibre2">分支因子</strong>，显示游戏树的密集度。当然，这不是一成不变的，可能会发生变化，因为有些动作并不总是可行的。在<em class="calibre11"> TicTacToe </em>的情况下，可用动作的数量可以从游戏开始时的九个变化到叶节点处的零个。分支因子允许我们估计博弈树增长的速度，因为每一个可用的动作都会导致另一组可以采取的动作。</p><p class="calibre8">对于我们的例子，在十字已经移动之后，零在每九个位置有八个选择，这使得在树的第二层总共有9*8个位置。树中的节点总数最多可达9个！= 362880，但实际数字更少，因为并非所有游戏都能玩到最大深度。</p><p class="calibre8"><em class="calibre11"> TicTacToe </em>很小，但是如果我们<a id="id749" class="calibre1"/>考虑更大的游戏，并且考虑在<em class="calibre11">国际象棋</em>游戏开始时白棋可以走的第一步棋的数量(是20)或者在<em class="calibre11">围棋</em>中白棋可以被放置的点数(19 × 19游戏场总共是361)，在完整的树中游戏位置的数量很快变得巨大， 对于每一个新的级别，状态的数量会乘以我们在前一个级别上可以执行的平均操作数量。</p><p class="calibre8">为了应对这种组合爆炸，随机抽样开始发挥作用。在《MCTS将军》中，我们执行了许多深度优先搜索的迭代，从当前游戏状态开始，或者随机选择动作，或者采用某种策略，这应该在其决策中包含足够的随机性。每次搜索持续到游戏的结束状态，然后根据游戏的结果更新被访问的树枝的权重。这个过程类似于价值迭代法，我们播放剧集的时候，剧集的最后一步影响了前面所有步骤的价值估计。这是一个通用的MCTS，这种方法有很多变体，涉及扩张战略、分支机构选择政策和其他细节。</p><p class="calibre8">在AlphaGo Zero中，使用了<a id="id750" class="calibre1"/> MCTS的变体。对于每个边(代表从某个位置的移动)，存储这组统计数据:边的先验概率<em class="calibre11"> P(s，a) </em>，访问计数<em class="calibre11"> N(s，a)</em>和动作值<em class="calibre11"> Q(s，a) </em>。每次搜索从最有希望的动作之后的根状态开始，使用效用值<em class="calibre11"> U(s，a) </em>选择，与<img src="img/00380.jpeg" alt="Monte-Carlo Tree Search" class="calibre24"/>成比例。在选择过程中加入了随机性，以确保对博弈树有足够的探索。每次搜索都可能以两种结果结束:到达游戏的结束状态，或者我们面临尚未探索的状态(换句话说，没有值的统计)。在后一种情况下，策略<strong class="calibre2">神经网络</strong> ( <strong class="calibre2"> NN </strong>)被<a id="id751" class="calibre1"/>用于获得先验概率和状态估计值，并且创建具有<em class="calibre11"> N(s，a) = 0 </em>、<em class="calibre11"> P(s，a) = p </em>、T19】网(这是网络返回的移动的概率)和<em class="calibre11"> Q(s，a) = 0 </em>的新树节点。除了行动的先验概率之外，网络还返回当前玩家对游戏结果(或状态值)的估计。</p><p class="calibre8">当我们已经获得值(通过到达最终游戏状态或通过使用NN扩展节点)，称为值的<em class="calibre11">备份的过程被执行。在该过程中，我们从底部到根遍历游戏路径，并且更新每个被访问的中间节点的统计数据，特别地，访问计数<em class="calibre11"> N(s，a) </em>增加1，并且<em class="calibre11"> Q(s，a) </em>被更新以包括来自当前状态视角的游戏结果。当两个玩家交换移动时，最后的游戏结果是改变每一步的符号。</em></p><p class="calibre8">这个搜索过程执行几次(在AlphaGo的例子中，执行一到两千次搜索)，收集足够的关于动作的统计数据，以使用<em class="calibre11"> N(s，a) </em>计数器作为根节点中要采取的动作概率。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>The AlphaGo Zero method</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_3"><a id="ch18lvl2sec123" class="calibre1"/>自弹自唱</h2></div></div></div><p class="calibre8">在AlphaGo Zero中，NN是<a id="id752" class="calibre1"/>用来近似动作的先验概率并评估位置，这与<a id="id753" class="calibre1"/>的<strong class="calibre2">演员兼评论家</strong> ( <strong class="calibre2"> A2C </strong>)双头设置非常相似。在网络的输入端，我们传递当前的游戏位置(增加了几个先前的位置)并返回两个值。策略头返回行动的概率分布，价值头从玩家的角度估计游戏结果。这个值是不打折的，因为<em class="calibre11">进</em>出的移动是确定的。当然，如果你在游戏中有随机性，比如在双陆棋中，应该使用一些折扣。</p><p class="calibre8">正如已经描述过的，我们正在维护<em class="calibre11">当前最好的</em>网络，它不断地自我播放，为我们的<em class="calibre11">学徒网络</em>收集训练数据。每个自玩游戏中的每一步都从当前位置的几个MCTS开始，以收集足够的关于游戏子树的统计数据，用于选择最佳动作。具体的选择取决于招式和我们的设定。对于应该在<a id="id754" class="calibre1"/>训练数据中产生足够方差的自玩游戏，第一步是以随机方式选择的。然而，在一定数量的步骤之后(这是该方法中的超参数)，动作选择变得确定，并且我们选择具有最大访问计数器<em class="calibre11"> N(s，a) </em>的动作。在评估游戏中(当我们对照当前最佳模型检查正在训练的网络时)，所有步骤都是确定性的，并且只在最大访问计数器上选择。</p><p class="calibre8">一旦自玩游戏已经完成并且知道了最终结果，游戏的每一步都被添加到训练数据集中，训练数据集中是元组列表<img src="img/00381.jpeg" alt="Self-play" class="calibre24"/>，其中<img src="img/00382.jpeg" alt="Self-play" class="calibre24"/>是游戏状态，<img src="img/00383.jpeg" alt="Self-play" class="calibre24"/>是根据MCTS采样计算的动作概率，<img src="img/00384.jpeg" alt="Self-play" class="calibre24"/>是在步骤<em class="calibre11"> t </em>从玩家的角度来看的游戏结果。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>The AlphaGo Zero method</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_4"><a id="ch18lvl2sec124" class="calibre1"/>培训和评估</h2></div></div></div><p class="calibre8">当前最佳网络的两个克隆体<a id="id755" class="calibre1"/>之间的自玩过程为<a id="id756" class="calibre1"/> us提供了训练数据流，包括从自玩游戏中获得的状态、动作概率和位置值。有了这个，我们的训练就简单了:我们从训练示例的重放缓冲区中采样小批，并最小化<a id="id757" class="calibre1"/>值头部预测和实际位置值之间的<strong class="calibre2">均方误差</strong> ( <strong class="calibre2"> MSE </strong>)，以及预测概率和采样概率<img src="img/00385.jpeg" alt="Training and evaluation" class="calibre24"/>之间的交叉熵损失。</p><p class="calibre8">如前所述，在几个训练步骤中，对训练好的网络进行一次评估，包括在当前最好的和训练好的网络之间进行几场比赛。一旦经过训练的网络变得明显好于当前的最佳网络，我们就将经过训练的网络复制到最佳网络中，并继续这一过程。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Connect4 bot</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch18lvl1sec94" class="calibre1"/>连接4机器人</h1></div></div></div><p class="calibre8">为了查看<a id="id758" class="calibre1"/>方法的运行情况，让我们为<em class="calibre11"> Connect4 </em>实现AlphaGo Zero。这个游戏是两个人玩的，场地是6 × 7。玩家有两种不同颜色的圆盘，他们依次将圆盘丢到七列中的任何一列。磁盘落到底部，垂直堆叠。游戏目标是第一个形成水平、垂直或对角线组的四个相同颜色的圆盘。图中显示了两种游戏情况。在第一天，红色玩家刚刚获胜，而在第二天，蓝色玩家将组成一个小组。</p><div><img src="img/00386.jpeg" alt="Connect4 bot" class="calibre9"/><div><p class="calibre14">图2:连接4中的两个游戏位置</p></div></div><p class="calibre10"> </p><p class="calibre8">尽管很简单，但这款游戏有4.5*1012种不同的游戏状态，这对计算机用蛮力求解是很有挑战性的。此示例由几个工具和库模块组成:</p><div><ul class="itemizedlist"><li class="listitem"><code class="literal">Chapter18/lib/game.py</code>:低级游戏表示，包含移动、编码和解码游戏状态的功能，以及其他与游戏相关的实用程序。</li><li class="listitem"><code class="literal">Chapter18/lib/mcts.py</code> : MCTS实现，允许树叶和节点备份的GPU扩展。这里的中心类还负责保存游戏节点统计数据，这些数据在两次搜索之间被重用。</li><li class="listitem"><code class="literal">Chapter18/lib/model.py</code>:NN和其他与模型相关的功能，比如游戏状态和模型输入之间的转换，以及单个游戏的运行。</li><li class="listitem"><code class="literal">Chapter18/train.py</code>:主要的训练工具，将所有的东西粘在一起，产生新的最佳网络的模型检查点。</li><li class="listitem"><code class="literal">Chapter18/play.py</code>:组织模型关卡间自动比武的工具。它接受几个模型文件，并相互玩一定数量的游戏，形成一个排行榜</li><li class="listitem"><code class="literal">Chapter18/telegram-bot.py</code>:电报聊天平台的<a id="id759" class="calibre1"/> bot，允许用户对任何保持统计的模型文件进行游戏。这个机器人被用来对例子的结果进行人工验证。</li></ul></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Connect4 bot</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_1"><a id="ch18lvl2sec125" class="calibre1"/>游戏模式</h2></div></div></div><p class="calibre8">整个方法是基于我们<a id="id760" class="calibre1"/>预测行动结果的能力，所以换句话说，我们需要能够在执行一些特定的游戏步骤后获得最终的游戏状态。这是一个比我们在雅达利环境和一般健身房更强烈的要求，在那里你不能指定任何你想要采取行动的当前状态。因此，我们需要一个游戏模型来封装游戏的规则和动态。幸运的是，大多数棋盘游戏都有一套简单而紧凑的规则，这使得模型实现成为一项简单的任务。</p><p class="calibre8">在我们的例子中，<em class="calibre11"> Connect4 </em>的完整游戏状态由6 × 7游戏区域单元的状态和谁将移动的指示器来表示。对于我们的示例来说，重要的是让游戏状态表示占用尽可能少的内存，但仍然允许它高效地工作。内存需求是由在MCTS期间存储大量游戏状态的必要性决定的。由于我们的游戏树很大，在MCTS期间我们能够保存的节点越多，我们移动概率的最终近似值就越好，因此，潜在地，我们希望能够在内存中保存数百万甚至数十亿个游戏状态。</p><p class="calibre8">掌握了这一点，游戏状态表示的紧凑性将对内存需求和我们训练过程的性能产生巨大的影响。然而，游戏状态表示必须便于使用，例如，检查棋盘上的获胜位置，移动并从某个状态中找到所有有效的移动。</p><p class="calibre8">为了保持这种平衡，在<code class="literal">Chapter18/lib/game.py,</code>中实现了游戏领域的两种表现形式。第一个<em class="calibre11">编码的</em>形式非常节省内存，只需要63位来编码整个字段，这使得它非常快速和轻便，因为它适合64位架构上的机器世界。另一个<em class="calibre11">解码的</em>游戏域表示具有列表的形式，长度为7，其中每个条目都是一个整数列表，并将磁盘保存在特定的列中。这种形式占用更多的内存，但是使用起来更方便。</p><p class="calibre8">我不会展示<code class="literal">Chapter18/lib/game.py,</code>的完整代码，但如果你需要，可以在回购中找到。这里，让我们来看看它提供的常量和函数列表:</p><div><pre class="programlisting">GAME_ROWS = 6
+GAME_COLS = 7
+BITS_IN_LEN = 3
+PLAYER_BLACK = 1
+PLAYER_WHITE = 0
+COUNT_TO_WIN = 4
+INITIAL_STATE = encode_lists([[]] * GAME_COLS)</pre></div><p class="calibre8">在<a id="id761" class="calibre1"/>代码中的前两个常量定义了游戏领域的维度，并在代码中的任何地方使用，所以你可以试着改变它们，并尝试一个更大或更小的游戏。<code class="literal">BITS_IN_LEN</code>值在状态编码函数中使用，指定使用多少位来编码列的高度(存在的磁盘数量)。在6 × 7游戏中，我们可以在每一列中有多达六个磁盘，因此三位足以保持从0到7的值。如果您改变行数，您将需要相应地调整<code class="literal">BITS_IN_LEN</code>。</p><p class="calibre8"><code class="literal">PLAYER_BLACK</code>和<code class="literal">PLAYER_WHITE</code>值定义了在<em class="calibre11">解码的</em>游戏表示中使用的值，最后，<code class="literal">COUNT_TO_WIN</code>设置了赢得游戏所需组成的组的长度。因此，从理论上讲，你可以尝试用代码来训练代理，比如说，在一个20 × 40的场地上，通过改变<code class="literal">game.py</code>中的四个数字来训练五个一排的代理。</p><p class="calibre8"><code class="literal">INITIAL_STATE</code>值包含初始游戏状态的<em class="calibre11">编码的</em>表示，其具有<code class="literal">GAME_COLS</code>空列表。代码的其余部分是函数。其中一些在内部使用，但是一些在示例中的任何地方使用。让我们快速列出它们:</p><div><ul class="itemizedlist"><li class="listitem"><code class="literal">encode_lists(state_lists)</code>:将游戏状态从<em class="calibre11">解码的</em>转换为<em class="calibre11">编码的</em>表示。该参数必须是一个由<code class="literal">GAME_COLS</code>列表组成的列表，该列的内容按自下而上的顺序指定。换句话说，要把一个新磁盘放到栈顶，我们只需要把它附加到相应的列表中。函数的结果是一个用63位表示游戏状态的整数。</li><li class="listitem"><code class="literal">decode_binary(state_int)</code>:从字段的整数表示转换回列表形式。</li><li class="listitem"><code class="literal">possible_moves(state_int)</code>:返回可从给定的编码游戏状态移动的列的索引列表。这些列从左到右从0到6编号。</li><li class="listitem"><code class="literal">move(state_int, col, player)</code>:文件的中心功能，提供游戏动态结合输赢检查。在参数中，它接受编码形式的游戏状态、放置磁盘的列以及移动的玩家的索引。列索引必须有效(出现在<code class="literal">possible_moves(state_int))</code>的结果中)，否则将引发异常。该函数返回一个包含两个元素的元组:一个是执行移动后以编码形式出现的新游戏状态，另一个是表示移动导致玩家获胜的布尔值。由于玩家只有在移动后才能获胜，所以一个布尔就足够了。当然，有机会获得平局状态(当没有人赢时，但没有剩余的可能移动)。此类<a id="id762" class="calibre1"/>情况必须通过在<code class="literal">move()</code>函数之后调用<code class="literal">possible_moves</code>函数来检查。</li><li class="listitem"><code class="literal">render(state_int)</code>:返回代表字段状态的字符串列表。该功能在电报机器人中用于向用户发送现场状态。</li></ul></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Connect4 bot</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_2"><a id="ch18lvl2sec126" class="calibre1"/>实现MCTS</h2></div></div></div><p class="calibre8">MCTS在<code class="literal">Chapter18/lib/mcts.py</code>中实现，由单个类<code class="literal">MCTS</code>表示，该类负责<a id="id763" class="calibre1"/>执行一批MCTS搜索，并保存搜索期间收集的统计数据。代码不是很大，但仍然有几个棘手的部分，所以让我们详细检查一下。</p><div><pre class="programlisting">class MCTS:
+    def __init__(self, c_puct=1.0):
+        self.c_puct = c_puct
+        # count of visits, state_int -&gt; [N(s, a)]
+        self.visit_count = {}
+        # total value of the state's action,
+        # state_int -&gt; [W(s, a)]
+        self.value = {}
+        # average value of actions, state_int -&gt; [Q(s, a)]
+        self.value_avg = {}
+        # prior probability of actions, state_int -&gt; [P(s,a)]
+        self.probs = {}</pre></div><p class="calibre8">构造函数除了<code class="literal">c_puct</code>常量之外没有其他参数，这个常量用于节点选择过程，在最初的AlphaGo Zero论文[1]中提到过<em class="calibre11">可以调整以增加探索</em>，但是我没有在任何地方重新定义它，也没有试验过它。构造函数的主体创建一个空容器来保存状态的统计信息。所有这些字典中的关键是编码的游戏状态(一个整数)和值是列表，保存我们拥有的各种动作参数。每个容器上面的注释都有与AlphaGo Zero白皮书中相同的数值符号。</p><div><pre class="programlisting">    def clear(self):
+        self.visit_count.clear()
+        self.value.clear()
+        self.value_avg.clear()
+        self.probs.clear()</pre></div><p class="calibre8">前面的方法在不破坏MCTS对象的情况下清除了<a id="id764" class="calibre1"/>状态，当我们将<em class="calibre11">当前最好的</em>模型切换到新的模型并且收集的统计数据变得过时时，就会发生这种情况。</p><div><pre class="programlisting">    def find_leaf(self, state_int, player):
+        """
+        Traverse the tree until the end of game or leaf node
+        :param state_int: root node state
+        :param player: player to move
+        :return: tuple of (value, leaf_state,
+        player, states, actions)
+        1. value: None if leaf node, otherwise equals
+        to the game outcome for the player at leaf
+        2. leaf_state: state_int of the last state
+        3. player: player at the leaf node
+        4. states: list of states traversed
+        5. actions: list of actions taken
+        """
+        states = []
+        actions = []
+        cur_state = state_int
+        cur_player = player
+        value = None</pre></div><p class="calibre8">在搜索过程中使用该方法来执行游戏树的一次遍历，从由<code class="literal">state_int</code>参数给出的根节点开始，继续向下走，直到面临这两种情况之一:我们到达最终游戏状态或者已经找到尚未探索的叶子。在搜索过程中，我们跟踪访问过的状态和执行的操作，以便能够在以后更新节点的统计数据。</p><div><pre class="programlisting">        while not self.is_leaf(cur_state):
+            states.append(cur_state)
+
+            counts = self.visit_count[cur_state]
+            total_sqrt = m.sqrt(sum(counts))
+            probs = self.probs[cur_state]
+            values_avg = self.value_avg[cur_state]</pre></div><p class="calibre8">循环的每次迭代都处理我们当前所处的游戏状态。对于这个状态，我们提取我们需要的统计数据来做出关于动作的决策。</p><div><pre class="programlisting">            if cur_state == state_int:
+                noises = np.random.dirichlet([0.03] * game.GAME_COLS)
+                probs = [0.75 * prob + 0.25 * noise for prob, noise in zip(probs, noises)]
+            score = [value + self.c_puct * prob * total_sqrt / (1 + count)
+                     for value, prob, count in zip(values_avg, probs, counts)]</pre></div><p class="calibre8">基于<code class="literal">action</code>效用做出关于动作的决定，该效用是<em class="calibre11"> Q(s，a) </em>和与访问计数成比例的先验概率之间的和。搜索过程的根节点具有添加到概率中的额外噪声，以改进搜索过程的探索。当我们沿着自我游戏的轨迹从不同的游戏状态执行MCTS时，这个额外的噪音确保了我们沿着路径尝试了不同的动作。</p><div><pre class="programlisting">            invalid_actions = set(range(game.GAME_COLS)) - set(game.possible_moves(cur_state))
+            for invalid in invalid_actions:
+                score[invalid] = -np.inf
+            action = int(np.argmax(score))
+            actions.append(action)</pre></div><p class="calibre8">由于我们已经计算了<a id="id765" class="calibre1"/>动作的分数，我们需要屏蔽掉该状态的无效动作(例如，当列已满时，我们不能在顶部放置另一个磁盘)。之后，选择并记录得分最高的动作。</p><div><pre class="programlisting">            cur_state, won = game.move(cur_state, action, cur_player)
+            if won:
+                # if somebody won the game, the value of the final
+                # state is -1 (as it is on opponent's turn)
+                value = -1.0
+            cur_player = 1-cur_player
+            # check for the draw
+            if value is None and len(game.possible_moves(cur_state)) == 0:
+                value = 0.0
+
+        return value, cur_state, cur_player, states, actions</pre></div><p class="calibre8">为了结束循环，我们要求我们的游戏引擎采取行动，返回新的状态和玩家是否赢得游戏的指示。最终的游戏状态(赢、输或平)永远不会添加到MCTS统计中，因此它们将始终是叶节点。该函数返回叶玩家的游戏值(如果还没有到达最终状态，则返回<code class="literal">None</code>)、处于叶状态的当前玩家、我们在搜索过程中访问过的状态列表以及所采取的行动列表。</p><div><pre class="programlisting">    def is_leaf(self, state_int):
+        return state_int not in self.probs
+
+    def search_batch(self, count, batch_size, state_int, player, net, device="cpu"):
+        for _ in range(count):
+            self.search_minibatch(batch_size, state_int, player, net, device)</pre></div><p class="calibre8"><code class="literal">MCTS</code>类的主要入口点是<code class="literal">search_batch()</code>函数，它执行几批搜索。每次搜索都包括找到树的叶子，选择性地展开叶子并进行备份。这里的主要瓶颈是扩展操作，它需要使用神经网络来获得行动的先验概率和估计的游戏价值。为了使这种扩展更有效，当我们搜索几个叶子时，我们使用迷你批处理，但是随后在单个NN执行中执行扩展。这种方法有一个缺点:由于几个MCTS搜索是在一个批处理中执行的，我们不会得到与串行执行相同的结果。</p><p class="calibre8">事实上，最初，当我们在<code class="literal">MCTS</code>类中没有存储<a id="id766" class="calibre1"/>节点时，我们的第一次搜索将扩展根节点，第二次搜索将扩展它的一些子节点，依此类推。但是，在开始时，一批搜索只能扩展一个根节点。当然，后来，批处理中的单个搜索可以遵循不同的游戏路径并扩展更多，但在开始时，迷你批处理扩展在探索方面的效率远不如顺序MCTS。</p><p class="calibre8">为了弥补这一点，我仍然使用迷你批处理，但执行其中的几个。</p><div><pre class="programlisting">    def search_minibatch(self, count, state_int, player, net, device="cpu"):
+        backup_queue = []
+        expand_states = []
+        expand_players = []
+        expand_queue = []
+        planned = set()
+        for _ in range(count):
+            value, leaf_state, leaf_player, states, actions = self.find_leaf(state_int, player)
+            if value is not None:
+                backup_queue.append((value, states, actions))
+            else:
+                if leaf_state not in planned:
+                    planned.add(leaf_state)
+                    leaf_state_lists = game.decode_binary(leaf_state)
+                    expand_states.append(leaf_state_lists)
+                    expand_players.append(leaf_player)
+                    expand_queue.append((leaf_state, states, actions))</pre></div><p class="calibre8">在迷你批次搜索中，我们首先从相同的状态开始执行叶搜索。如果搜索已经找到了一个最终的游戏状态(在这种情况下，返回值将不等于<code class="literal">None</code>，不需要扩展，我们保存结果用于备份操作。否则，我们存储该叶以供以后扩展。</p><div><pre class="programlisting">        if expand_queue:
+            batch_v = model.state_lists_to_batch(expand_states, expand_players, device)
+            logits_v, values_v = net(batch_v)
+            probs_v = F.softmax(logits_v, dim=1)
+            values = values_v.data.cpu().numpy()[:, 0]
+            probs = probs_v.data.cpu().numpy()</pre></div><p class="calibre8">为了扩展，我们将状态转换成模型所需的形式(在<code class="literal">model.py</code>库中有一个特殊的函数),并要求我们的网络返回该批状态的先验概率和值。我们将使用这些概率来创建节点，这些值将在最终的统计数据更新时备份。</p><div><pre class="programlisting">            # create the nodes
+            for (leaf_state, states, actions), value, prob in zip(expand_queue, values, probs):
+                self.visit_count[leaf_state] = [0] * game.GAME_COLS
+                self.value[leaf_state] = [0.0] * game.GAME_COLS
+                self.value_avg[leaf_state] = [0.0] * game.GAME_COLS
+                self.probs[leaf_state] = prob
+                backup_queue.append((value, states, actions))</pre></div><p class="calibre8">节点创建只是为访问计数和动作值(总计和平均)中的每个动作存储零<a id="id767" class="calibre1"/>。在先验概率中，我们存储从网络中获得的值。</p><div><pre class="programlisting">        for value, states, actions in backup_queue:
+            # leaf state is not stored in states and 
+            # actions, so the value of the leaf will be
+            # the value of the opponent
+            cur_value = -value
+            for state_int, action in zip(states[::-1], actions[::-1]):
+                self.visit_count[state_int][action] += 1
+                self.value[state_int][action] += cur_value
+                self.value_avg[state_int][action] = self.value[state_int][action] / self.visit_count[state_int][action]
+                cur_value = -cur_value</pre></div><p class="calibre8">备份操作是MCTS中的核心过程，它更新搜索期间访问过的州的统计数据。所采取行动的访问计数递增，总值相加，平均值使用访问计数标准化。在备份过程中正确跟踪游戏的价值非常重要，因为我们有两个对手，并且在每个回合，价值都会改变符号(因为当前玩家的胜利位置是对手的失败游戏状态)。</p><div><pre class="programlisting">    def get_policy_value(self, state_int, tau=1):
+        """
+        Extract policy and action-values by the state
+        :param state_int: state of the board
+        :return: (probs, values)
+        """
+        counts = self.visit_count[state_int]
+        if tau == 0:
+            probs = [0.0] * game.GAME_COLS
+            probs[np.argmax(counts)] = 1.0
+        else:
+            counts = [count ** (1.0 / tau) for count in counts]
+            total = sum(counts)
+            probs = [count / total for count in counts]
+        values = self.value_avg[state_int]
+        return probs, values</pre></div><p class="calibre8"><a id="id768" class="calibre1"/>类中的最后一个函数使用MCTS期间收集的统计数据，返回游戏状态的动作概率和动作值。概率计算有两种模式，由<img src="img/00387.jpeg" alt="Implementing MCTS" class="calibre24"/>参数指定。如果它等于零，选择就变得确定了，因为我们选择了最常访问的动作。在其他情况下，使用由<img src="img/00388.jpeg" alt="Implementing MCTS" class="calibre24"/>给出的分布，这再次改进了探索。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Connect4 bot</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_3"><a id="ch18lvl2sec127" class="calibre1"/>型号</h2></div></div></div><p class="calibre8">使用的NN是一个六层的<a id="id769" class="calibre1"/>残差卷积网，是原始AlphaGo零点方法中使用的网络的简化版。在输入端，我们传递编码的游戏状态，它由两个6 × 7通道组成。第一个频道有1.0个当前玩家磁盘的位置，第二个频道有1.0个对手磁盘的位置。这种表示允许我们使网络玩家不变，并从当前玩家的角度分析位置。</p><p class="calibre8">该网络由带有残差卷积滤波器的公共体组成。由它们生成的要素被传递给策略和值头，它们是卷积图层和全连通图层的组合。policy head返回每个可能操作的logits(即删除磁盘的列)和一个单值float。详细信息可在<code class="literal">Chapter18/lib/model.py</code>文件中找到。</p><p class="calibre8">除了模型之外，这个文件<a id="id770" class="calibre1"/>还包含两个函数:第一个函数使用<code class="literal">state_lists_to_batch </code>名称，将列表中表示的一批游戏状态转换成模型的输入形式。第二种方法名为<code class="literal">play_game</code>,对培训和测试过程都非常重要。它的目的是模拟两个nn之间的游戏，执行MCTS，并可选地将采取的移动存储在重放缓冲区中。</p><div><pre class="programlisting">def play_game(mcts_stores, replay_buffer, net1, net2, steps_before_tau_0, mcts_searches, mcts_batch_size,
+              net1_plays_first=None, device="cpu"):
+    if mcts_stores is None:
+        mcts_stores = [mcts.MCTS(), mcts.MCTS()]
+    elif isinstance(mcts_stores, mcts.MCTS):
+        mcts_stores = [mcts_stores, mcts_stores]</pre></div><p class="calibre8">该函数接受许多参数:</p><div><ul class="itemizedlist"><li class="listitem"><code class="literal">The MCTS</code>类实例，可以是单个实例或两个实例的列表或<code class="literal">None</code>。我们需要灵活处理这个函数的不同用法。</li><li class="listitem">可选的重放缓冲区。</li><li class="listitem">比赛中使用的nn。</li><li class="listitem">在用于动作概率计算的<img src="img/00389.jpeg" alt="Model" class="calibre24"/>参数从1变为0之前，需要采取的游戏步骤数量。</li><li class="listitem">要执行的MCTS量。</li><li class="listitem">MCTS批量大小。</li><li class="listitem">谁先玩。</li></ul></div><div><pre class="programlisting">    state = game.INITIAL_STATE
+    nets = [net1, net2]
+    if net1_plays_first is None:
+        cur_player = np.random.choice(2)
+    else:
+        cur_player = 0 if net1_plays_first else 1
+    step = 0
+    tau = 1 if steps_before_tau_0 &gt; 0 else 0
+    game_history = []</pre></div><p class="calibre8">在游戏循环之前，我们初始化游戏状态并选择第一个玩家。如果没有关于谁先行动的信息<a id="id771" class="calibre1"/>，那就是随机选择。</p><div><pre class="programlisting">    result = None
+    net1_result = None
+
+    while result is None:
+        mcts_stores[cur_player].search_batch(mcts_searches, mcts_batch_size, state, cur_player, nets[cur_player], device=device)
+        probs, _ = mcts_stores[cur_player].get_policy_value(
+                                                          state, tau=tau)
+        game_history.append((state, cur_player, probs))
+        action = np.random.choice(game.GAME_COLS, p=probs)</pre></div><p class="calibre8">在每一个回合，我们执行MCTS来填充统计数据，然后获得动作的概率，将对其进行采样以获得动作。</p><div><pre class="programlisting">        state, won = game.move(state, action, cur_player)
+        if won:
+            result = 1
+            net1_result = 1 if cur_player == 0 else -1
+            break
+        cur_player = 1-cur_player
+        # check the draw case
+        if len(game.possible_moves(state)) == 0:
+            result = 0
+            net1_result = 0
+            break
+        step += 1
+        if step &gt;= steps_before_tau_0:
+            tau = 0</pre></div><p class="calibre8">然后，使用游戏引擎模块中的函数更新游戏状态，并执行游戏结束情况的处理。</p><div><pre class="programlisting">    if replay_buffer is not None:
+        for state, cur_player, probs in reversed(game_history):
+            replay_buffer.append((state, cur_player, probs, result))
+            result = -result
+
+    return net1_result, step</pre></div><p class="calibre8">在函数的最后，我们从当前玩家的角度用动作和游戏结果的概率填充重放缓冲区。这些数据将用于训练网络。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Connect4 bot</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_4"><a id="ch18lvl2sec128" class="calibre1"/>培训</h2></div></div></div><p class="calibre8">有了所有这些功能，<a id="id772" class="calibre1"/>训练过程就是将它们以正确的顺序简单组合起来。训练程序在<code class="literal">Chapter18/train.py,</code>中可用，它具有已经描述过的逻辑:在循环中，我们当前的最佳模型不断地与自己对抗，将步骤保存在重放缓冲区中。另一个网络正在根据这些数据进行训练，以最小化从MCTS采样的行动概率与政策负责人的结果之间的交叉熵。关于游戏和实际游戏结果的头部预测值之间的MSE也被加到总损失中。</p><p class="calibre8">周期性地，被训练的网络和当前最佳网络进行100场比赛，并且如果当前网络能够赢超过60%的比赛，则网络的权重被同步。这个过程无限延续，希望找到越来越精通游戏的模型。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Connect4 bot</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_5"><a id="ch18lvl2sec129" class="calibre1"/>测试和比较</h2></div></div></div><p class="calibre8">在训练过程中，每次用训练好的模型替换当前最佳模型<a id="id774" class="calibre1"/>时，都会保存模型的<a id="id773" class="calibre1"/>权重。结果，我们得到了多种不同强度的药剂。从理论上讲，新型号的技术应该比以前的好，但是我们想亲自检验一下。</p><p class="calibre8">为此，有一个工具<code class="literal">Chapter18/play.py</code>，它获取几个模型文件，并在每个模型与所有其他模型进行指定回合数的比赛时进行比赛。结果表显示了每个模型的获胜次数，代表了相关模型的实力。</p><p class="calibre8">另一种检验合成药剂性能的方法是让它们与人类对抗。这已经由我和我的孩子们完成了(谢谢茱莉亚和费多尔！)，还有我的朋友，和各种实力的精选机型打了几场比赛。这是使用为Telegram messenger编写的机器人完成的，它允许用户选择模型进行比赛，并保留所有比赛的全局分数表。该bot在<code class="literal">Chapter18/telegram-bot.py</code>中可用，其要求和安装过程与来自<a class="calibre1" title="Chapter 12. Chatbots Training with RL" href="part0087_split_000.html#2IV0U1-ce551566b6304db290b61e4d70de52ee">第12章</a>、<em class="calibre11"> Chatbots Training with RL </em>的bot相同(要启动并运行它，您需要创建一个电报bot令牌并将其放在配置文件中)。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Connect4 results</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch18lvl1sec95" class="calibre1"/>连接4结果</h1></div></div></div><p class="calibre8">为了使训练快速，训练过程的<a id="id775" class="calibre1"/>超参数被有意选择为小的。例如，在自我游戏过程的每一步，只进行了10次MCTS，每次的小批量为8个。这与高效的迷你批处理MCTS和快速游戏引擎相结合，使得训练非常快。基本上，在仅仅一个小时的训练和2500个自我游戏模式下的游戏之后，制作的模型已经足够复杂，可以令人愉快地与之对抗。当然，它的游戏水平甚至远低于一个孩子的水平，但它展示了一些基本的策略，只在每一个其他的移动中出错，这是一个很好的进步。</p><p class="calibre8">训练进行了一天，结果是由一名最佳模特进行了55k场比赛，总共进行了102次最佳模特轮换。训练动态如下图所示:</p><div><img src="img/00390.jpeg" alt="Connect4 results" class="calibre9"/><div><p class="calibre14">图3:培训融合</p></div></div><p class="calibre10">锦标赛验证因不同模型的数量而变得复杂，因为每对选手需要进行几场比赛来评估他们的实力。为了解决这个问题，所有102个模型被分成10组(按时间排序)，接下来的100场比赛在每组的所有配对之间进行，然后从每组中选出两个最受欢迎的进行最后一轮比赛。这里显示了各系统在决赛中获得的分数。<em class="calibre11"> x </em>轴是模型的指数，而<em class="calibre11"> y </em>轴是系统获得的胜利数:</p><p class="calibre8">图4:训练有素的代理之间的比赛结果</p><div><img src="img/00391.jpeg" alt="Connect4 results" class="calibre9"/><div><p class="calibre14">Figure 4: Results of the tournament between the trained agents</p></div></div><p class="calibre10">从上图中可以明显看出，系统很早就找到了最佳策略，但后来由于某种原因，性能明显下降。系统慢慢开始恢复，但这个过程太慢了。或许，超参数(尤其是MCTS的数量和重放缓冲区的大小)可以被调整以改善结果。此外，后续模型具有更差的游戏性的事实可能是在训练网络的评估期间需要更多游戏的信号。</p><p class="calibre8">这里显示了10强决赛排行榜:</p><p class="calibre8"><code class="literal">best_008_02500.dat: w=223, l=157, d=0</code></p><div><ol class="orderedlist"><li class="listitem" value="1"><code class="literal">best_005_01900.dat: w=214, l=166, d=0</code></li><li class="listitem" value="2"><code class="literal">best_072_40500.dat: w=205, l=174, d=1</code></li><li class="listitem" value="3"><code class="literal">best_097_52100.dat: w=203, l=177, d=0</code></li><li class="listitem" value="4"><code class="literal">best_077_42600.dat: w=202, l=178, d=0</code></li><li class="listitem" value="5"><code class="literal">best_022_12200.dat: w=196, l=184, d=0</code></li><li class="listitem" value="6"><code class="literal">best_053_31000.dat: w=193, l=187, d=0</code></li><li class="listitem" value="7"><code class="literal">best_065_36600.dat: w=192, l=188, d=0</code></li><li class="listitem" value="8"><code class="literal">best_103_55700.dat: w=192, l=188, d=0</code></li><li class="listitem" value="9"><code class="literal">best_017_09800.dat: w=189, l=191, d=0</code></li><li class="listitem" value="10">从人类验证中获得了类似的结果<a id="id777" class="calibre1"/>，当时最好的结果由<code class="literal">best_008_02500.dat </code>模型显示，该模型能够赢得50%的游戏。</li></ol><div/></div><p class="calibre8">图5:人工验证排行榜；我女儿在主宰一切</p><div><img src="img/00392.jpeg" alt="Connect4 results" class="calibre9"/><div><p class="calibre14">Figure 5: The leaderboard of human verification; my daughter is dominating</p></div></div><p class="calibre10"><a id="ch18lvl1sec96" class="calibre1"/>摘要</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Summary</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0">在这一章中，我们实现了由DeepMind创建的AlphaGo Zero方法，用于解决具有完美信息的棋盘游戏。这种方法的要点是允许代理人通过自我游戏来提高他们的力量，而不需要任何来自人类游戏或其他数据源的先验知识。</h1></div></div></div><p class="calibre8"><a id="ch18lvl1sec97" class="calibre1"/>参考文献</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>References</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><em class="calibre11">在没有人类知识的情况下掌握围棋游戏</em>、<em class="calibre11">大卫·西尔弗</em>、<em class="calibre11">朱利安·施利特维泽</em>、<em class="calibre11">卡伦·西蒙扬</em>、<em class="calibre11">等人</em>、<em class="calibre11">doi:10.1038/nature 24270</em></h1></div></div></div><div><ol class="orderedlist"><li class="listitem" value="1"><em class="calibre11">用通用的强化学习算法</em>、<em class="calibre11">大卫·西尔弗</em>、<em class="calibre11">托马斯·休伯特</em>、<em class="calibre11">朱利安·施利特维泽</em>、<em class="calibre11">等</em>、<em class="calibre11"> arXiv:1712.01815 </em></li><li class="listitem" value="2"><a id="ch18lvl1sec98" class="calibre1"/>图书摘要</li></ol><div/></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Book summary</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0">恭喜你读到了这本书的结尾！我希望这本书是有用的，你喜欢读它，就像我喜欢收集资料和写所有的章节一样。最后，我想祝你在RL这个激动人心和充满活力的领域好运。该领域发展非常迅速，但是随着对基础知识的理解，跟踪该领域的新发展和研究变得简单多了。</h1></div></div></div><p class="calibre8">还有许多非常有趣的主题没有被发现，例如部分可观测的MDP(环境观测不满足马尔可夫性质)或最近的探索方法，例如基于计数的方法。最近有很多关于多代理方法的活动，其中许多代理需要学习如何协调来解决一个共同的问题。我们还没有提到基于记忆的RL方法，在这种方法中，您的代理可以维护某种记忆来保存其知识和经验。在提高RL样本效率方面投入了大量的努力，这在理想情况下将接近人类的学习性能，这在目前仍然是一个深远的目标。当然，一本小书不可能涵盖全领域，因为几乎每天都有新的想法出现。然而，这本书的目标是给你一个该领域的实践基础，简化你自己对常用方法的学习。</p><p class="calibre8">最后，我想引用Volodymir Mnih在Deep RL Bootcamp 2017上的演讲<em class="calibre11">Deep RL的最新进展和前沿</em>中的话:“Deep RL的领域非常新，一切仍然令人兴奋。字面意思，什么都还没解决！”</p><p class="calibre8">你可能喜欢的其他书籍</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Other Books You May Enjoy</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><h1 class="title" id="calibre_pb_0">如果您喜欢这本书，您可能会对Packt的其他书籍感兴趣:</h1></div></div></div><p class="calibre8">If you enjoyed this book, you may be interested in these other books by Packt:</p><div><img src="img/00393.jpeg" alt="Other Books You May Enjoy" class="calibre9"/></div><p class="calibre10"><strong class="calibre2"> Python机器学习-第二版</strong></p><p class="calibre8">瓦希德·米尔贾利利·塞巴斯蒂安·拉什卡</p><p class="calibre8">国际标准书号:978-1-78712-593-3</p><p class="calibre8">了解数据科学、机器学习和深度学习中的关键框架</p><div><ul class="itemizedlist"><li class="listitem">在机器学习中利用最新的Python开源库</li><li class="listitem">使用具有挑战性的真实世界数据掌握机器学习技术</li><li class="listitem">使用TensorFlow库掌握深度神经网络实现</li><li class="listitem">通过机器学习模型和神经网络对你的数据提出新的问题</li><li class="listitem">学习分类算法的机制，以实现工作的最佳工具</li><li class="listitem">使用回归分析预测连续的目标结果</li><li class="listitem">通过聚类发现数据中隐藏的模式和结构</li><li class="listitem">使用情感分析更深入地研究文本和社交媒体数据</li><li class="listitem"><strong class="calibre2">深度学习与TensorFlow -第二版</strong></li></ul></div><p class="calibre8">医学博士贾恩卡洛·扎克内</p><div><img src="img/00394.jpeg" alt="Other Books You May Enjoy" class="calibre9"/></div><p class="calibre10">国际标准书号:978-1-78883-110-9</p><p class="calibre8">通过TensorFlow应用深度机器智能和GPU计算</p><p class="calibre8">访问公共数据集并使用TensorFlow加载、处理和转换数据</p><p class="calibre8">了解如何使用高级TensorFlow API构建更强大的应用程序</p><div><ul class="itemizedlist"><li class="listitem">将深度学习用于可扩展的对象检测和移动计算</li><li class="listitem">通过探索强化学习技术，快速训练机器从数据中学习</li><li class="listitem">探索深度学习研究和应用的活跃领域</li><li class="listitem">Use deep learning for scalable object detection and mobile computing</li><li class="listitem">Train machines quickly to learn from data by exploring reinforcement learning techniques</li><li class="listitem"><strong class="calibre2"> Python访谈</strong></li></ul></div><p class="calibre8">迈克·德里斯科尔</p><div><img src="img/00395.jpeg" alt="Other Books You May Enjoy" class="calibre9"/></div><p class="calibre10">国际标准书号:978-1-78839-908-1</p><p class="calibre8">成功的程序员是如何思考的</p><p class="calibre8">Python的历史</p><p class="calibre8">洞察Python核心团队的想法</p><div><ul class="itemizedlist"><li class="listitem">Python编程的趋势</li><li class="listitem"><a id="ch18lvl1sec98_a" class="calibre1"/>留下评论——让其他读者知道你的想法</li><li class="listitem">请在你购买这本书的网站上留下评论，与他人分享你对这本书的想法。如果你从亚马逊购买了这本书，请在这本书的亚马逊页面给我们留下一个诚实的评论。这一点至关重要，这样其他潜在读者就可以看到并使用您的公正意见来做出购买决定，我们可以了解我们的客户对我们产品的看法，我们的作者也可以看到您对他们与Packt合作创作的书名的反馈。这只需要您几分钟的时间，但对其他潜在客户、我们的作者和Packt来说是有价值的。谢谢大家！</li><li class="listitem">索引</li></ul></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Other Books You May Enjoy</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h1 class="title" id="calibre_pb_1">A</h1></div></div></div><p class="calibre8">A2C，与阿克特尔</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h1 class="title" id="calibre_pb_0">关于/ <a title="A2C using ACKTR" class="calibre1" href="part0112_split_000.html#3APV01-ce551566b6304db290b61e4d70de52ee"> A2C使用ACKTR </a></h1>
+      <h2 class="calibre30">实施/ <a title="Implementation" class="calibre1" href="part0112_split_000.html#3APV01-ce551566b6304db290b61e4d70de52ee">实施</a></h2>
+      <ul class="itemizedlist"><li class="listitem">结果/ <a title="Results" class="calibre1" href="part0112_split_000.html#3APV01-ce551566b6304db290b61e4d70de52ee">结果</a><ul class="itemizedlist1"><li class="listitem">A2C代理/ <a title="Adding an extra A to A2C" class="calibre1" href="part0082.html#2E6E41-ce551566b6304db290b61e4d70de52ee">给A2C多加一个A</a></li><li class="listitem">A2C基线</li><li class="listitem">关于/ <a title="A2C baseline" class="calibre1" href="part0109_split_000.html#37UDA1-ce551566b6304db290b61e4d70de52ee"> A2C基线</a></li></ul></li>
+        <li class="listitem">结果/ <a title="Results" class="calibre1" href="part0109_split_000.html#37UDA1-ce551566b6304db290b61e4d70de52ee">结果</a></li>
+        <li class="listitem">视频录制/ <a title="Videos recording" class="calibre1" href="part0109_split_000.html#37UDA1-ce551566b6304db290b61e4d70de52ee">视频录制</a><ul class="itemizedlist1"><li class="listitem">乒乓球上的A2C</li><li class="listitem">关于/ <a title="A2C on Pong" class="calibre1" href="part0077.html#29DRA2-ce551566b6304db290b61e4d70de52ee"> A2C对乓</a></li><li class="listitem">结果/ <a title="A2C on Pong results" class="calibre1" href="part0078.html#2ACBS1-ce551566b6304db290b61e4d70de52ee"> A2C上乓结果</a></li></ul></li>
+        <li class="listitem">A3C并行化/<a title="A3C – data parallelism" class="calibre1" href="part0084_split_000.html#2G3F82-ce551566b6304db290b61e4d70de52ee">A3C–数据并行</a><ul class="itemizedlist1"><li class="listitem">结果/ <a title="Results" class="calibre1" href="part0084_split_000.html#2G3F82-ce551566b6304db290b61e4d70de52ee">结果</a></li><li class="listitem">梯度平行化/<a title="A3C – gradients parallelism" class="calibre1" href="part0085_split_000.html#2H1VQ2-ce551566b6304db290b61e4d70de52ee">A3C–梯度平行化</a>，<a title="Results" class="calibre1" href="part0085_split_000.html#2H1VQ2-ce551566b6304db290b61e4d70de52ee">结果</a></li></ul></li>
+        <li class="listitem">行为空间<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Action space" class="calibre1" href="part0100.html#2VBO81-ce551566b6304db290b61e4d70de52ee">动作空间</a></li><li class="listitem">演员兼评论家</li></ul></li>
+        <li class="listitem">演员兼评论家(A2C) / <a title="Self-play" class="calibre1" href="part0132_split_000.html#3TSA82-ce551566b6304db290b61e4d70de52ee">自演</a><ul class="itemizedlist1"><li class="listitem">演员-评论家(A2C)方法</li></ul></li>
+        <li class="listitem">关于/ <a title="The Actor-Critic (A2C) method" class="calibre1" href="part0102_split_000.html#318PC2-ce551566b6304db290b61e4d70de52ee">影评人(A2C)的方法</a></li>
+        <li class="listitem">实施/ <a title="Implementation" class="calibre1" href="part0102_split_000.html#318PC2-ce551566b6304db290b61e4d70de52ee">实施</a></li>
+        <li class="listitem">结果/ <a title="Results" class="calibre1" href="part0102_split_000.html#318PC2-ce551566b6304db290b61e4d70de52ee">结果</a><ul class="itemizedlist1"><li class="listitem">模型，使用/ <a title="Using models and recording videos" class="calibre1" href="part0102_split_000.html#318PC2-ce551566b6304db290b61e4d70de52ee">使用模型和录制视频</a></li><li class="listitem">视频，录制/ <a title="Using models and recording videos" class="calibre1" href="part0102_split_000.html#318PC2-ce551566b6304db290b61e4d70de52ee">使用模型和录制视频</a></li><li class="listitem">演员-评论家并行化</li><li class="listitem">方法/ <a title="Adding an extra A to A2C" class="calibre1" href="part0082.html#2E6E41-ce551566b6304db290b61e4d70de52ee">给A2C多加一个A</a></li><li class="listitem">代理人</li></ul></li>
+        <li class="listitem">解剖/ <a title="The anatomy of the agent" class="calibre1" href="part0016_split_000.html#F8901-ce551566b6304db290b61e4d70de52ee">代理人的解剖</a><ul class="itemizedlist1"><li class="listitem">代理网络</li></ul></li>
+        <li class="listitem">参考/<a title="The PyTorch Agent Net library" class="calibre1" href="part0048_split_000.html#1DOR02-ce551566b6304db290b61e4d70de52ee">py torch代理网库</a><ul class="itemizedlist1"><li class="listitem">AlphaGo归零法</li></ul></li>
+        <li class="listitem">概述/ <a title="Overview" class="calibre1" href="part0132_split_000.html#3TSA82-ce551566b6304db290b61e4d70de52ee">概述</a><ul class="itemizedlist1"><li class="listitem">MCTS / <a title="Monte-Carlo Tree Search" class="calibre1" href="part0132_split_000.html#3TSA82-ce551566b6304db290b61e4d70de52ee">蒙特卡罗树搜索</a></li></ul></li>
+        <li class="listitem">自弹/ <a title="Self-play" class="calibre1" href="part0132_split_000.html#3TSA82-ce551566b6304db290b61e4d70de52ee">自弹</a><ul class="itemizedlist1"><li class="listitem">培训/ <a title="Training and evaluation" class="calibre1" href="part0132_split_000.html#3TSA82-ce551566b6304db290b61e4d70de52ee">培训和评估</a></li><li class="listitem">评估/ <a title="Training and evaluation" class="calibre1" href="part0132_split_000.html#3TSA82-ce551566b6304db290b61e4d70de52ee">培训和评估</a></li><li class="listitem">异步优势行动者-批评家(A3C)</li><li class="listitem">关于/ <a title="Proximal Policy Optimization" class="calibre1" href="part0110_split_000.html#38STS2-ce551566b6304db290b61e4d70de52ee">邻近策略优化</a></li><li class="listitem">异步优势行动者-批评家(A3C)代理/ <a title="Model imperfections" class="calibre1" href="part0125.html#3N6MA1-ce551566b6304db290b61e4d70de52ee">模型缺陷</a></li></ul></li>
+        <li class="listitem">异步优势优评(A3C)法/ <a title="PG on Pong" class="calibre1" href="part0072_split_000.html#24L8G1-ce551566b6304db290b61e4d70de52ee"> PG on Pong </a>，<a title="Why a continuous space?" class="calibre1" href="part0099_split_000.html#2UD7M1-ce551566b6304db290b61e4d70de52ee">为什么是连续空间？</a><ul class="itemizedlist1"><li class="listitem">Atari变换</li></ul></li>
+        <li class="listitem">RL研究人员使用/ <a title="Wrappers" class="calibre1" href="part0046_split_000.html#1BRPS2-ce551566b6304db290b61e4d70de52ee">包装器</a></li>
+        <li class="listitem">B</li>
+        <li class="listitem">酒吧<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Data" class="calibre1" href="part0060.html#1P71O1-ce551566b6304db290b61e4d70de52ee">数据</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_1">基线代理</h2>
+      <ul class="itemizedlist"><li class="listitem">培训/ <a title="The baseline agent" class="calibre1" href="part0128_split_000.html#3Q2801-ce551566b6304db290b61e4d70de52ee">基线代理</a><ul class="itemizedlist1"><li class="listitem">基线</li></ul></li>
+        <li class="listitem">参考/ <a title="Wrappers" class="calibre1" href="part0046_split_000.html#1BRPS2-ce551566b6304db290b61e4d70de52ee">包装器</a><ul class="itemizedlist1"><li class="listitem">基本DQN</li></ul></li>
+        <li class="listitem">关于/ <a title="Basic DQN" class="calibre1" href="part0049.html#1ENBI2-ce551566b6304db290b61e4d70de52ee">基本DQN </a><ul class="itemizedlist1"><li class="listitem">贝尔曼方程</li></ul></li>
+        <li class="listitem">关于/ <a title="The Bellman equation of optimality" class="calibre1" href="part0037.html#1394Q2-ce551566b6304db290b61e4d70de52ee">最优性的贝尔曼方程</a><ul class="itemizedlist1"><li class="listitem">双语评估替角(BLEU)分数/ <a title="Bilingual evaluation understudy (BLEU) score" class="calibre1" href="part0089_split_000.html#2KS222-ce551566b6304db290b61e4d70de52ee">双语评估替角(BLEU)分数</a></li></ul></li>
+        <li class="listitem">黑盒方法<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Black-box methods" class="calibre1" href="part0114_split_000.html#3CN041-ce551566b6304db290b61e4d70de52ee">黑盒方法</a></li></ul></li>
+        <li class="listitem">属性/ <a title="Black-box methods" class="calibre1" href="part0114_split_000.html#3CN041-ce551566b6304db290b61e4d70de52ee">黑盒方法</a></li>
+        <li class="listitem">棋盘游戏<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Board games" class="calibre1" href="part0131_split_000.html#3STPM1-ce551566b6304db290b61e4d70de52ee">桌游</a></li><li class="listitem">分支因子/ <a title="Monte-Carlo Tree Search" class="calibre1" href="part0132_split_000.html#3TSA82-ce551566b6304db290b61e4d70de52ee">蒙特卡罗树搜索</a></li></ul></li>
+        <li class="listitem">浏览器自动化<ul class="itemizedlist1"><li class="listitem">和RL / <a title="Browser automation and RL" class="calibre1" href="part0092_split_000.html#2NNJO1-ce551566b6304db290b61e4d70de52ee">浏览器自动化和RL </a></li></ul></li>
+        <li class="listitem">C</li>
+        <li class="listitem">蜡烛图<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Data" class="calibre1" href="part0060.html#1P71O1-ce551566b6304db290b61e4d70de52ee">数据</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_2">侧翻方差/ <a title="CartPole variance" class="calibre1" href="part0075.html#27GQ61-ce551566b6304db290b61e4d70de52ee">侧翻方差</a></h2>
+      <ul class="itemizedlist"><li class="listitem">绝对DQN<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Categorical DQN" class="calibre1" href="part0055_split_000.html#1KEEU2-ce551566b6304db290b61e4d70de52ee">绝对DQN </a></li></ul></li>
+        <li class="listitem">实施/ <a title="Implementation" class="calibre1" href="part0055_split_000.html#1KEEU2-ce551566b6304db290b61e4d70de52ee">实施</a></li>
+        <li class="listitem">结果/ <a title="Results" class="calibre1" href="part0055_split_000.html#1KEEU2-ce551566b6304db290b61e4d70de52ee">结果</a><ul class="itemizedlist1"><li class="listitem">聊天机器人示例</li><li class="listitem">关于/ <a title="The chatbot example" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">聊天机器人的例子</a></li><li class="listitem">结构/ <a title="The example structure" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">示例结构</a></li></ul></li>
+        <li class="listitem">cornell.py文件/ <a title="Modules: cornell.py and data.py" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">模块:cornell.py和data.py </a><ul class="itemizedlist1"><li class="listitem">data.py file / <a title="Modules: cornell.py and data.py" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">模块:cornell.py和data.py </a></li><li class="listitem">BLEU score / <a title="BLEU score and utils.py" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee"> BLEU score和utils.py </a></li><li class="listitem">utils.py module / <a title="BLEU score and utils.py" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee"> BLEU score和utils.py </a></li><li class="listitem">型号/ <a title="Model" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">型号</a></li><li class="listitem">交叉熵方法/ <a title="Training: cross-entropy" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">训练:交叉熵</a></li><li class="listitem">培训代码/ <a title="Running the training" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">运行培训</a></li><li class="listitem">数据，检查/ <a title="Checking the data" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">检查数据</a></li><li class="listitem">训练模型/ <a title="Testing the trained model" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">测试训练模型</a></li><li class="listitem">SCST训练/ <a title="Training: SCST" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">训练:SCST </a></li><li class="listitem">跑SCST训练/ <a title="Running the SCST training" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">跑SCST训练</a></li><li class="listitem">结果/ <a title="Results" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">结果</a></li><li class="listitem">电报机器人/ <a title="Telegram bot" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee"/></li><li class="listitem">聊天机器人</li><li class="listitem">概述/ <a title="Chatbots overview" class="calibre1" href="part0087_split_000.html#2IV0U1-ce551566b6304db290b61e4d70de52ee">聊天机器人概述</a></li><li class="listitem">娱乐模仿人类/ <a title="The chatbot example" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">聊天机器人的例子</a></li></ul></li>
+        <li class="listitem">目标导向/ <a title="The chatbot example" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">聊天机器人示例</a><ul class="itemizedlist1"><li class="listitem">Connect4机器人</li><li class="listitem">关于/ <a title="Connect4 bot" class="calibre1" href="part0133_split_000.html#3UQQQ2-ce551566b6304db290b61e4d70de52ee"> Connect4 bot </a></li><li class="listitem">游戏型号/ <a title="Game model" class="calibre1" href="part0133_split_000.html#3UQQQ2-ce551566b6304db290b61e4d70de52ee">游戏型号</a></li></ul></li>
+        <li class="listitem">MCTS实施/ <a title="Implementing MCTS" class="calibre1" href="part0133_split_000.html#3UQQQ2-ce551566b6304db290b61e4d70de52ee">实施MCTS </a><ul class="itemizedlist1"><li class="listitem">型号/ <a title="Model" class="calibre1" href="part0133_split_000.html#3UQQQ2-ce551566b6304db290b61e4d70de52ee">型号</a></li><li class="listitem">培训流程/ <a title="Training" class="calibre1" href="part0133_split_000.html#3UQQQ2-ce551566b6304db290b61e4d70de52ee">培训</a></li><li class="listitem">测试/ <a title="Testing and comparison" class="calibre1" href="part0133_split_000.html#3UQQQ2-ce551566b6304db290b61e4d70de52ee">测试和比较</a></li><li class="listitem">比较/ <a title="Testing and comparison" class="calibre1" href="part0133_split_000.html#3UQQQ2-ce551566b6304db290b61e4d70de52ee">测试和比较</a></li><li class="listitem">结果/ <a title="Connect4 results" class="calibre1" href="part0134.html#3VPBC2-ce551566b6304db290b61e4d70de52ee">连接4结果</a></li><li class="listitem">连续空间</li><li class="listitem">为什么需要连续的空间？</li><li class="listitem">卷积模型/ <a title="Models" class="calibre1" href="part0063.html#1S2JE1-ce551566b6304db290b61e4d70de52ee">模型</a></li></ul></li>
+        <li class="listitem"><a title="The convolution model" class="calibre1" href="part0065_split_000.html#1TVKI2-ce551566b6304db290b61e4d70de52ee">卷积模型/</a>卷积模型<ul class="itemizedlist1"><li class="listitem">康奈尔电影对话语料库</li></ul></li>
+        <li class="listitem">参考/ <a title="The example structure" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">示例结构</a></li>
+        <li class="listitem">相关性/ <a title="Correlation and sample efficiency" class="calibre1" href="part0081_split_000.html#2D7TI1-ce551566b6304db290b61e4d70de52ee">相关性和样本效率</a></li>
+        <li class="listitem">协方差矩阵自适应进化策略<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Evolution strategies" class="calibre1" href="part0115.html#3DLGM1-ce551566b6304db290b61e4d70de52ee">进化策略</a></li></ul></li>
+        <li class="listitem">交叉熵</li>
+        <li class="listitem">在柱子上/ <a title="Cross-entropy on CartPole" class="calibre1" href="part0032.html#UGI02-ce551566b6304db290b61e4d70de52ee">在柱子上的交叉熵</a><ul class="itemizedlist1"><li class="listitem">关于FrozenLake / <a title="Cross-entropy on FrozenLake" class="calibre1" href="part0033.html#VF2I2-ce551566b6304db290b61e4d70de52ee">关于FrozenLake </a>的交叉熵</li></ul></li>
+        <li class="listitem">理论背景/ <a title="Theoretical background of the cross-entropy method" class="calibre1" href="part0034.html#10DJ41-ce551566b6304db290b61e4d70de52ee">交叉熵方法的理论背景</a><ul class="itemizedlist1"><li class="listitem">课程学习/ <a title="Log-likelihood training" class="calibre1" href="part0089_split_000.html#2KS222-ce551566b6304db290b61e4d70de52ee">对数似然训练</a></li><li class="listitem">自定义图层</li><li class="listitem">关于/ <a title="Custom layers" class="calibre1" href="part0025.html#NQU22-ce551566b6304db290b61e4d70de52ee">自定义图层</a></li></ul></li>
+        <li class="listitem">D</li>
+        <li class="listitem">数据<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Data" class="calibre1" href="part0060.html#1P71O1-ce551566b6304db290b61e4d70de52ee">数据</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_3">解码器/ <a title="Encoder-Decoder" class="calibre1" href="part0088_split_000.html#2JTHG2-ce551566b6304db290b61e4d70de52ee">编码器-解码器</a></h2>
+      <ul class="itemizedlist"><li class="listitem">深度确定性政策梯度(DDPG)<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Deterministic policy gradients " class="calibre1" href="part0103_split_000.html#3279U2-ce551566b6304db290b61e4d70de52ee">确定性政策梯度</a></li></ul></li>
+        <li class="listitem">深GA</li>
+        <li class="listitem">关于/ <a title="Deep GA" class="calibre1" href="part0120_split_000.html#3IE3G1-ce551566b6304db290b61e4d70de52ee">深嘎</a><ul class="itemizedlist1"><li class="listitem">深度学习(DL) / <a title="Chatbots overview" class="calibre1" href="part0087_split_000.html#2IV0U1-ce551566b6304db290b61e4d70de52ee">聊天机器人概述</a></li></ul></li>
+        <li class="listitem">深度学习(DL) / <a title="Hardware and software requirements" class="calibre1" href="part0017.html#G6PI1-ce551566b6304db290b61e4d70de52ee">硬件和软件要求</a><ul class="itemizedlist1"><li class="listitem">DeepMind控制套件/ <a title="Things to try" class="calibre1" href="part0105.html#344B21-ce551566b6304db290b61e4d70de52ee">可以尝试的事情</a></li></ul></li>
+        <li class="listitem">深入的NLP基础</li>
+        <li class="listitem">关于/ <a title="Deep NLP basics" class="calibre1" href="part0088_split_000.html#2JTHG2-ce551566b6304db290b61e4d70de52ee">深度NLP基础知识</a></li>
+        <li class="listitem">RNNs / <a title="Recurrent Neural Networks" class="calibre1" href="part0088_split_000.html#2JTHG2-ce551566b6304db290b61e4d70de52ee">递归神经网络</a></li>
+        <li class="listitem">嵌入/ <a title="Embeddings" class="calibre1" href="part0088_split_000.html#2JTHG2-ce551566b6304db290b61e4d70de52ee">嵌入</a><ul class="itemizedlist1"><li class="listitem">编码器-解码器/ <a title="Encoder-Decoder" class="calibre1" href="part0088_split_000.html#2JTHG2-ce551566b6304db290b61e4d70de52ee">编码器-解码器</a></li><li class="listitem">深度Q学习</li><li class="listitem">关于/ <a title="Deep Q-learning" class="calibre1" href="part0045_split_000.html#1AT9A2-ce551566b6304db290b61e4d70de52ee">深度Q-learning </a></li><li class="listitem">与环境的相互作用/ <a title="Interaction with the environment" class="calibre1" href="part0045_split_000.html#1AT9A2-ce551566b6304db290b61e4d70de52ee">与环境的相互作用</a></li></ul></li>
+        <li class="listitem">新加坡元优化/ <a title="SGD optimization" class="calibre1" href="part0045_split_000.html#1AT9A2-ce551566b6304db290b61e4d70de52ee">新加坡元优化</a><ul class="itemizedlist1"><li class="listitem">步骤间相关性/ <a title="Correlation between steps" class="calibre1" href="part0045_split_000.html#1AT9A2-ce551566b6304db290b61e4d70de52ee">步骤间相关性</a></li><li class="listitem">马尔可夫性质/ <a title="The Markov property" class="calibre1" href="part0045_split_000.html#1AT9A2-ce551566b6304db290b61e4d70de52ee">马尔可夫性质</a></li><li class="listitem">深Q-网络(DQN)法/ <a title="Why a continuous space?" class="calibre1" href="part0099_split_000.html#2UD7M1-ce551566b6304db290b61e4d70de52ee">为什么是连续空间？</a></li><li class="listitem">确定性政策梯度</li><li class="listitem">关于/ <a title="Deterministic policy gradients " class="calibre1" href="part0103_split_000.html#3279U2-ce551566b6304db290b61e4d70de52ee">确定性政策梯度</a></li></ul></li>
+        <li class="listitem">探索/ <a title="Exploration" class="calibre1" href="part0103_split_000.html#3279U2-ce551566b6304db290b61e4d70de52ee">探索</a></li>
+        <li class="listitem">实施/ <a title="Implementation" class="calibre1" href="part0103_split_000.html#3279U2-ce551566b6304db290b61e4d70de52ee">实施</a><ul class="itemizedlist1"><li class="listitem">结果/ <a title="Results" class="calibre1" href="part0103_split_000.html#3279U2-ce551566b6304db290b61e4d70de52ee">结果</a></li><li class="listitem">视频，录制/ <a title="Recording videos" class="calibre1" href="part0103_split_000.html#3279U2-ce551566b6304db290b61e4d70de52ee">录制视频</a></li><li class="listitem">呆伯特奖励过程</li><li class="listitem">关于/ <a title="Markov reward process" class="calibre1" href="part0014_split_000.html#DB7S2-ce551566b6304db290b61e4d70de52ee">马氏奖励流程</a></li><li class="listitem">分配政策梯度</li></ul></li>
+        <li class="listitem">关于/ <a title="Distributional policy gradients" class="calibre1" href="part0104_split_000.html#335QG2-ce551566b6304db290b61e4d70de52ee">分配政策梯度</a><ul class="itemizedlist1"><li class="listitem">架构/ <a title="Architecture" class="calibre1" href="part0104_split_000.html#335QG2-ce551566b6304db290b61e4d70de52ee">架构</a></li></ul></li>
+        <li class="listitem">实施/ <a title="Implementation" class="calibre1" href="part0104_split_000.html#335QG2-ce551566b6304db290b61e4d70de52ee">实施</a><ul class="itemizedlist1"><li class="listitem">结果/ <a title="Results" class="calibre1" href="part0104_split_000.html#335QG2-ce551566b6304db290b61e4d70de52ee">结果</a></li><li class="listitem">码头工人</li><li class="listitem">参考/ <a title="Installation" class="calibre1" href="part0093_split_000.html#2OM4A2-ce551566b6304db290b61e4d70de52ee">安装</a></li><li class="listitem">双DQN</li></ul></li>
+        <li class="listitem">关于/ <a title="Double DQN" class="calibre1" href="part0051_split_000.html#1GKCM2-ce551566b6304db290b61e4d70de52ee">双DQN </a><ul class="itemizedlist1"><li class="listitem">实施/ <a title="Implementation" class="calibre1" href="part0051_split_000.html#1GKCM2-ce551566b6304db290b61e4d70de52ee">实施</a></li></ul></li>
+        <li class="listitem">结果/ <a title="Results" class="calibre1" href="part0051_split_000.html#1GKCM2-ce551566b6304db290b61e4d70de52ee">结果</a><ul class="itemizedlist1"><li class="listitem">DQN改进</li><li class="listitem">组合/ <a title="Combining everything" class="calibre1" href="part0056_split_000.html#1LCVG2-ce551566b6304db290b61e4d70de52ee">组合一切</a></li><li class="listitem">实施/ <a title="Implementation" class="calibre1" href="part0056_split_000.html#1LCVG2-ce551566b6304db290b61e4d70de52ee">实施</a></li></ul></li>
+        <li class="listitem">结果/ <a title="Results" class="calibre1" href="part0056_split_000.html#1LCVG2-ce551566b6304db290b61e4d70de52ee">结果</a><ul class="itemizedlist1"><li class="listitem">DQN模型/ <a title="DQN model" class="calibre1" href="part0046_split_000.html#1BRPS2-ce551566b6304db290b61e4d70de52ee"> DQN模型</a></li><li class="listitem">乒乓球上的DQN</li><li class="listitem">关于/ <a title="DQN on Pong" class="calibre1" href="part0046_split_000.html#1BRPS2-ce551566b6304db290b61e4d70de52ee">乒乓上的DQN</a></li></ul></li>
+        <li class="listitem">糖纸/ <a title="Wrappers" class="calibre1" href="part0046_split_000.html#1BRPS2-ce551566b6304db290b61e4d70de52ee">糖纸</a></li>
+        <li class="listitem">训练/ <a title="Training" class="calibre1" href="part0046_split_000.html#1BRPS2-ce551566b6304db290b61e4d70de52ee">训练</a><ul class="itemizedlist1"><li class="listitem">运行/ <a title="Running and performance" class="calibre1" href="part0046_split_000.html#1BRPS2-ce551566b6304db290b61e4d70de52ee">运行和性能</a></li><li class="listitem">性能/ <a title="Running and performance" class="calibre1" href="part0046_split_000.html#1BRPS2-ce551566b6304db290b61e4d70de52ee">运行和性能</a></li><li class="listitem">工作/ <a title="Your model in action" class="calibre1" href="part0046_split_000.html#1BRPS2-ce551566b6304db290b61e4d70de52ee">您的行动模型</a></li><li class="listitem">DQN培训</li><li class="listitem">关于/<a title="The final form of DQN training" class="calibre1" href="part0045_split_000.html#1AT9A2-ce551566b6304db290b61e4d70de52ee">DQN培训的最终形式</a></li><li class="listitem">决斗DQN</li></ul></li>
+        <li class="listitem">关于/ <a title="Dueling DQN" class="calibre1" href="part0054_split_000.html#1JFUC2-ce551566b6304db290b61e4d70de52ee">决斗DQN </a><ul class="itemizedlist1"><li class="listitem">实施/ <a title="Implementation" class="calibre1" href="part0054_split_000.html#1JFUC2-ce551566b6304db290b61e4d70de52ee">实施</a></li></ul></li>
+        <li class="listitem">结果/ <a title="Results" class="calibre1" href="part0054_split_000.html#1JFUC2-ce551566b6304db290b61e4d70de52ee">结果</a><ul class="itemizedlist1"><li class="listitem">E</li><li class="listitem">伊莱扎</li><li class="listitem">reference / <a title="Chatbots overview" class="calibre1" href="part0087_split_000.html#2IV0U1-ce551566b6304db290b61e4d70de52ee">聊天机器人概述</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_4">EM权重</h2>
+      <ul class="itemizedlist"><li class="listitem">训练/ <a title="Training EM weights" class="calibre1" href="part0128_split_000.html#3Q2801-ce551566b6304db290b61e4d70de52ee">训练EM重量</a><ul class="itemizedlist1"><li class="listitem">编码器/ <a title="Encoder-Decoder" class="calibre1" href="part0088_split_000.html#2JTHG2-ce551566b6304db290b61e4d70de52ee">编码器-解码器</a></li></ul></li>
+        <li class="listitem">编码器-解码器/ <a title="Encoder-Decoder" class="calibre1" href="part0088_split_000.html#2JTHG2-ce551566b6304db290b61e4d70de52ee">编码器-解码器</a><ul class="itemizedlist1"><li class="listitem">熵/ <a title="Theoretical background of the cross-entropy method" class="calibre1" href="part0034.html#10DJ41-ce551566b6304db290b61e4d70de52ee">交叉熵方法的理论背景</a></li></ul></li>
+        <li class="listitem">环境</li>
+        <li class="listitem">关于/ <a title="The anatomy of the agent" class="calibre1" href="part0016_split_000.html#F8901-ce551566b6304db290b61e4d70de52ee">特工的解剖</a></li>
+        <li class="listitem">环境模型(EM) / <a title="Imagination-augmented agent" class="calibre1" href="part0126_split_000.html#3O56S2-ce551566b6304db290b61e4d70de52ee">想象力增强代理</a></li>
+        <li class="listitem">环境<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Environments" class="calibre1" href="part0101.html#30A8Q1-ce551566b6304db290b61e4d70de52ee">环境</a></li></ul></li>
+        <li class="listitem">环境</li>
+        <li class="listitem">PyBullet / <a title="Environments" class="calibre1" href="part0101.html#30A8Q1-ce551566b6304db290b61e4d70de52ee">环境</a><ul class="itemizedlist1"><li class="listitem">是的，在扁担上</li><li class="listitem">关于/ <a title="ES on CartPole" class="calibre1" href="part0116_split_000.html#3EK182-ce551566b6304db290b61e4d70de52ee"> ES上扁担</a></li><li class="listitem">结果/ <a title="Results" class="calibre1" href="part0116_split_000.html#3EK182-ce551566b6304db290b61e4d70de52ee">结果</a></li></ul></li>
+        <li class="listitem">是的，在半猎豹上<ul class="itemizedlist1"><li class="listitem">关于/ <a title="ES on HalfCheetah" class="calibre1" href="part0117_split_000.html#3FIHQ2-ce551566b6304db290b61e4d70de52ee"> ES对HalfCheetah </a></li><li class="listitem">结果/ <a title="Results" class="calibre1" href="part0117_split_000.html#3FIHQ2-ce551566b6304db290b61e4d70de52ee">结果</a></li></ul></li>
+        <li class="listitem">进化策略<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Evolution strategies" class="calibre1" href="part0115.html#3DLGM1-ce551566b6304db290b61e4d70de52ee">进化策略</a></li><li class="listitem">F</li></ul></li>
+        <li class="listitem">因式分解的高斯噪声/ <a title="Noisy networks" class="calibre1" href="part0052_split_000.html#1HIT82-ce551566b6304db290b61e4d70de52ee">噪声网络</a><ul class="itemizedlist1"><li class="listitem">前馈模型/ <a title="The feed-forward model" class="calibre1" href="part0065_split_000.html#1TVKI2-ce551566b6304db290b61e4d70de52ee">前馈模型</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_5">适应度函数/ <a title="Black-box methods" class="calibre1" href="part0114_split_000.html#3CN041-ce551566b6304db290b61e4d70de52ee">黑盒方法</a></h2>
+      <ul class="itemizedlist"><li class="listitem">冰冻湖</li>
+        <li class="listitem">价值迭代法/ <a title="Value iteration in practice" class="calibre1" href="part0040.html#164MG2-ce551566b6304db290b61e4d70de52ee">实践中的价值迭代</a></li>
+        <li class="listitem">Q-learning / <a title="Q-learning for FrozenLake" class="calibre1" href="part0041.html#173721-ce551566b6304db290b61e4d70de52ee">针对FrozenLake的Q-learning</a></li>
+        <li class="listitem">G<ul class="itemizedlist1"><li class="listitem">嘎，在扁担上</li><li class="listitem">关于/ <a title="GA on CartPole" class="calibre1" href="part0119_split_000.html#3HFIU1-ce551566b6304db290b61e4d70de52ee">钢管舞</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_6">结果/ <a title="Results" class="calibre1" href="part0119_split_000.html#3HFIU1-ce551566b6304db290b61e4d70de52ee">结果</a></h2>
+      <ul class="itemizedlist"><li class="listitem">嘎，在猎豹上<ul class="itemizedlist1"><li class="listitem">关于/ <a title="GA on Cheetah" class="calibre1" href="part0121_split_000.html#3JCK21-ce551566b6304db290b61e4d70de52ee"> GA上猎豹</a></li><li class="listitem">结果/ <a title="Results" class="calibre1" href="part0121_split_000.html#3JCK21-ce551566b6304db290b61e4d70de52ee">结果</a></li></ul></li>
+        <li class="listitem">雅达利图片上的甘<ul class="itemizedlist1"><li class="listitem">示例/ <a title="Example – GAN on Atari images" class="calibre1" href="part0028.html#QMFO2-ce551566b6304db290b61e4d70de52ee">示例–雅达利图像上的GAN</a></li><li class="listitem">GA调整</li></ul></li>
+        <li class="listitem">关于/ <a title="GA tweaks" class="calibre1" href="part0120_split_000.html#3IE3G1-ce551566b6304db290b61e4d70de52ee"> GA调整</a><ul class="itemizedlist1"><li class="listitem">深GA / <a title="Deep GA" class="calibre1" href="part0120_split_000.html#3IE3G1-ce551566b6304db290b61e4d70de52ee">深GA </a></li></ul></li>
+        <li class="listitem">查新/ <a title="Novelty search" class="calibre1" href="part0120_split_000.html#3IE3G1-ce551566b6304db290b61e4d70de52ee">查新</a><ul class="itemizedlist1"><li class="listitem">生成对抗网络</li><li class="listitem">关于/ <a title="Learning – supervised, unsupervised, and reinforcement" class="calibre1" href="part0012_split_000.html#BE6O2-ce551566b6304db290b61e4d70de52ee">学习——监督、非监督和强化</a></li><li class="listitem">生成对抗网络(GANs) / <a title="Example – GAN on Atari images" class="calibre1" href="part0028.html#QMFO2-ce551566b6304db290b61e4d70de52ee">示例——雅达利图像上的GANs</a></li></ul></li>
+        <li class="listitem">遗传算法<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Genetic algorithms" class="calibre1" href="part0118.html#3GH2C1-ce551566b6304db290b61e4d70de52ee">遗传算法</a></li></ul></li>
+        <li class="listitem">GPU张量/ <a title="GPU tensors" class="calibre1" href="part0022_split_000.html#KVCC2-ce551566b6304db290b61e4d70de52ee"> GPU张量</a></li>
+        <li class="listitem">梯度<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Gradients" class="calibre1" href="part0023_split_000.html#LTSU1-ce551566b6304db290b61e4d70de52ee">渐变</a></li></ul></li>
+        <li class="listitem">笔记本渐变/ <a title="Gradients" class="calibre1" href="part0023_split_000.html#LTSU1-ce551566b6304db290b61e4d70de52ee">渐变</a></li>
+        <li class="listitem">Gym / <a title="Hardware and software requirements" class="calibre1" href="part0017.html#G6PI1-ce551566b6304db290b61e4d70de52ee">硬件和软件要求</a><ul class="itemizedlist1"><li class="listitem">H</li><li class="listitem">硬件要求/ <a title="Hardware and software requirements" class="calibre1" href="part0017.html#G6PI1-ce551566b6304db290b61e4d70de52ee">硬件和软件要求</a></li></ul></li>
+        <li class="listitem">隐藏状态/ <a title="Recurrent Neural Networks" class="calibre1" href="part0088_split_000.html#2JTHG2-ce551566b6304db290b61e4d70de52ee">递归神经网络</a></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_7">人类示威</h2>
+      <ul class="itemizedlist"><li class="listitem">关于/ <a title="Human demonstrations" class="calibre1" href="part0095_split_000.html#2QJ5E2-ce551566b6304db290b61e4d70de52ee">人体演示</a></li>
+        <li class="listitem">录制/ <a title="Recording the demonstrations" class="calibre1" href="part0095_split_000.html#2QJ5E2-ce551566b6304db290b61e4d70de52ee">录制示威游行</a></li>
+        <li class="listitem">记录格式/ <a title="Recording format" class="calibre1" href="part0095_split_000.html#2QJ5E2-ce551566b6304db290b61e4d70de52ee">记录格式</a><ul class="itemizedlist1"><li class="listitem">使用演示进行培训/ <a title="Training using demonstrations" class="calibre1" href="part0095_split_000.html#2QJ5E2-ce551566b6304db290b61e4d70de52ee">使用演示进行培训</a></li><li class="listitem">结果/ <a title="Results" class="calibre1" href="part0095_split_000.html#2QJ5E2-ce551566b6304db290b61e4d70de52ee">结果</a></li><li class="listitem">TicTacToe问题/ <a title="TicTacToe problem" class="calibre1" href="part0095_split_000.html#2QJ5E2-ce551566b6304db290b61e4d70de52ee"> TicTacToe问题</a></li><li class="listitem">超参数调谐</li><li class="listitem">关于/ <a title="Tuning hyperparameters" class="calibre1" href="part0079_split_000.html#2BASE1-ce551566b6304db290b61e4d70de52ee">调整超参数</a></li><li class="listitem">学习率(LR) / <a title="Learning rate" class="calibre1" href="part0079_split_000.html#2BASE1-ce551566b6304db290b61e4d70de52ee">学习率</a></li></ul></li>
+        <li class="listitem">熵β/<a title="Entropy beta" class="calibre1" href="part0079_split_000.html#2BASE1-ce551566b6304db290b61e4d70de52ee">熵β</a><ul class="itemizedlist1"><li class="listitem">环境数量/ <a title="Count of environments" class="calibre1" href="part0079_split_000.html#2BASE1-ce551566b6304db290b61e4d70de52ee">环境数量</a></li><li class="listitem">批量大小/ <a title="Batch size" class="calibre1" href="part0079_split_000.html#2BASE1-ce551566b6304db290b61e4d70de52ee">批量大小</a></li><li class="listitem">我</li><li class="listitem">I2A，关于雅达利突破</li><li class="listitem">关于/ <a title="I2A on Atari Breakout" class="calibre1" href="part0127_split_000.html#3P3NE2-ce551566b6304db290b61e4d70de52ee">雅达利突破上的I2A</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_8">基线A2C代理/ <a title="The baseline A2C agent" class="calibre1" href="part0127_split_000.html#3P3NE2-ce551566b6304db290b61e4d70de52ee">基线A2C代理</a></h2>
+      <ul class="itemizedlist"><li class="listitem">EM培训/ <a title="EM training" class="calibre1" href="part0127_split_000.html#3P3NE2-ce551566b6304db290b61e4d70de52ee"> EM培训</a><ul class="itemizedlist1"><li class="listitem">想象力代理人/ <a title="The imagination agent" class="calibre1" href="part0127_split_000.html#3P3NE2-ce551566b6304db290b61e4d70de52ee">想象力代理人</a></li><li class="listitem">实施/<a title="The I2A model" class="calibre1" href="part0127_split_000.html#3P3NE2-ce551566b6304db290b61e4d70de52ee">I2A模型</a></li><li class="listitem">卷展栏编码器/ <a title="The Rollout encoder" class="calibre1" href="part0127_split_000.html#3P3NE2-ce551566b6304db290b61e4d70de52ee">卷展栏编码器</a></li><li class="listitem">培训流程/<a title="Training of I2A" class="calibre1" href="part0127_split_000.html#3P3NE2-ce551566b6304db290b61e4d70de52ee">I2A的培训</a></li><li class="listitem">I2A型号</li><li class="listitem">用/ <a title="Training with the I2A model" class="calibre1" href="part0128_split_000.html#3Q2801-ce551566b6304db290b61e4d70de52ee">训练用I2A模型训练</a></li><li class="listitem">想象增强代理</li></ul></li>
+        <li class="listitem">关于/ <a title="Imagination-augmented agent" class="calibre1" href="part0126_split_000.html#3O56S2-ce551566b6304db290b61e4d70de52ee">想象力增强剂</a><ul class="itemizedlist1"><li class="listitem">环境模型/ <a title="The environment model" class="calibre1" href="part0126_split_000.html#3O56S2-ce551566b6304db290b61e4d70de52ee">环境模型</a></li></ul></li>
+        <li class="listitem">推广政策/ <a title="The rollout policy" class="calibre1" href="part0126_split_000.html#3O56S2-ce551566b6304db290b61e4d70de52ee">推广政策</a><ul class="itemizedlist1"><li class="listitem">卷展栏编码器/ <a title="The rollout encoder" class="calibre1" href="part0126_split_000.html#3O56S2-ce551566b6304db290b61e4d70de52ee">卷展栏编码器</a></li><li class="listitem">论文成绩/ <a title="Paper results" class="calibre1" href="part0126_split_000.html#3O56S2-ce551566b6304db290b61e4d70de52ee">论文成绩</a></li><li class="listitem">想象路径/ <a title="Imagination-augmented agent" class="calibre1" href="part0126_split_000.html#3O56S2-ce551566b6304db290b61e4d70de52ee">想象增强代理</a></li><li class="listitem">独立高斯噪声</li><li class="listitem">关于/ <a title="Noisy networks" class="calibre1" href="part0052_split_000.html#1HIT82-ce551566b6304db290b61e4d70de52ee">嘈杂的网络</a></li></ul></li>
+        <li class="listitem">K</li>
+        <li class="listitem">开泰二进制解析语言<ul class="itemizedlist1"><li class="listitem">参考/ <a title="Recording format" class="calibre1" href="part0095_split_000.html#2QJ5E2-ce551566b6304db290b61e4d70de52ee">记录格式</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_9">关键决策/ <a title="Problem statements and key decisions" class="calibre1" href="part0061.html#1Q5IA1-ce551566b6304db290b61e4d70de52ee">问题陈述和关键决策</a></h2>
+      <ul class="itemizedlist"><li class="listitem">库尔巴克-莱布勒(KL)-散度/ <a title="PG on CartPole" class="calibre1" href="part0071_split_000.html#23MNU1-ce551566b6304db290b61e4d70de52ee">旗杆上的PG</a>，seq2seq中的<a title="RL in seq2seq" class="calibre1" href="part0089_split_000.html#2KS222-ce551566b6304db290b61e4d70de52ee">RL</a><ul class="itemizedlist1"><li class="listitem">Kullback-Leibler (KL)散度/ <a title="Theoretical background of the cross-entropy method" class="calibre1" href="part0034.html#10DJ41-ce551566b6304db290b61e4d70de52ee">交叉熵方法的理论背景</a></li></ul></li>
+        <li class="listitem">L</li>
+        <li class="listitem">损失函数</li>
+        <li class="listitem">关于/ <a title="Final glue – loss functions and optimizers" class="calibre1" href="part0026_split_000.html#OPEK1-ce551566b6304db290b61e4d70de52ee">最终胶水-损失函数和优化器</a>，<a title="Loss functions" class="calibre1" href="part0026_split_000.html#OPEK1-ce551566b6304db290b61e4d70de52ee">损失函数</a></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_10">nn。ms Loss/<a title="Loss functions" class="calibre1" href="part0026_split_000.html#OPEK1-ce551566b6304db290b61e4d70de52ee">损失函数</a></h2>
+      <ul class="itemizedlist"><li class="listitem">nn。损失函数<ul class="itemizedlist1"><li class="listitem">nn。损失函数</li><li class="listitem">nn。损失函数</li><li class="listitem">M</li><li class="listitem">机器学习(ML) / <a title="Chatbots overview" class="calibre1" href="part0087_split_000.html#2IV0U1-ce551566b6304db290b61e4d70de52ee">聊天机器人概述</a></li><li class="listitem">马尔可夫链</li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_11">关于/ <a title="Markov process" class="calibre1" href="part0014_split_000.html#DB7S2-ce551566b6304db290b61e4d70de52ee">马尔可夫过程</a></h2>
+      <ul class="itemizedlist"><li class="listitem">马尔可夫决策过程</li>
+        <li class="listitem">关于/ <a title="Markov decision process" class="calibre1" href="part0014_split_000.html#DB7S2-ce551566b6304db290b61e4d70de52ee">马尔科夫决策过程</a><ul class="itemizedlist1"><li class="listitem">马尔可夫决策过程(MDP) / <a title="Issues with simple clicking" class="calibre1" href="part0094_split_000.html#2PKKS2-ce551566b6304db290b61e4d70de52ee">简单点击</a>问题</li></ul></li>
+        <li class="listitem">马尔可夫决策过程<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Markov decision processes" class="calibre1" href="part0014_split_000.html#DB7S2-ce551566b6304db290b61e4d70de52ee">马尔可夫决策过程</a></li></ul></li>
+        <li class="listitem">马尔可夫过程</li>
+        <li class="listitem">关于/ <a title="Markov process" class="calibre1" href="part0014_split_000.html#DB7S2-ce551566b6304db290b61e4d70de52ee">马尔可夫过程</a><ul class="itemizedlist1"><li class="listitem">马尔可夫性质/ <a title="The Markov property" class="calibre1" href="part0045_split_000.html#1AT9A2-ce551566b6304db290b61e4d70de52ee">马尔可夫性质</a></li></ul></li>
+        <li class="listitem">关于/ <a title="Markov process" class="calibre1" href="part0014_split_000.html#DB7S2-ce551566b6304db290b61e4d70de52ee">马尔可夫过程</a><ul class="itemizedlist1"><li class="listitem">马尔可夫奖励过程</li></ul></li>
+        <li class="listitem">关于/ <a title="Markov reward process" class="calibre1" href="part0014_split_000.html#DB7S2-ce551566b6304db290b61e4d70de52ee">马氏奖励流程</a><ul class="itemizedlist1"><li class="listitem">均方差(MSE) / <a title="EM training" class="calibre1" href="part0127_split_000.html#3P3NE2-ce551566b6304db290b61e4d70de52ee"> EM训练</a>、<a title="Training and evaluation" class="calibre1" href="part0132_split_000.html#3TSA82-ce551566b6304db290b61e4d70de52ee">训练和评估</a></li></ul> / </li>
+        <li class="listitem">均方损耗<ul class="itemizedlist1"><li class="listitem">关于/ <a title="The Actor-Critic (A2C) method" class="calibre1" href="part0102_split_000.html#318PC2-ce551566b6304db290b61e4d70de52ee">影评人(A2C)的方法</a></li></ul></li>
+        <li class="listitem">极大极小</li>
+        <li class="listitem">关于/ <a title="Board games" class="calibre1" href="part0131_split_000.html#3STPM1-ce551566b6304db290b61e4d70de52ee">桌游</a><ul class="itemizedlist1"><li class="listitem">迷你比特世界(MiniWoB) / <a title="Mini World of Bits benchmark" class="calibre1" href="part0092_split_000.html#2NNJO1-ce551566b6304db290b61e4d70de52ee">迷你比特世界基准</a></li></ul></li>
+        <li class="listitem">迷你比特世界基准/ <a title="Mini World of Bits benchmark" class="calibre1" href="part0092_split_000.html#2NNJO1-ce551566b6304db290b61e4d70de52ee">迷你比特世界基准</a><ul class="itemizedlist1"><li class="listitem">基于模型的方法</li></ul></li>
+        <li class="listitem">对比，无模型方法/ <a title="Model-based versus model-free" class="calibre1" href="part0124_split_000.html#3M85O1-ce551566b6304db290b61e4d70de52ee">基于模型对比无模型</a></li>
+        <li class="listitem">模型缺陷/ <a title="Model imperfections" class="calibre1" href="part0125.html#3N6MA1-ce551566b6304db290b61e4d70de52ee">模型缺陷</a></li>
+        <li class="listitem">模型<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Models" class="calibre1" href="part0063.html#1S2JE1-ce551566b6304db290b61e4d70de52ee">车型</a></li><li class="listitem">卷积模型/ <a title="Models" class="calibre1" href="part0063.html#1S2JE1-ce551566b6304db290b61e4d70de52ee">模型</a></li></ul></li>
+        <li class="listitem">监视器/ <a title="Monitor" class="calibre1" href="part0020_split_000.html#J2B82-ce551566b6304db290b61e4d70de52ee">监视器</a><ul class="itemizedlist1"><li class="listitem">蒙特卡罗树搜索(MCTS) / <a title="Overview" class="calibre1" href="part0132_split_000.html#3TSA82-ce551566b6304db290b61e4d70de52ee">概述</a></li><li class="listitem">穆乔科</li></ul></li>
+        <li class="listitem">URL / <a title="Environments" class="calibre1" href="part0101.html#30A8Q1-ce551566b6304db290b61e4d70de52ee">环境</a></li>
+        <li class="listitem">关于/ <a title="Environments" class="calibre1" href="part0101.html#30A8Q1-ce551566b6304db290b61e4d70de52ee">环境</a></li>
+        <li class="listitem">多重处理<ul class="itemizedlist1"><li class="listitem">在Python中/ <a title="Multiprocessing in Python" class="calibre1" href="part0083.html#2F4UM1-ce551566b6304db290b61e4d70de52ee">在Python中多重处理</a></li><li class="listitem">普通</li></ul></li>
+        <li class="listitem">n步DQN<ul class="itemizedlist1"><li class="listitem">关于/ <a title="N-step DQN" class="calibre1" href="part0050_split_000.html#1FLS42-ce551566b6304db290b61e4d70de52ee"> N步DQN </a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_12">实施/ <a title="Implementation" class="calibre1" href="part0050_split_000.html#1FLS42-ce551566b6304db290b61e4d70de52ee">实施</a></h2>
+      <ul class="itemizedlist"><li class="listitem">自然语言/ <a title="Chatbots overview" class="calibre1" href="part0087_split_000.html#2IV0U1-ce551566b6304db290b61e4d70de52ee">聊天机器人概述</a><ul class="itemizedlist1"><li class="listitem">神经网络</li><li class="listitem">积木/ <a title="NN building blocks" class="calibre1" href="part0024.html#MSDG1-ce551566b6304db290b61e4d70de52ee"> NN积木</a></li></ul></li>
+        <li class="listitem">神经网络(NN) / <a title="Problem statements and key decisions" class="calibre1" href="part0061.html#1Q5IA1-ce551566b6304db290b61e4d70de52ee">问题陈述和关键决策</a>、<a title="Monte-Carlo Tree Search" class="calibre1" href="part0132_split_000.html#3TSA82-ce551566b6304db290b61e4d70de52ee">蒙特卡罗树搜索</a></li>
+        <li class="listitem">神经网络<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Deterministic policy gradients " class="calibre1" href="part0103_split_000.html#3279U2-ce551566b6304db290b61e4d70de52ee">确定性政策梯度</a></li></ul></li>
+        <li class="listitem">嘈杂的网络</li>
+        <li class="listitem">关于/ <a title="Noisy networks" class="calibre1" href="part0052_split_000.html#1HIT82-ce551566b6304db290b61e4d70de52ee">噪声网络</a><ul class="itemizedlist1"><li class="listitem">实施/ <a title="Implementation" class="calibre1" href="part0052_split_000.html#1HIT82-ce551566b6304db290b61e4d70de52ee">实施</a></li></ul></li>
+        <li class="listitem">结果/ <a title="Results" class="calibre1" href="part0052_split_000.html#1HIT82-ce551566b6304db290b61e4d70de52ee">结果</a><ul class="itemizedlist1"><li class="listitem">笔记本渐变/ <a title="Gradients" class="calibre1" href="part0023_split_000.html#LTSU1-ce551566b6304db290b61e4d70de52ee">渐变</a></li><li class="listitem">新颖性搜索</li><li class="listitem">关于/ <a title="Novelty search" class="calibre1" href="part0120_split_000.html#3IE3G1-ce551566b6304db290b61e4d70de52ee">查新</a></li></ul></li>
+        <li class="listitem">实施/ <a title="Novelty search" class="calibre1" href="part0120_split_000.html#3IE3G1-ce551566b6304db290b61e4d70de52ee">查新</a></li>
+        <li class="listitem">NumPy / <a title="Hardware and software requirements" class="calibre1" href="part0017.html#G6PI1-ce551566b6304db290b61e4d70de52ee">硬件和软件要求</a><ul class="itemizedlist1"><li class="listitem">O</li><li class="listitem">OpenAI</li></ul></li>
+        <li class="listitem">reference / <a title="OpenAI Gym API" class="calibre1" href="part0018_split_000.html#H5A42-ce551566b6304db290b61e4d70de52ee"> OpenAI健身房API </a></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_13">OpenAI健身房API</h2>
+      <ul class="itemizedlist"><li class="listitem">关于/ <a title="OpenAI Gym API" class="calibre1" href="part0018_split_000.html#H5A42-ce551566b6304db290b61e4d70de52ee"> OpenAI健身房API </a><ul class="itemizedlist1"><li class="listitem">动作空间/ <a title="Action space" class="calibre1" href="part0018_split_000.html#H5A42-ce551566b6304db290b61e4d70de52ee">动作空间</a></li></ul></li>
+        <li class="listitem">观察空间/ <a title="Observation space" class="calibre1" href="part0018_split_000.html#H5A42-ce551566b6304db290b61e4d70de52ee">观察空间</a><ul class="itemizedlist1"><li class="listitem">环境/ <a title="The environment" class="calibre1" href="part0018_split_000.html#H5A42-ce551566b6304db290b61e4d70de52ee">环境</a></li><li class="listitem">环境，创建/ <a title="Creation of the environment" class="calibre1" href="part0018_split_000.html#H5A42-ce551566b6304db290b61e4d70de52ee">环境的创建</a></li><li class="listitem">侧手翻练习</li><li class="listitem">开放宇宙</li><li class="listitem">参考/ <a title="Creation of the environment" class="calibre1" href="part0018_split_000.html#H5A42-ce551566b6304db290b61e4d70de52ee">创造环境</a>，<a title="OpenAI Universe" class="calibre1" href="part0093_split_000.html#2OM4A2-ce551566b6304db290b61e4d70de52ee">开放宇宙</a></li><li class="listitem">关于/ <a title="OpenAI Universe" class="calibre1" href="part0093_split_000.html#2OM4A2-ce551566b6304db290b61e4d70de52ee"> OpenAI宇宙</a></li></ul></li>
+        <li class="listitem">安装/ <a title="Installation" class="calibre1" href="part0093_split_000.html#2OM4A2-ce551566b6304db290b61e4d70de52ee">安装</a><ul class="itemizedlist1"><li class="listitem">行动/ <a title="Actions and observations" class="calibre1" href="part0093_split_000.html#2OM4A2-ce551566b6304db290b61e4d70de52ee">行动和观察</a></li><li class="listitem">观察/ <a title="Actions and observations" class="calibre1" href="part0093_split_000.html#2OM4A2-ce551566b6304db290b61e4d70de52ee">动作和观察</a></li><li class="listitem">环境创建/ <a title="Environment creation" class="calibre1" href="part0093_split_000.html#2OM4A2-ce551566b6304db290b61e4d70de52ee">环境创建</a></li><li class="listitem">MiniWoB稳定性/ <a title="MiniWoB stability" class="calibre1" href="part0093_split_000.html#2OM4A2-ce551566b6304db290b61e4d70de52ee"> MiniWoB稳定性</a></li><li class="listitem">OpenCV Python绑定/ <a title="Hardware and software requirements" class="calibre1" href="part0017.html#G6PI1-ce551566b6304db290b61e4d70de52ee">硬件和软件要求</a></li><li class="listitem">最佳性</li><li class="listitem">关于/ <a title="Value, state, and optimality" class="calibre1" href="part0036_split_000.html#12AK82-ce551566b6304db290b61e4d70de52ee">值、状态和最优性</a></li></ul></li>
+        <li class="listitem">优化者</li>
+        <li class="listitem">关于/ <a title="Final glue – loss functions and optimizers" class="calibre1" href="part0026_split_000.html#OPEK1-ce551566b6304db290b61e4d70de52ee">终胶-损耗函数和优化器</a>，<a title="Optimizers" class="calibre1" href="part0026_split_000.html#OPEK1-ce551566b6304db290b61e4d70de52ee">优化器</a><ul class="itemizedlist1"><li class="listitem">SGD / <a title="Optimizers" class="calibre1" href="part0026_split_000.html#OPEK1-ce551566b6304db290b61e4d70de52ee">优化器</a></li></ul></li>
+        <li class="listitem">RMSprop / <a title="Optimizers" class="calibre1" href="part0026_split_000.html#OPEK1-ce551566b6304db290b61e4d70de52ee">优化器</a><ul class="itemizedlist1"><li class="listitem">Adagrad / <a title="Optimizers" class="calibre1" href="part0026_split_000.html#OPEK1-ce551566b6304db290b61e4d70de52ee">优化器</a></li><li class="listitem">奥恩斯坦-乌伦贝克过程</li><li class="listitem">关于/ <a title="Implementation" class="calibre1" href="part0102_split_000.html#318PC2-ce551566b6304db290b61e4d70de52ee">实现</a></li><li class="listitem">P</li></ul></li>
+        <li class="listitem">部分可观测马尔可夫决策过程(POMDP)<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Implementation" class="calibre1" href="part0103_split_000.html#3279U2-ce551566b6304db290b61e4d70de52ee">实现</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_14">部分可观测MDPs (POMDP) / <a title="The Markov property" class="calibre1" href="part0045_split_000.html#1AT9A2-ce551566b6304db290b61e4d70de52ee">马尔可夫性质</a></h2>
+      <ul class="itemizedlist"><li class="listitem">PG法，在钢管上<ul class="itemizedlist1"><li class="listitem">大约/ <a title="PG on CartPole" class="calibre1" href="part0071_split_000.html#23MNU1-ce551566b6304db290b61e4d70de52ee"> PG在杠上</a></li></ul></li>
+        <li class="listitem">结果/ <a title="Results" class="calibre1" href="part0071_split_000.html#23MNU1-ce551566b6304db290b61e4d70de52ee">结果</a></li>
+        <li class="listitem">PG方法，在Pong上<ul class="itemizedlist1"><li class="listitem">关于/ <a title="PG on Pong" class="calibre1" href="part0072_split_000.html#24L8G1-ce551566b6304db290b61e4d70de52ee"> PG on Pong </a></li><li class="listitem">结果/ <a title="Results" class="calibre1" href="part0072_split_000.html#24L8G1-ce551566b6304db290b61e4d70de52ee">结果</a></li></ul></li>
+        <li class="listitem">政策/ <a title="Values and policy" class="calibre1" href="part0068_split_000.html#20R682-ce551566b6304db290b61e4d70de52ee">价值观和政策</a><ul class="itemizedlist1"><li class="listitem"><a title="Why policy?" class="calibre1" href="part0068_split_000.html#20R682-ce551566b6304db290b61e4d70de52ee">为什么需要政策？</a></li><li class="listitem">表示/ <a title="Policy representation" class="calibre1" href="part0068_split_000.html#20R682-ce551566b6304db290b61e4d70de52ee">策略表示</a></li></ul></li>
+        <li class="listitem">基于策略的方法<ul class="itemizedlist1"><li class="listitem">对比基于价值的方法/ <a title="Policy-based versus value-based methods" class="calibre1" href="part0069_split_000.html#21PMQ2-ce551566b6304db290b61e4d70de52ee">基于政策的方法对比基于价值的方法</a></li><li class="listitem">政策梯度(PG)/<a title="Training of I2A" class="calibre1" href="part0127_split_000.html#3P3NE2-ce551566b6304db290b61e4d70de52ee">I2A的培训</a></li></ul></li>
+        <li class="listitem">政策梯度/ <a title="Policy gradients" class="calibre1" href="part0068_split_000.html#20R682-ce551566b6304db290b61e4d70de52ee">政策梯度</a><ul class="itemizedlist1"><li class="listitem">聚苯醚（Polyphenylene Oxide的缩写）</li></ul></li>
+        <li class="listitem">关于/ <a title="Proximal Policy Optimization" class="calibre1" href="part0110_split_000.html#38STS2-ce551566b6304db290b61e4d70de52ee">近端政策优化</a></li>
+        <li class="listitem">实施/ <a title="Implementation" class="calibre1" href="part0110_split_000.html#38STS2-ce551566b6304db290b61e4d70de52ee">实施</a></li>
+        <li class="listitem">结果/ <a title="Results" class="calibre1" href="part0110_split_000.html#38STS2-ce551566b6304db290b61e4d70de52ee">结果</a><ul class="itemizedlist1"><li class="listitem">实用交叉熵/ <a title="Practical cross-entropy" class="calibre1" href="part0031.html#TI1E1-ce551566b6304db290b61e4d70de52ee">实用交叉熵</a></li><li class="listitem">优先重放缓冲区</li><li class="listitem">关于/ <a title="Prioritized replay buffer" class="calibre1" href="part0053_split_000.html#1IHDQ2-ce551566b6304db290b61e4d70de52ee">优先重放缓冲区</a></li></ul></li>
+        <li class="listitem">实施/ <a title="Implementation" class="calibre1" href="part0053_split_000.html#1IHDQ2-ce551566b6304db290b61e4d70de52ee">实施</a></li>
+        <li class="listitem">结果/ <a title="Results" class="calibre1" href="part0053_split_000.html#1IHDQ2-ce551566b6304db290b61e4d70de52ee">结果</a><ul class="itemizedlist1"><li class="listitem">问题陈述/ <a title="Problem statements and key decisions" class="calibre1" href="part0061.html#1Q5IA1-ce551566b6304db290b61e4d70de52ee">问题陈述和关键决策</a></li><li class="listitem">Ptan</li><li class="listitem">参考/ <a title="Hardware and software requirements" class="calibre1" href="part0017.html#G6PI1-ce551566b6304db290b61e4d70de52ee">硬件和软件要求</a></li></ul></li>
+        <li class="listitem">PyBullet</li>
+        <li class="listitem">关于/ <a title="Environments" class="calibre1" href="part0101.html#30A8Q1-ce551566b6304db290b61e4d70de52ee">环境</a><ul class="itemizedlist1"><li class="listitem">计算机编程语言</li></ul></li>
+        <li class="listitem">模块多重处理/<a title="Multiprocessing in Python" class="calibre1" href="part0083.html#2F4UM1-ce551566b6304db290b61e4d70de52ee">Python中的多重处理</a><ul class="itemizedlist1"><li class="listitem">PyTorch / <a title="Hardware and software requirements" class="calibre1" href="part0017.html#G6PI1-ce551566b6304db290b61e4d70de52ee">软硬件要求</a></li></ul></li>
+        <li class="listitem">关于/ <a title="ES on HalfCheetah" class="calibre1" href="part0117_split_000.html#3FIHQ2-ce551566b6304db290b61e4d70de52ee"> ES对HalfCheetah </a><ul class="itemizedlist1"><li class="listitem">PyTorch代理网络库</li></ul></li>
+        <li class="listitem">关于/<a title="The PyTorch Agent Net library" class="calibre1" href="part0048_split_000.html#1DOR02-ce551566b6304db290b61e4d70de52ee">py torch代理网库</a><ul class="itemizedlist1"><li class="listitem">设计原则/<a title="The PyTorch Agent Net library" class="calibre1" href="part0048_split_000.html#1DOR02-ce551566b6304db290b61e4d70de52ee">py torch代理网库</a></li></ul></li>
+        <li class="listitem">代理实体/ <a title="Agent" class="calibre1" href="part0048_split_000.html#1DOR02-ce551566b6304db290b61e4d70de52ee">代理</a><ul class="itemizedlist1"><li class="listitem">代理经验/ <a title="Agent's experience" class="calibre1" href="part0048_split_000.html#1DOR02-ce551566b6304db290b61e4d70de52ee">代理经验</a></li><li class="listitem">经验缓冲/ <a title="Experience buffer" class="calibre1" href="part0048_split_000.html#1DOR02-ce551566b6304db290b61e4d70de52ee">经验缓冲</a></li><li class="listitem">健身房环境包装器/ <a title="Gym env wrappers" class="calibre1" href="part0048_split_000.html#1DOR02-ce551566b6304db290b61e4d70de52ee">健身房环境包装器</a></li><li class="listitem">PyTorch文档</li><li class="listitem">参考/ <a title="Tensor operations" class="calibre1" href="part0022_split_000.html#KVCC2-ce551566b6304db290b61e4d70de52ee">张量运算</a></li><li class="listitem">Q</li></ul></li>
+        <li class="listitem">Q-learning，用于FrozenLake<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Q-learning for FrozenLake" class="calibre1" href="part0041.html#173721-ce551566b6304db290b61e4d70de52ee">问-为FrozenLake学习</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_15">稀有</h2>
+      <ul class="itemizedlist"><li class="listitem">随机弹匣剂/ <a title="The random CartPole agent" class="calibre1" href="part0019.html#I3QM1-ce551566b6304db290b61e4d70de52ee">随机弹匣剂</a><ul class="itemizedlist1"><li class="listitem">实值迭代/ <a title="Real-life value iteration" class="calibre1" href="part0043_split_000.html#190861-ce551566b6304db290b61e4d70de52ee">实值迭代</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_16">递归神经网络(RNN) / <a title="The Rollout encoder" class="calibre1" href="part0127_split_000.html#3P3NE2-ce551566b6304db290b61e4d70de52ee">卷展栏编码器</a></h2>
+      <ul class="itemizedlist"><li class="listitem">强化学习</li>
+        <li class="listitem">关于/ <a title="Learning – supervised, unsupervised, and reinforcement" class="calibre1" href="part0012_split_000.html#BE6O2-ce551566b6304db290b61e4d70de52ee">学习——监督、非监督和强化</a></li>
+        <li class="listitem">形式/ <a title="RL formalisms and relations" class="calibre1" href="part0013_split_000.html#CCNA2-ce551566b6304db290b61e4d70de52ee"> RL形式和关系</a></li>
+        <li class="listitem">关系/ <a title="RL formalisms and relations" class="calibre1" href="part0013_split_000.html#CCNA2-ce551566b6304db290b61e4d70de52ee"> RL形式和关系</a><ul class="itemizedlist1"><li class="listitem">奖励/ <a title="Reward" class="calibre1" href="part0013_split_000.html#CCNA2-ce551566b6304db290b61e4d70de52ee">奖励</a></li><li class="listitem">经纪人/ <a title="The agent" class="calibre1" href="part0013_split_000.html#CCNA2-ce551566b6304db290b61e4d70de52ee">经纪人</a></li><li class="listitem">环境/ <a title="The environment" class="calibre1" href="part0013_split_000.html#CCNA2-ce551566b6304db290b61e4d70de52ee">环境</a></li><li class="listitem">动作/ <a title="Actions" class="calibre1" href="part0013_split_000.html#CCNA2-ce551566b6304db290b61e4d70de52ee">动作</a></li><li class="listitem">观察结果/ <a title="Observations" class="calibre1" href="part0013_split_000.html#CCNA2-ce551566b6304db290b61e4d70de52ee">观察结果</a></li><li class="listitem">在seq2seq / <a title="RL in seq2seq" class="calibre1" href="part0089_split_000.html#2KS222-ce551566b6304db290b61e4d70de52ee">中RL在seq2seq </a>中</li><li class="listitem">加固方法</li><li class="listitem">关于/ <a title="The REINFORCE method" class="calibre1" href="part0069_split_000.html#21PMQ2-ce551566b6304db290b61e4d70de52ee">加固方法</a></li><li class="listitem">翻筋斗的例子/ <a title="The CartPole example" class="calibre1" href="part0069_split_000.html#21PMQ2-ce551566b6304db290b61e4d70de52ee">翻筋斗的例子</a></li></ul></li>
+        <li class="listitem">结果/ <a title="Results" class="calibre1" href="part0069_split_000.html#21PMQ2-ce551566b6304db290b61e4d70de52ee">结果</a><ul class="itemizedlist1"><li class="listitem">问题/ <a title="REINFORCE issues" class="calibre1" href="part0070_split_000.html#22O7C1-ce551566b6304db290b61e4d70de52ee">强化问题</a>，<a title="Full episodes are required" class="calibre1" href="part0070_split_000.html#22O7C1-ce551566b6304db290b61e4d70de52ee">全集必选</a>，<a title="High gradients variance" class="calibre1" href="part0070_split_000.html#22O7C1-ce551566b6304db290b61e4d70de52ee">高梯度方差</a>，<a title="Exploration" class="calibre1" href="part0070_split_000.html#22O7C1-ce551566b6304db290b61e4d70de52ee">探索</a>，<a title="Correlation between samples" class="calibre1" href="part0070_split_000.html#22O7C1-ce551566b6304db290b61e4d70de52ee">样本间相关性</a></li><li class="listitem">远程帧缓冲协议(RFP) / <a title="Recording format" class="calibre1" href="part0095_split_000.html#2QJ5E2-ce551566b6304db290b61e4d70de52ee">记录格式</a></li><li class="listitem">参考/ <a title="Recording format" class="calibre1" href="part0095_split_000.html#2QJ5E2-ce551566b6304db290b61e4d70de52ee">记录格式</a></li><li class="listitem">结果</li></ul></li>
+        <li class="listitem"><a title="The feed-forward model" class="calibre1" href="part0065_split_000.html#1TVKI2-ce551566b6304db290b61e4d70de52ee">前馈模型/</a>前馈模型<ul class="itemizedlist1"><li class="listitem"><a title="The convolution model" class="calibre1" href="part0065_split_000.html#1TVKI2-ce551566b6304db290b61e4d70de52ee">卷积模型/</a>卷积模型</li></ul></li>
+        <li class="listitem">RL方法<ul class="itemizedlist1"><li class="listitem">分类/<a title="Taxonomy of RL methods" class="calibre1" href="part0030_split_000.html#SJGS1-ce551566b6304db290b61e4d70de52ee">RL方法的分类</a></li><li class="listitem">机器人学校</li></ul></li>
+        <li class="listitem">关于/ <a title="Roboschool" class="calibre1" href="part0108.html#36VSO1-ce551566b6304db290b61e4d70de52ee">机器人学校</a><ul class="itemizedlist1"><li class="listitem">安装链接/ <a title="Roboschool" class="calibre1" href="part0108.html#36VSO1-ce551566b6304db290b61e4d70de52ee">机器人学校</a></li></ul></li>
+        <li class="listitem">S<ul class="itemizedlist1"><li class="listitem">样本效率/ <a title="Value iteration in practice" class="calibre1" href="part0040.html#164MG2-ce551566b6304db290b61e4d70de52ee">实际值迭代</a>，<a title="Correlation and sample efficiency" class="calibre1" href="part0081_split_000.html#2D7TI1-ce551566b6304db290b61e4d70de52ee">相关性和样本效率</a></li><li class="listitem">标量张量/ <a title="Scalar tensors" class="calibre1" href="part0022_split_000.html#KVCC2-ce551566b6304db290b61e4d70de52ee">标量张量</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_17">seq2seq</h2>
+      <ul class="itemizedlist"><li class="listitem">seq2seq中的强化学习/<a title="RL in seq2seq" class="calibre1" href="part0089_split_000.html#2KS222-ce551566b6304db290b61e4d70de52ee">RL</a></li>
+        <li class="listitem">seq2seq模型</li>
+        <li class="listitem">关于/ <a title="Encoder-Decoder" class="calibre1" href="part0088_split_000.html#2JTHG2-ce551566b6304db290b61e4d70de52ee">编码器-解码器</a><ul class="itemizedlist1"><li class="listitem">培训/<a title="Training of seq2seq " class="calibre1" href="part0089_split_000.html#2KS222-ce551566b6304db290b61e4d70de52ee">seq 2 seq</a>的培训</li></ul></li>
+        <li class="listitem">对数似然训练/ <a title="Log-likelihood training" class="calibre1" href="part0089_split_000.html#2KS222-ce551566b6304db290b61e4d70de52ee">对数似然训练</a><ul class="itemizedlist1"><li class="listitem">双语评估替角(BLEU)分数/ <a title="Bilingual evaluation understudy (BLEU) score" class="calibre1" href="part0089_split_000.html#2KS222-ce551566b6304db290b61e4d70de52ee">双语评估替角(BLEU)分数</a></li><li class="listitem">自爆序列训练/ <a title="Self-critical sequence training" class="calibre1" href="part0089_split_000.html#2KS222-ce551566b6304db290b61e4d70de52ee">自爆序列训练</a></li><li class="listitem">简单的点击方法</li><li class="listitem">关于/ <a title="Simple clicking approach" class="calibre1" href="part0094_split_000.html#2PKKS2-ce551566b6304db290b61e4d70de52ee">简单的点击方法</a></li><li class="listitem">网格动作/ <a title="Grid actions" class="calibre1" href="part0094_split_000.html#2PKKS2-ce551566b6304db290b61e4d70de52ee">网格动作</a></li></ul></li>
+        <li class="listitem">示例概述/ <a title="Example overview" class="calibre1" href="part0094_split_000.html#2PKKS2-ce551566b6304db290b61e4d70de52ee">示例概述</a><ul class="itemizedlist1"><li class="listitem">型号/ <a title="Model" class="calibre1" href="part0094_split_000.html#2PKKS2-ce551566b6304db290b61e4d70de52ee">型号</a></li><li class="listitem">训练码/ <a title="Training code" class="calibre1" href="part0094_split_000.html#2PKKS2-ce551566b6304db290b61e4d70de52ee">训练码</a>，<a title="Starting containers" class="calibre1" href="part0094_split_000.html#2PKKS2-ce551566b6304db290b61e4d70de52ee">起始容器</a></li><li class="listitem">起始容器/ <a title="Starting containers" class="calibre1" href="part0094_split_000.html#2PKKS2-ce551566b6304db290b61e4d70de52ee">起始容器</a></li><li class="listitem">培训流程/ <a title="Training process" class="calibre1" href="part0094_split_000.html#2PKKS2-ce551566b6304db290b61e4d70de52ee">培训流程</a></li><li class="listitem">已学政策，检查/ <a title="Checking the learned policy" class="calibre1" href="part0094_split_000.html#2PKKS2-ce551566b6304db290b61e4d70de52ee">检查已学政策</a></li><li class="listitem">问题，用简单的点击/ <a title="Issues with simple clicking" class="calibre1" href="part0094_split_000.html#2PKKS2-ce551566b6304db290b61e4d70de52ee">问题用简单的点击</a></li><li class="listitem">软件要求/ <a title="Hardware and software requirements" class="calibre1" href="part0017.html#G6PI1-ce551566b6304db290b61e4d70de52ee">硬件和软件要求</a></li><li class="listitem">随机的</li><li class="listitem">关于/ <a title="Deterministic policy gradients " class="calibre1" href="part0103_split_000.html#3279U2-ce551566b6304db290b61e4d70de52ee">确定性政策梯度</a></li></ul></li>
+        <li class="listitem">随机梯度下降(SGD) / <a title="Deep Q-learning" class="calibre1" href="part0045_split_000.html#1AT9A2-ce551566b6304db290b61e4d70de52ee">深度Q学习</a>，<a title="Log-likelihood training" class="calibre1" href="part0089_split_000.html#2KS222-ce551566b6304db290b61e4d70de52ee">对数似然训练</a></li>
+        <li class="listitem">关于/ <a title="Deterministic policy gradients " class="calibre1" href="part0103_split_000.html#3279U2-ce551566b6304db290b61e4d70de52ee">确定性政策梯度</a><ul class="itemizedlist1"><li class="listitem">随机梯度下降法</li></ul></li>
+        <li class="listitem">HalfCheetah上的ES<ul class="itemizedlist1"><li class="listitem">监督学习</li></ul></li>
+        <li class="listitem">关于/ <a title="Learning – supervised, unsupervised, and reinforcement" class="calibre1" href="part0012_split_000.html#BE6O2-ce551566b6304db290b61e4d70de52ee">学习——监督、非监督和强化</a><ul class="itemizedlist1"><li class="listitem">监督学习问题</li></ul></li>
+        <li class="listitem">示例/ <a title="Learning – supervised, unsupervised, and reinforcement" class="calibre1" href="part0012_split_000.html#BE6O2-ce551566b6304db290b61e4d70de52ee">学习——监督、非监督和强化</a><ul class="itemizedlist1"><li class="listitem">T</li></ul></li>
+        <li class="listitem">表格Q-学习<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Tabular Q-learning" class="calibre1" href="part0044.html#19UOO2-ce551566b6304db290b61e4d70de52ee">表格Q-学习</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_18">教师强制/ <a title="Log-likelihood training" class="calibre1" href="part0089_split_000.html#2KS222-ce551566b6304db290b61e4d70de52ee">对数似然训练</a></h2>
+      <ul class="itemizedlist"><li class="listitem">电报机器人<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Telegram bot" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">电报机器人</a></li></ul></li>
+        <li class="listitem">参考/ <a title="Telegram bot" class="calibre1" href="part0090_split_000.html#2LQIK2-ce551566b6304db290b61e4d70de52ee">电报机器人</a></li>
+        <li class="listitem">张量板<ul class="itemizedlist1"><li class="listitem">用/ <a title="Monitoring with TensorBoard" class="calibre1" href="part0027_split_000.html#PNV61-ce551566b6304db290b61e4d70de52ee">监视，用张量板</a>监视</li><li class="listitem">绘图工具/ <a title="Plotting stuff" class="calibre1" href="part0027_split_000.html#PNV61-ce551566b6304db290b61e4d70de52ee">绘图工具</a></li></ul></li>
+        <li class="listitem">张量板-pytorch<ul class="itemizedlist1"><li class="listitem">参考/ <a title="TensorBoard 101" class="calibre1" href="part0027_split_000.html#PNV61-ce551566b6304db290b61e4d70de52ee">张量板101 </a></li><li class="listitem">张量板101 / <a title="TensorBoard 101" class="calibre1" href="part0027_split_000.html#PNV61-ce551566b6304db290b61e4d70de52ee">张量板101 </a></li></ul></li>
+        <li class="listitem">张量<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Tensors" class="calibre1" href="part0022_split_000.html#KVCC2-ce551566b6304db290b61e4d70de52ee">张量</a></li></ul></li>
+        <li class="listitem">创建/ <a title="Creation of tensors" class="calibre1" href="part0022_split_000.html#KVCC2-ce551566b6304db290b61e4d70de52ee">创建张量</a></li>
+        <li class="listitem">标量张量/ <a title="Scalar tensors" class="calibre1" href="part0022_split_000.html#KVCC2-ce551566b6304db290b61e4d70de52ee">标量张量</a><ul class="itemizedlist1"><li class="listitem">运算/ <a title="Tensor operations" class="calibre1" href="part0022_split_000.html#KVCC2-ce551566b6304db290b61e4d70de52ee">张量运算</a></li><li class="listitem">GPU张量/ <a title="GPU tensors" class="calibre1" href="part0022_split_000.html#KVCC2-ce551566b6304db290b61e4d70de52ee"> GPU张量</a></li><li class="listitem">和梯度/ <a title="Tensors and gradients" class="calibre1" href="part0023_split_000.html#LTSU1-ce551566b6304db290b61e4d70de52ee">张量和梯度</a></li><li class="listitem">文本描述</li><li class="listitem">添加/ <a title="Adding text description" class="calibre1" href="part0096_split_000.html#2RHM02-ce551566b6304db290b61e4d70de52ee">添加文字说明</a></li><li class="listitem">结果/ <a title="Results" class="calibre1" href="part0096_split_000.html#2RHM02-ce551566b6304db290b61e4d70de52ee">结果</a></li></ul></li>
+        <li class="listitem">井字棋<ul class="itemizedlist1"><li class="listitem">博弈树/ <a title="Monte-Carlo Tree Search" class="calibre1" href="part0132_split_000.html#3TSA82-ce551566b6304db290b61e4d70de52ee">蒙特卡罗树搜索</a></li><li class="listitem">贸易</li></ul></li>
+        <li class="listitem">关于/ <a title="Trading" class="calibre1" href="part0059_split_000.html#1O8H61-ce551566b6304db290b61e4d70de52ee">交易</a><ul class="itemizedlist1"><li class="listitem">交易环境/ <a title="The trading environment" class="calibre1" href="part0062.html#1R42S2-ce551566b6304db290b61e4d70de52ee">交易环境</a></li></ul></li>
+        <li class="listitem">培训代码/ <a title="Training code" class="calibre1" href="part0064.html#1T1401-ce551566b6304db290b61e4d70de52ee">培训代码</a><ul class="itemizedlist1"><li class="listitem">树木修剪</li></ul></li>
+        <li class="listitem">关于/ <a title="Board games" class="calibre1" href="part0131_split_000.html#3STPM1-ce551566b6304db290b61e4d70de52ee">桌游</a></li>
+        <li class="listitem">TRPO</li>
+        <li class="listitem">关于/ <a title="Trust Region Policy Optimization" class="calibre1" href="part0111_split_000.html#39REE1-ce551566b6304db290b61e4d70de52ee">信任区域策略优化</a><ul class="itemizedlist1"><li class="listitem">实施/ <a title="Implementation" class="calibre1" href="part0111_split_000.html#39REE1-ce551566b6304db290b61e4d70de52ee">实施</a></li></ul></li>
+        <li class="listitem">结果/ <a title="Results" class="calibre1" href="part0111_split_000.html#39REE1-ce551566b6304db290b61e4d70de52ee">结果</a><ul class="itemizedlist1"><li class="listitem">信任区域政策优化(TRPO) / <a title="Model imperfections" class="calibre1" href="part0125.html#3N6MA1-ce551566b6304db290b61e4d70de52ee">模型缺陷</a></li><li class="listitem">U</li><li class="listitem">无监督学习</li></ul></li>
+        <li class="listitem">关于/ <a title="Learning – supervised, unsupervised, and reinforcement" class="calibre1" href="part0012_split_000.html#BE6O2-ce551566b6304db290b61e4d70de52ee">学习——监督、非监督和强化</a></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_19">V</h2>
+      <ul class="itemizedlist"><li class="listitem">价值<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Value, state, and optimality" class="calibre1" href="part0036_split_000.html#12AK82-ce551566b6304db290b61e4d70de52ee">值、状态和最优性</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_20">计算/ <a title="Value, state, and optimality" class="calibre1" href="part0036_split_000.html#12AK82-ce551566b6304db290b61e4d70de52ee">值、状态和最优性</a></h2>
+      <ul class="itemizedlist"><li class="listitem">基于价值的方法<ul class="itemizedlist1"><li class="listitem">与基于策略的方法相比/ <a title="Policy-based versus value-based methods" class="calibre1" href="part0069_split_000.html#21PMQ2-ce551566b6304db290b61e4d70de52ee">基于策略的方法与基于价值的方法相比</a></li><li class="listitem">值迭代法</li></ul></li>
+        <li class="listitem">关于/ <a title="The value iteration method" class="calibre1" href="part0039.html#1565U2-ce551566b6304db290b61e4d70de52ee">值迭代法</a><ul class="itemizedlist1"><li class="listitem">工作，在实践中为FrozenLake / <a title="Value iteration in practice" class="calibre1" href="part0040.html#164MG2-ce551566b6304db290b61e4d70de52ee">值迭代</a></li></ul></li>
+        <li class="listitem">奖励表/ <a title="Value iteration in practice" class="calibre1" href="part0040.html#164MG2-ce551566b6304db290b61e4d70de52ee">实践中的价值迭代</a><ul class="itemizedlist1"><li class="listitem">过渡表/ <a title="Value iteration in practice" class="calibre1" href="part0040.html#164MG2-ce551566b6304db290b61e4d70de52ee">实践中的值迭代</a></li><li class="listitem">价值表/ <a title="Value iteration in practice" class="calibre1" href="part0040.html#164MG2-ce551566b6304db290b61e4d70de52ee">实践中的价值迭代</a></li><li class="listitem">诉讼价值</li><li class="listitem">关于/ <a title="Value of action" class="calibre1" href="part0038.html#147LC2-ce551566b6304db290b61e4d70de52ee">动作值</a></li><li class="listitem">国家价值</li></ul></li>
+        <li class="listitem">关于/ <a title="Value, state, and optimality" class="calibre1" href="part0036_split_000.html#12AK82-ce551566b6304db290b61e4d70de52ee">价值、状态和最优性</a><ul class="itemizedlist1"><li class="listitem">价值观/ <a title="Values and policy" class="calibre1" href="part0068_split_000.html#20R682-ce551566b6304db290b61e4d70de52ee">价值观和政策</a></li></ul></li>
+        <li class="listitem">方差缩减/ <a title="Variance reduction" class="calibre1" href="part0074_split_000.html#26I9K1-ce551566b6304db290b61e4d70de52ee">方差缩减</a><ul class="itemizedlist1"><li class="listitem">VcXsrv</li></ul></li>
+        <li class="listitem">参考/ <a title="Monitor" class="calibre1" href="part0020_split_000.html#J2B82-ce551566b6304db290b61e4d70de52ee">监视器</a></li>
+        <li class="listitem">虚拟网络计算</li>
+        <li class="listitem">参考/ <a title="Mini World of Bits benchmark" class="calibre1" href="part0092_split_000.html#2NNJO1-ce551566b6304db290b61e4d70de52ee">迷你比特世界基准</a><ul class="itemizedlist1"><li class="listitem">W</li></ul></li>
+        <li class="listitem">网络导航<ul class="itemizedlist1"><li class="listitem">关于/ <a title="Web navigation" class="calibre1" href="part0092_split_000.html#2NNJO1-ce551566b6304db290b61e4d70de52ee">网页导航</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_21">word2vec / <a title="Embeddings" class="calibre1" href="part0088_split_000.html#2JTHG2-ce551566b6304db290b61e4d70de52ee">嵌入</a></h2>
+      <ul class="itemizedlist"><li class="listitem">单词嵌入/ <a title="Embeddings" class="calibre1" href="part0088_split_000.html#2JTHG2-ce551566b6304db290b61e4d70de52ee">嵌入</a><ul class="itemizedlist1"><li class="listitem">糖纸/ <a title="Wrappers" class="calibre1" href="part0020_split_000.html#J2B82-ce551566b6304db290b61e4d70de52ee">糖纸</a></li></ul></li>
+        <li class="listitem">包装器，OpenAI基线项目</li>
+        <li class="listitem">参考/ <a title="Gym env wrappers" class="calibre1" href="part0048_split_000.html#1DOR02-ce551566b6304db290b61e4d70de52ee">健身房环境包装</a></li>
+        <li class="listitem">X</li>
+        <li class="listitem">Xvfb (X11虚拟帧缓冲区)/ <a title="Monitor" class="calibre1" href="part0020_split_000.html#J2B82-ce551566b6304db290b61e4d70de52ee">监视器</a><ul class="itemizedlist1"><li class="listitem">reference / <a title="Gym env wrappers" class="calibre1" href="part0048_split_000.html#1DOR02-ce551566b6304db290b61e4d70de52ee">Gym env wrappers</a></li></ul></li>
+      </ul></div>
+  </body></html>
+
+
+<html>
+  <head>
+    <title>Index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="44HU60-ce551566b6304db290b61e4d70de52ee" class="calibre">
+<div><h2 class="title1" id="calibre_pb_22">X</h2>
+      <ul class="itemizedlist"><li class="listitem">Xvfb (X11 virtual framebuffer) / <a title="Monitor" class="calibre1" href="part0020_split_000.html#J2B82-ce551566b6304db290b61e4d70de52ee">Monitor</a></li>
+      </ul></div>
+  </body></html>
+</body></html>

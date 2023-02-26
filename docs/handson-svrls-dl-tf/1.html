@@ -1,0 +1,975 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Beginning with Serverless Computing and AWS Lambda</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">从无服务器计算和AWS Lambda开始</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>这本书将鼓励你在AWS Lambda中使用自己定制的模型，并使用简化的无服务器计算方法。稍后，您将实现示例项目，这些项目表示使用AWS Lambda来服务TensorFlow模型。</p>
+
+<p>在本章中，我们将讨论无服务器深度学习，您将探索无服务器为什么如此受欢迎，以及使用无服务器部署应用程序的优势。此外，您还将了解数据科学过程，以及无服务器如何实现一种简单方便的方式来部署深度学习应用程序。您还将简要了解我们将在接下来的章节中制作的示例项目。</p>
+
+<p>您还将了解AWS实现的工作方式，包括部署深度学习应用程序的传统和无服务器方式。</p>
+
+<p>特别是，我们将涵盖以下主题:</p>
+
+<ul>
+
+<li>什么是无服务器计算？</li>
+
+<li>为什么要无服务器深度学习？</li>
+
+<li>AWS函数</li>
+
+<li>示例项目</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>What is serverless computing?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">什么是无服务器计算？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>无服务器计算是一种由云提供商管理代码执行的架构，这意味着开发人员在部署代码时不必担心管理、供应和维护服务器。</p>
+
+<p class="mce-root"/>
+
+<p>让我们讨论应用程序部署的可能方式:</p>
+
+<ul>
+
+<li><strong>内部部署</strong>让您控制包括硬件在内的整个基础设施。换句话说，这意味着应用程序运行在我们的机器上，您可以物理地访问它。</li>
+
+<li>然后，您拥有<strong>基础设施即服务</strong> ( <strong> IaaS </strong>)，这意味着您无法物理访问服务器，但您可以控制其中发生的一切。</li>
+
+<li>接下来，你有<strong>平台即服务</strong> ( <strong> PaaS </strong>)，你不控制操作系统或运行时，但你可以控制我们的代码和容器。</li>
+
+<li>最后，你有<strong>功能即服务</strong> ( <strong> FaaS </strong>)这是一个无服务器模型，你唯一能控制的就是代码本身。它可以让我们在不同的应用程序上工作。</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Why serverless deep learning?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">为什么要无服务器深度学习？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>让我们理解为什么无服务器基础设施对于在数据科学过程中部署深度学习模型极其有用。</p>
+
+<p>通常的数据科学流程如下:</p>
+
+<ul>
+
+<li>业务理解:您需要理解业务需求，包括定义目标和可能的数据源。</li>
+
+<li>数据获取:你需要研究你计划使用的数据，探索它，并试图找到相关性和差距。</li>
+
+<li>建模:首先选择最有希望的特性，建立模型，并训练它。</li>
+
+<li>部署:您需要操作模型并部署它。</li>
+
+<li>客户接受:您可以向客户提供结果并接收反馈。</li>
+
+</ul>
+
+<p>下图显示了上述各点:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-316 image-border" src="img/6ec15de7-70ec-4696-8074-e8eaaa992a7f.png" style="width:104.42em;height:24.08em;"/></p>
+
+<p class="mce-root"/>
+
+<p>根据从客户那里收到的反馈，您可以更新模型并更改部署方式。部署和客户接受阶段本质上是迭代的。这意味着你必须尽早从用户那里得到反馈。为了实现这一点，我们的部署基础设施必须同时简单和可扩展，这可以在用于部署深度学习模型的无服务器基础设施的帮助下完成。</p>
+
+<p>你需要意识到，我们的深度学习基础设施必须与我们现有的基础设施相集成。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Where serverless deep learning works and where it doesn't work?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">无服务器深度学习在哪里行得通，在哪里行不通？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>无服务器深度学习部署非常可扩展、简单且启动成本低廉。它的缺点是时间限制、CPU限制和内存限制。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Where serverless deep learning works?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">无服务器深度学习在哪里工作？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在下一节中，您将首先重申无服务器深度学习部署的优势:</p>
+
+<ul>
+
+<li>这对你的项目非常有用。如果你训练你的模型，并想向世界展示它，无服务器深度学习将允许你这样做，而无需复杂的部署和任何前期成本。AWS还提供每月免费使用。这意味着AWS Lambda中的许多调用将完全免费。例如，在我们将在以下章节中讨论的图像识别项目中，运行次数大约为100，000次。</li>
+
+<li>无服务器深度学习非常适合希望尽早测试其业务假设的早期初创公司。简单性和可伸缩性允许小型团队在没有AWS专业知识的情况下开始工作。AWS Lambda允许您以简单的方式计算每个客户的成本，并了解每个用户的启动成本。</li>
+
+<li>如果你已经有一个现有的基础设施，并希望优化你的成本，无服务器深度学习是非常方便的。无服务器架构将比集群架构更简单、更便宜，也更容易维护。重要的是，它降低了成本，因为您不需要保留未使用的服务器。</li>
+
+<li>无服务器深度学习对于负载极高的情况非常有用。例如，很多公司在第一分钟有100万个请求，而下一分钟没有请求的情况下努力维护系统。集群要么太大，要么需要一定的时间来扩展。另一方面，无服务器具有无与伦比的可扩展性，允许系统在高负载下工作而不滚动。</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Where serverless deep learning doesn't work?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">无服务器深度学习不起作用的地方？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>深度学习在以下情况下不起作用:</p>
+
+<ul>
+
+<li>如果您的系统的主要功能之一是提供一个非常复杂的模型的实时响应；例如，如果它是用户和系统之间交互的一部分，那么无服务器架构可能对您来说还不够。AWS Lambda具有冷启动延迟以及将模型卸载和加载到存储器中的延迟。它确实运行得很快，但可能需要几秒钟以上的时间。速度高度依赖于模型的大小和复杂性，所以这是你必须事先测试的。</li>
+
+<li>如果你的模型利用了大量数据，无服务器深度学习可能会失败。AWS Lambda有一定的限制，例如3g运行空间和5g硬盘空间，这意味着您要么必须在内存使用方面优化代码，要么使用集群。</li>
+
+<li>如果您的模型对CPU能力或内核数量有要求，那么它可能无法在Lambda上启动。没有特定的限制可以预测您的模型是否能够在AWS Lambda上启动，所以这是您需要测试的东西。</li>
+
+<li>一个极其复杂的模型可能无法在无服务器的基础设施上很好地工作。所谓复杂，我们指的是大于1或2千兆字节。从S3下载需要更多的时间，而且Lambda可能没有足够的内存来加载它。</li>
+
+</ul>
+
+<p>上面提到的这些使用案例向我们展示了无服务器学习的前景，它将帮助我们决定是否使用它。最后，在很多情况下，没有确定的答案，继续在无服务器上测试你的模型是有意义的。</p>
+
+<p>现在我们将把Lambda函数作为无服务器模型来讨论。</p>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Lambda function – AWS implementation of FaaS</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">Lambda函数–FaaS的AWS实现</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本节中，我们将讨论FaaS的AWS实现的工作方式。Lambda函数是FaaS的AWS实现。AWS服务保留Lambda配置，基本上是服务中的代码、库和参数。一旦收到触发，它就从池中取出容器，并将配置放入容器中。然后，它使用来自事件触发器的数据运行容器内的代码。一旦容器产生结果，服务就在响应中返回它。</p>
+
+<p>下图展示了Lambda函数的工作方式:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-315 image-border" src="img/79b19130-55a3-4ec6-8f7b-bdac02657b00.png" style="width:33.42em;height:20.25em;"/></p>
+
+<p>Lambda可以自动扩展到10，000个并发执行。此外，Lambda定价是一种按使用付费的服务，所以你只需为你使用的每一轮Lambda付费，当它不运行时你不必付费。</p>
+
+<p>Lambda配置包括以下内容:</p>
+
+<ul>
+
+<li><strong>代码</strong>:这是你想要在函数内运行的东西。代码需要有一个函数的显式声明，这是服务运行所需要的。</li>
+
+<li>库:这些使我们能够运行更复杂的过程。您需要将它们和代码放在同一个包中。</li>
+
+<li><strong>配置</strong>:这些是指示Lambda如何工作的各种参数。</li>
+
+</ul>
+
+<p>主要参数如下:</p>
+
+<ul>
+
+<li>关系内存和超时</li>
+
+<li>运行时(例如，Python或node)</li>
+
+<li>触发器，我们将在下一节描述</li>
+
+<li>IAM角色，它提供对其他间隔服务的Lambda访问</li>
+
+<li>环境参数，它允许我们定制代码的输入参数</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Lambda triggers</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">λ触发器</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>有多种AWS服务可以作为AWS Lambda的触发器，它们是:</p>
+
+<ul>
+
+<li><strong> DynamoDB </strong>:这使我们能够在数据库的每个新条目上启动Lambda函数</li>
+
+<li><strong>亚马逊S3 </strong>:这有助于Lambda函数启动桶中的文件</li>
+
+<li><strong> CloudWatch </strong>:这使我们能够根据阴影运行Lambda函数(例如，每分钟、每天或仅在每周四中午)</li>
+
+<li><strong> Lex </strong>:这从看看通常的数据科学过程看起来像什么开始</li>
+
+<li><strong> Kinesis、SQS和SNS </strong>:这些使我们能够在事件流中的每个对象上启动Lambda函数</li>
+
+</ul>
+
+<p>有许多不同的触发器，这意味着您可以将Lambda与许多不同的服务绑定。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Why deep learning on AWS Lambda?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">为什么要在AWS Lambda上进行深度学习？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在这里，您将看到AWS Lambda的优势:</p>
+
+<ul>
+
+<li>在AWS Lambda上编码非常容易。您只需要包代码和库，而不需要Docker容器。它使您能够尽早开始并部署相同的代码，您可以在本地运行这些代码。因此，这是早期项目的完美选择。</li>
+
+<li>AWS Lambda具有极强的可扩展性，更重要的是，您不必管理可扩展性或为其编写单独的逻辑，因为您的数据科学应用程序将能够轻松处理大量任务或与多个用户合作。</li>
+
+<li>AWS Lambda定价方便。你只需要为你实际使用的东西付费，而且价格本身也很实惠。例如，对于图像识别模型，运行20，000到30，000次的成本将是1美元。</li>
+
+</ul>
+
+<p>在下一节中，您将了解使用Lamda的传统架构和无服务器架构之间的区别。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Traditional versus Serverless architecture using Lambda</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用Lambda的传统与无服务器架构</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>让我们看看传统架构和无服务器架构的区别。下图表示通过传统架构的深度学习API:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-317 image-border" src="img/068b50de-a0b5-46b9-955a-a1ee4b2bdcb8.png" style="width:38.92em;height:16.33em;"/></p>
+
+<p>在上面的传统架构中，您不仅必须处理集群本身，还必须处理所有API请求的平衡。此外，您必须用代码和库来管理Docker容器，并找到一种使用容器注册中心来部署它的方法。</p>
+
+<p>您需要对AWS有广泛的了解才能理解这个架构。虽然这并不十分困难，但它可能是一个真正的问题。你需要记住，深度学习的AWS架构将有静态成本。</p>
+
+<p>让我们讨论上述应用程序的无服务器实现。下图展示了使用Lambda进行深度学习的架构:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-318 image-border" src="img/b379b00d-e659-489b-86f7-f9fe4516088f.png" style="width:41.67em;height:17.50em;"/></p>
+
+<p>在上图中，您可以看到它看起来比传统架构简单得多。你不需要管理节点平衡的可伸缩性或者容器——你只需要放入你的被覆盖的库，Lambda会管理其他的一切。此外，你可以用它制作许多不同的原型，你只需要为调用付费。这使得Lambda成为向用户提供深度学习模型的完美方式。在下一节中，将向您简要介绍您将在本书中开发的项目。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Sample projects</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">示例项目</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在这一节中，你将涵盖在本书过程中开发的项目。您将创建三个项目:</p>
+
+<ul>
+
+<li>深度学习API</li>
+
+<li>深度学习批处理</li>
+
+<li>无服务器深度学习工作流</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Deep learning API</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">深度学习API</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>深度学习API项目提供了一个很好的实践体验，因为您可以立即从浏览器中看到结果。你将从用于图像识别的深度学习API开始。图像识别是深度学习显示出令人难以置信的结果的任务之一，这是使用任何其他方法都不可能实现的。你将会使用一个当代的、公开的、预先培训过的、免费的初始模型。该项目还将向您展示采用开源模型并在其上创建API接口是多么容易。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Deep learning batch processing</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">深度学习批处理</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在深度学习批处理项目中，您将仔细了解现在很多公司是如何运行深度学习应用程序的。在这个项目中，您将为图像识别构建深度学习批处理。它将向我们展示Lambda可伸缩性有多高，使我们能够同时处理数千个预测丢弃。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Serverless deep learning workflow</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">无服务器深度学习工作流</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在无服务器深度学习工作流项目中，您将强调无服务器基础架构上的深度学习模型的模式。你会做一个图像识别的无服务器深度学习工作流。这个项目将向您展示如何使用AWS step函数来使用当代的部署技术。您还将学习如何在部署、错误处理和多步骤过程中对模型进行A/B测试。这个项目将帮助您了解无服务器部署的可能应用，以及如何将这些知识应用到您的个人项目或公司中。</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:47c30fe0-708a-4ee4-a010-a72f15252cad" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">摘要</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本章中，向您介绍了无服务器功能、AWS实现和服务。您查看了Lambda函数，它是FaaS的AWS实现。您还了解了FaaS的AWS实现的工作原理。后来，您理解了为什么无服务器基础架构对于部署深度学习模型极其有用，以及您在部署过程中可能面临的挑战。您还比较了部署深度学习应用程序的传统方式和无服务器方式。你研究了无服务器深度学习可行和不可行的可能场景。最后，您涵盖了将在本书的课程中学习的各种示例项目。</p>
+
+<p>在下一章，你将学习如何使用AWS Lambda及其部署。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

@@ -1,0 +1,244 @@
+<html><head/><body>
+
+
+
+
+
+	
+
+		<title>B18522_08</title>
+
+		
+
+	
+
+	
+
+		<div><h1 id="_idParaDest-166" class="chapter-number"><a id="_idTextAnchor175"/> 8</h1>
+
+			<h1 id="_idParaDest-167"><a id="_idTextAnchor176"/>简化深度学习模型部署</h1>
+
+			<p>部署在生产环境中的<strong class="bold">深度学习</strong> ( <strong class="bold"> DL </strong>)模型通常与刚从培训过程中出来的模型不同。它们通常会得到增强，以最高的性能处理传入的请求。然而，目标环境通常过于宽泛，因此有必要进行大量定制，以涵盖差异极大的部署设置。要克服这个困难，可以利用<strong class="bold">开放神经网络交换</strong> ( <strong class="bold"> ONNX </strong>)，这是ML模型的标准文件格式。在这一章中，我们将介绍如何利用ONNX在DL框架之间转换DL模型，以及它如何将模型开发过程与部署分开。</p>
+
+			<p>在本章中，我们将讨论以下主要话题:</p>
+
+			<ul>
+
+				<li>ONNX简介</li>
+
+				<li>张量流和ONNX之间的转换</li>
+
+				<li>PyTorch和ONNX之间的转换</li>
+
+			</ul>
+
+			<h1 id="_idParaDest-168"><a id="_idTextAnchor177"/>技术要求</h1>
+
+			<p>可以从以下GitHub链接下载本章的补充资料:<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter_8">https://GitHub . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 8</a>。</p>
+
+			<h1 id="_idParaDest-169"><a id="_idTextAnchor178"/>ONNX简介</h1>
+
+			<p>有各种各样的DL框架可以用来训练一个DL模型。然而，<em class="italic">DL模型部署中的一个主要困难来自于这些框架之间缺乏互操作性</em>。例如，PyTorch和<strong class="bold">tensor flow</strong>(<strong class="bold">TF</strong>)之间的转换会带来许多困难。</p>
+
+			<p>在许多情况下，利用底层硬件提供的加速，为部署环境进一步扩充DL模型，以提高准确性并减少推理延迟。不幸的是，这需要广泛的软件和硬件知识，因为每种类型的硬件为运行的应用程序提供不同的加速。常用于DL的硬件包括<strong class="bold">中央处理器</strong>(<strong class="bold">CPU</strong>)<strong class="bold">图形处理器</strong>(<strong class="bold">GPU</strong>)<strong class="bold">联想处理器</strong>(<strong class="bold">APU</strong>)<strong class="bold">张量处理器</strong>(<strong class="bold">TPU</strong>)<strong class="bold">现场可编程门阵列</strong> ( <strong class="bold"> FPGA </strong>)</p>
+
+			<p>这个过程不是一次性的操作；一旦以任何方式更新了模型，这个过程可能需要重复。为了减少该领域的工程工作，一组工程师共同努力，提出了一个中介器，它标准化了模型<a id="_idIndexMarker853"/>组件:<code>.onnx</code>文件，该文件跟踪模型是如何设计的，以及网络中的每个操作是如何链接到其他组件的。<code>.onnx</code>档(<a href="https://github.com/lutzroeder/netron">https://github.com/lutzroeder/netron</a>)。以下是可视化示例:</p>
+
+			<div><div><img src="img/B18522_08_01.jpg" alt="Figure 8.1 – Netron visualization for an ONNX file&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US"> </p>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图8.1–ONNX文件的Netron可视化</p>
+
+			<p>如你所见，ONNX <a id="_idIndexMarker855"/>是培训框架和部署环境之间的一层。虽然ONNX文件定义了一种交换格式，但是还存在<strong class="bold"> ONNX运行时</strong> ( <strong class="bold"> ORT </strong>)，它<a id="_idIndexMarker856"/>支持ONNX模型的硬件无关加速。换句话说，ONNX生态系统允许您选择任何DL框架进行培训，并轻松实现针对部署的硬件优化:</p>
+
+			<div><div><img src="img/B18522_08_02.jpg" alt="Figure 8.2 – The position of ONNX in a DL project&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图8.2–ONNX在DL项目中的位置</p>
+
+			<p>总之，ONNX帮助完成以下任务:</p>
+
+			<ul>
+
+				<li>简化各种DL框架之间的模型转换</li>
+
+				<li>为DL模型提供硬件无关的优化</li>
+
+			</ul>
+
+			<p>在下一节中，我们将进一步了解ORT。</p>
+
+			<h2 id="_idParaDest-170"><a id="_idTextAnchor179"/>使用ONNX运行时运行推理</h2>
+
+			<p>ORT<a id="_idIndexMarker857"/>旨在支持直接使用ONNX模型进行训练和<a id="_idIndexMarker858"/>推理，而无需将它们转换成特定的框架。然而，训练并不是ORT的主要用例，所以在这一节中，我们将重点关注后一个方面，即推理。</p>
+
+			<p>ORT利用不同的硬件加速库，即所谓的<strong class="bold">执行提供者</strong> ( <strong class="bold"> EPs </strong>)，来<a id="_idIndexMarker859"/>改善各种硬件架构的延迟和准确性。不管模型训练期间使用的DL框架和底层硬件如何，ORT推理代码都将保持不变。</p>
+
+			<p>下面的<a id="_idIndexMarker860"/>代码片段是ONNX <a id="_idIndexMarker861"/>推理代码的示例。完整的细节可以在https://onnxruntime.ai/docs/get-started/with-python.html<a href="https://onnxruntime.ai/docs/get-started/with-python.html">找到:</a></p>
+
+			<pre class="source-code">
+
+import onnxruntime as rt
+
+providers = ['CPUExecutionProvider'] # select desired provider or use rt.get_available_providers()
+
+model = rt.InferenceSession("model.onnx", providers=providers)
+
+onnx_pred = model.run(output_names, {"input": x}) # x is your model's input</pre>
+
+			<p><code>InferenceSession</code>类接受一个文件名、一个序列化的ONNX模型或一个字节字符串形式的ORT模型。在前面的例子中，我们指定了ONNX文件的名称(<code>"model.onnx"</code>)。<code>providers</code>参数和按优先级排序的执行提供者列表(比如<code>CPUExecutionProvider</code>、<code>TvmExecutionProvider</code>、<code>CUDAExecutionProvider</code>等等)是可选的，但是很重要，因为它们定义了将要应用的硬件加速的类型。在最后一行中，<code>run</code>函数触发了模型预测。<code>run</code>函数有两个主要参数:<code>output_names</code>(模型输出的名称)和<code>input_feed</code>(包含您想要运行模型预测的输入名称和值的输入字典)。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.ONNX为ML模型提供了标准化的跨平台表示。</p>
+
+			<p class="callout">b.ONNX可以用来将一个DL框架中实现的DL模型转换成另一个DL框架，只需很少的努力。</p>
+
+			<p class="callout">c.ORT为部署的模型提供硬件无关的加速。</p>
+
+			<p>在接下来的两节中，我们将看看使用TF和PyTorch创建ONNX模型的过程。</p>
+
+			<h1 id="_idParaDest-171"><a id="_idTextAnchor180"/>张量流和ONNX之间的转换</h1>
+
+			<p>首先，我们来看看TF和ONNX之间的转换。我们将把这个过程分成两部分:将TF模型转换成ONNX模型，并将ONNX模型转换回TF模型。</p>
+
+			<h2 id="_idParaDest-172"><a id="_idTextAnchor181"/>将张量流模型转换为ONNX模型</h2>
+
+			<p><code>tf2onnx</code>用于<a id="_idIndexMarker862"/>将TF车型转换为【https://github.com/onnx/tensorflow-onnx】<a href="https://github.com/onnx/tensorflow-onnx"/><a id="_idIndexMarker863"/>ONNX车型。这个库支持TF的两个版本(版本1和版本2)。此外，还可以转换成特定于部署的TF格式，如TensorFlow.js和TensorFlow Lite。</p>
+
+			<p>要将使用<code>saved_model</code>模块生成的TF模型转换成ONNX模型，可以使用<code>tf2onnx.convert</code>模块，如下所示:</p>
+
+			<pre>python -m tf2onnx.convert --saved-model tensorflow_model_path --opset 9 --output model.onnx  </pre>
+
+			<p>在前面的命令中，<code>tensorflow-model-path</code>指向一个保存在磁盘上的TF模型，<code>--output</code>定义生成的ONNX模型将保存在哪里，<code>--opset</code>将ONNX设置为<code>opset</code>，定义ONNX版本和操作符(<a href="https://github.com/onnx/onnx/releases">https://github.com/onnx/onnx/releases</a>)。如果您的TF模型不是使用<code>tf.saved_model.save</code>功能保存的，您需要如下指定输入和输出格式:</p>
+
+			<pre># model in checkpoint format
+python -m tf2onnx.convert --checkpoint tensorflow-model-meta-file-path --output model.onnx --inputs input0:0,input1:0 --outputs output0:0
+# model in graphdef format
+python -m tf2onnx.convert --graphdef tensorflow_model_graphdef-file --output model.onnx --inputs input0:0,input1:0 --outputs output0:0 </pre>
+
+			<p>前面的命令描述了检查点(<a href="https://www.tensorflow.org/api_docs/python/tf/train/Checkpoint">https://www . tensor flow . org/API _ docs/python/TF/train/check point</a>)和graph def(<a href="https://www.tensorflow.org/api_docs/python/tf/compat/v1/GraphDef">https://www . tensor flow . org/API _ docs/python/TF/compat/v1/graph def</a>)格式的模型转换。关键参数是<code>--checkpoint</code>和<code>--graphdef</code>，它们表示模型格式以及源<a id="_idIndexMarker865"/>模型的位置<a id="_idIndexMarker864"/>。</p>
+
+			<p>在https://github.com/onnx/tensorflow-onnx你可以找到<code>tf2onnx</code>提供的Python API。</p>
+
+			<p>接下来，我们将看看如何将ONNX模型转换为TF模型。</p>
+
+			<h2 id="_idParaDest-173"><a id="_idTextAnchor182"/>将ONNX模型转换为张量流模型</h2>
+
+			<p><code>tf2onnx</code>用于从TF转换成ONNX，<code>onnx-tensorflow</code>(<a href="https://github.com/onnx/onnx-tensorflow">https://github.com/onnx/onnx-tensorflow</a>)用于将ONNX模型转换成TF模型。与<code>tf2onnx</code>情况下的<a id="_idIndexMarker867"/>一样，是基于终端命令的<a id="_idIndexMarker866"/>。下面一行显示了一个简单的<code>onnx-tf</code>命令用例:</p>
+
+			<pre>onnx-tf convert -i model.onnx -o tensorflow_model_file</pre>
+
+			<p>在前面的命令中，<code>-i</code>参数用于指定源<code>.onnx</code>文件，而<code>-o</code>参数用于指定新TF模型的输出位置。<code>onnx-tf</code>命令的其他用例在<a href="https://github.com/onnx/onnx-tensorflow/blob/main/doc/CLI.md">https://github . com/onnx/onnx-tensor flow/blob/main/doc/CLI . MD</a>中有很好的记录。</p>
+
+			<p>此外，您可以使用Python API执行相同的转换:</p>
+
+			<pre class="source-code">
+
+import onnx
+
+from onnx_tf.backend import prepare
+
+onnx_model = onnx.load("model.onnx") 
+
+tf_rep = prepare(onnx_model)  
+
+tensorflow-model-file-path = path/to/tensorflow-model
+
+tf_rep.export_graph(tensorflow_model_file_path)</pre>
+
+			<p>在前面的<a id="_idIndexMarker868"/> Python代码中，ONNX模型是使用<code>onnx.load</code>函数加载的<a id="_idIndexMarker869"/>，然后使用从<code>onnx_tf.backend</code>导入的<code>prepare</code>进行转换调整。最后，使用<code>export_graph</code>函数将TF模型导出并保存到指定的位置(<code>tensorflow_model_file_path</code>)。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.从TF到ONNX和从ONNX到TF的转换分别通过<code>onnx-tensorflow</code>和<code>tf2onnx</code>执行。</p>
+
+			<p class="callout">b.<code>onnx-tensorflow</code>和<code>tf2onnx</code>都支持命令行接口，并提供Python API。</p>
+
+			<p>接下来，我们将描述如何在PyTorch中执行ONNX和ONNX之间的转换。</p>
+
+			<h1 id="_idParaDest-174">【PyTorch和ONNX之间的转换</h1>
+
+			<p>在本节中，我们将解释如何将PyTorch模型转换为ONNX模型，以及如何将ONNX模型转换为py torch模型。上一节已经介绍了TF和ONNX之间的转换，到本节结束时，您应该能够在TF和PyTorch之间转换您的模型。</p>
+
+			<h2 id="_idParaDest-175"><a id="_idTextAnchor184"/>将PyTorch模型转换为ONNX模型</h2>
+
+			<p>有趣的是，PyTorch有<a id="_idIndexMarker870"/>内置支持将其<a id="_idIndexMarker871"/>模型导出为ONNX模型(<a href="https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html">https://py torch . org/tutorials/advanced/super _ resolution _ with _ ONNX runtime . html</a>)。给定一个模型，您所需要的就是下面代码片段中所示的<code>torch.onnx.export</code>函数:</p>
+
+			<pre class="source-code">
+
+import torch
+
+pytorch_model = ...
+
+# Input to the model
+
+dummy_input = torch.randn(..., requires_grad=True)
+
+onnx_model_path = "model.onnx"
+
+# Export the model
+
+torch.onnx.export(
+
+    pytorch_model,       # model being run
+
+    dummy_input,         # model input (or a tuple for multiple inputs)
+
+    onnx_model_path      # where to save the model (can be a file or file-like object) )</pre>
+
+			<p><code>torch.onnx.export</code>的第一个参数是您想要转换的PyTorch模型。作为第二个参数，您必须提供一个表示虚拟输入的张量。换句话说，这个张量必须是模型期望作为输入的大小。最后一个参数是ONNX模型的本地路径。</p>
+
+			<p>触发<code>torch.onnx.export</code>功能后，您应该会看到在您提供的路径(<code>onnx_model_path</code>)下生成了一个<code>.onnx</code>文件。</p>
+
+			<p>现在，让我们看看如何将ONNX模型加载为PyTorch模型。</p>
+
+			<h2 id="_idParaDest-176"><a id="_idTextAnchor185"/>将ONNX模型转换为PyTorch模型</h2>
+
+			<p>不幸的是，PyTorch <a id="_idIndexMarker872"/>没有内置支持<a id="_idIndexMarker873"/>加载ONNX模型。然而，对于这种转换，有一个流行的库叫做<code>onnx2pytorch</code>(<a href="https://github.com/ToriML/onnx2pytorch">https://github.com/ToriML/onnx2pytorch</a>)。假设这个库是用一个<code>pip</code>命令安装的，下面的代码片段演示了这个转换:</p>
+
+			<pre class="source-code">
+
+import onnx
+
+from onnx2pytorch import ConvertModel
+
+onnx_model = onnx.load("model.onnx")
+
+pytorch_model = ConvertModel(onnx_model)</pre>
+
+			<p>我们从<code>onnx2pytorch</code>模块中需要的关键类是<code>ConverModel</code>。如前面的代码片段所示，我们将ONNX模型传递到该类中，以生成PyTorch模型。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.PyTorch内置了将PyTorch模型导出为ONNX模型的支持。这个过程涉及到<code>torch.onnx.export</code>功能。</p>
+
+			<p class="callout">b.将ONNX模型导入PyTorch环境需要<code>onnx2pytorch</code>库。</p>
+
+			<p>在本节中，我们描述了ONNX和PyTorch之间的转换。既然我们已经知道如何在ONNX和TF之间转换一个模型，那么TF和PyTorch之间的转换也就水到渠成了。</p>
+
+			<h1 id="_idParaDest-177"><a id="_idTextAnchor186"/>总结</h1>
+
+			<p>在这一章中，我们介绍了ONNX，一种ML模型的通用表示。ONNX的好处主要来自它的模型部署，因为它通过ORT在幕后为我们处理特定于环境的优化和转换。ONNX的另一个优势来自于它的互操作性；它可以用于将一个框架生成的DL模型转换为其他框架。在本章中，我们专门讨论了TensorFlow和PyTorch的转换，因为它们是两个最标准的DL框架。</p>
+
+			<p>向高效的DL模型部署迈进一步，在下一章中，我们将学习如何使用<strong class="bold">弹性Kubernetes服务</strong> ( <strong class="bold"> EKS </strong>)和SageMaker来建立一个模型推理端点。</p>
+
+		</div>
+
+		<div><div/>
+
+		</div>
+
+	
+
+
+
+</body></html>

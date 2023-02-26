@@ -1,0 +1,448 @@
+<html><head/><body>
+
+
+	
+		<title>B12365_05_Final_JC_ePub</title>
+		
+	
+	
+		<div><h1><em class="italic"> <a id="_idTextAnchor092"/>第五章</em>:递归神经网络与情感分析</h1>
+			<p>在本章中，我们将研究<strong class="bold">递归神经网络</strong> ( <strong class="bold"> RNNs </strong>)，这是PyTorch中基本前馈神经网络的一种变体，我们在第1章  <em class="italic">《机器学习基础</em>中学习了如何构建它。一般来说，RNNs可以用于数据可以表示为序列的任何任务。这包括诸如股票价格预测之类的事情，使用以序列表示的历史数据的时间序列。我们通常在自然语言处理中使用RNNs，因为文本可以被认为是一系列单独的单词，并且可以这样建模。传统的神经网络采用单个向量作为模型的输入，而RNN可以采用整个向量序列。如果我们将文档中的每个单词表示为向量嵌入，那么我们可以将整个文档表示为向量序列(或三阶张量)。然后，我们可以使用RNNs(以及一种更复杂的RNN形式，称为<strong class="bold">长短期记忆</strong> ( <strong class="bold"> LSTM </strong>)从我们的数据中学习。</p>
+			<p>在本章中，我们将介绍RNNs的基础知识和更高级的LSTM。然后，我们将研究情感分析，并通过一个实例来说明如何使用PyTorch构建一个LSTM来对文档进行分类。最后，我们将在一个简单的云应用平台Heroku上托管我们的简单模型，这将允许我们使用我们的模型进行预测。</p>
+			<p>本章涵盖以下主题:</p>
+			<ul>
+				<li>构建rnn</li>
+				<li>使用LSTMs</li>
+				<li>使用LSTM构建情感分析器</li>
+				<li>在Heroku上部署应用程序</li>
+			</ul>
+			<h1><a id="_idTextAnchor093"/>技术要求</h1>
+			<p>本章使用的所有代码都可以在<a href="https://github.com/PacktPublishing/Hands-On-Natural-Language-Processing-with-PyTorch-1.x/tree/master/Chapter5">https://github . com/packt publishing/Hands-On-Natural Language-Processing-with-py torch-1 . x/tree/master/chapter 5</a>找到。Heroku可以从www.heroku.com安装。数据取自<a href="https://archive.ics.uci.edu/ml/datasets/Sentiment+Labelled+Sentences">https://archive . ics . UCI . edu/ml/datasets/情操+标签化+句子</a>。</p>
+			<h1><a id="_idTextAnchor094"/>构建rnn</h1>
+			<p>RNNs由循环层组成。虽然它们在许多方面与标准前馈神经网络中的完全连接层相似，但这些递归层由一个隐藏状态组成，在顺序输入的每一步都进行更新。这意味着对于任何给定的序列，模型都用隐藏状态初始化，通常表示为一维向量。然后，我们序列的第一步被输入到我们的模型中，并且根据一些学习到的参数更新隐藏状态。然后，第二个字被输入到网络中，隐藏状态根据其他一些学习参数再次更新。重复这些步骤，直到处理完整个序列，我们就剩下最后的隐藏状态了。这个计算<em class="italic">循环</em>，隐藏状态从之前的计算中延续并更新，这就是为什么我们称这些网络为循环网络。这个最终的隐藏状态然后被连接到另一个完全连接的层，并且最终的分类被预测。</p>
+			<p>我们的递归层看起来如下，其中<em class="italic"> h </em>是隐藏状态，而<em class="italic"> x </em>是我们在序列中不同时间步的输入。对于每次迭代，我们在每个时间步长更新我们的隐藏状态，<em class="italic"> x </em>:</p>
+			<div><div><img src="img/B12365_05_1.jpg" alt="Figure 5.1 – Recurrent layer&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.1–循环层</p>
+			<p>或者，我们可以将<a id="_idIndexMarker232"/>扩展到整个时间步骤序列，如下所示:</p>
+			<div><div><img src="img/B12365_05_2.jpg" alt="Figure 5.2 – Sequence of time steps&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.2-时间步长序列</p>
+			<p>该层用于长度为<em class="italic"> n </em>个时间步长的输入。我们的隐藏状态在状态<em class="italic"> h </em> 0中初始化，然后使用我们的第一个输入<em class="italic"> x </em> 1来计算下一个隐藏状态<em class="italic"> h </em> 1。还有两组要学习的权重矩阵——矩阵<em class="italic"> U </em>，学习隐藏状态如何在时间步长之间变化<a id="_idIndexMarker233"/>，矩阵<em class="italic"> W </em>，学习每个输入步长如何影响隐藏状态。</p>
+			<p>我们还将一个<em class="italic"> tanh </em>激活函数应用于结果产品，将隐藏状态的值保持在-1和1之间。用于计算任何隐藏状态的等式，h变成如下:</p>
+			<p class="figure"><img src="img/Formula_05_001.png" alt=""/></p>
+			<p>然后，在我们的输入序列中的每个时间步重复这一过程，这一层的最终输出是我们的最后一个隐藏状态，<em class="italic"> h </em> n。当我们的网络学习时，我们像以前一样通过网络向前传递，以计算我们的最终分类。然后，我们根据这一预测计算损失，并像以前一样通过网络反向传播，同时计算梯度。这个反向传播过程发生在递归层内的所有步骤中，每个输入步骤和隐藏状态之间的参数被学习。</p>
+			<p>我们将在后面看到，我们实际上可以在每个时间步采用隐藏状态，而不是使用最终的隐藏状态，这对于NLP中的序列到序列翻译任务很有用。然而，就目前而言，我们只是将隐藏层作为网络其余部分的输出。</p>
+			<h2><a id="_idTextAnchor095"/>使用RNNs进行情感分析</h2>
+			<p>在<a id="_idIndexMarker234"/>情绪分析的背景下，我们的模型是在评论的情绪分析数据集上训练的，该数据集由文本评论的数量<a id="_idIndexMarker235"/>和0或1的标签组成，这取决于评论是负面的还是正面的。这意味着我们的模型变成了一个分类任务(其中两个类是负的/正的)。我们的句子通过一层已学习的单词嵌入，以形成包含几个向量(每个单词一个向量)的句子表示。然后，这些向量被依次送入我们的RNN层，最终的隐藏状态通过另一个完全连接的层。我们的模型的输出是0和1之间的单个值，这取决于我们的模型从句子中预测的是负面还是正面的<a id="_idIndexMarker236"/>情绪。这意味着我们完整的分类模型如下所示:</p>
+			<div><div><img src="img/B12365_05_3.jpg" alt="Figure 5.3 – Classification model&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.3–分类模型</p>
+			<p>现在，我们将强调RNNs的一个问题<a id="_idIndexMarker237"/>——爆炸和收缩梯度——以及我们如何使用梯度裁剪来解决这个问题。</p>
+			<h2><a id="_idTextAnchor096"/>爆炸和收缩渐变</h2>
+			<p>我们在RNNs中经常面临的一个问题是<strong class="bold">爆炸或收缩梯度</strong>。我们可以把<a id="_idIndexMarker238"/>递归层想象成一个非常深的网络。当计算梯度时，我们在隐藏状态的每次迭代中都这样做。如果损失相对于任何给定位置的权重的梯度变得非常大，这将具有倍增效应，因为它通过循环层的所有迭代向前馈送。这会导致渐变爆炸，因为它们很快变得很大。如果梯度较大，这可能会导致网络不稳定。另一方面，如果我们的隐藏状态中的梯度非常小，这将再次具有乘法效应，并且梯度将接近于0。这意味着梯度可能变得太小，无法通过梯度下降准确更新我们的参数，这意味着我们的模型无法学习。</p>
+			<p>我们可以用来防止渐变爆炸的一个技巧是使用渐变剪辑。这种技术限制了我们的梯度，以防止它们变得太大。我们只需选择一个超参数，<em class="italic"> C </em>，就可以计算出我们的削波梯度，如下所示:</p>
+			<p class="figure-caption"><img src="img/Formula_05_002.png" alt=""/></p>
+			<p>下图显示了两个变量之间的关系:</p>
+			<div><div><img src="img/B12365_05_4.jpg" alt="Figure 5.4 – Comparison of gradient clipping&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.4–渐变裁剪的比较</p>
+			<p>另一种防止渐变爆炸或消失的方法是缩短输入序列的长度。递归层的有效深度取决于输入序列的长度，因为序列长度决定了我们需要对隐藏状态进行多少次迭代更新。该过程中的步骤数量越少，隐藏状态之间的梯度累积的倍增效应就越小。通过智能地选择最大序列长度作为我们模型中的超参数，我们可以帮助防止爆炸和消失梯度。</p>
+			<h1><a id="_idTextAnchor097"/>介绍LSTMs</h1>
+			<p>虽然RNNs允许我们使用单词序列作为模型的输入，但它们远非完美。RNNs <a id="_idIndexMarker242"/>有两个主要缺陷，可以通过使用更复杂版本的RNN部分弥补，称为<strong class="bold"> LSTM </strong>。</p>
+			<p>RNNs的基本结构意味着它们很难长期保留信息。考虑一个20个单词长的句子。从我们影响初始隐藏状态的句子中的第一个单词到句子中的最后一个单词，我们的隐藏状态更新了20次。从我们句子的开头到最后的隐藏状态，RNN人很难记住句子开头单词的信息。这意味着rnn不太擅长捕捉序列中的长期依赖关系。这也与前面提到的消失梯度问题有关，在这种情况下，通过长而稀疏的向量序列进行反向传播是非常低效的。</p>
+			<p>考虑一个很长的段落，我们试图预测下一个单词。句子以<code>I study math…</code>开头，以<code>my final exam is in…</code>结尾。凭直觉，我们会认为下一个词是<code>math</code>或一些数学相关领域。然而，在一个长序列的RNN模型中，我们的隐藏状态可能很难在到达句子末尾时保留句子开头的信息，因为它需要多个更新步骤。</p>
+			<p>我们还应该注意到，rnn不善于从整体上捕捉句子中单词的上下文。我们在前面看到，在查看n-gram模型时，一个单词在句子中的意义取决于它在句子中的上下文，这是由出现在它之前的单词和出现在它之后的单词决定的。在RNN中，我们的隐藏状态只在一个方向上更新。在一次正向传递中，我们的隐藏状态被初始化，序列中的第一个单词被传递给它。然后对句子中所有后续的单词依次重复这个过程，直到<a id="_idIndexMarker243"/>我们剩下最后的隐藏状态。这意味着，对于一个句子中的任何给定单词，我们只考虑了在该点之前在句子中出现的单词的累积效果。我们不考虑它后面的任何单词，这意味着我们不能捕捉句子中每个单词的完整上下文。</p>
+			<p>在另一个例子中，我们再次希望预测句子中丢失的单词，但是它现在出现在开头而不是结尾。我们有一个句子<code>I grew up in…so I can speak fluent Dutch</code>。在这里，我们可以从他们说荷兰语这一事实直观地猜测这个人是在荷兰长大的。然而，因为RNN是按顺序解析这些信息的，所以它只会使用<code>I grew up in…</code>进行预测，而忽略了句子中的其他关键上下文。</p>
+			<p>使用LSTMs可以部分解决这两个问题。</p>
+			<h2><a id="_idTextAnchor098"/>使用LSTMs</h2>
+			<p>LSTMs是RNNs <a id="_idIndexMarker244"/>的更高级版本，包含两个额外的属性——一个<strong class="bold">更新门</strong>和一个<strong class="bold">忘记门</strong>。这两个<a id="_idIndexMarker245"/>增加使得<a id="_idIndexMarker246"/>网络更容易学习长期依赖关系。考虑以下电影评论:</p>
+			<p>这部电影太棒了。周二下午，我和妻子、女儿一起去看了。虽然我没想到它会很有趣，但它确实很有趣。如果有机会，我们一定会再去看看。</p>
+			<p>在情感分析中，很明显，不是句子中的所有单词都与确定它是正面评论还是负面评论相关。我们将重复这句话，但这次要强调与评估评论情绪相关的词语:</p>
+			<p>这部电影太棒了。周二下午，我和妻子、女儿一起去看了。虽然我没想到它会很有趣，但它确实很有趣。如果有机会，我们一定会再去看看。</p>
+			<p>LSTMs试图做到这一点——记住句子中的相关单词，同时忘记所有不相关的信息。通过这样做，它阻止了不相关的信息稀释<a id="_idIndexMarker247"/>相关的信息，这意味着长期依赖性可以在长序列中更好地学习。</p>
+			<p>LSTMs在结构上与rnn非常相似。虽然在LSTM的各个步骤之间有一个隐藏的状态，但LSTM细胞本身的内部运作与RNN细胞不同:</p>
+			<div><div><img src="img/B12365_05_5.jpg" alt="Figure 5.5 – LSTM cell&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption"> figure 5.5–lstm电池</p>
+			<h2><a id="_idTextAnchor099"/> LSTM细胞</h2>
+			<p>虽然RNN单元只是采用<a id="_idIndexMarker248"/>先前的隐藏状态和新的输入步骤，并使用一些学习到的参数计算下一个隐藏状态，但LSTM单元的内部工作方式要复杂得多:</p>
+			<div><div><img src="img/B12365_05_6.jpg" alt="Figure 5.6 – Inner workings of an LSTM cell&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.6-LSTM电池的内部工作原理</p>
+			<p>虽然这看起来明显比RNN更令人生畏，但我们将依次解释LSTM <a id="_idIndexMarker249"/>单元的每个组件。我们将首先查看<strong class="bold">忘记门</strong>(由<a id="_idIndexMarker250"/>粗体矩形表示):</p>
+			<div><div><img src="img/B12365_05_7.jpg" alt="Figure 5.7 – The forget gate&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.7–遗忘之门</p>
+			<p>遗忘门本质上学习序列中要遗忘的元素。先前的隐藏状态<em class="italic"> h </em> t-1和最新的输入步骤<em class="italic"> x </em> 1被连接在一起，并通过遗忘门上的学习权重矩阵和将值<a id="_idIndexMarker251"/>压缩在0和1之间的sigmoid函数。这个结果矩阵<em class="italic"> ft </em>逐点乘以来自前一步骤的单元状态<em class="italic"> c </em> t-1。这有效地将掩码应用于先前的单元状态，从而仅带来来自先前单元状态的相关信息。</p>
+			<p>接下来，我们<a id="_idIndexMarker252"/>将查看<strong class="bold">输入门</strong>:</p>
+			<div><div><img src="img/B12365_05_8.jpg" alt="Figure 5.8 – The input gate&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.8–输入门</p>
+			<p>输入门再次获取串接的先前隐藏状态<em class="italic"> h </em> t-1和当前序列输入<em class="italic"> x </em> t，并将其通过具有学习参数的sigmoid函数，该函数输出另一个矩阵<em class="italic"> i </em> t，该矩阵由0和1之间的值组成。串联的隐藏<a id="_idIndexMarker253"/>状态和序列输入也通过一个双曲正切函数，该函数将输出压缩在-1和1之间。这是乘以矩阵。这意味着生成<em class="italic"> i </em> t所需的学习参数有效地学习了哪些元素应该从我们的单元状态中的当前时间步长保留。然后将其添加到当前单元状态，以获得我们的最终单元状态，该状态将被带入下一个时间步骤。</p>
+			<p>最后，我们有LSTM单元的最后一个元件<a id="_idIndexMarker254"/>—<strong class="bold">输出门</strong>:</p>
+			<div><div><img src="img/B12365_05_9.jpg" alt="Figure 5.9 – The output gate&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.9–输出门</p>
+			<p>输出门计算LSTM单元的最终输出——包括单元状态和隐藏状态，并传递到下一步。单元状态<em class="italic"> c </em> t与前两步<a id="_idIndexMarker255"/>没有变化，是遗忘门和输入门的产物。最终隐藏状态<em class="italic"> h </em> t的计算方法是，采用串接的先前隐藏状态<em class="italic"> h </em> t-1和当前时间步长输入<em class="italic"> x </em> t，并通过具有一些学习参数的sigmoid函数来获得输出门输出<em class="italic"> o </em> t。最终单元状态<em class="italic"> c </em> t通过tanh函数并乘以输出门输出<em class="italic"> o </em> t， 为了计算最终隐藏状态，<em class="italic"> h </em> t。这意味着输出门上的学习参数有效地控制先前隐藏状态和当前输出的哪些元素与最终单元状态相结合，以作为新的隐藏状态延续到下一时间步。</p>
+			<p>在我们的正向传递中，我们简单地迭代通过模型，初始化我们的隐藏状态和单元状态，并使用LSTM单元在每个时间步长更新它们，直到我们剩下最终的隐藏状态，该隐藏状态被输出到我们的神经网络的下一层。通过反向传播LSTM的所有层，我们可以计算相对于网络损耗的梯度，因此我们知道通过梯度下降在哪个方向更新我们的参数。我们得到几个矩阵或参数——一个用于输入门，一个用于输出门，一个用于遗忘门。</p>
+			<p>因为我们比简单的RNN获得更多的<a id="_idIndexMarker256"/>参数，并且我们的计算图更复杂，通过网络反向传播和更新权重的过程可能比简单的RNN花费更长的时间。然而，尽管训练时间较长，但我们已经表明，LSTM提供了优于传统RNN的显著优势，因为输出门、输入门和遗忘门都结合起来，使模型能够确定哪些输入元素应该用于更新隐藏状态，哪些隐藏状态的元素应该被遗忘，这意味着模型能够更好地形成长期依赖性，并保留来自先前序列步骤的信息。</p>
+			<h2><a id="_idTextAnchor100"/>双向LSTMs</h2>
+			<p>我们之前提到过，简单的rnn的一个缺点是它们不能捕捉句子中单词的完整上下文，因为它们只是向后看的。在RNN的每个时间步长，只考虑之前看到的单词，而不考虑句子中接下来出现的单词。虽然基本的LSTM类似地面向后，但我们可以使用LSTM的修改版本，称为<strong class="bold">双向LSTM </strong>，它在序列中的每个时间步都考虑它之前和之后的单词。</p>
+			<p>双向LSTMs同时按正序和逆序处理序列，保持两个<a id="_idIndexMarker258"/>隐藏状态。我们称正向隐藏状态为<em class="italic"> f </em> t，用<em class="italic"> r </em> t表示反向隐藏状态:</p>
+			<div><div><img src="img/B12365_05_10.jpg" alt="Figure 5.10 – The bidirectional LSTM process&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.10-双向LSTM过程</p>
+			<p>在这里，我们可以看到，我们在整个过程中保持这两个隐藏状态，并使用它们来计算最终隐藏状态，<em class="italic"> h </em> t。因此，如果我们希望计算时间步长<em class="italic"> t </em>的最终隐藏状态，我们使用前向隐藏状态，<em class="italic"> f </em> t，它已经看到了直到并包括输入<em class="italic"> x </em> t的所有单词，以及反向隐藏状态，<em class="italic"> r </em> t， 因此，我们的最终隐藏状态，<em class="italic"> h </em> t包含已经看到句子中所有单词的隐藏状态，而不仅仅是在时间步<em class="italic"> t </em>之前出现的单词<a id="_idIndexMarker259"/>。 这意味着可以更好地捕捉整个句子中任何给定单词的上下文。与传统的单向lstm相比，双向lstm已经被证明在几个NLP任务上提供了改进的性能。</p>
+			<h1>使用LSTMs构建情感分析器</h1>
+			<p>我们现在将看看如何构建我们自己的简单LSTM来根据句子的情感对它们进行分类。我们将在3000条评论的数据集上训练我们的模型，这些评论被分类为正面或<a id="_idIndexMarker261"/>负面。这些评论来自三个不同的来源——电影评论、产品评论和地点评论——以确保我们的情感分析器是强大的。数据集是平衡的，因此它由1，500条正面评论和1，500条负面评论组成。我们将从导入数据集并检查它开始:</p>
+			<pre>with open("sentiment labelled sentences/sentiment.txt") as f:
+    reviews = f.read()
+    
+data = pd.DataFrame([review.split('\t') for review in                      reviews.split('\n')])
+data.columns = ['Review','Sentiment']
+data = data.sample(frac=1)</pre>
+			<p>这将返回以下输出:</p>
+			<div><div><img src="img/B12365_05_11.jpg" alt="Figure 5.11 – Output of the dataset&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.11-数据集的输出</p>
+			<p>我们从文件中读入数据集。我们的数据集是制表符分隔的，所以我们用制表符和<a id="_idIndexMarker262"/>换行符将它分开。我们重命名我们的列，然后使用sample函数随机打乱我们的数据。查看我们的数据集，我们需要做的第一件事是预处理我们的句子，将它们输入我们的LSTM模型。</p>
+			<h2><a id="_idTextAnchor102"/>数据预处理</h2>
+			<p>首先，我们创建一个函数<a id="_idIndexMarker263"/>来标记我们的数据，将每个评论分成一个单独的预处理单词列表。我们遍历我们的数据集，对于每个评论，我们删除所有标点符号，将字母转换成小写，并删除任何尾随空格。然后，我们使用NLTK标记器从这个预处理的文本中创建单独的标记:</p>
+			<pre>def split_words_reviews(data):
+    text = list(data['Review'].values)
+    clean_text = []
+    for t in text:
+        clean_text.append(t.translate(str.maketrans('', '',                   punctuation)).lower().rstrip())
+    tokenized = [word_tokenize(x) for x in clean_text]
+    all_text = []
+    for tokens in tokenized:
+        for t in tokens:
+            all_text.append(t)
+    return tokenized, set(all_text)
+reviews, vocab = split_words_reviews(data)
+reviews[0]</pre>
+			<p>这导致<a id="_idIndexMarker264"/>以下输出:</p>
+			<div><div><img src="img/B12365_05_12.jpg" alt="Figure 5.12 – Output of NTLK tokenization&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.12–NTLK令牌化的输出</p>
+			<p>我们返回评论本身，以及所有评论中的一组所有单词(即词汇/语料库)，我们将使用它们来创建我们的vocab词典。</p>
+			<p>为了充分准备我们的句子进入神经网络，我们必须将单词转换成数字。为了做到这一点，我们创建了几个字典，这将允许我们将数据从word转换为index，以及从index转换为word。为此，我们只需遍历我们的语料库，并为每个唯一的单词分配一个索引:</p>
+			<pre>def create_dictionaries(words):
+    word_to_int_dict = {w:i+1 for i, w in enumerate(words)}
+    int_to_word_dict = {i:w for w, i in word_to_int_dict.                            items()}
+    return word_to_int_dict, int_to_word_dict
+word_to_int_dict, int_to_word_dict = create_dictionaries(vocab)
+int_to_word_dict</pre>
+			<p>这将产生以下输出:</p>
+			<div><div><img src="img/B12365_05_13.jpg" alt="Figure 5.13 – Assigning index to each word&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.13-给每个单词分配一个索引</p>
+			<p>我们的神经网络将接受固定长度的输入；然而，如果我们探究我们的评论，我们会发现<a id="_idIndexMarker265"/>我们的评论都有不同的长度。为了确保我们所有的输入都是相同的长度，我们将<em class="italic">填充</em>我们的输入句子。这实质上意味着我们给更短的句子添加空的标记，这样所有的句子都是一样长的。我们必须首先决定我们希望实现的填充长度。我们首先计算输入评论中句子的最大长度，以及平均长度:</p>
+			<pre>print(np.max([len(x) for x in reviews]))
+print(np.mean([len(x) for x in reviews]))</pre>
+			<p>这给出了以下内容:</p>
+			<p class="figure-caption"><img src="img/B12365_05_14.png" alt="Figure 5.14 – Length value&#13;&#10;"/></p>
+			<p class="figure-caption">图5.14-长度值</p>
+			<p>我们可以看到，最长的句子有<code>70</code>个单词长，平均句子长度有<code>11.78</code>个。为了从所有句子中获取所有信息，我们希望填充所有句子，使它们的长度为70。然而，使用更长的句子意味着更长的序列，这导致我们的LSTM层变得更深。这意味着模型训练需要更长的时间，因为我们必须通过更多的层反向传播我们的梯度，但这也意味着我们的大部分输入将只是稀疏的<a id="_idIndexMarker266"/>和充满空令牌，这使得从我们的数据中学习的效率低得多。我们的最大句子长度比我们的平均句子长度大得多这一事实就说明了这一点。为了捕捉我们句子的大部分信息，而不会不必要地填充我们的输入，使它们过于稀疏，我们选择使用输入大小为<code>50</code>。您可能希望尝试在<code>20</code>和<code>70</code>之间使用不同的输入大小，看看这会如何影响您的模型性能。</p>
+			<p>我们将创建一个函数，允许我们填充我们的句子，使它们都是相同的大小。对于短于序列长度的评论，我们用空标记填充它们。对于超过序列长度的评论，我们只需丢弃超过最大序列长度的任何标记:</p>
+			<pre>def pad_text(tokenized_reviews, seq_length):
+    
+    reviews = []
+    
+    for review in tokenized_reviews:
+        if len(review) &gt;= seq_length:
+            reviews.append(review[:seq_length])
+        else:
+            reviews.append(['']*(seq_length-len(review)) +                    review)
+        
+    return np.array(reviews)
+padded_sentences = pad_text(reviews, seq_length = 50)
+padded_sentences[0]</pre>
+			<p>我们的填充句子看起来像这样:</p>
+			<div><div><img src="img/B12365_05_15.jpg" alt="Figure 5.15 – Padding the sentences&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.15–填充句子</p>
+			<p>我们必须做进一步的调整，以允许在我们的模型中使用空令牌。目前，我们的<a id="_idIndexMarker267"/>词汇词典不知道如何将空令牌转换成整数，以便在我们的网络中使用。因此，我们手动将它们添加到索引为<code>0</code>的字典中，这意味着空令牌在输入到我们的模型中时将被赋予一个值<code>0</code>:</p>
+			<pre>int_to_word_dict[0] = ''
+word_to_int_dict[''] = 0</pre>
+			<p>我们现在几乎准备好开始训练我们的模型。我们执行预处理的最后一步，将所有填充的句子编码成数字序列，输入到我们的神经网络中。这意味着先前填充的句子现在看起来像这样:</p>
+			<pre>encoded_sentences = np.array([[word_to_int_dict[word] for word in review] for review in padded_sentences])
+encoded_sentences[0]</pre>
+			<p>我们的编码句子表示如下:</p>
+			<div><div><img src="img/B12365_05_16.jpg" alt="Figure 5.16 – Encoding the sentence&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.16–句子编码</p>
+			<p>既然我们已经将所有的输入序列编码为数字向量，我们就可以开始设计我们的模型架构了。</p>
+			<h2><a id="_idTextAnchor103"/>模型架构</h2>
+			<p>我们的模型将由几个主要部分组成。除了许多神经网络共有的输入和输出层，我们首先需要一个<strong class="bold">嵌入层</strong>。这是为了让我们的模型学习它正在被训练的<a id="_idIndexMarker270"/>单词的矢量<a id="_idIndexMarker269"/>表示。我们可以选择使用预先计算的嵌入(比如GLoVe)，但是出于演示的目的，我们将训练我们自己的嵌入层。我们的输入序列通过输入层，以向量序列的形式输出。</p>
+			<p>这些向量序列<a id="_idIndexMarker271"/>然后被输入到我们的<strong class="bold"> LSTM层</strong>。正如本章前面详细解释的，LSTM层从我们的嵌入序列中连续学习，并输出代表LSTM层最终隐藏状态的单一矢量输出。在最终输出节点预测0和1之间的值之前，该最终隐藏状态最终通过另一个<strong class="bold">隐藏层</strong>传递<a id="_idIndexMarker272"/>，指示输入序列是正面还是负面评论。这意味着我们的模型架构看起来像这样:</p>
+			<div><div><img src="img/B12365_05_17.jpg" alt="Figure 5.17 – Model architecture&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.17–模型架构</p>
+			<p>我们现在将<a id="_idIndexMarker273"/>演示如何使用PyTorch从头开始编写这个模型。我们创建了一个名为<code>SentimentLSTM</code>的类，它继承自<code>nn.Module</code>类。我们将我们的<code>init</code>参数定义为我们的<a id="_idIndexMarker274"/>vocab的大小，我们的<a id="_idIndexMarker275"/>模型将具有的LSTM层数，以及我们的模型隐藏状态的大小:</p>
+			<pre>class SentimentLSTM(nn.Module):
+    
+    def __init__(self, n_vocab, n_embed, n_hidden, n_output,    n_layers, drop_p = 0.8):
+        super().__init__()
+        
+        self.n_vocab = n_vocab  
+        self.n_layers = n_layers 
+        self.n_hidden = n_hidden </pre>
+			<p>然后，我们定义网络的每一层。首先，我们定义我们的嵌入层，它将我们的词汇表中单词数量的<a id="_idIndexMarker276"/>长度和嵌入向量的大小作为要指定的<code>n_embed</code>超参数。我们的LSTM层是使用嵌入层的输出矢量大小、模型隐藏状态的长度以及LSTM层的层数来定义的。我们还添加了一个参数来指定我们的LSTM可以在批量数据上进行训练<a id="_idIndexMarker278"/>,并添加了一个参数来允许我们通过dropout实现网络正则化。我们用概率<code>drop_p</code>(将在模型创建时指定的超参数)定义进一步的丢弃层，以及我们对最终全连接层和输出/预测节点的定义(具有sigmoid激活函数):</p>
+			<pre>       self.embedding = nn.Embedding(n_vocab, n_embed)
+        self.lstm = nn.LSTM(n_embed, n_hidden, n_layers,                        batch_first = True, dropout = drop_p)
+        self.dropout = nn.Dropout(drop_p)
+        self.fc = nn.Linear(n_hidden, n_output)
+        self.sigmoid = nn.Sigmoid()</pre>
+			<p>接下来，我们需要在模型类中定义我们的向前传递。在这个正向传递中，我们只是将一层的输出链接在一起，成为下一层的输入。在这里，我们可以看到我们的嵌入层以<code>input_words</code>作为输入，输出嵌入的单词。然后，我们的LSTM层将嵌入的单词作为输入并输出<code>lstm_out</code>。这里唯一的细微差别是，我们使用<code>view()</code>将LSTM输出的张量重新整形为输入到完全连接层的正确大小。同样的情况也适用于调整隐藏层的输出，以匹配输出节点的输出。请注意，我们的输出将返回对<code>class = 0</code>和<code>class = 1</code>的预测，因此我们将输出切片，只返回对<code>class = 1</code>的预测—也就是说，我们的句子为正的概率:</p>
+			<pre> def forward (self, input_words):
+                          
+        embedded_words = self.embedding(input_words)
+        lstm_out, h = self.lstm(embedded_words) 
+        lstm_out = self.dropout(lstm_out)
+        lstm_out = lstm_out.contiguous().view(-1,                             self.n_hidden)
+        fc_out = self.fc(lstm_out)                  
+        sigmoid_out = self.sigmoid(fc_out)              
+        sigmoid_out = sigmoid_out.view(batch_size, -1)  
+        
+        sigmoid_last = sigmoid_out[:, -1]
+        
+        return sigmoid_last, h</pre>
+			<p>我们还定义了一个名为<code>init_hidden()</code>的函数，它用批量大小的维度<a id="_idIndexMarker279"/>初始化我们的隐藏层。这允许我们的模型一次训练和预测许多句子，而不是一次只训练一个<a id="_idIndexMarker280"/>句子，如果我们愿意的话。注意，我们在这里将<code>device</code>定义为<code>"cpu"</code>，以便在本地处理器上运行它。但是，如果您有GPU，也可以将其设置为支持CUDA的GPU，以便在GPU上训练它:</p>
+			<pre>    def init_hidden (self, batch_size):
+        
+        device = "cpu"
+        weights = next(self.parameters()).data
+        h = (weights.new(self.n_layers, batch_size,\
+                 self.n_hidden).zero_().to(device),\
+             weights.new(self.n_layers, batch_size,\
+                 self.n_hidden).zero_().to(device))
+        
+        return h</pre>
+			<p>然后我们通过创建一个<code>SentimentLSTM</code>类的新实例来初始化我们的模型。我们传递我们的vocab的大小、我们的嵌入的大小、我们的隐藏状态的大小、以及输出大小和我们的LSTM中的层数:</p>
+			<pre>n_vocab = len(word_to_int_dict)
+n_embed = 50
+n_hidden = 100
+n_output = 1
+n_layers = 2
+net = SentimentLSTM(n_vocab, n_embed, n_hidden, n_output, n_layers)</pre>
+			<p>现在我们已经完全定义了我们的模型架构，是时候开始训练我们的模型了。</p>
+			<h2><a id="_idTextAnchor104"/>训练模型</h2>
+			<p>为了训练我们的模型，我们必须首先定义我们的数据集。我们将使用一组训练数据来训练我们的模型，在验证集的每一步评估我们训练的模型，最后，使用一组看不见的测试数据来测量我们模型的最终性能。我们使用独立于验证训练的测试集的原因是，我们可能希望基于相对于验证集的损失来微调我们的模型超参数。如果我们这样做，我们最终可能会选择那些对于特定的数据验证集来说性能最优的超参数。我们根据未知的测试集评估最终时间，以确保我们的模型能够很好地推广到它在训练循环的任何部分都没有见过的数据。</p>
+			<p>我们已经将我们的模型输入(<em class="italic"> x </em>)定义为<code>encoded_sentences</code>，但是我们还必须定义我们的模型输出(<em class="italic"> y </em>)。我们这样做很简单，如下所示:</p>
+			<pre>labels = np.array([int(x) for x in data['Sentiment'].values])</pre>
+			<p>接下来，我们定义我们的训练和验证比率。在这种情况下，我们将在80%的数据上训练我们的模型，在另外10%的数据上验证，最后，在剩下的10%的数据上测试:</p>
+			<pre>train_ratio = 0.8
+valid_ratio = (1 - train_ratio)/2</pre>
+			<p>然后，我们使用这些<a id="_idIndexMarker284"/>比率对数据进行切片，并将其转换为张量，然后转换为张量数据集:</p>
+			<pre>total = len(encoded_sentences)
+train_cutoff = int(total * train_ratio)
+valid_cutoff = int(total * (1 - valid_ratio))
+train_x, train_y = torch.Tensor(encoded_sentences[:train_cutoff]).long(), torch.Tensor(labels[:train_cutoff]).long()
+valid_x, valid_y = torch.Tensor(encoded_sentences[train_cutoff : valid_cutoff]).long(), torch.Tensor(labels[train_cutoff : valid_cutoff]).long()
+test_x, test_y = torch.Tensor(encoded_sentences[valid_cutoff:]).long(), torch.Tensor(labels[valid_cutoff:])
+train_data = TensorDataset(train_x, train_y)
+valid_data = TensorDataset(valid_x, valid_y)
+test_data = TensorDataset(test_x, test_y)</pre>
+			<p>然后，我们使用这些数据集来创建PyTorch <code>DataLoader</code>对象。<code>DataLoader</code>允许我们用<code>batch_size</code>参数批量处理我们的数据集，允许不同的批量容易地传递给我们的模型。在这种情况下，我们将保持简单并设置<code>batch_size = 1</code>，这意味着我们的模型将在单个句子上训练，而不是使用更大批量的数据。我们还选择随机打乱我们的<code>DataLoader</code>对象，以便数据以随机顺序通过我们的神经网络，而不是每个时期都以相同的顺序，这可能会从训练顺序中删除任何有偏差的结果:</p>
+			<pre>batch_size = 1
+train_loader = DataLoader(train_data, batch_size = batch_size,                          shuffle = True)
+valid_loader = DataLoader(valid_data, batch_size = batch_size,                          shuffle = True)
+test_loader = DataLoader(test_data, batch_size = batch_size,                         shuffle = True)</pre>
+			<p>既然我们已经为三个数据集定义了<code>DataLoader</code>对象，那么我们定义我们的训练循环。我们首先定义一些超参数，它们将在<a id="_idIndexMarker285"/>我们的训练循环中使用。最重要的是，我们将损失函数定义为二进制交叉熵(因为我们处理的是预测单个二进制类)，并将优化器定义为学习速率为<code>0.001</code>的<code>Adam</code>。我们还定义我们的模型运行一小段时间(以节省时间)，并设置<code>clip = 5</code>来定义我们的渐变裁剪:</p>
+			<pre>print_every = 2400
+step = 0
+n_epochs = 3
+clip = 5  
+criterion = nn.BCELoss()
+optimizer = optim.Adam(net.parameters(), lr = 0.001)</pre>
+			<p>我们训练循环的主体看起来像这样:</p>
+			<pre>for epoch in range(n_epochs):
+    h = net.init_hidden(batch_size)
+    
+    for inputs, labels in train_loader:
+        step += 1  
+        net.zero_grad()
+        output, h = net(inputs)
+        loss = criterion(output.squeeze(), labels.float())
+        loss.backward()
+        nn.utils.clip_grad_norm(net.parameters(), clip)
+        optimizer.step()</pre>
+			<p>在这里，我们只是为多个时期训练我们的模型，对于每个时期，我们首先使用批处理大小参数初始化我们的隐藏层。在这种情况下，我们设置<code>batch_size = 1</code>，因为我们只是一次一句地训练<a id="_idIndexMarker286"/>我们的模型。对于我们的训练加载器中的每一批输入句子和标签，我们首先将梯度置零(以阻止它们累积)，并使用模型的当前状态，通过数据的正向传递来计算我们的模型输出。使用此输出，我们然后使用模型的预测输出和正确的标签来计算我们的损失。然后，我们通过网络对这种损失进行反向传递，以计算每个阶段的梯度。接下来，我们使用<code>grad_clip_norm()</code>函数来裁剪我们的渐变，因为这将阻止我们的渐变爆炸，正如本章前面提到的。我们定义了<code>clip = 5</code>，意思是在任何给定节点的最大梯度是<code>5</code>。最后，我们通过调用<code>optimizer.step()</code>，使用在反向过程中计算的梯度来更新我们的权重。</p>
+			<p>如果我们自己运行这个循环，我们将训练我们的模型。然而，我们希望在每个时期后评估我们的模型性能，以便确定它在一组验证数据上的性能。我们的做法如下:</p>
+			<pre>if (step % print_every) == 0:            
+            net.eval()
+            valid_losses = []
+            for v_inputs, v_labels in valid_loader:
+                       
+                v_output, v_h = net(v_inputs)
+                v_loss = criterion(v_output.squeeze(),                                    v_labels.float())
+                valid_losses.append(v_loss.item())
+            print("Epoch: {}/{}".format((epoch+1), n_epochs),
+                  "Step: {}".format(step),
+                  "Training Loss: {:.4f}".format(loss.item()),
+                  "Validation Loss: {:.4f}".format(np.                                     mean(valid_losses)))
+            net.train()</pre>
+			<p>这意味着在每个时期结束时，我们的模型调用<code>net.eval()</code>来冻结我们模型的权重，并像以前一样使用我们的数据执行向前传递。请注意，当我们处于评估模式时，dropout也不适用。但是，这一次，我们没有使用训练数据加载器，而是使用了验证加载器。通过这样做，我们可以计算模型当前状态在我们的验证数据集上的总损失。最后，我们打印我们的结果并调用<code>net.train()</code>来解冻我们模型的权重，以便我们可以在下一个时期再次训练。我们的输出看起来像这样:</p>
+			<div><div><img src="img/B12365_05_18.jpg" alt="Figure 5.18 – Training the model&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.18–训练模型</p>
+			<p>最后，我们可以保存我们的模型以备将来使用:</p>
+			<pre>torch.save(net.state_dict(), 'model.pkl')</pre>
+			<p>在对我们的模型进行了三个时期的训练之后，我们注意到了两件主要的事情。我们先从好消息开始——我们的模型正在学习一些东西！不仅我们的训练损失下降了，而且我们还可以看到我们在验证集上的损失在每个时期后都下降了。这意味着我们的模型更善于在仅仅三个时期后，根据一组看不见的数据预测情绪！然而，坏消息是我们的模型过度拟合了。我们的训练损失远低于我们的验证损失，这表明尽管我们的模型已经学会了如何很好地预测训练数据集，但这并不能推广到一组看不见的数据。这是意料之中的事情，因为我们<a id="_idIndexMarker288"/>使用了非常小的一组训练数据(只有2400个训练句子)。由于我们正在训练整个嵌入层，因此许多单词可能只在训练集中出现一次，而在验证集中从未出现过，反之亦然，这使得模型实际上不可能概括我们语料库中所有不同种类的单词。在实践中，我们希望在更大的数据集上训练我们的模型，以允许我们的模型学习如何更好地概括。我们还在非常短的时间内训练了该模型，并且没有执行超参数调整来确定我们的模型的最佳可能迭代。为了提高模型的性能，可以随意尝试更改模型中的一些参数(如训练时间、隐藏状态大小、嵌入大小等)。</p>
+			<p>虽然我们的模型过拟合，但它还是学到了一些东西。我们现在希望在最终测试数据集上评估我们的模型。我们使用之前定义的测试加载器对数据进行最后一次处理。在此过程中，我们循环所有测试数据，并使用最终模型进行预测:</p>
+			<pre>net.eval()
+test_losses = []
+num_correct = 0
+for inputs, labels in test_loader:
+    test_output, test_h = net(inputs)
+    loss = criterion(test_output, labels)
+    test_losses.append(loss.item())
+    
+    preds = torch.round(test_output.squeeze())
+    correct_tensor = preds.eq(labels.float().view_as(preds))
+    correct = np.squeeze(correct_tensor.numpy())
+    num_correct += np.sum(correct)
+    
+print("Test Loss: {:.4f}".format(np.mean(test_losses)))
+print("Test Accuracy: {:.2f}".format(num_correct/len(test_loader.dataset)))    </pre>
+			<p>我们在测试数据集上的表现如下:</p>
+			<div><div><img src="img/B12365_05_19.jpg" alt="Figure 5.19 – Output values&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.19–输出值</p>
+			<p>然后，我们将我们的模型预测与我们的真实标签进行比较，以获得<code>correct_tensor</code>，这是一个评估我们的每个模型预测是否正确的向量。然后，我们对这个向量求和，并除以它的长度，得到我们的模型的总精度。在这里，我们得到了76%的准确率。虽然我们的模型当然远非完美，但考虑到我们非常小的训练集和有限的训练时间，这一点也不差！这个<a id="_idIndexMarker289"/>只是用来说明LSTMs在学习NLP数据时是多么有用。接下来，我们将展示如何使用我们的模型根据新数据进行预测。</p>
+			<h2><a id="_idTextAnchor105"/>使用我们的模型进行预测</h2>
+			<p>现在我们有了一个经过训练的模型<a id="_idIndexMarker290"/>，应该可以对一个新句子重复我们的预处理步骤，将其传递到我们的模型中，并获得它的情感预测。我们首先创建一个函数来预处理我们的输入句子，以预测:</p>
+			<pre>def preprocess_review(review):
+    review = review.translate(str.maketrans('', '',                    punctuation)).lower().rstrip()
+    tokenized = word_tokenize(review)
+    if len(tokenized) &gt;= 50:
+        review = tokenized[:50]
+    else:
+        review= ['0']*(50-len(tokenized)) + tokenized
+    
+    final = []
+    
+    for token in review:
+        try:
+            final.append(word_to_int_dict[token])
+            
+        except:
+            final.append(word_to_int_dict[''])
+        
+    return final</pre>
+			<p>我们删除标点符号和尾随空格，将字母转换成小写，并像以前一样对输入句子进行标记。我们将句子填充到一个长度为<code>50</code>的序列中，然后使用我们预先计算的字典将<a id="_idIndexMarker291"/>我们的标记转换成数值。请注意，我们的输入可能包含我们的网络以前没有见过的新单词。在这种情况下，我们的函数将这些视为空令牌。</p>
+			<p>接下来，我们创建实际的<code>predict()</code>函数。我们对输入评论进行预处理，将其转换为张量，并将其传递给数据加载器。然后，我们遍历这个数据加载器(即使它只包含一个句子)，并通过我们的网络进行审查，以获得预测。最后，我们评估我们的预测，并打印出它是正面的还是负面的评论:</p>
+			<pre>def predict(review):
+    net.eval()
+    words = np.array([preprocess_review(review)])
+    padded_words = torch.from_numpy(words)
+    pred_loader = DataLoader(padded_words, batch_size = 1,                             shuffle = True)
+    for x in pred_loader:
+        output = net(x)[0].item()
+    
+    msg = "This is a positive review." if output &gt;= 0.5 else           "This is a negative review."
+    print(msg)
+    print('Prediction = ' + str(output))</pre>
+			<p>最后，我们只需要在我们的评论中调用<code>predict()</code>来做一个预测:</p>
+			<pre>predict("The film was good")</pre>
+			<p>这导致<a id="_idIndexMarker292"/>以下输出:</p>
+			<div><div><img src="img/B12365_05_20.jpg" alt="Figure 5.20 – Prediction string on a positive value&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.20–正值上的预测字符串</p>
+			<p>我们还尝试对负值使用<code>predict()</code>:</p>
+			<pre>predict("It was not good")</pre>
+			<p>这会产生以下输出:</p>
+			<div><div><img src="img/B12365_05_21.jpg" alt="Figure 5.21 – Prediction string on a negative value&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图5.21–负值上的预测字符串</p>
+			<p>我们现在已经建立了一个LSTM模型来从头开始进行情感分析。虽然我们的<a id="_idIndexMarker293"/>模型远非完美，但我们已经展示了如何利用一些带有情感标签的评论，训练一个能够对新评论进行预测的模型。接下来，我们将展示如何在Heroku云平台上托管我们的模型，以便其他人可以使用您的模型进行预测</p>
+			<h1><a id="_idTextAnchor106"/>在Heroku上部署应用</h1>
+			<p>我们现在已经在本地机器上训练了我们的模型，我们可以用它来做预测。然而，如果你想让其他人能够使用你的模型进行预测，这并不一定有什么好处。如果我们在基于云的平台(比如Heroku)上托管我们的模型，并创建一个基本的API，其他人将能够调用该API来使用我们的模型进行预测。</p>
+			<h2><a id="_idTextAnchor107"/>介绍Heroku</h2>
+			<p>Heroku是一个基于云的平台，在这里你可以托管自己的基础程序。虽然Heroku的免费层具有最大500 MB的上传大小和有限的处理能力，但这应该足以让我们托管我们的模型并创建一个基本的API，以便使用我们的模型进行预测。</p>
+			<p>第一步，在Heroku上创建一个免费账号，安装Heroku app。然后，在命令行中，键入以下命令:</p>
+			<pre>heroku login</pre>
+			<p>使用您的帐户详细信息登录。然后，通过键入以下命令创建一个新的<code>heroku</code>项目:</p>
+			<pre>heroku create sentiment-analysis-flask-api</pre>
+			<p>注意，所有的项目名称必须是唯一的，所以您需要选择一个不是<code>sentiment-analysis-flask-api</code>的项目名称。</p>
+			<p>我们的第一步是使用Flask构建一个基本的API。</p>
+			<h2><a id="_idTextAnchor108"/>使用Flask文件结构创建API</h2>
+			<p>创建API相当简单<a id="_idIndexMarker298"/>使用Flask，因为Flask包含创建API所需的默认模板<a id="_idIndexMarker299"/>:</p>
+			<p>首先，在命令行中，为您的flask API创建<a id="_idIndexMarker300"/>一个新文件夹，并导航到它:</p>
+			<pre>mkdir flaskAPI
+cd flaskAPI</pre>
+			<p>然后，在文件夹中创建一个虚拟环境。这将是您的API将使用的Python环境:</p>
+			<pre>python3 -m venv vir_env</pre>
+			<p>在您的环境中，使用<code>pip</code>安装您将需要的所有包。这包括您在模型程序中使用的所有包，如NLTK、<code>pandas</code>、NumPy和PyTorch，以及运行API所需的包，如Flask和Gunicorn:</p>
+			<pre>pip install nltk pandas numpy torch flask gunicorn</pre>
+			<p>然后，我们创建一个API将使用的需求列表。请注意，当我们将它上传到Heroku时，Heroku会自动下载并安装列表中的所有软件包。我们可以通过键入以下命令来实现这一点:</p>
+			<pre>pip freeze &gt; requirements.txt</pre>
+			<p>我们需要做的一个调整是用下面的代码替换<code>requirements.txt</code>文件中的<code>torch</code>行:</p>
+			<pre><a href="https://download.pytorch.org/whl/cpu/torch-1.3.1%2Bcpu-cp37-cp37m-linux_x86_64.whl"><strong class="bold">https://download.pytorch.org/whl/cpu/torch-1.3.1%2Bcpu-cp37-cp37m-linux_x86_64.whl</strong></a></pre>
+			<p>这是一个指向PyTorch版本的wheel文件的链接，该文件只包含CPU实现。包含完整GPU支持的PyTorch的完整版本大小超过500 MB，因此它不能在免费的Heroku集群上运行。使用这个更紧凑的PyTorch版本意味着您仍然可以在Heroku上使用PyTorch运行您的模型。最后，我们在文件夹中创建了另外三个文件，以及模型的最终目录:</p>
+			<pre>touch app.py
+touch Procfile
+touch wsgi.py
+mkdir models</pre>
+			<p>现在，我们已经<a id="_idIndexMarker301"/>创建了Flash API所需的所有文件，我们已经<a id="_idIndexMarker302"/>准备好开始调整我们的文件。</p>
+			<h2><a id="_idTextAnchor109"/>使用Flask-API文件创建API</h2>
+			<p>在我们的<code>app.py</code>文件中，我们可以开始<a id="_idIndexMarker303"/>构建我们的API:</p>
+			<ol>
+				<li>我们首先执行所有的进口<a id="_idIndexMarker304"/>并创建一条<code>predict</code>路线。这允许我们用<code>predict</code>参数调用我们的API，以便在我们的API中运行<code>predict()</code>方法:<pre>import flask from flask import Flask, jsonify, request import json import pandas as pd from string import punctuation import numpy as np import torch from nltk.tokenize import word_tokenize from torch.utils.data import TensorDataset, DataLoader from torch import nn from torch import optim app = Flask(__name__) @app.route('/predict', methods=['GET'])</pre></li>
+				<li>Next, we define our <code>predict()</code> method within our <code>app.py</code> file. This is largely a rehash of our model file, so to avoid repetition of code, it is advised that you look at the completed <code>app.py</code> file within the GitHub repository linked in the <em class="italic">Technical requirements</em> section of this chapter. You will see that there are a few additional<a id="_idIndexMarker305"/> lines. Firstly, within our <code>preprocess_review()</code> function, we will see the following lines:<pre>with open('models/word_to_int_dict.json') as handle:
+word_to_int_dict = json.load(handle)</pre><p>这将把我们在主模型笔记本中计算的<code>word_to_int</code>字典加载到<a id="_idIndexMarker306"/>我们的模型中。这是为了使我们的单词索引与我们训练的模型一致。然后，我们使用这个字典将输入文本转换成编码序列。确保从原始笔记本输出中取出<code>word_to_int_dict.json</code>文件，并将其放在<code>models</code>目录中。</p></li>
+				<li>类似地，我们还必须从训练好的模型中加载权重。我们首先定义我们的<code>SentimentLSTM</code>类，并使用<code>torch.load</code>加载我们的权重。我们将使用原始笔记本中的<code>.pkl</code>文件，所以请务必将它放在<code>models</code>目录中:<pre>model = SentimentLSTM(5401, 50, 100, 1, 2) model.load_state_dict(torch.load("models/model_nlp.pkl"))</pre></li>
+				<li>我们还必须定义API的输入和输出。我们希望我们的模型从我们的API获取输入，并将其传递给我们的<code>preprocess_review()</code>函数。我们使用<code>request.get_json()</code> : <pre>request_json = request.get_json() i = request_json['input'] words = np.array([preprocess_review(review=i)])</pre>来实现这一点</li>
+				<li>为了定义我们的输出，我们返回一个JSON响应，它由模型的输出和一个<a id="_idIndexMarker307"/>响应代码<code>200</code>组成，这是我们的predict函数所返回的内容:<pre>output = model(x)[0].item() response = json.dumps({'response': output}) 	return response, 200</pre></li>
+				<li>随着我们的<a id="_idIndexMarker308"/>应用程序主体的完成，为了使我们的API运行，我们还必须添加两个额外的东西。我们必须首先将以下内容添加到我们的<code>wsgi.py</code>文件中:<pre>from app import app as application if __name__ == "__main__":     application.run()</pre></li>
+				<li>最后，将以下内容添加到我们的Procfile中:<pre>web: gunicorn app:app --preload</pre></li>
+			</ol>
+			<p>这就是应用程序运行所需的全部内容。我们可以通过首先使用以下命令在本地启动API来测试我们的API是否运行:</p>
+			<pre>gunicorn --bind 0.0.0.0:8080 wsgi:application -w 1</pre>
+			<p>一旦API在本地运行，我们就可以向API发出请求，向它传递一个句子来预测结果:</p>
+			<pre>curl -X GET http://0.0.0.0:8080/predict -H "Content-Type: application/json" -d '{"input":"the film was good"}'</pre>
+			<p>如果一切正常，您应该会收到来自API的预测。既然我们已经有了在本地进行预测的API，那么是时候将它托管在Heroku上了，这样我们就可以在云中进行预测。</p>
+			<h2>使用Flask创建API在Heroku上托管</h2>
+			<p>我们首先需要<a id="_idIndexMarker309"/>将我们的文件提交给Heroku，就像我们使用GitHub提交文件<a id="_idIndexMarker310"/>一样。我们通过简单地运行以下命令，将我们的工作目录<code>flaskAPI</code>定义为一个<code>git</code>文件夹:</p>
+			<pre>git init</pre>
+			<p>在该文件夹中，我们将以下代码添加到<code>.gitignore</code>文件，这将阻止我们向Heroku repo添加不必要的文件:</p>
+			<pre>vir_env
+__pycache__/
+.DS_Store</pre>
+			<p>最后，我们添加我们的第一个<code>commit</code>函数，并将其推送到我们的<code>heroku</code>项目:</p>
+			<pre>git add . -A 
+git commit -m 'commit message here'
+git push heroku master</pre>
+			<p>这可能需要一些时间来编译，因为系统不仅要将所有文件从您的本地目录复制到Heroku，而且Heroku会自动构建您定义的环境，安装所有需要的包并运行您的API。</p>
+			<p>现在，如果一切正常，您的API将自动运行在Heroku cloud上。为了进行预测，您可以简单地使用您的项目名而不是<code>sentiment-analysis-flask-api</code>向API发出请求:</p>
+			<pre>curl -X GET https://sentiment-analysis-flask-api.herokuapp.com/predict -H "Content-Type: application/json" -d '{"input":"the film was good"}'</pre>
+			<p>您的应用程序现在将从模型中返回一个预测。恭喜您，您现在已经学会了如何从头开始训练一个LSTM模型，将它上传到云中，并使用它进行预测！展望未来，本教程有望成为您训练自己的LSTM模型并将它们部署到云中的基础。</p>
+			<h1><a id="_idTextAnchor111"/>总结</h1>
+			<p>在这一章中，我们讨论了RNNs的基本原理及其主要变体之一，LSTM。然后，我们演示了如何从头开始构建自己的RNN，并将其部署在基于云的平台Heroku上。虽然rnn通常用于NLP任务的深度学习，但它们绝不是适合该任务的唯一神经网络架构。</p>
+			<p>在下一章中，我们将研究卷积神经网络，并展示它们如何用于NLP学习任务。</p>
+		</div>
+	
+
+</body></html>

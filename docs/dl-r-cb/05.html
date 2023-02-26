@@ -1,0 +1,809 @@
+<html><head/><body>
+
+
+    
+        <title>Deep Generative Models</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">深度生成模型</h1>
+                
+            
+            
+                
+<p>深度生成神经网络是无监督深度学习模型的一种流行形式。这些模型旨在学习生成数据的过程。生成模型不仅学习从数据中提取模式，还估计潜在的概率分布。这些模型用于创建合成数据，这些数据遵循与给定训练数据集相同的概率分布。这一章将让你了解深层生成模型以及它们是如何工作的。</p>
+<p>在本章中，我们将介绍以下配方:</p>
+<ul>
+<li>使用GANs生成图像</li>
+<li>实现DCGANs</li>
+<li>实现可变自动编码器</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Generating images with GANs</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">使用GANs生成图像</h1>
+                
+            
+            
+                
+<p><strong>生成对抗网络</strong> ( <strong>甘斯</strong>)被广泛用于学习任何数据分布并模仿它。GANs由两个网络组成；一个是生成器，它从正态或均匀分布生成新的合成数据实例，而另一个是鉴别器，它评估生成的实例并检查它们是否可信，即它们是否属于原始训练数据分布。在伪造者和cop的场景中，发生器和鉴别器相互竞争，其中伪造者的目标是通过生成虚假数据来欺骗cop，而cop的角色是检测谎言。来自鉴别器的反馈被传递给生成器，以便它可以在每次迭代中随机应变。注意，尽管两个网络都优化不同且相反的目标函数，但是整个系统的稳定性和准确性取决于这两个网络各自的准确性。</p>
+<p class="mce-root"/>
+<p>以下是GAN网络的总体目标函数:</p>
+<p style="padding-left: 60px"><img class="aligncenter size-full wp-image-1224 image-border" src="img/63d62f7a-aa8e-43a6-a6c3-62d5c205fbcd.png" style="width:38.17em;height:7.42em;"/></p>
+<p>下图显示了gan的工作原理:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/416958c6-477f-425d-9ddf-368964b9d746.png" style="width:35.25em;height:15.75em;"/></p>
+<p>在这个菜谱中，我们将实现一个GAN模型来重建手写数字。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Getting ready</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">做好准备</h1>
+                
+            
+            
+                
+<div><div><div><p>在这个例子中，我们将使用手写数字的MNIST数据集。它由60，000个训练和10，000个测试灰度图像组成，大小为28x28。</p>
+</div>
+</div>
+</div>
+<div><div><div><p>让我们从加载所需的库开始:</p>
+</div>
+</div>
+<pre>library(keras)<br/>library(grid)<br/>library(abind)</pre>
+<p>现在，让我们加载数据:</p>
+<pre># Input image dimensions<br/>img_rows &lt;- 28<br/>img_cols &lt;- 28<br/><br/># The data, shuffled and split between train and test sets<br/>mnist &lt;- dataset_mnist()<br/>x_train &lt;- mnist$train$x<br/>y_train &lt;- mnist$train$y<br/>x_test &lt;- mnist$test$x<br/>y_test &lt;- mnist$test$y</pre>
+<p>现在，我们可以检查数据的维度:</p>
+<pre>dim(x_train)</pre>
+<p>在下面的截图中，您可以看到训练数据中有60，000张图像，每张图像的大小为28x28:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-721 image-border" src="img/5a4d7a07-2234-4049-b4b0-c0eb3481a910.png" style="width:7.75em;height:1.58em;"/></p>
+<p>现在我们已经完成了这一步，我们可以将训练数据的维度从28x28的矩阵重新定义为长度为784的扁平1D数组:</p>
+</div>
+<pre>x_train &lt;- array_reshape(x_train, c(nrow(x_train), 784))</pre>
+<p>接下来，我们对训练数据进行归一化，并在0和1的范围内转换值:</p>
+<pre>x_train &lt;- x_train/255<br/></pre>
+<p>让我们打印一个样本图像数据，看看它看起来像什么:</p>
+<pre>x_train[1,]</pre>
+<p>现在我们知道了数据，让我们继续模型构建部分。</p>
+<p class="mce-root"/>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How to do it...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">怎么做...</h1>
+                
+            
+            
+                
+<div><div><div><p>GANs中有两个组件——发生器和鉴别器。我们首先创建单独的发生器和鉴别器网络，然后通过GAN模型链接这两个网络并训练它。让我们开始吧:</p>
+</div>
+</div>
+</div>
+<ol>
+<li>由于我们处理的是灰度图像，通道的数量将是1。我们还将用作发电机网络输入的随机噪声向量的维数设置为100:</li>
+</ol>
+<pre style="padding-left: 60px">channels &lt;- 1<br/>set.seed(10)<br/>latent_dimension &lt;- 100</pre>
+<ol start="2">
+<li>接下来，我们创建发电机网络。生成器网络将形状为<kbd>latent_dimension</kbd>的随机正常噪声向量映射到长度等于展平输入图像的向量。发电机网络由三个隐含层组成；激活功能是泄漏的ReLU:</li>
+</ol>
+<pre style="padding-left: 60px">input_generator &lt;- layer_input(shape = c(latent_dimension))<br/><br/>output_generator &lt;- input_generator %&gt;%  <br/> layer_dense(256,input_shape = c(784),kernel_initializer = initializer_random_normal(mean = 0,   stddev = 0.05, seed = NULL)) %&gt;%<br/> layer_activation_leaky_relu(0.2) %&gt;% <br/> layer_dense(512) %&gt;%<br/> layer_activation_leaky_relu(0.2) %&gt;% <br/> layer_dense(1024) %&gt;%<br/> layer_activation_leaky_relu(0.2) %&gt;%<br/> layer_dense(784,activation = "tanh")<br/><br/>generator &lt;- keras_model(input_generator, output_generator)</pre>
+<p style="padding-left: 60px">我们来看一下发电机网络的总结:</p>
+<pre style="padding-left: 60px">summary(generator)</pre>
+<p class="mce-root"/>
+<p style="padding-left: 60px">以下屏幕截图显示了发电机型号的描述:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/b87e3b85-b012-4c8e-be68-a531b84f7f2f.png" style="width:36.92em;height:22.58em;"/></p>
+<ol start="3">
+<li>现在，我们可以创建鉴别器网络。该网络将生成器生成的图像映射到生成的图像是真的还是假的概率:</li>
+</ol>
+<pre style="padding-left: 60px">input_discriminator &lt;- layer_input(shape = c(784))<br/><br/>output_discriminator &lt;- input_discriminator %&gt;% <br/>  <br/>  layer_dense(units = 1024,input_shape = c(784),kernel_initializer = initializer_random_normal(mean = 0, stddev = 0.05, seed = NULL)) %&gt;%<br/>  layer_activation_leaky_relu(0.2) %&gt;% <br/>  layer_dropout(0.3)%&gt;%<br/> <br/>  layer_dense(units = 512) %&gt;%<br/>  layer_activation_leaky_relu(0.2) %&gt;% <br/>  layer_dropout(0.3)%&gt;%<br/> <br/>  layer_dense(units = 256) %&gt;%<br/>  layer_activation_leaky_relu(0.2) %&gt;% <br/>  layer_dropout(0.3)%&gt;%<br/>  <br/>  layer_dense(1,activation = "sigmoid")<br/><br/><br/>discriminator &lt;- keras_model(input_discriminator, output_discriminator)</pre>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p style="padding-left: 60px">我们来看看鉴别器的总结:<br/></p>
+<pre style="padding-left: 60px">summary(discriminator)</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了鉴别器模型的描述:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1142 image-border" src="img/3656ac9e-1203-4292-a372-0c8c25e2dbfa.png" style="width:35.92em;height:27.00em;"/></p>
+<p style="padding-left: 60px">配置好鉴别器网络后，我们需要编译它。我们使用<kbd>adam</kbd>作为优化器，使用<kbd>binary_crossentropy</kbd>作为损失函数。学习率被指定为0.0002。我们使用<kbd>clipvalue</kbd>进行梯度裁剪，这限制了梯度的大小，以便它在陡峭的悬崖附近表现得更好:</p>
+<pre style="padding-left: 60px">discriminator %&gt;% compile(<br/> optimizer = optimizer_adam(lr = 0.0002, beta_1 = 0.5,clipvalue = 1),<br/> loss = "binary_crossentropy"<br/>)</pre>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mceNonEditable"/>
+<ol start="4">
+<li>接下来，在开始训练GAN网络之前，我们冻结鉴别器的权重。这使得鉴别器不可训练，并且在训练GAN时其权重不会更新:</li>
+</ol>
+<pre style="padding-left: 60px">freeze_weights(discriminator) </pre>
+<ol start="5">
+<li>让我们配置GAN网络并编译它。GAN网络结合了发生器和鉴频器网络:</li>
+</ol>
+<pre style="padding-left: 60px">gan_input &lt;- layer_input(shape = c(latent_dimension),name = 'gan_input')<br/>gan_output &lt;- discriminator(generator(gan_input))<br/>gan &lt;- keras_model(gan_input, gan_output)<br/><br/>gan %&gt;% compile(<br/> optimizer = optimizer_adam(lr = 0.0002, beta_1 = 0.5,clipvalue = 1), <br/> loss = "binary_crossentropy"<br/>)</pre>
+<p style="padding-left: 60px">我们来看看<kbd>gan</kbd>模式的总结:</p>
+<pre style="padding-left: 60px">summary(gan)</pre>
+<p style="padding-left: 60px">以下截图显示了GAN模型的描述:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1152 image-border" src="img/d31ceef3-dba1-4568-b3af-0fc7122b4a4f.png" style="width:38.00em;height:13.08em;"/></p>
+<ol start="6">
+<li>现在，我们可以开始训练GAN网络。我们训练我们的GAN网络进行1000次迭代，每次迭代有一批20个新图像。我们创建一个名为<kbd>gan_images</kbd>的文件夹，并将各种迭代生成的图像存储在该文件夹中。我们还将不同迭代的模型存储在另一个名为<kbd>gan_model</kbd>的文件夹中:</li>
+</ol>
+<pre style="padding-left: 60px">iterations &lt;- 1000<br/>batch_size &lt;- 20<br/><br/># create directory to store generated images<br/>dir.create("gan_images")<br/># create directory to store model<br/>dir.create("gan_model")</pre>
+<p style="padding-left: 60px">让我们开始训练GAN模型:</p>
+<pre style="padding-left: 60px">start_index &lt;- 1<br/>for (i in 1:iterations) {<br/> <br/># Sample random points in the normally distributed latent <br/># space of dimension (batch_size * latent_dimension)<br/> <br/> latent_vectors &lt;- matrix(rnorm(batch_size * latent_dimension), <br/> nrow = batch_size, ncol = latent_dimension)<br/> <br/># Use generator network to decode the above random points to fake images<br/> generated_images &lt;- generator %&gt;% predict(latent_vectors)<br/> <br/># Combine the fake images with real images to build the training data for discriminator<br/> stop_index &lt;- start_index + batch_size - 1 <br/> real_images &lt;- x_train[start_index:stop_index,]<br/> rows &lt;- nrow(real_images)<br/> combined_images &lt;- array(0, dim = c(rows * 2, dim(real_images)[-1]))<br/> combined_images[1:rows,] &lt;- generated_images<br/> combined_images[(rows+1):(rows*2),] &lt;- real_images<br/> dim(combined_images)<br/> <br/># Provide appropriate labels for real and fake images<br/> labels &lt;- rbind(matrix(1, nrow = batch_size, ncol = 1),<br/> matrix(0, nrow = batch_size, ncol = 1))<br/> <br/># Adds random noise to the labels to increase robustness of the discriminator<br/> labels &lt;- labels + (0.5 * array(runif(prod(dim(labels))),<br/> dim = dim(labels)))<br/> <br/># Train the discriminator using both real and fake images<br/> discriminator_loss &lt;- discriminator %&gt;% train_on_batch(combined_images, labels)<br/> <br/># Sample random points in the latent space<br/> latent_vectors &lt;- matrix(rnorm(batch_size * latent_dimension), <br/> nrow = batch_size, ncol = latent_dimension)<br/> <br/># Assembles labels that say "all real images"<br/> misleading_targets &lt;- array(0, dim = c(batch_size, 1))<br/> <br/># Training the generator by using the gan model,note that the discriminator weights are frozen<br/> gan_model_loss &lt;- gan %&gt;% train_on_batch( <br/> latent_vectors, <br/> misleading_targets<br/> )<br/> start_index &lt;- start_index + batch_size<br/> if (start_index &gt; (nrow(x_train) - batch_size))<br/> start_index &lt;- 1<br/> <br/> # At few iterations save the model and save generated images<br/> if(i %in% c(5,10,15,20,40,100,200,500,800,1000)){<br/> <br/> # Save model<br/> save_model_hdf5(gan,paste0("gan_model/gan_model_",i,".h5"))<br/> <br/> # Save generated images<br/> generated_images &lt;- generated_images *255<br/> generated_images = array_reshape(generated_images ,dim = c(batch_size,28,28,1))<br/> generated_images = (generated_images -min(generated_images ))/(max(generated_images )-min(generated_images ))<br/> grid = generated_images [1,,,]<br/> for(j in seq(2,5)){<br/> single = generated_images [j,,,]<br/> grid = abind(grid,single,along = 2)<br/> }<br/> png(file=paste0("gan_images/generated_digits_",i,".png"),<br/> width=600, height=350)<br/> grid.raster(grid, interpolate=FALSE)<br/> dev.off() <br/> }<br/>}</pre>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p style="padding-left: 60px">生成的数字如下所示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1143 image-border" src="img/5f14b3ad-6732-484d-9def-28ea60910e64.png" style="width:51.42em;height:11.33em;"/></p>
+<p>从上图中，我们可以推断出我们的模型运行良好。在下一节中，您将得到我们在这里实现的步骤的深入解释。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How it works...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">它是如何工作的...</h1>
+                
+            
+            
+                
+<p>在<em>步骤</em>T5】1中，我们定义了输入图像的形状和通道的数量。因为我们使用的图像是灰度的，我们指定通道为1。我们还定义了潜在空间维度，它被用作生成器的输入。在<em>步骤</em> <em> 2 </em>中，我们构建了一个生成器网络。生成器的目标是从<kbd>latent_dim</kbd>维度的随机法向量中生成图像。它产生一个784维的输出张量。在我们的例子中，我们使用深度神经网络作为生成器网络。注意，我们在生成器的最后一层使用了<kbd>tanh</kbd>作为激活函数，因为它比sigmoid激活函数执行得更好。此外，泄漏ReLU被用作隐藏层中的激活函数，因为该激活函数通过允许小的负激活值来放松稀疏梯度约束。</p>
+<p>为了获得更好的结果，建议使用正态分布而不是均匀分布从潜在空间生成点。</p>
+<p>在下一步中，我们定义并编译了鉴别器网络。它将生成器生成的大小为784的向量映射到一个概率，该概率指示生成的图像是真实的还是伪造的。因为我们的生成器网络是具有三个隐藏层的深度神经网络，所以鉴别器也是具有相同层数的深度神经网络。请注意，我们在鉴频器的标签中添加了漏失层和随机噪声，以增加随机性并使GAN模型更加稳健。在<em>步骤</em> <em> 4 </em>中，我们冻结了鉴别器的重量，使其不可训练。</p>
+<p>然后，在<em>步骤</em> <em> 5 </em>中，我们配置编译了GAN网络。GAN网络链接发生器和鉴别器。我们可以将GAN网络表示如下:</p>
+<p class="CDPAlignCenter CDPAlign"><em> gan(x) ←鉴别器(发生器(x)) </em></p>
+<p>我们创建的GAN网络将生成器生成的图像映射到鉴别器对真假图像的评估。在<em>步</em>T3】6中，我们训练了GAN网络。为了训练GAN，我们需要训练鉴别器，以便它准确地识别真假图像。生成器使用来自鉴别器的反馈来更新其权重。通过这种方式，鉴别器帮助训练生成器。我们使用发电机重量相对于<kbd>gan</kbd>模型损耗的梯度来训练发电机。这样，在每次迭代中，我们使生成器的权重向一个方向移动，使得鉴别器更有可能将生成器解码的图像分类为真实图像。发生器和鉴别器的鲁棒性对于整个网络的准确性至关重要。最后，我们保存了一些批次的模型和生成的图像。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>There's more...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">还有更多...</h1>
+                
+            
+            
+                
+<p>尽管GANs已经成为一种非常流行的深度学习技术，但是与GANs一起工作仍然存在一些挑战。这里列出了一些关键的问题:</p>
+<ul>
+<li>甘人极难训练。通常，模型参数不稳定且不收敛。</li>
+<li>有时，鉴别器变得如此精确，以至于发生器的梯度消失，什么也没学到。</li>
+<li>发生器和鉴频器之间的不平衡会导致过拟合。</li>
+<li>gan对模型调整和超参数选择过于敏感。</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>See also</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">请参见</h1>
+                
+            
+            
+                
+<p>要了解更多有关其他主要类型的GAN架构的信息，请参考以下链接:</p>
+<ul>
+<li>有条件的甘:<a href="https://arxiv.org/pdf/1411.1784.pdf">的</a></li>
+<li>瓦塞尔斯坦·甘(WGAN):<a href="https://arxiv.org/pdf/1904.08994.pdf"/>https://arxiv.org/pdf/1904.08994.pdf<a href="https://arxiv.org/pdf/1704.00028.pdf">https://arxiv.org/pdf/1704.00028.pdf</a></li>
+<li>最小二乘甘:<a href="https://arxiv.org/pdf/1611.04076.pdf">的</a></li>
+</ul>
+<p class="mce-root"/>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Implementing DCGANs</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">实现DCGANs</h1>
+                
+            
+            
+                
+<p>卷积gan是gan的一个非常成功的变体。它们在发生器和鉴别器网络中都包含卷积层。在这个菜谱中，我们将实现一个<strong>深度卷积生成对抗网络</strong> ( <strong> DCGAN </strong>)。这是对vanilla GANs的改进，因为它的结构稳定。有一些标准指导原则，遵循这些原则可以实现DCGAN的强大性能。</p>
+<p>它们如下:</p>
+<ul>
+<li>在鉴别器中用卷积步长替换池层，在生成器网络中使用转置卷积。</li>
+<li>在生成器和鉴别器中使用批处理规范化，但输出层除外。</li>
+<li>不要使用完全连接的隐藏层。</li>
+<li>在生成器中使用ReLU，但输出层除外，它使用tanh。</li>
+<li>在鉴别器中使用泄漏ReLU。</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Getting ready</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">做好准备</h1>
+                
+            
+            
+                
+<div><div><div><p>在这个食谱中，我们将使用花识别数据集的一个子集，它归功于Alexsandr Mamaev。我们将在本例中使用的数据子集包含大约2，500张三种花的图像——向日葵、蒲公英和雏菊。每节课由大约800张照片组成。数据可以从https://www.kaggle.com/alxmamaev/flowers-recognition<a href="https://www.kaggle.com/alxmamaev/flowers-recognition">的Kaggle下载。</a></p>
+<p>让我们从加载所需的库开始:</p>
+</div>
+</div>
+</div>
+<div><div><pre>library(keras)<br/>library(reticulate)<br/>library(abind)<br/>library(grid)</pre>
+<p>现在，我们可以将数据加载到R环境中。我们将利用来自<kbd>keras</kbd>的<kbd>flow_images_from_directory()</kbd>函数来加载数据。这些数据存在一个名为<kbd>flowers</kbd>的文件夹中，其中包含子文件夹，每个子文件夹都属于一个特定的花卉类别。由于我们的输入图像大小不一致，因此在加载数据本身时，我们指定目标大小，以便相应地调整每个图像的大小:</p>
+</div>
+<pre>train_path &lt;- "data/flowers/"<br/><br/>image_width = 32<br/>image_height = 32<br/>target_image_size = c(image_width,image_height)<br/><br/>training_data &lt;- flow_images_from_directory(directory = train_path,target_size = target_image_size, color_mode = "rgb", class_mode = NULL, batch_size = 2500)<br/><br/>training_data = as_iterator(training_data)<br/>training_data = iter_next(training_data)<br/>training_data &lt;- training_data/255<br/>dim(training_data)</pre>
+<p>下面的屏幕截图显示了培训数据的维度:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/773c7938-334b-441f-8be0-87973216cbcd.png" style="width:8.50em;height:1.92em;"/></p>
+<p>现在我们已经了解了数据，让我们进入模型构建阶段。</p>
+</div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How to do it...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">怎么做...</h1>
+                
+            
+            
+                
+<p>让我们首先声明模型配置所需的几个变量:</p>
+<ol>
+<li>首先，我们根据高度、宽度和通道数量来定义图像的大小。因为我们正在对彩色图像进行分析，所以我们将通道数量保持为<kbd>3</kbd>，即RGB模式。我们还定义了潜在空间向量的形状:</li>
+</ol>
+<pre style="padding-left: 60px">latent_dim &lt;- 32<br/>height &lt;- 32<br/>width &lt;- 32<br/>channels &lt;- 3</pre>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mceNonEditable"/>
+<ol start="2">
+<li>接下来，我们创建发电机网络。生成器网络将形状为<kbd>latent_dim</kbd>的随机向量映射到输入大小的图像，在我们的例子中是(32，32，3):</li>
+</ol>
+<pre style="padding-left: 60px">input_generator &lt;- layer_input(shape = c(latent_dim))<br/><br/>output_generator &lt;- input_generator %&gt;% <br/># We transform the input data into a 16x16 128-channels feature map initially<br/> layer_dense(units = 128 * 16 * 16) %&gt;%<br/> layer_activation_leaky_relu() %&gt;% <br/> layer_reshape(target_shape = c(16, 16, 128)) %&gt;% <br/># Next ,we add a convolution layer<br/> layer_conv_2d(filters = 256, kernel_size = 5, <br/> padding = "same") %&gt;% <br/> layer_activation_leaky_relu() %&gt;% <br/># Now we upsample the data to 32x32 dimension using the layer_conv_2d_transpose()<br/> layer_conv_2d_transpose(filters = 256, kernel_size = 4, <br/> strides = 2, padding = "same") %&gt;% <br/> layer_activation_leaky_relu() %&gt;%<br/># Now we add more convolutional layers to the network<br/> layer_conv_2d(filters = 256, kernel_size = 5, <br/> padding = "same") %&gt;% <br/> layer_activation_leaky_relu() %&gt;% <br/> layer_conv_2d(filters = 256, kernel_size = 5, <br/> padding = "same") %&gt;% <br/> layer_activation_leaky_relu() %&gt;% <br/># Produce a 32x32 1-channel feature map<br/> layer_conv_2d(filters = channels, kernel_size = 7,<br/> activation = "tanh", padding = "same")<br/><br/>generator &lt;- keras_model(input_generator, output_generator)</pre>
+<p style="padding-left: 60px">我们来看一下发电机网络的总结:</p>
+<pre style="padding-left: 60px">summary(generator)</pre>
+<p style="padding-left: 60px">以下屏幕截图显示了发电机型号的描述:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1150 image-border" src="img/cd7e8f82-41c3-42c1-9231-414fa8a9eef8.png" style="width:29.67em;height:25.42em;"/></p>
+<ol start="3">
+<li>现在，我们创建鉴别器网络。该网络将形状生成器(32，32，3)产生的图像映射到二进制值，并估计所产生的图像是真实的还是伪造的概率:</li>
+</ol>
+<pre style="padding-left: 60px">input_discriminator &lt;- layer_input(shape = c(height, width, channels))<br/><br/>output_discriminator &lt;- input_discriminator %&gt;% <br/> layer_conv_2d(filters = 128, kernel_size = 3) %&gt;% <br/> layer_activation_leaky_relu() %&gt;% <br/> layer_conv_2d(filters = 128, kernel_size = 4, strides = 2) %&gt;% <br/> layer_activation_leaky_relu() %&gt;% <br/> layer_conv_2d(filters = 128, kernel_size = 4, strides = 2) %&gt;% <br/> layer_activation_leaky_relu() %&gt;% <br/> layer_conv_2d(filters = 128, kernel_size = 4, strides = 2) %&gt;% <br/> layer_activation_leaky_relu() %&gt;% <br/> layer_flatten() %&gt;%<br/> # One dropout layer<br/> layer_dropout(rate = 0.3) %&gt;% <br/> # Classification layer<br/> layer_dense(units = 1, activation = "sigmoid")<br/><br/>discriminator &lt;- keras_model(input_discriminator, output_discriminator)</pre>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mceNonEditable"/>
+<p style="padding-left: 60px">我们来看看鉴频器网络的总结:</p>
+<pre style="padding-left: 60px">summary(discriminator)</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了鉴别器模型的描述:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1144 image-border" src="img/a61a805f-4229-448d-bcf6-965f3c621058.png" style="width:32.75em;height:26.25em;"/></p>
+<p style="padding-left: 60px" class="mce-root">配置鉴别器网络后，我们对其进行编译。我们使用<kbd>rmsprop</kbd>作为优化器，使用<kbd>binary_crossentropy</kbd>作为损失函数。学习率被指定为0.0008。我们使用<kbd>clipvalue</kbd>进行梯度裁剪，这限制了梯度的大小，以便它在陡峭的悬崖附近表现得更好:</p>
+<pre style="padding-left: 60px">discriminator %&gt;% compile(<br/> optimizer = optimizer_rmsprop(lr = 0.0008,clipvalue = 1.0,decay = 1e-8),<br/> loss = "binary_crossentropy"<br/>)</pre>
+<ol start="4">
+<li>在我们开始训练GAN网络之前，我们冻结鉴别器的权重，使其不可训练:</li>
+</ol>
+<pre style="padding-left: 60px">freeze_weights(discriminator)</pre>
+<p class="mce-root">让我们配置DCGAN网络并编译它。GAN网络结合了发生器和鉴频器网络:</p>
+<ol start="5">
+<li>让我们来看看我们的GAN模型的总结:</li>
+</ol>
+<pre style="padding-left: 60px">gan_input &lt;- layer_input(shape = c(latent_dim),name = 'dc_gan_input')<br/>gan_output &lt;- discriminator(generator(gan_input))<br/>gan &lt;- keras_model(gan_input, gan_output)<br/><br/>gan %&gt;% compile(<br/> optimizer = optimizer_rmsprop(lr = 0.0004,clipvalue = 1.0,decay = 1e-8), <br/> loss = "binary_crossentropy"<br/>)</pre>
+<p style="padding-left: 60px">以下截图显示了GAN模型的描述:</p>
+<pre style="padding-left: 60px">summary(gan)</pre>
+<p style="padding-left: 60px"><img class="aligncenter size-full wp-image-1151 image-border" src="img/d41f8dbf-5488-44ec-9ab9-732b8c0d7f3d.png" style="width:34.75em;height:11.42em;"/></p>
+<p class="CDPAlignCenter CDPAlign">现在，让我们开始训练网络。我们训练我们的DCGAN网络进行2000次迭代，每次迭代一批40个新图像。我们创建一个名为<kbd>dcgan_images</kbd>的文件夹，并将各种迭代生成的图像存储在该文件夹中。我们还将不同迭代的模型存储在另一个名为<kbd>dcgan_model</kbd>的文件夹中:</p>
+<ol start="6">
+<li>Now, let's start training the network. We train our DCGAN network for 2,000 iterations on a batch of 40 new images for each iteration. We create a folder named <kbd>dcgan_images</kbd> and store the generated images for various iterations in that folder. We also store the models at different iterations in another folder named <kbd>dcgan_model</kbd>:</li>
+</ol>
+<pre style="padding-left: 60px">iterations &lt;- 2000<br/>batch_size &lt;- 40<br/>dir.create("dcgan_images")<br/>dir.create("dcgan_model")</pre>
+<p class="mce-root"/>
+<p class="mce-root">现在，我们训练我们的GAN模型:</p>
+<p style="padding-left: 60px">经过2000次迭代后，生成的图像如下所示:</p>
+<pre style="padding-left: 60px">start_index &lt;- 1<br/><br/>for (i in 1:iterations) {<br/> <br/># Sample random points in the normally distributed latent space of dimension :<br/># (batch_size *latent_dimension)<br/><br/> random_latent_vectors &lt;- matrix(rnorm(batch_size * latent_dim), <br/> nrow = batch_size, ncol = latent_dim)<br/> <br/># Use generator network to decode the above random points to fake images<br/> generated_images &lt;- generator %&gt;% predict(random_latent_vectors)<br/> <br/># Combine the fake images with real images to build the training data for discriminator<br/> stop_index &lt;- start_index + batch_size - 1 <br/> real_images &lt;- training_data[start_index:stop_index,,,]<br/> rows &lt;- nrow(real_images)<br/> combined_images &lt;- array(0, dim = c(rows * 2, dim(real_images)[-1]))<br/> combined_images[1:rows,,,] &lt;- generated_images<br/> combined_images[(rows+1):(rows*2),,,] &lt;- real_images<br/> <br/> # Provide appropriate labels for real and fake images<br/> labels &lt;- rbind(matrix(1, nrow = batch_size, ncol = 1),<br/> matrix(0, nrow = batch_size, ncol = 1))<br/> <br/> # Adds random noise to the labels to increase robustness of the discriminator<br/> labels &lt;- labels + (0.5 * array(runif(prod(dim(labels))),<br/> dim = dim(labels)))<br/> <br/> # Train the discriminator using both real and fake images<br/> discriminator_loss &lt;- discriminator %&gt;% train_on_batch(combined_images, labels) <br/> <br/> # Sample random points in the latent space<br/> random_latent_vectors &lt;- matrix(rnorm(batch_size * latent_dim), <br/> nrow = batch_size, ncol = latent_dim)<br/> <br/> # Assembles labels that say "all real images"<br/> misleading_targets &lt;- array(0, dim = c(batch_size, 1))<br/> <br/> # Train the generator by using the gan model,note that the discriminator weights are frozen.<br/> gan_model_loss &lt;- gan %&gt;% train_on_batch( <br/> random_latent_vectors, <br/> misleading_targets<br/> ) <br/> <br/> start_index &lt;- start_index + batch_size<br/> if (start_index &gt; (nrow(training_data) - batch_size))<br/> start_index &lt;- 1<br/> <br/># At few iterations save the model and save generated images<br/>if(i %in% c(5,10,15,20,40,100,200,500,800,1000,1500,2000)){<br/> <br/># Save models<br/> save_model_hdf5(gan,paste0("dcgan_model/gan_model_",i,".h5"))<br/><br/># Save generated images<br/> generated_images &lt;- generated_images *255<br/> generated_images = array_reshape(generated_images ,dim = c(batch_size,32,32,3))<br/> generated_images = (generated_images -min(generated_images ))/(max(generated_images )-min(generated_images ))<br/> grid = generated_images [1,,,]<br/> for(j in seq(2,5)){<br/> single = generated_images [j,,,]<br/> grid = abind(grid,single,along = 2)<br/> }<br/> png(file=paste0("dcgan_images/generated_flowers_",i,".png"),<br/> width=600, height=350)<br/> grid.raster(grid, interpolate=FALSE)<br/> dev.off()<br/> }<br/>}</pre>
+<p style="padding-left: 60px"><img class="aligncenter size-full wp-image-1146 image-border" src="img/e2fcd2dd-c520-4c63-b238-ff164826ca6a.png" style="width:34.08em;height:7.67em;"/></p>
+<p class="CDPAlignCenter CDPAlign">如果我们希望提高模型的准确性，我们可以训练它进行更多的迭代。</p>
+<p>它是如何工作的...</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How it works...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">在<em>步骤</em> <em> 1 </em>中，我们定义了输入图像的形状和通道的数量。由于使用的图像是彩色的，我们将通道数指定为3，这意味着<strong> RGB </strong>模式。我们还指定了潜在空间维度。在<em>步骤</em> <em> 2 </em>中，我们构建了一个发电机网络。这个生成器的工作是将形状<kbd>latent_dim</kbd>的随机法向量映射到形状(32，32，3)的图像。</h1>
+                
+            
+            
+                
+<p>使用正态分布从潜在空间生成点，而不是均匀分布以获得可靠的结果。<br/> <br/></p>
+<p>在我们的示例中，我们使用深度卷积网络作为生成器网络。<kbd>layer_conv_2d_transpose()</kbd>功能用于对图像数据进行上采样。我们使用<strong> tanh </strong>作为生成器最后一层的激活函数，使用<strong> Leaky Relu </strong>作为隐藏层的激活函数。</p>
+<p class="CDPAlignLeft CDPAlign">建议在下采样时使用步长卷积，而不是最大池，以避免稀疏渐变的风险。</p>
+<p>在下一步中，我们定义并编译了鉴别器网络。它将由生成器生成的形状(32，32，3)的图像映射到指示所生成的图像是真实的还是伪造的概率。因为我们的生成器网络是一个<strong> convnet </strong>，所以鉴别器也是一个卷积网络。为了诱发随机性并使我们的GAN更稳定，我们在鉴频器的标签上添加了漏失层和随机噪声。</p>
+<p>在<em>步骤</em>T3】4中，我们冻结了鉴别器的重量，使其不可训练。在步骤<em> 5 </em>中，我们配置并编译了GAN网络。这个GAN网络将生成器生成的图像映射到鉴别器对真假图像的评估。最后一步，我们训练了GAN网络。在训练GANs时，我们需要训练鉴别器，使其准确识别真假图像。生成器使用来自鉴别器的反馈来更新其权重。我们使用发电机重量相对于<kbd>gan</kbd>模型损耗的梯度来训练发电机。最后，我们保存了一些批次的模型和生成的图像。</p>
+<p>In <em>step</em> <em>4</em>, we froze the weights of the discriminator to make it non-trainable. In step <em>5</em>, we configured and compiled the GAN network. This GAN network maps the images that have been generated by a generator to the discriminator's assessment of real and fake images. In the last step, we trained the GAN network. When training GANs, we need to train the discriminator so that it identifies the real and fake images accurately. The generator uses feedback from the discriminator to update its weights. We use the gradients of the generator's weights with respect to the loss of the <kbd>gan</kbd> model to train the generator. Finally, we saved the models and the generated images for a few batches.</p>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mceNonEditable">还有更多...</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>There's more...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">尽管DCGANs的体系结构稳定，但仍然不能保证收敛，并且训练可能不稳定。有几个体系结构特征和训练程序，当在训练GANs时应用时，显示其性能的显著改善。这些技术利用了对不收敛问题的启发式理解，并导致改进的学习性能和样本生成。事实上，在少数情况下，生成的数据无法与特定数据集的真实数据区分开来，例如MNIST、CIFAR等等。</h1>
+                
+            
+            
+                
+<p>以下是一些可用于实现相同目的的技术:</p>
+<p><strong>特征匹配</strong>:该技术为生成器提供了一个新的目标，以便生成与真实数据的统计相匹配的数据，而不是直接最大化鉴别器的输出。鉴别器用于指定值得匹配的统计数据，生成器被训练为匹配鉴别器中间层上的特征的期望值。</p>
+<ul>
+<li><strong>小批量鉴别</strong>:与GANs相关的挑战之一是发生器崩溃到一个特定的参数设置，使其总是产生相似的数据。发生这种情况是因为鉴别器的梯度可能会指向许多相似点的相似方向，因为它独立处理每一批，各批之间没有协调。因此，生成器不会学习区分批次。微型批次鉴别允许鉴别器协调地而不是孤立地查看多个示例，这反过来有助于发生器相应地调整其梯度。</li>
+<li><strong>历史平均</strong> : <strong> </strong>在该技术中，在更新参数时，考虑每个参数的过去值的平均值。这种学习很适合长时间序列。发生器和鉴别器的成本值修改为包括以下术语:<br/> <div> <img class="aligncenter size-full wp-image-1225 image-border" src="img/3c15c03c-96d6-4c00-ad29-15d6bad883b6.png" style="width:34.58em;height:6.17em;"/> </div></li>
+<li><strong>单侧标签平滑</strong>:这种技术用平滑值代替分类器的0和1目标，如. 9或. 1，这在处理对立的例子时提高了模型性能。</li>
+<li><strong>虚拟批量标准化</strong>:虽然批量标准化可以提高神经网络的性能，但也会导致一个训练样本的输出依赖于同一批中的其他训练样本。虚拟批次标准化通过相对于在参考批次上收集的统计数据标准化每个训练示例的结果来避免这种依赖性，参考批次在训练开始时是固定的。这种技术在计算上是昂贵的，因为前向传播是在两个小批量数据上运行的。因此，这仅用于发电机网络。</li>
+<li>请参见</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>See also</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">要了解更多关于使用辅助分类器GANs的条件图像合成，请访问https://arxiv.org/pdf/1610.09585.pdf<a href="https://arxiv.org/pdf/1610.09585.pdf" target="_blank"/>。</h1>
+                
+            
+            
+                
+<div><div><div><div><p>实现可变自动编码器</p>
+</div>
+</div>
+</div>
+</div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Implementing variational autoencoders</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">在<a href="dad9e357-3469-42c3-8c6a-9aea8258d8c1.xhtml">第4章</a>、<em>用Keras </em>实现自动编码器中，我们了解了自动编码器。我们知道自动编码器学习在降维的潜在特征空间中表示输入数据。它学习任意函数，以压缩的潜在表示来表达输入数据。一个<strong>变型</strong> <strong>自动编码器</strong> ( <strong> VAE </strong>)，不是学习任意函数，而是学习压缩表示的概率分布的参数。如果我们能从这个分布中取样，我们就能产生新的数据。VAE由编码器网络和解码器网络组成。</h1>
+                
+            
+            
+                
+<p>下图说明了VAE的结构:</p>
+<p>The structure of a VAE is illustrated in the following diagram:</p>
+<p class="mce-root"><img class="aligncenter size-full wp-image-1147 image-border" src="img/acb80fc8-670a-4ec7-a9da-87d6b753f78e.png" style="width:21.58em;height:27.00em;"/></p>
+<p class="CDPAlignCenter CDPAlign">让我们了解一下编码器和解码器网络在VAE中的作用:</p>
+<p><strong>编码器</strong>:这是一个神经网络，接受一个输入<img class="fm-editor-equation" src="img/9384625b-659a-48fe-be55-37d0afd198eb.png" style="width:0.75em;height:0.75em;"/>，并输出一个潜在的表示<img class="fm-editor-equation" src="img/e6d7515a-7faf-4d7b-aa97-d99d7dc0a4d5.png" style="width:0.67em;height:0.83em;"/>。编码器网络的目标是预测潜在分布的均值(<img class="fm-editor-equation" src="img/11345dbe-b62e-406d-a532-f1f2bce8e6f8.png" style="width:0.50em;height:0.67em;"/>)和标准差(<img class="fm-editor-equation" src="img/18de0bb2-5d4c-41ca-b91d-57625e2968c6.png" style="width:0.67em;height:0.67em;"/>)，然后从该分布中随机抽取一个点<img class="fm-editor-equation" src="img/c13b6fa1-6f76-458e-b63d-1206a2e32d0c.png" style="width:0.75em;height:0.92em;"/>。本质上，VAE的编码器学习概率分布<img class="fm-editor-equation" src="img/fe1bfed4-2b8a-4785-9321-a678e1b5608e.png" style="width:3.00em;height:1.17em;"/>，其中<img class="fm-editor-equation" src="img/559bc668-1f3e-4c91-8b1e-667a5a9a20e2.png" style="width:0.58em;height:1.17em;"/>是编码器网络的参数。</p>
+<ul>
+<li><strong>解码器</strong>:解码器网络的目标是从随机采样点<img style="font-size: 1em;color: #333333;width:0.75em;height:0.92em;" class="fm-editor-equation" src="img/c14e9dc1-3a57-43a9-8cce-fed1253b8673.png"/>重建输入数据<img style="font-size: 1em;color: #333333;width:0.92em;height:0.92em;" class="fm-editor-equation" src="img/9bd89639-5876-4929-bba8-e1ec35c60eae.png"/>(<img style="font-size: 1em;color: #333333;width:0.75em;height:0.92em;" class="fm-editor-equation" src="img/b844fe3d-2120-434f-b291-041361ebdf98.png"/>属于参数为<em> μ </em>和<em> σ </em>的分布)。它的工作是预测概率分布<img style="font-size: 1em;color: #333333;width:3.50em;height:1.25em;" class="fm-editor-equation" src="img/cf25004c-decb-49b3-a560-2e7cf07767cc.png"/>，其中<img style="font-size: 1em;color: #333333;width:0.83em;height:1.50em;" class="fm-editor-equation" src="img/3c5601f3-27b6-44a4-a59a-cf5acc8f75e9.png"/>是解码器网络的参数。</li>
+<li>在典型的自动编码器中，损失函数由两部分组成:重建损失和正则项。一个训练示例的VAE的损失函数由以下等式给出:</li>
+</ul>
+<p class="mce-root"><img class="fm-editor-equation" src="img/cb779e28-e480-4292-b506-a9a4d5062de6.png" style="width:28.17em;height:1.50em;"/></p>
+<p class="mce-root CDPAlignCenter CDPAlign">等式的第一项是重建损失；即数据的负对数似然性。第二项是学习的概率分布<img class="fm-editor-equation" src="img/c009bb3e-08ca-4103-ab82-459de4f435ab.png" style="width:3.42em;height:1.33em;"/>和潜在变量的真实分布<img class="fm-editor-equation" src="img/ed5160d0-0e01-441f-b31e-b4d6d2ae2a22.png" style="width:2.08em;height:1.33em;"/>之间的KL散度。在VAE，我们假设潜在变量来自一个标准的正态分布；即<em> P(z) </em>跟随<em> N(0，1) </em>。</p>
+<p class="mce-root">在这个菜谱中，我们将实现一个可变的自动编码器来生成图像。</p>
+<p>做好准备</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Getting ready</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">在这个食谱中，我们将使用时尚MNIST数据集。我们在第2章、<em>使用这个数据集处理卷积神经网络</em>，在那里我们把它分成训练和测试数据集。我们将使用这个数据集，并将每个28x28大小的图像展平为一个784个值的数组。</h1>
+                
+            
+            
+                
+<p>让我们从导入所需的库开始:</p>
+<p>接下来，我们加载数据集并对其进行整形:</p>
+<pre>library(keras)<br/>library(abind)<br/>library(grid)</pre>
+<p>我们的数据准备好了。在下一节中，我们将构建一个VAE模型。</p>
+<pre>mnist &lt;- dataset_fashion_mnist()<br/>x_train &lt;- mnist$train$x/255<br/>x_test &lt;- mnist$test$x/255<br/>x_train &lt;- array_reshape(x_train, c(nrow(x_train), 784), order = "F")<br/>x_test &lt;- array_reshape(x_test, c(nrow(x_test), 784), order = "F")</pre>
+<p>怎么做...</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How to do it...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">在这一部分，我们将建立一个VAE模型，以便我们可以重建时尚MNIST的形象。让我们从定义VAE的网络参数开始:</h1>
+                
+            
+            
+                
+<p>首先，我们需要定义一些变量来设置网络参数、批量大小、输入维数、潜在维数和历元数:</p>
+<ol>
+<li>让我们定义VAE编码器部分的输入层和隐藏层:</li>
+</ol>
+<pre style="padding-left: 60px"># network parameters<br/>batch_size &lt;- 100L<br/>input_dim &lt;- 784L</pre>
+<pre style="padding-left: 60px">latent_dim &lt;- 2L<br/>epochs &lt;- 10</pre>
+<ol start="2">
+<li>现在，我们配置代表潜在分布标准偏差的平均值和对数的密集层:</li>
+</ol>
+<pre style="padding-left: 60px"># VAE input layer and hidden layer encoder<br/>input &lt;- layer_input(shape = c(input_dim))<br/>x &lt;- input %&gt;% layer_dense(units = 256, activation = "relu")</pre>
+<ol start="3">
+<li>接下来，让我们定义一个采样函数，以便我们可以从潜在空间中采样新点:</li>
+</ol>
+<pre style="padding-left: 60px"># mean of latent distribution<br/>z_mean &lt;- x %&gt;% layer_dense(units = latent_dim,name = "mean")<br/><br/># log variance of latent distribution<br/>z_log_sigma &lt;- x %&gt;% layer_dense(units = latent_dim,name = "sigma")</pre>
+<ol start="4">
+<li>现在，我们创建一个图层，该图层采用潜在分布的平均值和标准差，并从中生成一个随机样本:</li>
+</ol>
+<pre style="padding-left: 60px"># sampling<br/>sampling &lt;- function(arg) {<br/> z_mean &lt;- arg[, 1:(latent_dim)]<br/> z_log_var &lt;- arg[, (latent_dim + 1):(2 * latent_dim)]<br/> epsilon &lt;- k_random_normal(shape = list(k_shape(z_mean)[1], latent_dim),<br/> mean = 0, stddev = 1)<br/> z_mean + k_exp(z_log_sigma) * epsilon<br/>}</pre>
+<ol start="5">
+<li>到目前为止，我们已经定义了一个层来提取一个随机点。现在，我们为VAE的解码器部分创建一些隐藏层，并将它们合并以创建输出层:</li>
+</ol>
+<pre style="padding-left: 60px"># random pont from latent distributiom<br/>z &lt;- layer_concatenate(list(z_mean, z_log_sigma)) %&gt;% layer_lambda(sampling)</pre>
+<ol start="6">
+<li>接下来，我们构建一个变分自动编码器并可视化其摘要:</li>
+</ol>
+<pre style="padding-left: 60px"># VAE decoder hidden layers<br/>x_1 &lt;- layer_dense(units = 256, activation = "relu") <br/>x_2 &lt;- layer_dense(units = input_dim, activation = "sigmoid")<br/><br/># decoder output<br/>vae_output &lt;- x_2(x_1(z))</pre>
+<ol start="7">
+<li>下面的屏幕截图显示了VAE模型的概要:</li>
+</ol>
+<pre style="padding-left: 60px"># variational autoencoder<br/>vae &lt;- keras_model(input, vae_output)<br/>summary(vae)</pre>
+<p style="padding-left: 60px"><img class="aligncenter size-full wp-image-1148 image-border" src="img/ba657952-9e9a-41db-b836-859593b894ba.png" style="width:35.92em;height:22.17em;"/></p>
+<p class="CDPAlignCenter CDPAlign">现在，我们创建一个单独的编码器模型:</p>
+<ol start="8">
+<li>下面的屏幕截图显示了编码器型号的概要:</li>
+</ol>
+<pre style="padding-left: 60px"># encoder, from inputs to latent space<br/>encoder &lt;- keras_model(input, c(z_mean,z_log_sigma))<br/>summary(encoder)</pre>
+<p style="padding-left: 60px"><img class="aligncenter size-full wp-image-1149 image-border" src="img/61cda865-f0fe-4358-8353-23beb9b68847.png" style="width:39.33em;height:13.33em;"/></p>
+<p class="CDPAlignCenter CDPAlign">让我们也创建一个独立的解码器模型:</p>
+<ol start="9">
+<li>下面的屏幕截图显示了解码器型号的概要:</li>
+</ol>
+<pre style="padding-left: 60px"># Decoder input<br/>decoder_input &lt;- layer_input(k_int_shape(z)[-1])<br/><br/># Decoder hidden layers<br/>decoder_output &lt;- x_2(x_1(decoder_input)) <br/># Decoder<br/>decoder &lt;- keras_model(decoder_input,decoder_output)<br/><br/>summary(decoder)</pre>
+<p style="padding-left: 60px"><img class="aligncenter size-full wp-image-737 image-border" src="img/77d74236-2958-474f-8aa4-bf822e8187f3.png" style="width:38.92em;height:11.33em;"/></p>
+<p class="CDPAlignCenter CDPAlign">接下来，我们为VAE定义一个自定义损失函数:</p>
+<ol start="10">
+<li>然后，我们编译并训练模型:</li>
+</ol>
+<pre style="padding-left: 60px"># loss function<br/>vae_loss &lt;- function(x, decoded_output){<br/> reconstruction_loss &lt;- (input_dim/1.0)*loss_binary_crossentropy(x, decoded_output)<br/> kl_loss &lt;- -0.5*k_mean(1 + z_log_sigma - k_square(z_mean) - k_exp(z_log_sigma), axis = -1L)<br/> reconstruction_loss + kl_loss<br/>}</pre>
+<ol start="11">
+<li>之后，我们训练模型:</li>
+</ol>
+<pre style="padding-left: 60px"># compile<br/>vae %&gt;% compile(optimizer = "rmsprop", loss = vae_loss)</pre>
+<p style="padding-left: 60px">现在，让我们来看一些由模型生成的示例图像:</p>
+<pre style="padding-left: 60px"># train<br/>vae %&gt;% fit(<br/> x_train, x_train, <br/> shuffle = TRUE, <br/> epochs = epochs, <br/> batch_size = batch_size, <br/> validation_data = list(x_test, x_test)<br/>)</pre>
+<ol start="12">
+<li>下图显示了第10个纪元后生成的图像:</li>
+</ol>
+<pre style="padding-left: 60px">random_distribution = array(rnorm(n = 20,mean = 0,sd = 4),dim = c(10,2))<br/>predicted = array_reshape(predict(decoder,matrix(c(0,0),ncol=2)),dim = c(28,28))<br/><br/>for(i in seq(1,nrow(random_distribution))){<br/> one_pred = predict(decoder,matrix(random_distribution[i,],ncol=2)) <br/> predicted = abind(predicted,array_reshape(one_pred,dim = c(28,28)),along = 2)<br/>}<br/><br/>options(repr.plot.width=10, repr.plot.height=1)<br/>grid.raster(predicted,interpolate=FALSE)</pre>
+<p style="padding-left: 60px"><img src="img/545065db-be71-4b60-89d8-1f94433c9470.png" style="width:58.25em;height:5.83em;"/></p>
+<p class="CDPAlignCenter CDPAlign">在下一节中，我们将详细解释我们在本节中实现的步骤。</p>
+<p>它是如何工作的...</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How it works...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">在<em>步骤</em> <em> 1 </em>中，我们设置网络参数的值。我们将输入维度设置为784，这等于一个展平的MNIST时尚图像的维度。在<em>步骤</em> <em> 2 </em>中，我们为VAE定义了一个输入层，第一个隐藏层有256个神经单元和ReLU激活函数。在<em>步骤</em> <em> 3 </em>中，我们创建了两个密集层<kbd>z_mean</kbd>和<kbd>z_sigma</kbd>。这些层的单位等于潜在分布的维数。在我们的例子中，我们将784维的输入空间压缩为一个二维的潜在空间。请注意，这些层分别连接到先前定义的层。这些层代表潜在表征的均值(<img style="color: black;font-size: 1em;width:0.58em;height:0.92em;" class="fm-editor-equation" src="img/9acb21ab-6d7b-4f36-8ce1-fb6b2fdc5ca6.png"/>)和标准差(<img style="color: black;font-size: 1em;width:0.75em;height:0.75em;" class="fm-editor-equation" src="img/006b87ce-9a23-49a6-9764-36afe8f59ced.png"/>)属性。在<em>步骤</em> <em> 4 </em>中，我们定义了一个抽样函数，从均值和方差已知的分布中产生一个随机样本。它以一个四维张量作为输入，从张量中提取均值和标准差，并从分布中生成一个随机点样本。按照<img style="color: black;font-size: 1em;width:7.25em;height:1.42em;" class="fm-editor-equation" src="img/99e116c6-312d-469a-92bf-0885226b13b9.png"/>生成新的随机样本，其中ε是标准正态分布中的一个点。</h1>
+                
+            
+            
+                
+<p>在下一步中，我们创建了一个层来连接<kbd>z_mean</kbd>和<kbd>z_sigma</kbd>层的输出张量，然后我们堆叠了一个lambda层。Keras中的lambda层是一个包装器，它将任意表达式包装为一个层。在我们的示例中，lambda层包装了我们在上一步中定义的采样函数。这一层的输出是VAE解码器部分的输入。在<em>步骤</em> <em> 6 </em>中，我们构建了VAE的解码器部分。我们实例化了两个层，<kbd>x_1</kbd>和<kbd>x_2</kbd>，分别有256和784个单元。我们将这些层组合起来创建输出层。在<em>步骤7 </em>中，我们建立了VAE模型。</p>
+<p>在<em>步骤</em> <em> 8 </em>和<em> 9 </em>中，我们分别构建了编码器和解码器模型。在<em>步骤10 </em>中，我们定义了VAE模型的损失函数。它是输入上潜在变量的假定真实概率分布和潜在变量的条件概率分布之间的重建损失和Kullback-Leibler散度之和<img style="color: black;font-size: 1em;width:0.92em;height:0.92em;" class="fm-editor-equation" src="img/4a94853a-b05d-4205-9a85-ec9a7f00d17c.png"/>。在<em>步骤11 </em>中，我们编译了VAE模型，并对其进行了十个时期的训练，以使用<kbd>rmsprop</kbd>优化器最小化VAE损失。在最后一步中，我们生成了一个新的合成图像样本。</p>
+<p>请参见</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>See also</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">要了解有关自然语言处理的生成模型的更多信息，请查看以下链接:</h1>
+                
+            
+            
+                
+<p>https://openai.com/blog/better-language-models/的GPT 2号</p>
+<ul>
+<li>伯特:https://arxiv.org/pdf/1810.04805.pdf</li>
+<li>BERT: <a href="https://arxiv.org/pdf/1810.04805.pdf" target="_blank">https://arxiv.org/pdf/1810.04805.pdf</a></li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>

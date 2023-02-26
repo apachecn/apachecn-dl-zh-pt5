@@ -1,0 +1,1109 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Running Deep Learning Models in the Cloud</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">在云中运行深度学习模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">到目前为止，我们只简单讨论了训练深度学习模型的硬件要求，因为本书中几乎所有的例子都可以在任何现代计算机上运行。虽然你不需要基于<strong> GPU </strong> ( <strong>图形处理单元</strong>)的计算机来运行本书中的示例，但无法回避的事实是，训练复杂的深度学习模型需要一台带有GPU的计算机。即使你的机器上有合适的GPU，安装必要的软件来使用GPU训练深度学习模型也不是一件小事。本节将简要讨论如何安装必要的软件以在GPU上运行深度学习模型，并讨论使用云计算进行深度学习的优势和劣势。我们将使用各种云提供商来创建虚拟实例或访问服务，这将允许我们在云中训练深度学习模型。</p>
+
+<p>本章涵盖以下主题:</p>
+
+<ul>
+
+<li>设置用于深度学习的本地计算机</li>
+
+<li>使用亚马逊网络服务(AWS)进行深度学习</li>
+
+<li>使用Azure进行深度学习</li>
+
+<li>使用谷歌云进行深度学习</li>
+
+<li>使用Paperspace进行深度学习</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Setting up a local computer for deep learning</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">设置用于深度学习的本地计算机</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在写这本书的时候，有可能以低于1000美元的价格购买一台带有适合深度学习的GPU卡的计算机。目前AWS上最便宜的GPU电脑的点播费用是每小时0.90美元，相当于连续46天不停地使用机器。所以，如果你刚刚开始深度学习，云资源是最便宜的开始方式。一旦你学会了基础知识，那么你可能会决定获得一台基于GPU的计算机，但即使这样，你也可能会继续使用云资源进行深度学习。您在云中拥有更大的灵活性。例如，在AWS中，你可以以每小时24.48美元的按需价格获得8块特斯拉V100 GPU卡的p 3.16 x大型机器。一个相当的盒子是英伟达(【https://www.nvidia.com/en-us/data-center/dgx-1/】)的DGX-1，它有8个特斯拉V100 GPU卡，价格为14.9万美元！</p>
+
+<p>如果你正在考虑使用自己的计算机进行深度学习，那么以下其中一种方法适用于你:</p>
+
+<ul>
+
+<li>您已经有了一台配有合适GPU处理器的计算机</li>
+
+<li>你会买一台电脑来建立深度学习模型</li>
+
+<li>您将构建一台计算机来构建深度学习模型</li>
+
+</ul>
+
+<p>如果想用本地电脑进行深度学习，需要合适的GPU卡，必须是英伟达的。最好的检查方法是去NVIDIA网站，检查你的显卡是否与CUDA兼容。CUDA是一个应用编程接口(API)，允许程序使用GPU进行计算。你需要安装CUDA才能使用GPU进行深度学习。当前检查你的显卡是否兼容CUDA的链接是<a href="https://developer.nvidia.com/cuda-gpus">https://developer.nvidia.com/cuda-gpus</a>。</p>
+
+<p>虽然一些公司出售专门为深度学习设计的机器，但它们非常昂贵。如果你刚刚开始学习深度学习，我不建议你去买一本。相反，我建议考虑购买一台高端电脑游戏电脑。这台电脑应该有合适的GPU卡用于深度学习。同样，首先检查卡是否与CUDA(【https://developer.nvidia.com/cuda-gpus】)兼容。</p>
+
+<p>用于深度学习的游戏电脑？这并不像看起来那么奇怪。开发GPU是为了在电脑上玩高端游戏，而不是为了深度学习。但是为游戏设计的机器可能会有比通常更高的规格，例如，SSD驱动器，大量(快速)RAM，以及最重要的GPU卡。早期的深度学习实践者意识到，计算3D空间所涉及的矩阵运算与神经网络中使用的矩阵运算非常相似。NVIDIA将CUDA作为API发布，以便其他应用程序可以将GPU用作协处理器。无论是运气还是远见，NVIDIA成为深度学习GPU卡的事实上的标准，并在过去3年里股价增长了10倍，很大程度上是因为人工智能对GPU卡的巨大需求。</p>
+
+<p>第三种选择是构建自己的深度学习计算机。如果您正在考虑这个选项，那么除了GPU卡、内存和SSD驱动器之外，您还需要考虑电源和主板。由于GPU卡和风扇，您可能需要比标准计算机更大容量的电源。对于主板，你需要考虑主板和GPU卡之间的硬件接口是否会限制数据传输——这些是PCIe车道。一个GPU可以满负荷使用16个PCIe通道。出于扩展目的，您可能需要一个支持40个PCIe通道的主板，以便您可以同时支持两个GPU卡和一个SSD驱动器。</p>
+
+<p>在我们继续讨论使用云计算进行深度学习的本章剩余部分之前，我们应该简要讨论一下本书使用的云中GPU卡的性能。对于这本书，我使用了GTX 1050 Ti，它有768个内核和4 GB内存。以我的经验来看，这个卡的性能和AWS上的一个<strong> p2.xlarge </strong>实例差不多。我通过在本地CPU (i5处理器)、本地GPU (GTX 1050 Ti)和AWS GPU ( <strong> p2.xlarge </strong>)上运行两个模型来检查这一点。我在两个模型上运行了测试:来自<a href="28315a07-2bf0-45c8-8e6f-0e4f01616ca3.xhtml">第四章</a>、<em>训练深度预测模型</em>的二元预测任务，以及来自<a href="1c0b9897-b0cc-4a8f-9ce8-e6409c347f4f.xhtml">第五章</a>、<em>使用卷积神经网络进行图像分类</em>的LeNet卷积神经网络。这两个模型都是使用MXNet构建的，运行了50个时期:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/99d7a3cf-186e-4501-86de-fc10925816ce.png" style="width:42.92em;height:34.58em;"/></p>
+
+<p>图10.1:两个深度学习网络在CPU、本地GPU和AWS GPU上的执行时间(秒)</p>
+
+<p>在我的本地机器上，在GPU上运行二进制预测任务的深度学习模型比在CPU上运行快20%左右，AWS GPU机器比本地GPU快大约13%。然而，当运行卷积神经网络时，有一个更大的区别，在本地CPU上训练它几乎比在本地GPU上训练它慢16倍。反过来，AWS GPU比本地GPU快大约16%。这些结果是意料之中的，反映了我在实践和网络上其他基准测试中看到的情况，并最终表明，对于深度学习计算机视觉任务，GPU是必要的。我的本地机器(GTX 1050 Ti)上的GPU卡可能是你应该用于深度学习的最低规格的GPU卡。目前它的价格不到200美元。作为比较，一个高端GPU卡(GTX 1080 Ti)有3584个内核和11 GB的内存，目前价格约为700美元。GTX 1080 Ti大约比GTX 1050 Ti快4-5倍。<br/></p>
+
+<p>为什么前面的图只看AWS而不看Azure、Google Cloud、Paperspace？为什么我没有根据性能和/或成本对它们进行基准测试？我决定不这样做有几个原因。首先，也是最重要的，任何建议在几个月后都会过时——深度学习非常受欢迎，各种云提供商不断改变他们的产品和价格。另一个原因是，本书中的例子相对较小，我们使用的是最便宜的GPU实例。因此，任何与生产用例的比较都会产生误导。最后，当你开始时，易用性可能比原始成本更重要。无论您使用哪个提供商，本书中的所有示例都应该在1小时之内在云中运行，因此争论一个提供商每小时花费0.55美元而另一个提供商每小时花费0.45美元并不重要。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>How do I know if my model is training on a GPU?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">如何知道我的模型是否在GPU上训练？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>很多刚开始深度学习的人都会问的一个问题是，<em>我怎么知道我的模型是不是在GPU上训练？</em>幸运的是，无论你使用的是云实例还是本地机器，你都可以检查深度学习模型是在GPU上训练还是在CPU上训练。实例上有一个实用程序显示GPU的活动。在Linux中，您可以键入以下命令:</p>
+
+<pre><strong>watch -n0.5 nvidia-smi</strong></pre>
+
+<p>在Windows中，您可以在命令提示符下使用以下命令:</p>
+
+<pre><strong>nvidia-smi -l 1</strong></pre>
+
+<p>这将运行一个脚本，输出关于计算机上GPU的诊断消息。如果您的模型当前正在GPU上训练，GPU效用将会很高。在下面的例子中，我们可以看到它是75-78%。我们还可以看到，名为<kbd>rsession.exe</kbd>的文件正在使用GPU内存。这证实了模型正在GPU上接受训练:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/53b61b85-9ce9-40d7-bdbc-48764803c6df.png"/></p>
+
+<p>图10.2: nvidia-smi实用程序显示GPU卡的利用率为75-85%</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Using AWS for deep learning</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用AWS进行深度学习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p><strong> AWS </strong>是最大的云提供商，因此值得我们关注。如果你知道如何使用AWS，特别是如果你熟悉spot请求，这可能是一种非常经济有效的方法来训练复杂的深度学习模型。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>A brief introduction to AWS</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">自动气象站简介</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">本节简要介绍AWS的工作原理。它描述了EC2、AMIs以及如何在云中创建虚拟机。这不会是对AWS的详尽介绍——网上有很多教程可以指导你。</p>
+
+<p class="mce-root">AWS是一套云资源。它的另一个术语是<strong>基础设施即服务</strong> ( <strong> IaaS </strong>，相对于<strong>软件即服务</strong> ( <strong> SaaS </strong>)或<strong>平台即服务</strong> ( <strong> PaaS </strong>)。与SaaS或PaaS不同，IaaS为您提供了基础设施(硬件)，您可以根据自己的意愿使用它。这包括安装软件和管理安全和网络，尽管AWS负责安全和网络的某些方面。AWS有许多服务，但对于深度学习，您将使用的是EC2，这是一个虚拟计算环境，以便您可以启动实例(虚拟计算机)。您可以通过web界面控制这些虚拟计算机，也可以通过远程登录它们来从shell运行命令。当您启动EC2实例时，您可以选择您想要的操作系统(Ubuntu、Linux、Windows等等)和机器类型。</p>
+
+<p class="mce-root">你也可以选择使用一个<strong>亚马逊机器镜像</strong> ( <strong> AMI </strong>)，上面已经预装了软件应用和库。对于深度学习来说，这是一个很好的选择，因为这意味着你可以启动一个已经安装了深度学习库的EC2实例，并直接进入深度学习。</p>
+
+<p class="mce-root">您应该熟悉的另一项服务是S3，它是一种持久存储的形式。我建议您采用的一个非常有用的做法是，将您的虚拟机视为临时资源，并将您的数据和临时结果保存在S3。我们不会在本章中讨论这个问题，因为这是一个高级话题。</p>
+
+<p>在上一节中，我们说明了AWS上最便宜的GPU计算机的当前按需成本是每小时0.90美元。<em>按需</em>是在AWS中使用虚拟机的一种方式，但在AWS中租赁虚拟机有三种不同的方式:</p>
+
+<ul>
+
+<li><strong>按需实例</strong>:根据需要租用实例时。</li>
+
+<li><strong>保留实例</strong>:当您承诺租赁机器一段时间(通常为1-3年)时。这比按需实例便宜50%左右。然而，你必须为这段时间内的资源付费。</li>
+
+<li><strong>现货实例</strong>:为了应对波动的需求，亚马逊大部分时间都有备用的计算能力。您可以对这种未使用的容量进行投标，根据对该类型机器的需求，您通常可以获得比按需和预留实例更便宜的价格。然而，一旦你有了这台机器，并不能保证你会保留它，只要你需要-如果对计算机的需求上升，你的计算机可能会被终止。</li>
+
+</ul>
+
+<p>储备实例对深度学习没用。租用最便宜的GPU机器1年的成本将超过5000美元，而你可以花更少的钱购买性能更好的深度学习机器。按需实例保证您将拥有所需的资源，但代价昂贵。如果您知道如何正确使用Spot实例，并为计算机被终止的可能性做好准备，那么spot实例是一种有趣且经济的方法。</p>
+
+<p>通常情况下，现货价格是按需价格的30%左右，因此可以节省大量成本。您的出价是您愿意为现货实例支付的最高金额，实际价格取决于市场价格，而市场价格是基于需求的。</p>
+
+<p>因此，你应该把你的出价定得高一些；我建议将其设置为按需价格的51%、76%或101%。50%、75%和100%中额外的1%是因为，与任何竞价市场类似，人类将他们的竞价固定在整数上，因此通过额外的1%来避免这一点，它可以产生影响。</p>
+
+<p>spot实例最初的用例是用于低优先级的批处理作业。公司使用spot实例来利用更便宜的计算资源来完成长时间运行的任务，如果任务没有完成，可以重新启动。例如，对运营不重要的数据运行辅助数据接收流程。然而，基于GPU的实例的需求模式是不同的，可能是因为在线数据挖掘竞争，如Kaggle。因为GPU实例不是很常见，所以对GPU实例的需求会增加很多。这导致了现货定价中的一些奇怪行为，人们为现货实例出价的价格可能是按需价格的10倍。人们这样做是因为他们相信这样就不太可能有人出价比他们高。有些情况下，p2.16xlarge的现货价格为每小时144美元，而点播价格为14.40美元。设定这些出价的人不希望他们的机器被终止，并且相信他们为即时实例支付的平均费用仍然低于按需实例。如果你使用spot实例，我不鼓励这样做，因为如果需求上升，你会得到一个非常令人讨厌的惊喜！但是，您应该意识到这种定价怪癖——不要认为将投标价格设置为略高于按需价格就能保证您的机器不会被终止。</p>
+
+<p>AWS通过提供定价历史图表来帮助您设置现货请求出价，这些图表会为您提供按需价格和出价价格方面的建议。在下面的截图中，我们可以看到特定地区(美国东部)的价格在过去3个月中的变化。有6个可用区域(us-east-1a到us-east-1f)，此实例类型的当前现货价格(<strong> p2.16xlarge </strong>)从4.32美元到14.40美元不等，而按需价格为14.40美元:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/c2acf192-d7df-49ce-9267-f6ba038f9a7d.png" style="width:75.08em;height:45.00em;"/></p>
+
+<p>图10.3:p 2.16大型实例类型现货报价的定价历史</p>
+
+<p>查看该资源的上图，我会考虑以下几点:</p>
+
+<ul>
+
+<li>如果可能的话，我会使用可用区<strong> us-east-1a </strong>，因为它的价格波动性最低。</li>
+
+<li>我会将价格设置为每小时7.21美元，这只是按需价格的50%多一点。我可能只会支付每小时4.32美元，因为它已经1个月以来，美国东部1a的投标价格已经超过每小时4.32美元。将它设置为较高的价格会降低我的spot实例被终止的可能性。</li>
+
+</ul>
+
+<div><strong>Regions and availability zones:</strong> AWS arranges its services in regions (<strong>us-east1</strong>, <strong>eu-west1</strong>, and so on). Currently, there are 18 different regions and in each region, there are multiple availability zones, which you can consider as physical data centers. For some use cases (for example, websites, disaster recovery, and so on) and regulatory requirements, regions and availability zones are important. For deep learning, they are not so important, as you can usually run your deep learning models at any location. The bid price for spot instances is different for regions/availability zones, and some resources are more expensive in some regions. You also need to be aware that there is a cost in transferring data between regions, so keep your data and instances in the same region.</div>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Creating a deep learning GPU instance in AWS</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">在AWS中创建深度学习GPU实例</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">本节将使用AWS来训练来自<a href="e0045e3c-8afd-4e59-be9f-29e652a9a8b1.xhtml">第9章</a>、<em>异常检测和推荐系统</em>的深度学习模型。这将包括设置机器、访问机器、下载数据和运行模型。我们将使用来自RStudio的预构建的AWS AMI，它已经安装了TensorFlow和Keras。关于这个AMI的细节，请点击这个链接:<a href="https://aws.amazon.com/marketplace/pp/B0785SXYB2">https://aws.amazon.com/marketplace/pp/B0785SXYB2</a>。如果你还没有在<a href="https://portal.aws.amazon.com/billing/signup">https://portal.aws.amazon.com/billing/signup</a>注册AWS账户，你需要注册一个。注册后，按照以下步骤在AWS上创建一个具有GPU的虚拟机:</p>
+
+<p>请注意，当您在AWS中设置一个实例时，只要它还在运行，您就需要付费！请务必关闭您的实例，否则您将继续被收费。使用完虚拟实例后，检查AWS控制台以确保没有正在运行的实例。</p>
+
+<ol>
+
+<li class="mce-root">登录AWS控制台并选择EC2。您应该会看到类似下面的屏幕。这是用于创建新虚拟机的web界面:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/aba67547-2b69-4a67-b9c5-a36d4b11a68b.png" style="width:62.67em;height:38.42em;"/></p>
+
+<p>图10.4: AWS EC2仪表板</p>
+
+<ol start="2">
+
+<li>单击启动实例按钮，将加载以下页面。</li>
+
+<li>点击左边的<strong> AWS Marketplace </strong>，在搜索框中输入<kbd>rstudio</kbd>(见以下截图)。</li>
+
+<li>选择<strong>带Tensorflow-GPU的RStudio服务器用于AWS </strong>。请注意，还有另一个带有单词<strong> Pro </strong>的选项–这是一个需要额外费用的付费订阅，因此不要选择此AMI:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/aafcaf7a-2869-471c-acce-f673585f8536.png" style="width:62.50em;height:38.33em;"/></p>
+
+<p>图10.5: AWS启动实例向导，步骤1</p>
+
+<ol start="5">
+
+<li>单击<strong>选择</strong>后，可能会出现以下屏幕，显示一些关于访问实例的附加信息。请仔细阅读说明，因为它们可能与以下屏幕截图中显示的内容有所不同:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/d2ec8bac-a577-4bab-895c-35e7461b5a64.png" style="width:62.42em;height:38.25em;"/></p>
+
+<p>图10.6: RStudio AMI信息</p>
+
+<ol start="6">
+
+<li>当您点击<strong>继续</strong>时，将出现以下机器类型屏幕。选择配有GPU的机器至关重要，因此从<strong>筛选依据:</strong>选项中，选择GPU计算，然后从列表中选择<strong> p2.xlarge </strong>。您的选项应该类似于下面的屏幕截图:</li>
+
+</ol>
+
+<div><img src="img/ed92abfe-bcc6-468b-98f1-e7c5c15ce603.png" style="width:62.42em;height:38.25em;"/></div>
+
+<p>图10.7: AWS启动实例向导，步骤2</p>
+
+<ol start="7">
+
+<li>当您单击“下一步”时，您将进入具有各种配置选项的以下屏幕。默认选项是OK，所以只需再次按下Next:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/fd0097b8-c8c5-4039-ae0e-3eddc27cf31b.png" style="width:62.42em;height:38.33em;"/></p>
+
+<p>图10.8: AWS启动实例向导，步骤3</p>
+
+<ol start="8">
+
+<li>此屏幕允许您更改存储选项。根据数据的大小，您可能需要添加额外的存储空间。存储相对便宜，所以我建议使用3-5倍大小的输入数据。</li>
+
+<li>点击<strong>下一步</strong>进入以下截图:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/286b5c73-eb73-4ac7-a270-878f3d9a958b.png" style="width:62.33em;height:38.33em;"/></p>
+
+<p>图10.9: AWS启动实例向导，步骤4</p>
+
+<ol start="10">
+
+<li>下面的屏幕并不重要——标签用于跟踪AWS中的资源，但我们并不需要它们。单击“下一步”转到以下屏幕截图:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/e25e132f-c0dd-4f66-b764-9cfa0554e48c.png" style="width:62.50em;height:40.17em;"/></p>
+
+<p>图10.10: AWS启动实例向导，步骤5</p>
+
+<ol start="11">
+
+<li>下面的屏幕截图显示了安全选项。AWS限制对实例的访问，因此您必须打开任何需要的端口。这里提供的默认值允许访问端口<kbd>22</kbd> (SSH)来访问shell，也允许访问端口<kbd>8787</kbd>，这是RStudio使用的web端口。单击“查看并启动”继续:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/cd54d2b2-35c6-45d5-9046-24345d306457.png" style="width:62.50em;height:38.42em;"/></p>
+
+<p>图10.11: AWS启动实例向导，步骤6</p>
+
+<p style="padding-left: 60px">会出现下面的截图。请注意关于安全性的警告消息——在生产环境中，您可能希望解决这些问题。</p>
+
+<ol start="12">
+
+<li>点击<strong>发射</strong>按钮继续:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/157480e8-9d0b-44f5-b32f-6f5422d462e3.png" style="width:62.33em;height:38.33em;"/></p>
+
+<p>图10.12: AWS启动实例向导，步骤7</p>
+
+<ol start="13">
+
+<li>您将被要求提供一对密钥。如果您尚未创建密钥对，请选择创建密钥对的选项。给它一个描述性的名称，然后按下载密钥对按钮。然后，单击启动实例:</li>
+
+</ol>
+
+<p>密钥对用于通过SSH访问实例。您应该非常小心地保护这一点，就好像有人设法获得了您的私钥，那么他们将能够登录到您的任何实例。您应该偶尔删除您的密钥对并创建一个新的。</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/ef21c0ea-5bf6-4899-9adc-fb34f76686bc.png" style="width:62.42em;height:38.25em;"/></p>
+
+<p>图10.13: AWS启动实例向导，选择密钥对</p>
+
+<ol start="14">
+
+<li>一旦您完成了这些，您可以返回到EC2仪表板，您将看到您有1个正在运行的实例。单击该链接，转到实例的详细信息:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/34bf01f9-062b-498b-85da-c69914e6fcdd.png" style="width:62.58em;height:38.42em;"/></p>
+
+<p>图10.14: AWS EC2仪表板</p>
+
+<ol start="15">
+
+<li>在这里，您将看到实例的详细信息。在这种情况下，IP地址是<kbd>34.227.109.123</kbd>。还要记下突出显示的实例ID，因为这是用于连接到RStudio实例的密码:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/27feac10-e148-43ce-8972-9e7784921555.png" style="width:62.58em;height:38.42em;"/></p>
+
+<p>图10.15: AWS EC2仪表板，实例详细信息</p>
+
+<ol start="16">
+
+<li class="mce-root">打开另一个网页，浏览至您机器的IP地址，并添加<kbd>:8787</kbd>以访问该链接。在我的例子中，链接是<kbd>http://34.227.109.123:8787/</kbd>。登录的说明在<em>图10.6 </em>中，即使用rstudio-user作为用户名，实例ID作为密码。您还应该考虑按照说明更改密码。</li>
+
+</ol>
+
+<ol start="17">
+
+<li>当你登录时，你会看到一个熟悉的界面——它类似于RStudio桌面程序。一个不同之处是右下角的<strong>上传</strong>按钮，它允许你上传文件。在以下示例中，我已经上传了来自<a href="e0045e3c-8afd-4e59-be9f-29e652a9a8b1.xhtml">第9章</a>、<em>异常检测和推荐系统</em>的数据和脚本，用于Keras推荐器示例，并成功运行了它:</li>
+
+</ol>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img src="img/dc6290f6-e4d3-47ae-b27d-9f9571921105.png" style="font-size: 1em;width:62.33em;height:38.33em;"/></p>
+
+<p>图10.16:使用RStudio服务器访问云中的深度学习实例</p>
+
+<p>RStudio中的web界面类似于在本地计算机上使用RStudio。在<em>图10.16 </em>中，您可以看到我上传的数据文件(<kbd>recomend.csv</kbd>、<kbd>recomend40.csv</kbd>)以及左下方窗口文件中的R脚本。我们还可以在左下方的控制台窗口中看到执行的代码。</p>
+
+<p class="mce-root">这完成了我们关于如何在AWS中设置深度学习机器的例子。再次提醒你，只要电脑还在运行，你就要付费。确保您的实例被终止，否则您将继续被收费。为此，返回EC2仪表板，找到实例，并单击<strong>动作</strong>按钮。弹出菜单，选择<strong>实例状态</strong>，然后选择<strong>终止</strong>:</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img src="img/3d35019f-f470-4a97-86eb-31bb1b1048d4.png" style="width:62.50em;height:40.58em;"/></p>
+
+<p>图10.17:终止AWS实例</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Creating a deep learning AMI in AWS</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">在AWS中创建深度学习AMI</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在前面的例子中，我们使用了一个由RStudio构建的<strong>亚马逊机器映像</strong> ( <strong> AMI </strong>)。在AWS中，您还可以创建自己的AMI。当您创建一个AMI时，您可以安装您想要的软件，将数据加载到它上面，并按照您的意愿设置它。本节将向您展示如何使用AMI在AWS上使用MXNet。</p>
+
+<ol>
+
+<li>创建AMI的第一步是选择将要使用的基础映像。我们可以从安装了操作系统的基本映像开始，但我们将使用之前使用的带有Tensorflow-GPU for AWS 的<strong xmlns:epub="http://www.idpf.org/2007/ops"> RStudio服务器，并向其中添加MXNet包。</strong></li>
+
+<li>安装MXNet的说明改编自<a xmlns:epub="http://www.idpf.org/2007/ops" href="https://mxnet.incubator.apache.org/install/index.html">https://mxnet.incubator.apache.org/install/index.html</a>。第一步是根据上一节，使用Tensorflow-GPU for AWS  AMI从<strong xmlns:epub="http://www.idpf.org/2007/ops"> RStudio服务器创建实例。</strong></li>
+
+<li>一旦你完成了这些，你需要SSH进入机器。如何操作取决于您自己计算机上的操作系统。对于Linux和macOS，可以在shell上执行本地命令，在Windows中可以使用Putty。</li>
+
+<li>登录到计算机后，运行以下命令:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>vi ~/.profile</strong></pre>
+
+<ol start="5">
+
+<li>将下面一行添加到该文件的末尾，并保存该文件:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>export CUDA_HOME=/usr/local/cuda</strong></pre>
+
+<ol start="6">
+
+<li>回到shell后，逐一运行以下代码行:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>sudo apt-get update</strong><br/><strong>sudo dpkg --configure -a</strong><br/><strong>sudo apt-get install -y build-essential git</strong><br/><strong>export CUDA_HOME=/usr/local/cuda</strong><br/><strong>git clone --recursive https://github.com/apache/incubator-mxnet</strong><br/><strong>cd incubator-mxnet</strong><br/><strong>make -j $(nproc) USE_OPENCV=1 USE_CUDA=1 USE_CUDA_PATH=/usr/local/cuda USE_CUDNN=1</strong></pre>
+
+<ol start="7">
+
+<li>最后一个命令可能需要2个小时才能完成。完成后，运行最后几行:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>sudo ldconfig /usr/local/cuda/lib64</strong><br/><strong>sudo make rpkg</strong><br/><strong>sudo R CMD INSTALL mxnet_current_r.tar.gz</strong></pre>
+
+<p style="padding-left: 60px">第二行可能需要30分钟。最后一行可能会返回一个关于丢失文件的警告，这可以忽略。</p>
+
+<ol start="8">
+
+<li>要测试所有安装是否正确，请转到实例的RStudio页面，并键入以下代码:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>library(mxnet)
+
+a &lt;- mx.nd.ones(c(2,3), ctx = mx.gpu())
+
+b &lt;- a * 2 + 1
+
+b</strong></pre>
+
+<ol start="9">
+
+<li>您应该得到以下输出:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>     [,1] [,2] [,3]</strong><br/><strong>[1,]    3    3    3</strong><br/><strong>[2,]    3    3    3</strong></pre>
+
+<ol start="10">
+
+<li>现在回到EC2仪表板，点击<strong>运行实例</strong>，并在列表中选择机器。点击<strong>动作</strong>按钮，从下拉菜单中选择<strong>图像</strong>，并选择<strong>创建图像</strong>。如下图所示:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-711 image-border" src="img/6e79acde-0322-4ea8-bd54-af931a923b29.png" style="width:44.25em;height:28.33em;"/></p>
+
+<p>图10.18:创建一个AMI</p>
+
+<ol start="11">
+
+<li>该图像可能需要15-20分钟才能完成。完成后，单击左侧菜单选项中的ami以显示与您的帐户相关的ami列表。您应该会看到您刚刚创建的AMI。然后，这个AMI可以用于创建新的按需实例或新的spot实例。下面的屏幕截图显示了为AMI创建一个spot实例的菜单选项:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-712 image-border" src="img/1a09ca79-e660-464f-84bc-71adffd561a9.png" style="width:72.83em;height:46.67em;"/></p>
+
+<p>图10.19:使用现有的AMI进行spot请求</p>
+
+<p>这个AMI现在是可用的，以便您可以创建新的深度学习实例。您应该意识到，即使您不使用AMI，存储它也是有持续成本的。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Using Azure for deep learning</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用Azure进行深度学习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">Azure是微软云服务的品牌名称。你可以使用Azure进行深度学习，与AWS类似，它提供了预配置有深度学习库的深度学习虚拟机。在本例中，我们将创建一个可用于Keras或MXNet的Windows实例。这里假设您的本地计算机也是一台Windows计算机，因为您将使用<strong>远程桌面协议</strong> ( <strong> RDP </strong>)来访问云实例。</p>
+
+<ol>
+
+<li class="mce-root">第一步是在Azure中创建一个帐户，然后在<a href="https://portal.azure.com">https://portal.azure.com</a>登录Azure。你会看到一个类似下面的截图。点击<strong>创建资源</strong>并搜索<strong>深度学习虚拟机</strong>:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-713 image-border" src="img/35fda232-a7e7-4c1c-99e6-a719b99d6798.png" style="width:96.92em;height:51.50em;"/></p>
+
+<p>图10.20: Azure门户网站</p>
+
+<ol start="2">
+
+<li class="mce-root">当您选择<strong>深度学习虚拟机</strong>时，会出现以下画面。点击<strong>创建</strong>:</li>
+
+</ol>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img src="img/865011d0-1c63-4727-913d-39a08bc61ffd.png"/></p>
+
+<p>图10.21:在Azure上提供深度学习实例，步骤0</p>
+
+<ol start="3">
+
+<li class="mce-root">现在，您将启动一个4步向导来创建新实例。</li>
+
+</ol>
+
+<p style="padding-left: 90px">第一步(基础)，询问一些基本细节。可以输入与我相同的值，但请仔细填写用户名和密码，因为您稍后会用到它们:</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img src="img/6b977cee-8553-449a-b482-efa7f5031dec.png"/></p>
+
+<p>图10.22:在Azure上提供深度学习实例，步骤1</p>
+
+<p style="padding-left: 90px">对于步骤2(设置)，确保虚拟机大小为1 x标准NC6 (1个GPU)，然后单击<strong>确定</strong>继续:</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img src="img/4a27d0e4-b492-4566-8383-1d37646b48c3.png"/></p>
+
+<p>图10.23:在Azure上提供深度学习实例，步骤2</p>
+
+<p style="padding-left: 90px">对于步骤3(总结)，有一个简短的验证检查。您可能会被告知，您的帐户没有足够的可用计算/虚拟机(核心/虚拟CPU)资源，这是因为Microsoft可能在您的帐户首次创建时对其进行了限制。创建支持票证以增加您的资源，然后重试。如果您已经通过了这一步，点击<strong> OK </strong>继续。您现在处于最后一步，只需点击<strong>创建</strong>:</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img src="img/55fb8721-62c1-4693-a074-b0b9c9a76f10.png"/></p>
+
+<p>图10.24:在Azure上提供深度学习实例，步骤4</p>
+
+<p class="mce-root" style="padding-left: 90px">在创建资源之前，您可能需要等待30-40分钟。完成后，选择左侧的<strong> All resources </strong>，您将看到所有对象都已创建。下面的截图显示了一个例子。点击类型为<strong>的虚拟机</strong>:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/b96b0b9e-f5db-449d-846f-c1013f799bd9.png"/></p>
+
+<p>图10.25:Azure上当前提供的资源列表</p>
+
+<ol start="4">
+
+<li>然后你会看到下面的截图。点击屏幕顶部的<strong>连接</strong>按钮。</li>
+
+<li>右边会打开一个窗格，让你选择<strong>下载RDP文件</strong>。点击它，当文件下载后，双击它:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/4f60bb8b-8e00-4906-b815-9940b5a28833.png"/></p>
+
+<p>图10.26:下载RDP文件以连接到Azure中的云实例</p>
+
+<ol start="6">
+
+<li>这应该会弹出一个登录窗口来连接到云实例。输入您在步骤1中创建的用户名和密码，以连接到实例。当您连接时，您将看到类似于以下屏幕截图的桌面:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/a0697b47-5d20-4e0c-b5f5-9f775c2e5cb5.png" style="width:57.92em;height:32.58em;"/></p>
+
+<p>图10.27:深度学习实例(Azure)的远程桌面</p>
+
+<p>太好了！RStudio已经安装。已经安装了Keras，所以您拥有的任何Keras深度学习代码都将运行。让我们试着运行一些MXNet代码。打开RStudio并运行以下命令来安装MXNet:</p>
+
+<pre>cran &lt;- getOption("repos")<br/>cran["dmlc"] &lt;- "https://apache-mxnet.s3-accelerate.dualstack.amazonaws.com/R/CRAN/GPU/cu90"<br/>options(repos = cran)<br/>install.packages("mxnet")<br/><br/># validate install<br/>library(mxnet)<br/>a &lt;- mx.nd.ones(c(2,3), ctx = mx.gpu())<br/>b &lt;- a * 2 + 1<br/>b</pre>
+
+<p>这在安装的R版本上不起作用。如果要使用MXNet，必须下载最新版本的R(编写时为3.5.1)并安装。不幸的是，这将禁用Keras，所以只有当您想使用MXNet而不是Keras时才这样做。一旦你从https://cran.r-project.org/,下载了R，然后重新运行上面的代码来安装MXNet。</p>
+
+<p>注意:安装在这些AMI上的软件变化非常频繁。在安装任何深度学习库之前，请检查安装的CUDA版本。你需要确保他们的深度学习库与机器上安装的CUDA版本兼容。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Using Google Cloud for deep learning</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用谷歌云进行深度学习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">谷歌云也有GPU实例。在写这本书的时候，NVIDIA Tesla K80 GPU卡(也是AWS p2.xlarge实例中的GPU卡)的实例价格是按需每小时0.45美元。这比AWS按需价格要便宜得多。谷歌云的GPU实例的进一步细节在<a xmlns:epub="http://www.idpf.org/2007/ops" href="https://cloud.google.com/gpu/">https://cloud.google.com/gpu/</a>。但是，对于Google Cloud，我们不打算使用实例。相反，我们将使用Google Cloud机器学习引擎API向云提交机器学习作业。与配置虚拟机相比，这种方法的一大优势是您只需为使用的硬件资源付费，而不必担心实例的设置和终止。更多细节和价格可以在https://cloud.google.com/ml-engine/pricing的<a xmlns:epub="http://www.idpf.org/2007/ops" href="https://cloud.google.com/ml-engine/pricing">找到。</a></p>
+
+<p>通过以下步骤注册Google Cloud并启用API:</p>
+
+<ol>
+
+<li>注册一个Google Cloud帐户。</li>
+
+<li>你需要在https://console.cloud.google.com<a href="https://console.cloud.google.com">登录门户</a>，启用<strong>云机器学习引擎</strong> API。</li>
+
+<li>从主菜单中选择<strong>API&amp;服务</strong>并点击<strong>启用API和服务</strong>按钮。</li>
+
+<li>API包含在组中。为<strong>机器学习</strong>组选择<strong>查看全部</strong>，然后选择<strong>云机器学习引擎</strong>并确保API已启用。</li>
+
+</ol>
+
+<p>启用API后，从RStudio执行以下代码:</p>
+
+<pre>devtools::install_github("rstudio/cloudml")<br/>library(cloudml)<br/>gcloud_init()</pre>
+
+<p>这将安装Google Cloud SDK，并要求您将您的Google帐户连接到SDK。然后，您将在终端窗口中浏览选项菜单。第一种选择如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/09b57ce1-eb63-4e33-a609-82a1d2fe641b.png"/></p>
+
+<p>图10.28:从RStudio访问Google Cloud SDK</p>
+
+<p>现在，不要创建任何新的项目或配置，只需选择已经存在的项目或配置。一旦你将你的Google帐户链接到你机器上的Google SDK并启用了服务，你就可以开始了。云机器学习引擎允许您向Google Cloud提交作业，而无需创建任何实例。工作文件夹中的所有文件(R脚本和数据)将被压缩并打包发送到Google Cloud。</p>
+
+<p>对于这个例子，我从第八章<a xmlns:epub="http://www.idpf.org/2007/ops" href="49a1fa27-1130-4f86-966e-cc73444b88a2.xhtml">的项目中取了一个推荐文件，在R<em xmlns:epub="http://www.idpf.org/2007/ops">中使用TensorFlow的深度学习模型。我将这个文件和<kbd xmlns:epub="http://www.idpf.org/2007/ops">keras_recommend.R</kbd>脚本复制到一个新目录中，并在该目录中创建了一个新的RStudio项目。然后我在RStudio中打开了这个项目。在前面的截图中可以看到这两个文件和RStudio项目文件。然后，我在RStudio中执行下面一行来提交深度学习作业:</em></a></p>
+
+<pre>cloudml_train("keras_recommend.R", master_type = "standard_gpu")</pre>
+
+<p>这将收集当前工作目录中的文件，并将它们发送到云机器学习引擎。随着作业的执行，一些进度信息将被发送回RStudio。您还可以通过选择<strong> ML Engine </strong> | <strong> Jobs </strong>在<a href="https://console.cloud.google.com">https://console.cloud.google.com</a>的控制台页面上监控活动。以下是此网页的屏幕截图，显示了两个已完成的作业和一个已取消的作业:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/8519af01-4cd4-4c31-b2c2-3a1d7d03a2f7.png"/></p>
+
+<p>图10.29:谷歌云平台网页上的ML引擎/作业页面</p>
+
+<p>作业完成后，日志将下载到您的本地计算机上。将自动创建一个漂亮的摘要网页，显示该作业的统计信息，如下面的屏幕截图所示:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/cfd08ae4-afaa-4f7f-b71a-d07a60c1f1d8.png"/></p>
+
+<p>图10.30:机器学习作业的Web摘要页面</p>
+
+<p>我们可以看到显示模型在训练期间的进度、模型摘要、一些超参数(<strong> epochs </strong>、<strong> batch_size </strong>等等)以及成本(<strong> ml_units </strong>)。web页面还包含R脚本的输出。从菜单中选择<strong>输出</strong>进行查看。在下面的屏幕截图中，我们可以看到R代码和该代码的输出:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/ccfca405-fa9f-4dd7-b102-fe39f624f402.png"/></p>
+
+<p>图10.31:显示R代码和输出的机器学习作业的Web摘要页面</p>
+
+<p>这只是对使用谷歌云机器学习引擎的简单介绍。在<a href="https://tensorflow.rstudio.com/tools/cloudml/articles/tuning.html">https://tensor flow . r studio . com/tools/cloudml/articles/tuning . html</a>有一个很好的教程，解释了如何使用这个服务进行超参数训练。使用这种服务而不是云实例进行超参数训练比使用虚拟实例自己管理更简单，可能也更便宜。您不必监控它并协调模型训练的不同运行。有关使用该服务的更多信息，请访问<a href="https://tensorflow.rstudio.com/tools/cloudml/articles/getting_started.html">https://tensor flow . r studio . com/tools/cloudml/articles/getting _ started . html</a>。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Using Paperspace for deep learning</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用Paperspace进行深度学习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root"><strong> Paperspace </strong>是在云中执行深度学习的另一种有趣方式。这可能是在云中训练深度学习模型的最简单的方法。要使用Paperspace设置云实例，您可以登录到他们的控制台，配置一台新机器，并从您的web浏览器连接到该机器:</p>
+
+<ol>
+
+<li class="mce-root">首先注册一个Paperspace帐户，登录到控制台，然后通过选择Core或Compute进入虚拟机部分。Paperspace有一个RStudio TensorFlow模板，其中已经安装了NVIDIA GPU库(CUDA 8.0和cuDNN 6.0)，以及TensorFlow和Keras for R的GPU版本。当您选择<strong>公共模板</strong>时，您将看到此机器类型，如以下截图所示:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/e81d0c7e-1252-4cc6-9f55-da9d48ab433f.png"/></p>
+
+<p>图10.32:图纸空间门户</p>
+
+<ol start="2">
+
+<li>你可以选择三个GPU实例，并选择按小时或按月付费。选择最便宜的选项(目前为每小时0.40美元的P4000)和每小时定价。向下滚动到页面底部，并按下<strong>创建</strong>按钮。几分钟后，您的计算机将被设置，您将能够通过浏览器访问它。RStudio图纸空间实例的示例如下所示:</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/5dac837c-ce96-4cea-ae66-14f848f46040.png"/></p>
+
+<p>图10.33:从网页访问虚拟机的桌面并为Paperspace实例运行RStudio</p>
+
+<p>默认情况下，已经安装了Keras，因此您可以继续使用Keras训练深度学习模型。但是，我们还将在我们的实例上安装MXNet:</p>
+
+<ol>
+
+<li>第一步是打开RStudio并安装几个包。从RStudio执行以下命令:</li>
+
+</ol>
+
+<pre style="padding-left: 60px">install.packages("devtools")<br/>install.packages(c("imager","DiagrammeR","influenceR","rgexf"))</pre>
+
+<ol start="2">
+
+<li>下一步是访问刚刚创建的实例的终端(或shell)。您可以返回控制台页面，从那里开始操作。或者，点击桌面右上角的圆形目标(见前面的截图)。这也为您提供了其他选项，例如在本地计算机和虚拟机之间同步复制和粘贴。</li>
+
+<li>登录到实例的终端后，运行以下命令将安装MXNet:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>sudo apt-get update</strong><br/><strong>sudo dpkg --configure -a</strong><br/><strong>sudo apt-get install -y build-essential git</strong><br/><strong>export CUDA_HOME=/usr/local/cuda</strong><br/><strong>git clone --recursive https://github.com/apache/incubator-mxnet</strong><br/><strong>cd incubator-mxnet</strong><br/><strong>make -j $(nproc) USE_OPENCV=1 USE_BLAS=blas USE_CUDA=1 USE_CUDA_PATH=/usr/local/cuda USE_CUDNN=1</strong><br/><br/><strong>sudo ldconfig /usr/local/cuda/lib64</strong><br/><strong>sudo make rpkg</strong></pre>
+
+<ol start="4">
+
+<li>您还需要将下面一行添加到<kbd>.profile</kbd>文件的末尾:</li>
+
+</ol>
+
+<pre style="padding-left: 60px"><strong>export CUDA_HOME=/usr/local/cuda</strong></pre>
+
+<p>完成后，重新启动实例。你现在有了一台可以在云端训练Keras和MXNet深度学习模型的机器。有关在Paperspace中使用RStudio的更多详细信息，请参见<a href="https://tensorflow.rstudio.com/tools/cloud_desktop_gpu.html">https://tensorflow.rstudio.com/tools/cloud_desktop_gpu.html</a>。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">摘要</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">我们在这一章已经涵盖了很多训练深度学习模型的选项！我们讨论了在本地运行它的选项，并展示了拥有GPU卡的重要性。我们使用三个主要的云提供商在云上的R中训练深度学习模型。云计算是一种奇妙的资源——我们举了一个超级计算机的例子，价值149，000美元。几年前，这样的资源对几乎每个人来说都是遥不可及的，但现在多亏了云计算，你可以按小时租用这样的机器。</p>
+
+<p>对于AWS、Azure和Paperspace，我们在云资源上安装了MXNet，让我们可以选择使用哪个深度学习库。我鼓励你使用本书其他章节中的例子，并尝试这里所有不同的云提供商。令人惊讶的是，你可以这样做，你的总成本可能不到10美元！</p>
+
+<p>在下一章也是最后一章，我们将从图像文件中构建一个图像分类解决方案。我们将演示如何应用迁移学习，它允许您使现有的模型适应新的数据集。我们将展示如何使用REST API将模型部署到生产中，并简要讨论生成式对抗网络、强化学习，如果您希望继续您的深度学习探索，还将提供一些进一步的资源。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

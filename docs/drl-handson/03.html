@@ -1,0 +1,414 @@
+<html><head/><body>
+<html>
+  <head>
+    <title>Chapter 3. Deep Learning with PyTorch</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03" class="calibre1"/>第三章。使用PyTorch进行深度学习</h1></div></div></div><p class="calibre8">在前一章中，我们熟悉了开源库，它为我们提供了一系列RL环境。然而，最近在RL方面的发展，特别是它与<strong class="calibre2">深度学习</strong> ( <strong class="calibre2"> DL </strong>)的结合，现在使得解决比以前更复杂和更具挑战性的问题成为可能。这部分是由于DL方法和工具的发展。</p><p class="calibre8">这一章专门介绍这样一个工具，它使得用几行Python代码实现复杂的DL模型成为可能。这一章并不假装是一个完整的DL手册，因为这个领域非常广泛和动态。目标是让您熟悉PyTorch库的细节和实现细节，假设您已经熟悉了DL基础知识。</p><p class="calibre8"><strong class="calibre2">兼容性说明</strong>:本章中的所有示例都是针对最新的PyTorch 0.4.0进行更新的，与之前的0.3.1版本相比有很多变化。如果你用的是旧的PyTorch，可以考虑升级。在本章中，我们将讨论最新版本中的不同之处。</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Chapter 3. Deep Learning with PyTorch</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h1 class="title" id="calibre_pb_1"><a id="ch03lvl1sec20" class="calibre1"/>张量</h1></div></div></div><p class="calibre8">张量<a id="id73" class="calibre1"/>是所有DL工具包的基础构件。这个名字听起来很酷也很神秘，但是它的基本思想是张量是一个多维数组。一个个数字就像一个点，是零维的，而向量就像线段一样是一维的，矩阵就是二维的物体。三维数集合可以用一个数的平行六面体来表示，但是不要像<em class="calibre11">矩阵</em>一样有单独的名字。我们可以保留这个术语用于更高维度的集合，它们被命名为多维矩阵或张量。</p><div><img src="img/00022.jpeg" alt="Tensors" class="calibre9"/><div><p class="calibre14">图1:从单一数字到n维张量</p></div></div><p class="calibre10"> </p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Chapter 3. Deep Learning with PyTorch</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><div><h2 class="title1" id="calibre_pb_2"><a id="ch03lvl2sec20" class="calibre1"/>张量的创建</h2></div></div></div><p class="calibre8">如果你熟悉NumPy库(你应该熟悉)，那么你应该已经知道它的主要目的是以一种通用的方式处理多维数组。在NumPy中，这样的数组不叫张量，但事实上，它们是张量。张量在科学计算中被广泛使用，作为数据的一般存储。例如，彩色图像可以被编码为具有宽度、高度和色彩平面维度的3D张量。</p><p class="calibre8">除了维度，张量的特征还在于其元素的类型。PyTorch支持八种类型:三种浮点类型(16位、32位和64位)和五种整数类型(8位有符号、8位无符号、16位、32位和64位)。不同类型的张量用不同的类来表示，最常用的有<code class="literal">torch.FloatTensor</code>(对应32位浮点)、<code class="literal">torch.ByteTensor</code>(8位无符号整数)、<code class="literal">torch.LongTensor</code>(64位有符号整数)。其余的可以在文档中找到。</p><p class="calibre8">在PyTorch中创建张量有三种方法:</p><div><ol class="orderedlist"><li class="listitem" value="1">通过调用所需类型的构造函数。</li><li class="listitem" value="2">通过将NumPy数组或Python列表转换成张量。在这种情况下，类型将取自数组的类型。</li><li class="listitem" value="3">通过让PyTorch为你创建一个带有特定数据的张量。例如，您可以使用<code class="literal">torch.zeros()</code>函数创建一个填充零值的张量。</li></ol><div/></div><p class="calibre8">为了给你这些方法的例子，让我们看一个简单的会话:</p><div><pre class="programlisting">&gt;&gt;&gt; import torch
+&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; a = torch.FloatTensor(3, 2)
+&gt;&gt;&gt; a
+tensor([[ 4.1521e+09,  4.5796e-41],
+        [ 1.9949e-20,  3.0774e-41],
+        [ 4.4842e-44,  0.0000e+00]])</pre></div><p class="calibre8">这里，我们导入了PyTorch和NumPy，并创建了一个大小为3 × 2的未初始化张量。默认情况下，PyTorch为张量分配内存，但不初始化它。为了清楚张量的内容，我们需要使用它的运算:</p><div><pre class="programlisting">&gt;&gt;&gt; a.zero_()
+tensor([[ 0.,  0.],
+        [ 0.,  0.],
+        [ 0.,  0.]])</pre></div><p class="calibre8">张量有两种类型的操作:就地操作和函数操作。就地运算的名称后面有一个下划线，它对张量的内容进行运算。在这之后，对象本身被返回。功能等价创建了一个张量的<em class="calibre11">副本</em>，并执行了修改，而原始张量保持不变。从性能和内存的角度来看，就地操作通常更有效。</p><p class="calibre8">通过构造函数创建张量的另一种方法是提供一个Python iterable(例如，一个列表或元组)，它将被用作新创建的张量的内容:</p><div><pre class="programlisting">&gt;&gt;&gt; torch.FloatTensor([[1,2,3],[3,2,1]])
+tensor([[ 1.,  2.,  3.],
+        [ 3.,  2.,  1.]])</pre></div><p class="calibre8">这里我们使用NumPy创建相同的zero对象:</p><div><pre class="programlisting">&gt;&gt;&gt; n = np.zeros(shape=(3, 2))
+&gt;&gt;&gt; n
+array([[ 0.,  0.],
+       [ 0.,  0.],
+       [ 0.,  0.]])
+&gt;&gt;&gt; b = torch.tensor(n)
+&gt;&gt;&gt; b
+tensor([[ 0.,  0.],
+        [ 0.,  0.],
+        [ 0.,  0.]], dtype=torch.float64)</pre></div><p class="calibre8"><code class="literal">torch.tensor</code>方法接受NumPy数组作为参数，并从中创建一个适当形状的张量。在前面的示例中，我们创建了一个用零初始化的NumPy数组，默认情况下，它创建了一个double (64位浮点)数组。因此，得到的张量具有<code class="literal">DoubleTensor</code>类型(在前面的示例中显示为具有<code class="literal">dtype</code>值)。通常，在DL中，不需要双精度，这增加了额外的内存和性能开销。通常的做法是使用32位浮点类型，甚至16位浮点类型，这就足够了。要创建这样的张量，需要明确指定NumPy数组的类型:</p><div><pre class="programlisting">&gt;&gt;&gt; n = np.zeros(shape=(3, 2), dtype=np.float32)
+&gt;&gt;&gt; torch.tensor(n)
+tensor([[ 0.,  0.],
+        [ 0.,  0.],
+        [ 0.,  0.]])</pre></div><p class="calibre8">作为一种选择，所需张量的类型可以在<code class="literal">dtype</code>自变量中提供给<code class="literal">torch.tensor</code>函数。然而，要小心，因为这个参数期望得到PyTorch类型规范，而不是NumPy类型规范。PyTorch类型保存在<code class="literal">torch</code>包中，例如<code class="literal">torch.float32</code>、<code class="literal">torch.uint8</code>。</p><div><pre class="programlisting">&gt;&gt;&gt; n = np.zeros(shape=(3,2))
+&gt;&gt;&gt; torch.tensor(n, dtype=torch.float32)
+tensor([[ 0.,  0.],
+        [ 0.,  0.],
+        [ 0.,  0.]])</pre></div><p class="calibre8"><strong class="calibre2">兼容性说明</strong>:0 . 4 . 0版本中增加了<code class="literal">torch.tensor()</code>方法和显式PyTorch类型规范，这是向简化张量创建迈出的一步。在以前的版本中，<code class="literal">torch.from_numpy()</code>函数是转换NumPy数组的推荐方法，但是它在处理Python列表和NumPy数组的组合时存在问题。为了向后兼容，这个<code class="literal">from_numpy()</code>函数仍然存在，但是为了更灵活的<code class="literal">torch.tensor()</code>方法，它被弃用了。</p></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Chapter 3. Deep Learning with PyTorch</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><div><h2 class="title1" id="calibre_pb_3"><a id="ch03lvl2sec21" class="calibre1"/>标量张量</h2></div></div></div><p class="calibre8">从0.4.0版本开始，PyTorch <a id="id77" class="calibre1"/>支持对应标量<a id="id78" class="calibre1"/>值的零维张量(在<em class="calibre11">图1 </em>的左侧)。这种张量可以是某些运算的结果，例如对张量中的所有值求和。早些时候，这种情况是通过创建一维(向量)张量来处理的，其中一维等于1。这个解决方案有效，但是不太简单，因为需要额外的索引来访问值。</p><p class="calibre8">现在零维张量被适当的函数支持并返回，并且可以由<code class="literal">torch.tensor()</code>函数创建。要访问这样一个张量的实际Python值，他们有一个特殊的<code class="literal">item()</code>方法:</p><div><pre class="programlisting">&gt;&gt;&gt; a = torch.tensor([1,2,3])
+&gt;&gt;&gt; a
+tensor([ 1,  2,  3])
+&gt;&gt;&gt; s = a.sum()
+&gt;&gt;&gt; s
+tensor(6)
+&gt;&gt;&gt; s.item()
+6
+&gt;&gt;&gt; torch.tensor(1)
+tensor(1)</pre></div></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Chapter 3. Deep Learning with PyTorch</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><div><h2 class="title1" id="calibre_pb_4"><a id="ch03lvl2sec22" class="calibre1"/>张量运算</h2></div></div></div><p class="calibre8">在张量上可以<a id="id79" class="calibre1"/>执行的操作有很多，不胜枚举。通常，在位于<a class="calibre1" href="http://pytorch.org/docs/">http://pytorch.org/docs/</a>的PyTorch文档<a id="id80" class="calibre1"/>中搜索就足够了。这里我们需要提到的是，除了我们已经讨论过的就地变量和函数变量(也就是说，有和没有下划线，像<code class="literal">zero()</code>和<code class="literal">zero_()</code>)，还有两个地方可以寻找操作:<code class="literal">torch</code>包和张量类。在第一种情况下，函数通常接受张量作为参数。在第二种情况下，它作用于所谓的张量。</p><p class="calibre8">大多数时候，张量运算试图对应于它们的NumPy等价，所以如果NumPy中有一些不是很专业的函数，那么PyTorch也很有可能有。例子有<code class="literal">torch.stack()</code>、<code class="literal">torch.transpose()</code>和<code class="literal">torch.cat()</code>。</p></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Chapter 3. Deep Learning with PyTorch</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><div><h2 class="title1" id="calibre_pb_5"><a id="ch03lvl2sec23" class="calibre1"/> GPU张量</h2></div></div></div><p class="calibre8">PyTorch透明支持<a id="id81" class="calibre1"/>CUDA GPU，也就是说所有操作都有两个版本——CPU和<a id="id82" class="calibre1"/>GPU——自动选择。这个决定是基于你正在操作的张量的类型做出的。我们提到的每一种张量类型都是针对CPU的，都有对应的GPU。唯一的区别是GPU张量驻留在<code class="literal">torch.cuda</code>包中，而不仅仅是<code class="literal">torch</code>。例如，<code class="literal">torch.FloatTensor</code>是一个驻留在CPU内存中的32位浮点张量，但是<code class="literal">torch.cuda.FloatTensor</code>是它的GPU对应物。要从CPU转换到GPU，有一个张量方法<code class="literal">to(device)</code>，它创建一个张量的副本到指定的设备(可以是CPU或GPU)。如果张量已经在设备上，什么都不会发生，原始张量将被返回。可以用不同的方式指定设备类型。首先你可以只传一个设备的字符串名，就是cpu内存的“CPU”或者GPU的“cuda”。一个GPU设备可以在冒号后指定一个可选的设备索引，例如，系统中的第二个GPU卡可以通过“cuda:1”来寻址(索引从零开始)。</p><p class="calibre8">在<code class="literal">to()</code>方法中指定设备的另一种稍微有效的方法是使用<code class="literal">torch.device</code>类，它接受设备名和可选索引。为了访问张量当前所在的设备，它有一个<code class="literal">device</code>属性。</p><div><pre class="programlisting">&gt;&gt;&gt; a = torch.FloatTensor([2,3])
+&gt;&gt;&gt; a
+tensor([ 2.,  3.])
+&gt;&gt;&gt; ca = a.cuda(); ca
+tensor([ 2.,  3.], device='cuda:0')</pre></div><p class="calibre8">这里，我们在CPU上创建了一个张量，然后将其复制到GPU内存中。两个副本都可以用于计算，所有特定于GPU的机器对用户都是透明的:</p><div><pre class="programlisting">&gt;&gt;&gt; a + 1
+tensor([ 3.,  4.])
+&gt;&gt;&gt; ca + 1
+tensor([ 3.,  4.], device='cuda:0')
+&gt;&gt;&gt; ca.device
+device(type='cuda', index=0)</pre></div><p class="calibre8"><strong class="calibre2">兼容性说明</strong>:0 . 4 . 0中引入了<code class="literal">to()</code>方法<a id="id83" class="calibre1"/>和<code class="literal">torch.device</code>类。在<a id="id84" class="calibre1"/>以前的版本中，CPU和GPU之间的复制分别通过单独的张量方法<code class="literal">cpu()</code>和<code class="literal">cuda()</code>来执行，这需要添加额外的代码行来显式地将张量转换为它们的CUDA版本。在最新版本中，你可以在程序开始时创建一个想要的<code class="literal">torch.device</code>对象，并在你创建的每个张量上使用<code class="literal">to(device)</code>。张量中的旧方法<code class="literal">cpu()</code>和<code class="literal">cuda()</code>仍然存在，但已被弃用。</p></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Gradients</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec21" class="calibre1"/>渐变</h1></div></div></div><p class="calibre8">即使有透明的GPU支持，如果没有一个“杀手锏”:自动计算梯度，所有这些<a id="id85" class="calibre1"/>与张量共舞都不值得费心。这个功能最初是在Caffe工具包中实现的，后来成为DL库中事实上的标准。即使对于最简单的<strong class="calibre2">神经网络</strong> ( <strong class="calibre2"> NN </strong>)来说，手动计算梯度的实现和调试也是极其痛苦的。你必须计算所有函数的导数，应用链式法则，然后实现计算结果，祈祷一切都做对了。这对于理解DL的具体细节可能是一个非常有用的练习，但这不是你想通过试验不同的神经网络架构来一遍又一遍重复的事情。</p><p class="calibre8">幸运的是，那些日子已经过去了，就像用烙铁和真空管给你的硬件编程一样！现在，定义一个数百层的神经网络只需要从预定义的构建块组装它，或者在极端情况下，你做一些奇特的事情，手动定义转换表达式。所有的梯度将被仔细计算，反向传播，并应用于网络。为了能够实现这一点，您需要根据所使用的DL库来定义您的网络架构，这些库在细节上可以不同，但一般来说必须是相同的:您定义您的网络将输入转换为输出的顺序。</p><div><img src="img/00023.jpeg" alt="Gradients" class="calibre9"/><div><p class="calibre14">图2:数据和梯度流过神经网络</p></div></div><p class="calibre10"> </p><p class="calibre8">造成根本差异的是如何计算梯度。有两种方法:</p><div><ol class="orderedlist"><li class="listitem" value="1"><strong class="calibre2">静态图</strong>:在这种方法中，你需要预先定义你的计算，以后就不可能再修改了。在进行任何计算之前，DL库会对图形进行处理和优化。该模型在TensorFlow、Theano和许多其他DL工具包中实现。</li><li class="listitem" value="2"><strong class="calibre2">动态图形</strong>:你不需要预先定义你的图形，因为它将被执行。您只需对实际数据执行想要用于数据转换的操作。在此期间，该库记录执行操作的顺序，当您要求它计算梯度时，它会展开其操作历史，累积<a id="id87" class="calibre1"/>网络参数的梯度。这个方法也叫做<a id="id88" class="calibre1"/>笔记本渐变<strong class="calibre2">并且在PyTorch、Chainer和其他一些软件中实现。</strong></li></ol><div/></div><p class="calibre8">这两种方法各有优缺点。例如，静态图形通常更快，因为所有计算都可以转移到GPU，从而最大限度地减少数据传输开销。此外，在静态图中，库在优化计算顺序甚至删除图的某些部分方面有更大的自由度。另一方面，动态图有较高的计算开销，但给开发者更多的自由。例如，他们可以说，“对于这段数据，我可以应用这个网络两次，对于这段数据，我将使用一个完全不同的模型，其中的梯度被批量平均值剪裁。”动态图模型的另一个非常吸引人的优点是，它允许您以更“Pythonic化”的方式更自然地表达您的转换。最后，它只是一个包含一堆函数的Python库，所以只需调用它们，让这个库来发挥作用。</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Gradients</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_1"><a id="ch03lvl2sec24" class="calibre1"/>张量和梯度</h2></div></div></div><p class="calibre8">PyTorch张量有一个<a id="id89" class="calibre1"/>内置的梯度计算和跟踪机制，所以你需要做的就是将数据转换成张量，并使用<code class="literal">torch</code>提供的张量方法和函数进行计算。当然，如果您需要访问底层的底层细节，您总是可以的，但是大多数时候，PyTorch会做您所期望的事情。</p><p class="calibre8">每个张量都有几个与梯度相关的属性:</p><div><ul class="itemizedlist"><li class="listitem"><code class="literal">grad</code>:保存包含计算梯度的相同形状的张量的属性。</li><li class="listitem"><code class="literal">is_leaf</code> : <code class="literal">True</code>，如果这个张量是用户构造的，<code class="literal">False</code>，如果对象是函数变换的结果。</li><li class="listitem"><code class="literal">requires_grad</code> : <code class="literal">True</code>如果这个张量需要计算梯度。该属性继承自叶张量，叶张量从张量构造步骤(<code class="literal">torch.zeros()</code>或<code class="literal">torch.tensor()</code>等等)中获得该值。默认情况下，构造函数有<code class="literal">requires_grad=False</code>，所以如果你想为你的张量计算梯度，那么你需要明确地说出来。</li></ul></div><p class="calibre8">为了让所有这些渐变叶片机制更加清晰，让我们来考虑一下这个环节:</p><div><pre class="programlisting">&gt;&gt;&gt; v1 = torch.tensor([1.0, 1.0], requires_grad=True)
+&gt;&gt;&gt; v2 = torch.tensor([2.0, 2.0])</pre></div><p class="calibre8">在前面的代码中，我们创建了两个张量。第一种需要计算梯度，第二种不需要:</p><div><pre class="programlisting">&gt;&gt;&gt; v_sum = v1 + v2
+&gt;&gt;&gt; v_res = (v_sum*2).sum()
+&gt;&gt;&gt; v_res
+tensor(12.)</pre></div><p class="calibre8">所以现在我们将两个向量按元素相加(这是向量<code class="literal">[3, 3]</code>)，将每个元素加倍，并将它们加在一起。结果是一个值为<code class="literal">12</code>的零维张量。好了，到目前为止这是简单的数学。现在让我们来看看我们的表达式创建的底层图表:</p><div><img src="img/00024.jpeg" alt="Tensors and gradients" class="calibre9"/><div><p class="calibre14">图3:表达式的图形表示</p></div></div><p class="calibre10"> </p><p class="calibre8">如果我们检查张量的属性，我们会发现<strong class="calibre2"> v1 </strong>和<strong class="calibre2"> v2 </strong>是仅有的叶节点，除了<strong class="calibre2"> v2 </strong>之外的每个变量<a id="id90" class="calibre1"/>都需要计算梯度:</p><div><pre class="programlisting">&gt;&gt;&gt; v1.is_leaf, v2.is_leaf
+(True, True)
+&gt;&gt;&gt; v_sum.is_leaf, v_res.is_leaf
+(False, False)
+&gt;&gt;&gt; v1.requires_grad
+True
+&gt;&gt;&gt; v2.requires_grad
+False
+&gt;&gt;&gt; v_sum.requires_grad
+True
+&gt;&gt;&gt; v_res.requires_grad
+True</pre></div><p class="calibre8">现在，让PyTorch计算我们的图形的梯度:</p><div><pre class="programlisting">&gt;&gt;&gt; v_res.backward()
+&gt;&gt;&gt; v1.grad
+tensor([ 2.,  2.])</pre></div><p class="calibre8">通过调用<code class="literal">backward</code>函数，我们要求PyTorch计算<code class="literal">v_res</code>变量相对于我们图表中任何变量的数值导数。换句话说，<code class="literal">v_res</code>变量的微小变化会对图表的其余部分产生什么影响？在我们的特定示例中，v1的渐变中的值2意味着通过将v1的每个元素增加1，得到的值<code class="literal">v_res</code>将增加2。</p><p class="calibre8">如上所述，PyTorch仅使用<code class="literal">requires_grad=True</code>为叶张量计算梯度。事实上，如果我们试图检查v2的梯度，我们什么也得不到:</p><div><pre class="programlisting">&gt;&gt;&gt; v2.grad</pre></div><p class="calibre8">原因是计算和内存方面的效率:在现实生活中，我们的网络可以有数百万个优化的参数，对它们执行数百个中间操作。在梯度下降优化过程中，我们对任何中间矩阵乘法的梯度不感兴趣；我们在模型中唯一想要调整的是相对于模型参数(权重)的损失梯度。当然，如果你想计算输入数据的梯度(如果你想生成一些对立的例子来欺骗现有的神经网络或调整预训练的单词嵌入，这可能是有用的)，那么你可以很容易地做到这一点，通过传递张量创建的<code class="literal">requires_grad=True</code>。</p><p class="calibre8">基本上，您现在已经拥有了实现自己的神经网络优化器所需的一切。这一章的其余部分是关于额外方便的函数，它将为你提供NN架构的更高层次的构建块，流行的优化算法和常见的损失函数。然而，不要忘记，你可以很容易地以任何你喜欢的方式重新实现所有这些附加功能。这就是PyTorch在DL研究者中如此受欢迎的原因:因为它的优雅和灵活性。</p><p class="calibre8"><strong class="calibre2">兼容性说明</strong>:支持张量中的梯度计算<a id="id91" class="calibre1"/>是PyTorch 0.4.0的主要变化之一。在以前的版本中，图形跟踪和梯度累积是在一个单独的非常薄的类<code class="literal">Variable</code>中完成的，它作为张量的包装器，自动保存计算的历史，以便能够反向传播。这个类在0.4.0中仍然存在，但它已被弃用，并将很快消失，因此新代码应该避免使用它。从我的角度来看，这一变化很大，因为<code class="literal">Variable</code>逻辑非常薄，但仍然需要额外的代码和开发人员的注意力来包装和展开张量。现在渐变是一个内置的张量属性，这使得API更加简洁。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>NN building blocks</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec22" class="calibre1"/> NN积木</h1></div></div></div><p class="calibre8">在<code class="literal">torch.nn</code>包中，你会发现大量的预定义类为你提供了基本的功能块。所有这些都是在实践的基础上设计的(例如，它们支持迷你批次，具有合理的默认值，并且权重被正确初始化)。所有模块都遵循<em class="calibre11"> callable </em>的约定，这意味着任何类的实例在应用于其参数时都可以充当函数。例如，<code class="literal">Linear</code>类实现了一个带有可选偏置的前馈层:</p><div><pre class="programlisting">&gt;&gt;&gt; import torch.nn as nn
+&gt;&gt;&gt; l = nn.Linear(2, 5)
+&gt;&gt;&gt; v = torch.FloatTensor([1, 2])
+&gt;&gt;&gt; l(v)
+tensor([ 0.1975,  0.1639,  1.1130, -0.2376, -0.7873])</pre></div><p class="calibre8">这里，我们创建了一个随机初始化的前馈层，有两个输入和五个输出，并将其应用于我们的浮点张量。<code class="literal">torch.nn</code>包中的所有类都继承自<code class="literal">nn.Module</code>基类，你可以用它来实现你自己的更高层次的NN块。我们将在下一节看到如何做到这一点，但是现在，让我们看看所有<code class="literal">nn.Module</code>孩子都提供的有用方法。它们如下:</p><div><ul class="itemizedlist"><li class="listitem"><code class="literal">parameters()</code>:返回所有需要梯度计算的变量(即模块权重)的迭代器的函数</li><li class="listitem"><code class="literal">zero_grad()</code>:该功能将所有参数的所有梯度初始化为零</li><li class="listitem"><code class="literal">to(device)</code>:将所有模块参数移动到给定设备(CPU或GPU)</li><li class="listitem"><code class="literal">state_dict()</code>:这将返回包含所有模块参数的字典，对于模型序列化非常有用</li><li class="listitem"><code class="literal">load_state_dict()</code>:用状态字典初始化模块</li></ul></div><p class="calibre8">可用类别<a id="id93" class="calibre1"/>的完整列表可在<a class="calibre1" href="http://pytorch.org/docs">http://pytorch.org/docs</a>的文档中找到。</p><p class="calibre8">现在我们应该提到一个非常方便的类，它允许您将其他层组合到管道中:<code class="literal">Sequential</code>。演示<code class="literal">Sequential</code>的最佳方式是通过一个例子:</p><div><pre class="programlisting">&gt;&gt;&gt; s = nn.Sequential(
+... nn.Linear(2, 5),
+... nn.ReLU(),
+... nn.Linear(5, 20),
+... nn.ReLU(),
+... nn.Linear(20, 10),
+... nn.Dropout(p=0.3),
+... nn.Softmax(dim=1))
+&gt;&gt;&gt; s
+Sequential (
+  (0): Linear (2 -&gt; 5)
+  (1): ReLU ()
+  (2): Linear (5 -&gt; 20)
+  (3): ReLU ()
+  (4): Linear (20 -&gt; 10)
+  (5): Dropout (p = 0.3)
+  (6): Softmax ()
+)</pre></div><p class="calibre8">这里，我们定义了一个输出为softmax的三层神经网络，应用于维度1(维度0是批量样本)、ReLU非线性和丢失。让我们推着东西穿过它:</p><div><pre class="programlisting">&gt;&gt;&gt; s(torch.FloatTensor([[1,2]]))
+tensor([[ 0.1410,  0.1380,  0.0591,  0.1091,  0.1395,  0.0635,  0.0607,
+          0.1033,  0.1397,  0.0460]])</pre></div><p class="calibre8">所以，我们的迷你电池就是一个成功穿越网络的例子！</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Custom layers</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec23" class="calibre1"/>自定义图层</h1></div></div></div><p class="calibre8">在上一节中，我们简单地提到了<a id="id94" class="calibre1"/>类作为PyTorch公开的所有NN构件的基本父类。它不仅是现有层的统一父层，还有更多的意义。通过子类化<code class="literal">nn.Module</code>类，您可以创建自己的构建块，这些构建块可以堆叠在一起，以后可以重用，并且可以完美地集成到PyTorch框架中。</p><p class="calibre8">在其核心部分，<code class="literal">nn.Module</code>为其子代提供了相当丰富的功能:</p><div><ul class="itemizedlist"><li class="listitem">它跟踪当前模块包含的所有子模块。例如，您的构建块可以有两个前馈层，以某种方式用于执行块的转换。</li><li class="listitem">它提供了处理注册子模块的所有参数的函数。您可以获得模块参数的完整列表(<code class="literal">parameters()</code>方法)，将它的梯度归零(<code class="literal">zero_grads()</code>方法)，移动到CPU或GPU ( <code class="literal">to(device)</code>方法)，序列化和反序列化模块(<code class="literal">state_dict()</code>和<code class="literal">load_state_dict()</code>)，甚至使用您自己的可调用方法(<code class="literal">apply()</code>方法)执行一般转换。</li><li class="listitem">它建立了模块应用于数据的惯例。每个模块都需要通过覆盖<code class="literal">forward()</code>方法来执行数据转换。</li><li class="listitem">还有更多的功能，比如注册一个钩子函数来调整模块转换或渐变流的能力，但它更多的是针对高级用例。</li></ul></div><p class="calibre8">这些功能允许我们以统一的方式将子模型嵌套到更高级别的模型中，这在处理复杂性时非常有用。这可能是一个简单的一层线性变换，也可能是一个1001层的ResNet怪物，但是如果它们遵循<code class="literal">nn.Module</code>的约定，那么它们都可以用相同的方式处理。这对于代码的简单性和可重用性非常方便。</p><p class="calibre8">为了使我们的生活更简单，在遵循前面的约定时，PyTorch作者通过精心的设计和大量的Python魔法简化了模块的创建。因此，要创建一个定制模块，我们通常只需要做两件事:注册子模块和实现<code class="literal">forward()</code>方法。让我们看看如何为上一节中的<code class="literal">Sequential</code>示例实现这一点，但是是以一种更通用和可重用的方式(完整的示例是<code class="literal">Chapter03/01_modules.py</code>):</p><div><pre class="programlisting">class OurModule(nn.Module):
+    def __init__(self, num_inputs, num_classes, dropout_prob=0.3):
+        super(OurModule, self).__init__()
+        self.pipe = nn.Sequential(
+            nn.Linear(num_inputs, 5),
+            nn.ReLU(),
+            nn.Linear(5, 20),
+            nn.ReLU(),
+            nn.Linear(20, num_classes),
+            nn.Dropout(p=dropout_prob),
+            nn.Softmax()
+        )</pre></div><p class="calibre8">这是我们继承了<code class="literal">nn.Module</code>的模块类。在构造函数中，我们传递三个参数:输入的大小、输出的大小和可选的退出概率。我们要做的第一件事是调用父类的构造函数，让它自己初始化。第二步，我们用一堆层创建一个已经熟悉的<code class="literal">nn.Sequential</code>，并把它分配给我们的类字段<code class="literal">pipe</code>。通过给我们的字段分配一个<code class="literal">Sequential</code>实例，我们自动注册了这个<a id="id96" class="calibre1"/>模块(<code class="literal">nn.Sequential</code>从<code class="literal">nn.Module</code>继承而来，就像<code class="literal">nn</code>包中的所有东西一样)。要注册，我们不需要调用任何东西，我们只需要将我们的子模块分配给字段。构造函数完成后，所有这些字段将被自动注册(如果你真的想注册，在<code class="literal">nn.Module</code>中有一个函数可以注册子模块):</p><div><pre class="programlisting">    def forward(self, x):
+        return self.pipe(x)</pre></div><p class="calibre8">这里，我们用数据转换的实现覆盖了forward函数。由于我们的模块是其他层的一个非常简单的包装器，我们只需要要求他们转换数据。请注意，要将模块应用于数据，您需要将模块调用为可调用的(也就是说，假设模块实例是一个函数并使用参数调用它)，并且<em class="calibre11">而不是</em>使用<code class="literal">nn.Module</code>类的<code class="literal">forward()</code>函数。这是因为<code class="literal">nn.Module</code>覆盖了<code class="literal">__call__()</code>方法，当我们将一个实例视为可调用时，就会用到这个方法。这个方法使用了一些<code class="literal">nn.Module</code>魔法，并调用了你的<code class="literal">forward()</code>方法。如果你直接调用<code class="literal">forward()</code>，你将会介入<code class="literal">nn.Module</code>任务，这会给你错误的结果。</p><p class="calibre8">所以，这就是我们需要做的，来定义我们自己的模块。现在，让我们使用它:</p><div><pre class="programlisting">if __name__ == "__main__":
+    net = OurModule(num_inputs=2, num_classes=3)
+    v = torch.FloatTensor([[2, 3]])
+    out = net(v)
+    print(net)
+    print(out)</pre></div><p class="calibre8">我们创建我们的模块，为它提供所需数量的输入和输出，然后我们创建一个张量，包装到<code class="literal">Variable</code>中，并要求我们的模块转换它，遵循使用它作为可调用的相同约定。然后我们打印我们的网络结构(<code class="literal">nn.Module</code>覆盖<code class="literal">__str__()</code>和<code class="literal">__repr__()</code>)，以一种很好的方式表示内部结构。我们最后展示的是网络转型的结果。</p><p class="calibre8">我们代码的输出应该如下所示:</p><div><pre class="programlisting">rl_book_samples/Chapter03$ python 01_modules.pyOurModule(
+  (pipe): Sequential(
+    (0): Linear(in_features=2, out_features=5, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=5, out_features=20, bias=True)
+    (3): ReLU()
+    (4): Linear(in_features=20, out_features=3, bias=True)
+    (5): Dropout(p=0.3)
+    (6): Softmax()
+  )
+)
+tensor([[ 0.3672,  0.3469,  0.2859]])</pre></div><p class="calibre8">当然，所有关于PyTorch的动态本质的说法仍然是正确的。您的<code class="literal">forward()</code>方法将获得对每批数据的控制，因此，如果您想基于需要处理的数据进行一些复杂的转换，如分层softmax或随机选择要应用的<a id="id97" class="calibre1"/> net，那么没有什么可以阻止您这样做。您的模块的参数数量也不受一个参数的限制。所以，如果你愿意，你可以写一个有多个必选参数和几十个可选参数的模块，就可以了。</p><p class="calibre8">现在我们需要熟悉PyTorch库的两个重要部分，这将简化我们的生活:损失函数和优化器。</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Final glue – loss functions and optimizers</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec24" class="calibre1"/>最终粘合-损失函数和优化器</h1></div></div></div><p class="calibre8">将输入数据转换成输出数据的网络不足以开始训练它。我们需要定义我们的学习目标，即有一个接受两个参数的函数:网络的输出和期望的输出。它的职责是返回给我们一个单一的数字:网络的预测与期望的结果有多接近。该功能<a id="id99" class="calibre1"/>称为<strong class="calibre2">损失功能</strong>，其输出为<strong class="calibre2">损失值</strong>。使用该损失值，我们计算网络参数的梯度并调整它们以减小该损失值，这推动我们的模型在未来得到更好的结果。这两个部分——损失函数和通过梯度调整网络参数的方法——是如此常见，并以如此多的形式存在，以至于它们都构成了PyTorch库的重要部分。让我们从损失函数开始。</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Final glue – loss functions and optimizers</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_1"><a id="ch03lvl2sec25" class="calibre1"/>损失函数</h2></div></div></div><p class="calibre8">损失函数驻留在<code class="literal">nn</code>包中，并作为<code class="literal">nn.Module</code>子类实现。通常，它们接受两个参数:来自网络的输出(预测)和期望的输出(真实数据，也称为数据样本的标签)。在撰写本文时，PyTorch 0.4包含17个不同的损失函数。最常用的有:</p><div><ul class="itemizedlist"><li class="listitem"><code class="literal">nn.MSELoss</code>:自变量之间的均方误差，这是回归问题的标准损失</li><li class="listitem"><code class="literal">nn.BCELoss</code>和<code class="literal">nn.BCEWithLogits</code>:二元交叉熵损失。第一个版本期望一个<a id="id102" class="calibre1"/>单一概率值(通常是<code class="literal">Sigmoid</code>层的输出)，而第二个版本假设原始分数作为输入，<a id="id103" class="calibre1"/>自己应用<code class="literal">Sigmoid</code>。第二种方法通常在数值上更加稳定和有效。这些损失(顾名思义)经常用于二进制分类问题。</li><li class="listitem"><code class="literal">nn.CrossEntropyLoss</code>和<code class="literal">nn.NLLLoss</code>:著名的“最大似然”准则，用于<a id="id104" class="calibre1"/>多类分类问题。第一个版本<a id="id105" class="calibre1"/>期望每个类的原始分数，并在内部应用<code class="literal">LogSoftmax</code>，而第二个版本期望将对数概率作为输入。</li></ul></div><p class="calibre8">还有其他可用的损失函数，您可以随时编写自己的<code class="literal">Module</code>子类来比较输出和目标。现在让我们看看优化过程的第二部分。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Final glue – loss functions and optimizers</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_2"><a id="ch03lvl2sec26" class="calibre1"/>优化者</h2></div></div></div><p class="calibre8">基本优化器的职责是获取模型参数的梯度并改变这些参数，以便<a id="id106" class="calibre1"/>降低损失值。通过降低损失值，我们将模型推向期望的输出，这可以给我们未来更好的模型性能带来希望。“更改参数”听起来可能很简单，但这里有很多细节，优化程序仍然是一个热门的研究课题。在<code class="literal">torch.optim</code>包中，PyTorch提供了许多流行的优化器实现，其中最广为人知的如下:</p><div><ul class="itemizedlist"><li class="listitem"><code class="literal">SGD</code>:具有可选动量扩展的普通<a id="id107" class="calibre1"/>随机梯度下降算法</li><li class="listitem"><code class="literal">RMSprop</code>:g . hint on提出的<a id="id108" class="calibre1"/>优化器</li><li class="listitem"><code class="literal">Adagrad</code>:一个<a id="id109" class="calibre1"/>自适应梯度优化器</li></ul></div><p class="calibre8">所有的优化器都公开了统一的接口，这样就可以很容易地试验不同的优化方法(有时优化方法真的可以在收敛动态和最终结果上有所不同)。在构造上，你需要传递一个<code class="literal">Variables</code>的iterable，这个iterable会在优化过程中被修改。通常的做法是传递上层<code class="literal">nn.Module</code>实例的<code class="literal">params()</code>调用的结果，这将返回所有带有渐变的叶子<code class="literal">Variables</code>的iterable。</p><p class="calibre8">现在，让我们讨论一个训练循环的通用蓝图:</p><div><pre class="programlisting">for batch_samples, batch_labels in iterate_batches(data, batch_size=32):                                                    # 1
+    batch_samples_t = torch.tensor(batch_samples))                 # 2
+    batch_labels_t = torch.tensor(batch_labels))                   # 3
+    out_t = net(batch_samples_t)                                   # 4
+    loss_t = loss_function(out_t, batch_labels_t)                  # 5
+    loss_t.backward()                                              # 6
+    optimizer.step()                                               # 7
+    optimizer.zero_grad()                                          # 8
+    </pre></div><p class="calibre8">通常，您会一遍又一遍地迭代您的数据(对一组完整示例的一次迭代被称为一个<em class="calibre11">时期</em>)。数据通常太大，无法一次放入CPU或GPU内存，因此被分成大小相等的批次。每批包含数据样本和目标标签，两者都必须是张量(行<code class="literal">2</code>和<code class="literal">3</code>)。您将数据样本传递到您的网络(行<code class="literal">4</code>)并将它的输出和目标标签馈送到损失函数(行<code class="literal">5</code>)。损失函数的结果显示了网络结果相对于目标标签的“差”。由于网络的输入和网络的权重是张量，所以网络的所有变换只不过是具有中间张量实例的运算图。损失函数也是如此:它的结果也是一个单一损失值的张量。这个计算图中的每个张量都记得它的父项，所以要计算整个网络的梯度，你需要做的就是在一个损失函数结果上调用<code class="literal">backward()</code>函数(第<code class="literal">6</code>行)。</p><p class="calibre8">该调用的结果将是展开已执行计算的图表，并使用<code class="literal">require_grad=True</code>计算每个叶张量的梯度。通常，这样的张量是我们模型的参数，例如前馈网络的权重和偏差，以及卷积滤波器。每次计算梯度时，它都在<code class="literal">tensor.grad</code>域中累积，因此一个张量可以多次参与一个变换，其梯度将被适当地累加在一起。例如，一个单独的<strong class="calibre2"> RNN </strong>(代表<strong class="calibre2">递归神经网络</strong>，我们将在<a class="calibre1" title="Chapter 12. Chatbots Training with RL" href="part0087_split_000.html#2IV0U1-ce551566b6304db290b61e4d70de52ee">第12章</a>、<em class="calibre11">用RL </em>训练聊天机器人)单元可以应用于多个输入项。</p><p class="calibre8">在<code class="literal">loss.backward()</code>调用完成后，我们已经积累了梯度，现在是优化器做它的工作的时候了:它从我们在构造时传递给它的参数中获取所有梯度并应用它们。所有这些都是用方法<code class="literal">step()</code>(行<code class="literal">7</code>)完成的。</p><p class="calibre8">训练循环的最后但并非最不重要的部分是我们对参数零梯度的责任。这可以通过在我们的网络上调用<code class="literal">zero_grad()</code>来完成，但是为了方便起见，optimizer也公开了这样一个调用，它做同样的事情(第<code class="literal">8</code>行)。有时候<code class="literal">zero_grad()</code>被放在训练循环的开头，但是没多大关系。</p><p class="calibre8">前面的方案是一种非常灵活的执行优化的方式，即使在复杂的研究中也能满足要求。例如，您可以让两个优化器在相同的数据上调整不同模型的选项(这是来自GAN training的真实场景)。</p><p class="calibre8">因此，我们已经完成了培训神经网络所需的PyTorch的基本功能。本章以一个实际的中等规模的例子结束，以展示我们所学的所有概念，但在我们开始之前，我们需要讨论一个对神经网络从业者来说至关重要的重要话题:学习过程的监控。</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Monitoring with TensorBoard</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch03lvl1sec25" class="calibre1"/>用张量板监控</h1></div></div></div><p class="calibre8">如果你曾经尝试过独自训练一个神经网络，那么你可能知道这有多痛苦和不确定。我说的不是遵循现有的教程和演示，当所有的超参数都已经为您调好时，而是获取一些数据并从头开始创建一些东西。即使有了现代的DL高级工具包，所有的最佳实践，例如正确的权重初始化和优化器的betas、gammas和其他选项都被设置为相同的默认值，并且许多其他东西都隐藏在引擎盖下，但仍然有许多决策可以做出，因此许多事情可能会出错。因此，你的网络从第一次运行开始就几乎不工作，这是你应该习惯的事情。</p><p class="calibre8">当然，随着实践和经验的积累，你会对问题的可能原因产生强烈的直觉，但是直觉需要关于你的网络内部正在发生什么的输入数据。所以你需要能够窥视你的训练过程，观察它的动态。即使是小型网络(如微型MNIST辅导网络)也可能有数十万个参数，具有非常非线性的训练动态。DL从业者已经制定了一份你在培训期间应该遵守的事项清单，通常包括以下内容:</p><div><ul class="itemizedlist"><li class="listitem">损失值，通常由几个部分组成，如基本损失和正则化损失。您应该随时监控总损耗和单个组件。</li><li class="listitem">训练集和测试集的验证结果。</li><li class="listitem">关于梯度和权重的统计。</li><li class="listitem">学习率和其他超参数，如果它们随时间调整的话。</li></ul></div><p class="calibre8">该列表可能会更长，并包括特定领域的指标，如单词嵌入的投影、音频样本和GAN生成的图像。您可能还想监控与训练速度相关的值，比如一个epoch需要多长时间，以查看您的优化效果或硬件问题。</p><p class="calibre8">长话短说<a id="id112" class="calibre1"/>,您需要一个通用的解决方案来跟踪一段时间内的大量值并表示它们以供分析，最好是专门为DL开发的(想象一下在Excel电子表格中查看这样的统计数据)。幸运的是，这样的工具是存在的。</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Monitoring with TensorBoard</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_1"><a id="ch03lvl2sec27" class="calibre1"/>冲浪板101</h2></div></div></div><p class="calibre8">事实上，在撰写本文时，可供选择的替代方案并不多，尤其是开源和通用的。从第一个公开版本开始，TensorFlow就包含了一个名为<a id="id113" class="calibre1"/> TensorBoard的特殊工具，开发该工具是为了解决我们正在谈论的问题:如何在训练过程中观察和分析各种NN特征。TensorBoard是一个强大的通用解决方案，拥有一个大型社区，它看起来非常漂亮:</p><div><img src="img/00025.jpeg" alt="TensorBoard 101" class="calibre9"/><div><p class="calibre14">图TensorBoard web界面</p></div></div><p class="calibre10">从架构的角度来看，TensorBoard是一个Python web服务，您可以在您的计算机上启动它，向它传递您的训练过程将保存要分析的值的目录。然后你将浏览器指向TensorBoard的端口(通常是<code class="literal">6006</code>)，它会向你展示一个交互式的web界面，其中的值会实时更新。这很好也很方便，尤其是当你的训练是在云中某个远程机器上进行的时候。</p><p class="calibre8">最初，TensorBoard是作为TensorFlow的一部分部署的，但最近，它被转移到一个单独的项目(仍由Google维护)中，并有了自己的包名。然而，TensorBoard仍然使用TensorFlow数据格式，因此为了能够从PyTorch优化中编写训练统计数据，您需要安装<code class="literal">tensorflow</code>和<code class="literal">tensorflow-tensorboard</code>包。由于TensorFlow依赖于TensorBoard，要安装两者，您需要在您的虚拟环境中运行<code class="literal">pip install tensorflow</code>。</p><p class="calibre8">理论上，这就是你开始监控你的网络所需要的一切，因为<code class="literal">tensorflow</code>包为你提供了写TensorBoard能够读取的数据的类。然而，它不是很实用，因为那些类是非常低的水平。为了克服这个问题，有几个第三方开源库提供了一个方便的高级接口。我的最爱之一，也就是本书中使用的<a id="id115" class="calibre1"/>，是<code class="literal">tensorboard-pytorch</code>(<a class="calibre1" href="https://github.com/lanpa/tensorboard-pytorch">https://github.com/lanpa/tensorboard-pytorch</a>)。可以用<code class="literal">pip install tensorboard-pytorch</code>安装。</p><p class="calibre8"><a id="ch03lvl2sec28" class="calibre1"/>策划素材</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Monitoring with TensorBoard</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_2">为了给你一个<a id="id116" class="calibre1"/>简单<code class="literal">tensorboard-pytorch</code>的印象，让我们考虑一个与NNs无关的小例子，它只是将东西写入TensorBoard(完整的示例代码在<code class="literal">Chapter03/02_tensorboard.py</code>中)。</h2></div></div></div><p class="calibre8">我们导入所需的包，创建一个数据写入器，并定义我们要可视化的函数。默认情况下，<code class="literal">SummaryWriter</code>将为每次启动在<code class="literal">runs</code>目录下创建一个唯一的目录，以便能够比较不同的培训启动。新目录的名称包括当前日期和时间以及主机名。要覆盖它，您可以将<code class="literal">log_dir</code>参数传递给<code class="literal">SummaryWriter</code>。您还可以通过传递一个注释选项来给目录名添加一个后缀，例如为了捕捉不同实验的语义，比如<code class="literal">dropout=0.3</code>或<code class="literal">strong_regularisation</code></p><div><pre class="programlisting">import math
+from tensorboardX import SummaryWriter
+
+if __name__ == "__main__":
+    writer = SummaryWriter()
+
+    funcs = {"sin": math.sin, "cos": math.cos, "tan": math.tan}</pre></div><p class="calibre8">在这里，我们循环以度为单位的角度范围，将它们转换成弧度，并计算函数的值。使用<code class="literal">add_scalar</code>函数将每个值添加到编写器中，该函数有三个<a id="id117" class="calibre1"/>参数:参数名、参数值和当前迭代(必须是整数)。</p><div><pre class="programlisting">    for angle in range(-360, 360):
+        angle_rad = angle * math.pi / 180
+        for name, fun in funcs.items():
+            val = fun(angle_rad)
+            writer.add_scalar(name, val, angle)
+    writer.close()</pre></div><p class="calibre8">循环后我们需要做的最后一件事是关闭编写器。请注意，writer会定期刷新(默认情况下，每两分钟一次)，因此即使在优化过程很长的情况下，您仍然会看到您的值。</p><p class="calibre8">运行它的结果将是控制台上的零输出，但是您将看到在<code class="literal">runs</code>目录中创建了一个新目录，其中包含一个文件。为了查看结果，我们需要启动TensorBoard:</p><p class="calibre8">现在，您可以在浏览器中打开<code class="literal">http://localhost:6006</code>来查看如下内容:</p><div><pre class="programlisting">rl_book_samples/Chapter03$ tensorboard --logdir runs --host localhost
+TensorBoard 0.1.7 at http://localhost:6006 (Press CTRL+C to quit)</pre></div><p class="calibre8">图5:示例生成的图</p><div><img src="img/00026.jpeg" alt="Plotting stuff" class="calibre9"/><div><p class="calibre14">Figure 5: Plots produced by the example</p></div></div><p class="calibre10">这些图表是交互式的，因此您可以将鼠标悬停在它们上面以查看实际值，并选择区域以放大细节。要缩小，请双击图形内部。如果您多次运行您的程序，那么您将在左侧的“运行”列表中看到几个项目，它们可以以任何组合启用和禁用，允许您比较几个优化的动态。TensorBoard不仅允许您分析标量值，还允许您分析图像、音频、文本数据和嵌入，它甚至可以向您显示您的网络结构。有关所有这些特性，请参考<code class="literal">tensorboard-pytorch</code>和<code class="literal">tensorboard</code>的文档。</p><p class="calibre8">现在是时候把你在本章中学到的所有东西结合起来，用PyTorch看一个真实的神经网络优化问题了。</p><p class="calibre8"><a id="ch03lvl1sec26" class="calibre1"/>示例–雅达利图像上的GAN</p></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Example – GAN on Atari images</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0">几乎每本关于DL <a id="id119" class="calibre1"/>的书都使用MNIST数据集向你展示DL的力量，多年来，这使得这个数据集变得极其乏味，就像基因研究人员的果蝇一样。为了打破这一传统，并给这本书增添一点趣味，我尽量避免走老路，用一些不同的东西来说明PyTorch。你可能听说过<strong class="calibre2">生成对抗网络</strong> ( <strong class="calibre2"> GANs </strong>)，是由<em class="calibre11"> Ian Goodfellow </em>发明并推广的<a id="id120" class="calibre1"/>。在这个例子中，我们将训练一个GAN来生成各种Atari游戏的截图。</h1></div></div></div><p class="calibre8">最简单的GAN架构是这样的:我们有两个网络，第一个作为“骗子”(也称为生成器)，另一个是“侦探”(另一个名称是鉴别器)。两个网络相互竞争:生成器试图生成假数据，鉴别器将很难从您的数据集区分出来，而鉴别器试图检测生成的数据样本。随着时间的推移，这两个网络都提高了他们的技能:生成器产生越来越多的真实数据样本，鉴别器发明了更复杂的方法来区分假冒商品。GANs的实际应用包括图像质量改进、逼真图像生成和特征学习。在我们的例子中，实际有用性几乎为零，但它将是一个很好的例子，说明PyTorch代码对于相当复杂的模型是多么简洁。</p><p class="calibre8">那么，我们开始吧。整个示例代码在文件<code class="literal">Chapter03/03_atari_gan.py</code>中。这里我们只看重要的代码段，没有导入部分和常量声明:</p><p class="calibre8">这个类是一个体育馆游戏的包装器，它包括几个转换:</p><div><pre class="programlisting">class InputWrapper(gym.ObservationWrapper):
+    def __init__(self, *args):
+        super(InputWrapper, self).__init__(*args)
+        assert isinstance(self.observation_space, gym.spaces.Box)
+        old_space = self.observation_space
+        self.observation_space = gym.spaces.Box(self.observation(old_space.low),self.observation(old_space.high), dtype=np.float32)
+
+    def observation(self, observation):
+        # resize image
+        new_obs = cv2.resize(observation, (IMAGE_SIZE, IMAGE_SIZE))
+        # transform (210, 160, 3) -&gt; (3, 210, 160)
+        new_obs = np.moveaxis(new_obs, 2, 0)
+        return new_obs.astype(np.float32) / 255.0</pre></div><p class="calibre8">将输入图像的大小从210 × 160(标准Atari分辨率)调整为64 × 64的正方形</p><div><ul class="itemizedlist"><li class="listitem">将图像的颜色平面从最后一个位置移动到第一个位置，以满足卷积层的PyTorch约定，该卷积层输入具有通道形状、高度和宽度的张量</li><li class="listitem">将图像从字节转换为浮点，并将其值重新调整为0..1范围</li><li class="listitem">然后我们定义两个<code class="literal">nn.Module</code>类:<code class="literal">Discriminator</code>和<code class="literal">Generator</code>。第一个将我们缩放的彩色<a id="id121" class="calibre1"/>图像作为输入，通过应用五层卷积，将其转换为一个单一的数字，通过一个sigmoid非线性函数。来自<code class="literal">Sigmoid</code>的输出被解释为<code class="literal">Discriminator</code>认为我们的输入图像来自真实数据集的概率。</li></ul></div><p class="calibre8"><code class="literal">Generator</code>将一个随机数向量(潜在向量)作为输入，并使用“转置卷积”操作(也称为<strong class="calibre2">解卷积</strong>)，将该向量转换为原始分辨率的彩色图像。我们不会在这里查看这些类，因为它们太长了，并且与我们的例子不太相关。您可以在完整的示例文件中找到它们。</p><p class="calibre8">图6:三款Atari游戏的截图</p><div><img src="img/00027.jpeg" alt="Example – GAN on Atari images" class="calibre9"/><div><p class="calibre14">Figure 6: A sample screenshot from three Atari games</p></div></div><p class="calibre10">作为输入，我们将使用由一个随机代理同时玩的几个Atari游戏的截图。<em class="calibre11">图6 </em>是输入数据的一个例子，由以下函数生成:</p><p class="calibre8">这将从提供的数组中无限采样环境，发出随机动作并在<code class="literal">batch</code>列表中记住观察结果。当批处理达到要求的大小时，我们将它转换成一个张量和来自生成器的<code class="literal">yield</code>。由于一个游戏中的错误，需要检查观察的非零均值，以防止图像闪烁。</p><div><pre class="programlisting">def iterate_batches(envs, batch_size=BATCH_SIZE):
+    batch = [e.reset() for e in envs]
+    env_gen = iter(lambda: random.choice(envs), None)
+
+    while True:
+        e = next(env_gen)
+        obs, reward, is_done, _ = e.step(e.action_space.sample())
+        if np.mean(obs) &gt; 0.01:
+            batch.append(obs)
+        if len(batch) == batch_size:
+            yield torch.FloatTensor(batch)
+            batch.clear()
+        if is_done:
+            e.reset()</pre></div><p class="calibre8">现在让我们看看我们的主<a id="id122" class="calibre1"/>函数，它准备模型并运行训练循环:</p><p class="calibre8">这里，我们处理命令行参数(可能只有一个可选参数，<code class="literal">--cuda</code>，启用GPU计算模式)并创建应用了包装器的环境池。这个环境数组将被传递给<code class="literal">iterate_batches</code>函数来生成训练数据；</p><div><pre class="programlisting">if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cuda", default=False, action='store_true')
+    args = parser.parse_args()
+    device = torch.device("cuda" if args.cuda else "cpu")
+
+    env_names = ('Breakout-v0', 'AirRaid-v0', 'Pong-v0')
+    envs = [InputWrapper(gym.make(name)) for name in env_names]
+    input_shape = envs[0].observation_space.shape</pre></div><p class="calibre8">在这篇文章中，我们创建了我们的类:一个摘要编写器、两个网络、一个损失函数和两个优化器。为什么是两个？这是因为这是GANs接受训练的方式:为了训练鉴别器，我们需要向它展示带有适当标签的真实和虚假数据样本(1代表真实，0代表虚假)。在此过程中，我们只更新鉴别器的参数。</p><div><pre class="programlisting">    Writer = SummaryWriter()
+    net_discr = Discriminator(input_shape=input_shape).to(device)
+    net_gener = Generator(output_shape=input_shape).to(device)
+
+    objective = nn.BCELoss()
+    gen_optimizer = optim.Adam(params=net_gener.parameters(), lr=LEARNING_RATE)
+    dis_optimizer = optim.Adam(params=net_discr.parameters(), lr=LEARNING_RATE)</pre></div><p class="calibre8">之后，我们再次通过鉴别器传递真实和虚假的样本，但这次所有样本的标签都是1，现在我们只更新生成器的权重。第二遍教导生成器如何欺骗鉴别器并将真实样本与生成的样本混淆:</p><p class="calibre8">在这里，我们定义了数组，<a id="id123" class="calibre1"/>，它将用于累积损失，迭代器计数器，以及带有<code class="literal">True</code>和<code class="literal">Fake</code>标签的变量。</p><div><pre class="programlisting">    gen_losses = []
+    dis_losses = []
+    iter_no = 0
+
+    true_labels_v = torch.ones(BATCH_SIZE, dtype=torch.float32, device=device)
+    fake_labels_v = torch.zeros(BATCH_SIZE, dtype=torch.float32, device=device)</pre></div><p class="calibre8">在训练循环的开始，我们生成一个随机向量，并将其传递给<code class="literal">Generator</code>网络。</p><div><pre class="programlisting">    for batch_v in iterate_batches(envs):
+        # generate extra fake samples, input is 4D: batch, filters, x, y
+        gen_input_v = torch.FloatTensor(BATCH_SIZE, LATENT_VECTOR_SIZE, 1, 1).normal_(0, 1).to(device)
+        batch_v = batch_v.to(device)
+        gen_output_v = net_gener(gen_input_v)</pre></div><p class="calibre8">首先，我们通过应用它两次来训练鉴别器:对我们的批中的真实数据样本和对生成的样本。我们需要在生成器的输出上调用<code class="literal">detach()</code>函数，防止这个训练通道的梯度流入生成器(<code class="literal">detach()</code>是tensor的一个方法，它在不连接到父操作的情况下制作一个副本)。</p><div><pre class="programlisting">        dis_optimizer.zero_grad()
+        dis_output_true_v = net_discr(batch_v)
+        dis_output_fake_v = net_discr(gen_output_v.detach())
+        dis_loss = objective(dis_output_true_v, true_labels_v) + objective(dis_output_fake_v, fake_labels_v)
+        dis_loss.backward()
+        dis_optimizer.step()
+        dis_losses.append(dis_loss.item())</pre></div><p class="calibre8">现在是发电机的训练时间。我们将生成器的输出传递给鉴别器，但现在我们不停止渐变。相反，我们应用带有<code class="literal">True</code>标签的目标函数。它会将我们的生成器推向这样一个方向:它生成的样本会使鉴别器将它们与真实数据混淆。</p><div><pre class="programlisting">        gen_optimizer.zero_grad()
+        dis_output_v = net_discr(gen_output_v)
+        gen_loss_v = objective(dis_output_v, true_labels_v)
+        gen_loss_v.backward()
+        gen_optimizer.step()
+        gen_losses.append(gen_loss_v.item())</pre></div><p class="calibre8">这都是真正的训练，接下来的几行<a id="id124" class="calibre1"/>会报告损失并向TensorBoard提供图像样本:</p><p class="calibre8">这个例子的训练是一个相当漫长的过程。在GTX 1080 GPU上，100次迭代大约需要40秒。开始时，生成的图像完全是随机噪声，但经过10k-20k的迭代，生成器越来越精通其工作，生成的图像越来越接近真实的游戏截图。</p><div><pre class="programlisting">        iter_no += 1
+        if iter_no % REPORT_EVERY_ITER == 0:
+            log.info("Iter %d: gen_loss=%.3e, dis_loss=%.3e",iter_no, np.mean(gen_losses), np.mean(dis_losses))
+            writer.add_scalar("gen_loss", np.mean(gen_losses), iter_no)
+            writer.add_scalar("dis_loss", np.mean(dis_losses), iter_no)
+            gen_losses = []
+            dis_losses = []
+        if iter_no % SAVE_IMAGE_EVERY_ITER == 0:
+            writer.add_image("fake", vutils.make_grid(gen_output_v.data[:64]), iter_no)
+            writer.add_image("real", vutils.make_grid(batch_v.data[:64]), iter_no)</pre></div><p class="calibre8">我的实验在40k-50k的训练迭代(在GPU上几个小时)后给出了以下图像:</p><p class="calibre8">图7:由生成器网络生成的样本图像</p><div><img src="img/00028.jpeg" alt="Example – GAN on Atari images" class="calibre9"/><div><p class="calibre14">Figure 7: Sample images produced by the generator network</p></div></div><p class="calibre10"><a id="ch03lvl1sec27" class="calibre1"/>总结</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Summary</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0">在本章中，我们看到了PyTorch功能和特性的快速概述。我们讨论了张量和梯度等基本要素，了解了如何从基本构建模块中构建神经网络，并学习了如何自己实现这些模块。我们讨论了损失函数和优化器，以及训练动态的监控。这一章的目的是快速介绍PyTorch，这将在本书的后面使用。</h1></div></div></div><p class="calibre8">对于下一章，我们准备开始处理本书的主题:RL方法。</p><p class="calibre8">For the next chapter, we're ready to start dealing with the main subject of this book: RL methods.</p></div></body></html>
+</body></html>

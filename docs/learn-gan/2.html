@@ -1,0 +1,236 @@
+<html><head/><body><title>Chapter 2. Unsupervised Learning with GAN</title><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+<!-- kobo-style -->
+
+<script type="text/javascript" src="img/kobo.js"/>
+<style type="text/css" id="kobostylehacks">div#book-inner p, div#book-inner div { font-size: 1.0em; } a { color: black; } a:link, a:visited, a:hover, a:active { color: blue; } div#book-inner * { margin-top: 0 !important; margin-bottom: 0 !important;}</style>
+
+<div><div><div><div><div><div><h1 class="title"><a id="ch02"/>第二章。基于GAN的无监督学习</h1></div></div></div><p>近年来，随着生成模型的发展，神经网络不仅可以识别图像，还可以用来生成声音和逼真的图像。</p><p>在这一章中，我们将通过最新的<strong>生成对抗网络</strong>，俗称<strong>干</strong>的艺术算法，深入探究深度学习的创造性本质。您将通过实际操作的例子学习使用<a id="id47" class="indexterm"/>中神经网络的生成能力，从各种真实世界的数据集(如<code class="literal">MNIST</code>和<code class="literal">CIFAR</code>)中生成逼真的图像。此外，你将了解如何使用半监督方法克服深度网络无监督学习的主要挑战，并将其应用到你自己的问题领域。在本章的最后一节，您将了解一些训练障碍，然后是使用GAN模型的实用提示和技巧。</p><p>我们将在本章中讨论以下主题:</p><div><ul class="itemizedlist"><li class="listitem" style="list-style-type: disc">甘是什么？它的应用、技巧和诀窍</li><li class="listitem" style="list-style-type: disc">用TensorFlow通过两层神经网络图像生成解释GAN的概念</li><li class="listitem" style="list-style-type: disc">使用Keras通过<strong>深度卷积GAN </strong> ( <strong> DCGAN </strong>)生成图像<a id="id48" class="indexterm"/></li><li class="listitem" style="list-style-type: disc">用TensorFlow实现半监督学习</li></ul></div><div><div><div><div><h1 class="title"><a id="ch02lvl1sec11"/>利用深度神经网络实现人工任务自动化</h1></div></div></div><p>在过去的几年里，<a id="id49" class="indexterm"/>深度神经网络出现了爆炸式增长，这种网络可以执行图像分类、语音识别，并以很高的准确度理解自然语言。</p><p>深度神经网络领域内的当前艺术算法状态能够学习一组数据中固有的模式的高度复杂的模型。虽然这些能力令人印象深刻，但人类能够做的不仅仅是图像识别或理解人们在谈论什么，通过机器自动化这些任务似乎有些牵强。</p><p>让我们看看一些需要人类创造力的用例<a id="id52" class="indexterm"/>(至少到目前为止):</p><div><ul class="itemizedlist"><li class="listitem" style="list-style-type: disc">训练一个人工作者，通过学习维基百科过去的文章，以非常简单的方式写文章并向社区解释数据科学概念</li><li class="listitem" style="list-style-type: disc">通过学习他/她过去的收藏，创造一个可以像任何著名艺术家一样绘画的人工画家</li></ul></div><p>你相信机器有能力完成这些任务吗？令你惊讶的是，答案是“是”。</p><p>当然，这些任务很难自动化，但是GANs已经开始使其中一些任务成为可能。</p><p>深度学习领域的杰出人物Yann LeCun(脸书AI的主管)说:</p><div><blockquote class="blockquote"><p>生成对抗网络(GANs)和现在提出的变体是过去10年机器学习中最有趣的想法。</p></blockquote></div><p>如果你对甘这个名字感到害怕，不要担心！到本书结束时，你将掌握这种技术，并将其应用于现实世界的问题。</p><div><div><div><div><h2 class="title"><a id="ch02lvl2sec19"/>甘的目的</h2></div></div></div><p>一些创成式模型<a id="id53" class="indexterm"/>能够从模型分布中生成样本。gan是生成模型的一个例子。GAN主要关注从分布中生成样本。</p><p>您可能想知道为什么生成模型值得研究，尤其是那些只能生成数据而不能提供密度函数估计的生成模型。</p><p>研究生成模型的一些原因如下:</p><div><ul class="itemizedlist"><li class="listitem" style="list-style-type: disc">采样(或生成)很简单</li><li class="listitem" style="list-style-type: disc">训练不涉及最大似然估计</li><li class="listitem" style="list-style-type: disc">对<a id="id54" class="indexterm"/>过拟合具有鲁棒性，因为生成器不会看到训练数据</li><li class="listitem" style="list-style-type: disc">甘善于捕捉分销模式</li></ul></div></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec20"/>来自现实世界的类比</h2></div></div></div><p>让我们考虑一下<a id="id55" class="indexterm"/>现实世界中伪钞罪犯和警察之间的关系。让我们列举一下罪犯和警察在金钱方面的目标:</p><div><img src="img/B08086_02_1.jpg" alt="An analogy from the real world"/><div><p>图1a: GAN真实世界类比</p></div></div><div><ul class="itemizedlist"><li class="listitem" style="list-style-type: disc">要成为一名成功的伪钞制造者，罪犯需要愚弄警察，使警察无法分辨假钞和真钞</li><li class="listitem" style="list-style-type: disc">作为正义的典范，警方希望尽可能有效地发现假币</li></ul></div><p>这可以建模为博弈论中的极小极大博弈<a id="id56" class="indexterm"/>。这种现象被称为<strong>对抗过程</strong>。GAN是由Ian Goodfellow于2014年在arXiv: 1406.2661 上介绍的，是两个神经网络相互竞争的对抗过程的一个特例。第一<a id="id57" class="indexterm"/>网络生成数据，第二网络试图找出第一网络生成的真实数据和虚假数据之间的差异。第二个网络将输出标量[0，1]，它表示真实数据的概率。</p></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec21"/>甘的积木</h2></div></div></div><p>在GAN中，第一个<a id="id58" class="indexterm"/>网络称为<a id="id59" class="indexterm"/>发生器，通常表示为<em> G(z) </em>，第二个网络称为鉴别器，通常表示为<em> D(x) </em>:</p><div><img src="img/B08086_02_2.png.jpg" alt="The building blocks of GAN"/><div><p>图1b:生成性对抗网络</p></div></div><p>在平衡点，即极小极大游戏中的最佳点，第一网络将模拟真实数据，第二网络将输出0.5的概率，作为第一网络的输出=真实数据:</p><div><img src="img/B08086_02_3.jpg" alt="The building blocks of GAN"/></div><p>有时两个网络最终达到平衡，但这并不总是有保证的，两个网络可以长时间继续学习。下图显示了使用<a id="id60" class="indexterm"/>发生器和鉴频器损耗的学习示例:</p><div><img src="img/B08086_02_4.png.jpg" alt="The building blocks of GAN"/><div><p>图1c:失去两个网络，发生器和鉴别器</p></div></div><div><div><div><div><h3 class="title"><a id="ch02lvl3sec01"/>发电机</h3></div></div></div><p>生成器网络<a id="id61" class="indexterm"/>将随机噪声作为输入，并尝试生成数据样本。在上图中，我们<a id="id62" class="indexterm"/>可以看到发生器<em> G(z) </em>从概率分布<em> p(z) </em>中获取输入<em> z </em>并生成数据，然后将该数据馈入鉴别器网络<em> D(x) </em>。</p></div><div><div><div><div><h3 class="title"><a id="ch02lvl3sec02"/>鉴别器</h3></div></div></div><p>鉴别器<a id="id63" class="indexterm"/>网络从真实数据或发生器生成的数据中获取输入，并且<a id="id64" class="indexterm"/>试图预测输入是真实的还是生成的。它从真实数据分布<em> P </em> <em> <sub>数据</sub></em><em>【x】</em>中提取一个输入<em> x </em>，然后求解一个二进制分类问题，给出标量范围为0到1的输出。</p><p>由于GANs能够解决无监督学习的重要挑战，因此受到了广泛的欢迎，因为可用的未标记数据的数量远大于标记数据的数量。它们受欢迎的另一个原因是，GANs能够在生成模型中生成最真实的图像。虽然这很主观，但这是大多数从业者的共同观点。</p><div><img src="img/B08086_02_5.png.jpg" alt="Discriminator"/><div><p>图1d:GANs中的矢量算法</p></div></div><p>除此之外，GAN通常非常具有表现力:它可以在潜在空间(即z向量空间)中执行算术运算，并转换为特征空间中的相应运算。如图<em>图1d </em>所示，如果你取一个戴眼镜的男人在潜在空间的表示，减去<code class="literal">neutral man</code>向量，再加回<code class="literal">neutral woman</code>向量，最终得到一个戴眼镜的女人在特征空间的图片。这真是太神奇了。</p></div></div></div></div></div></div>
+<title>Implementation of GAN</title><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+<!-- kobo-style -->
+
+<script type="text/javascript" src="img/kobo.js"/>
+<style type="text/css" id="kobostylehacks">div#book-inner p, div#book-inner div { font-size: 1.0em; } a { color: black; } a:link, a:visited, a:hover, a:active { color: blue; } div#book-inner * { margin-top: 0 !important; margin-bottom: 0 !important;}</style>
+
+<div><div><div><div><div><div><h1 class="title"><a id="ch02lvl1sec12"/>甘的实现</h1></div></div></div><p>根据GAN的<a id="id66" class="indexterm"/>定义，我们基本上需要两个网络，无论是复杂的网络(如ConvNet)还是简单的两层神经网络。让我们使用一个简单的双层神经网络和使用TensorFlow的<code class="literal">MNIST</code>数据集来实现。<code class="literal">MNIST</code>是手写数字的数据集，其中每个图像是28×28像素大小的灰度级:</p><div><pre class="programlisting"># Random noise setting for Generator
+Z = tf.placeholder(tf.float32, shape=[None, 100], name='Z')
+
+#Generator parameter settings
+G_W1 = tf.Variable(xavier_init([100, 128]), name='G_W1')
+G_b1 = tf.Variable(tf.zeros(shape=[128]), name='G_b1')
+G_W2 = tf.Variable(xavier_init([128, 784]), name='G_W2')
+G_b2 = tf.Variable(tf.zeros(shape=[784]), name='G_b2')
+theta_G = [G_W1, G_W2, G_b1, G_b2]
+
+
+# Generator Network
+def generator(z):
+    G_h1 = tf.nn.relu(tf.matmul(z, G_W1) + G_b1)
+    G_log_prob = tf.matmul(G_h1, G_W2) + G_b2
+    G_prob = tf.nn.sigmoid(G_log_prob)
+
+    return G_prob</pre></div><p><code class="literal">generator(z)</code>将来自随机分布的100维向量作为输入(在这种情况下，我们使用<a id="id67" class="indexterm"/>均匀分布)并返回786维向量，这是一个<code class="literal">MNIST</code>图像(28x28)。这里的<code class="literal">z</code>是<em> G(z) </em>的先验。这样，它学习了先验空间到<em> p </em> <sub> <em>数据</em> </sub>(真实数据分布)之间的映射:</p><div><pre class="programlisting">#Input Image MNIST setting for Discriminator [28x28=784]
+X = tf.placeholder(tf.float32, shape=[None, 784], name='X')
+
+#Discriminator parameter settings
+D_W1 = tf.Variable(xavier_init([784, 128]), name='D_W1')
+D_b1 = tf.Variable(tf.zeros(shape=[128]), name='D_b1')
+D_W2 = tf.Variable(xavier_init([128, 1]), name='D_W2')
+D_b2 = tf.Variable(tf.zeros(shape=[1]), name='D_b2')
+theta_D = [D_W1, D_W2, D_b1, D_b2]
+
+
+# Discriminator Network
+def discriminator(x):
+    D_h1 = tf.nn.relu(tf.matmul(x, D_W1) + D_b1)
+    D_logit = tf.matmul(D_h1, D_W2) + D_b2
+    D_prob = tf.nn.sigmoid(D_logit)
+
+return D_prob, D_logit</pre></div><p>而<code class="literal">discriminator(x)</code>将<code class="literal">MNIST</code>图像作为输入，并返回代表真实图像概率的标量。现在，我们来讨论一个训练GAN的算法。下面是论文<em> arXiv: 1406.2661，2014 </em>中的<a id="id68" class="indexterm"/>训练算法的伪代码:</p><div><img src="img/B08086_02_6.png.jpg" alt="Implementation of GAN"/><div><p>图1e: GAN训练算法伪代码</p></div></div><div><pre class="programlisting">G_sample = generator(Z)
+
+D_real, D_logit_real = discriminator(X)
+D_fake, D_logit_fake = discriminator(G_sample)
+
+# Loss functions according the GAN original paper
+D_loss = -tf.reduce_mean(tf.log(D_real) + tf.log(1. - D_fake))
+G_loss = -tf.reduce_mean(tf.log(D_fake))</pre></div><p>张量流优化器只能进行最小化，因此为了最大化<code class="literal">loss</code>函数，我们对损失使用负号，如前所述。此外，根据论文的伪算法，最好最大化<code class="literal">tf.reduce_mean(tf.log(D_fake))</code>而不是最小化<code class="literal">tf.reduce_mean(1 - tf.log(D_fake)</code>。然后，我们用前面的<code class="literal">loss</code>函数逐一训练网络:</p><div><pre class="programlisting"># Only update D(X)'s parameters, so var_list = theta_D
+D_solver = tf.train.AdamOptimizer().minimize(D_loss, var_list=theta_D)
+# Only update G(X)'s parameters, so var_list = theta_G
+G_solver = tf.train.AdamOptimizer().minimize(G_loss, var_list=theta_G)
+
+def sample_Z(m, n):
+    '''Uniform prior for G(Z)'''
+    return np.random.uniform(-1., 1., size=[m, n])
+
+for it in range(1000000):
+    X_mb, _ = mnist.train.next_batch(mb_size)
+
+    _, D_loss_curr = sess.run([D_solver, D_loss], feed_dict={X: X_mb, Z: sample_Z(mb_size, Z_dim)})
+    _, G_loss_curr = sess.run([G_solver, G_loss], feed_dict={Z: sample_Z(mb_size, Z_dim)})</pre></div><p>之后，我们用随机噪声启动<a id="id69" class="indexterm"/>，随着训练的继续，<code class="literal">G(Z)</code>开始向<em> p </em> <sub> <em>数据</em> </sub>移动。与原始MNIST图像相比，由<code class="literal">G(Z)</code>生成的更相似的样本证明了这一点。</p><p>60，000次迭代后生成的一些输出如下所示:</p><div><img src="img/B08086_02_7.png.jpg" alt="Implementation of GAN"/><div><p>图1f:生成的输出图像的GAN实现</p></div></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec22"/>氮化镓的应用</h2></div></div></div><p>甘在各种各样的领域都引起了人们的极大兴趣。<a id="id70" class="indexterm"/> GAN近年来的一些令人兴奋的应用列举如下:</p><div><ul class="itemizedlist"><li class="listitem" style="list-style-type: disc">使用CycleGAN将一个图像转换为另一个图像(如马到斑马)，并通过条件GAN执行图像编辑。详细内容将在<a class="link" href="ch03.html" title="Chapter 3. Transfer Image Style Across Various Domains">第3章</a>、<em>跨不同域传输图像样式</em>中介绍。</li><li class="listitem" style="list-style-type: disc">使用StackGAN从文本句子自动合成真实图像。以及<a id="id71" class="indexterm"/>使用<strong>发现GAN </strong> ( <strong>发现GAN </strong>)将样式从一个域转移到另一个域。细节将在<a class="link" href="ch04.html" title="Chapter 4. Building Realistic Images from Your Text">第4章</a>、<em>从你的文本中构建真实的图像</em>中介绍。</li><li class="listitem" style="list-style-type: disc">使用SRGAN通过预先训练的模型提高图像质量并生成高分辨率图像。详细内容将在<a class="link" href="ch05.html" title="Chapter 5. Using Various Generative Models to Generate Images">第五章</a>、<em>中介绍，使用各种生成模型生成图像</em>。</li><li class="listitem" style="list-style-type: disc">从属性生成逼真的图像:假设一个窃贼来到你的公寓，但是你没有他/她的照片。现在警察局的系统可以根据你提供的描述生成一个逼真的窃贼图像，并搜索数据库。更多信息请参考<em> arXiv: 1605.05396，2016 </em>。</li><li class="listitem" style="list-style-type: disc">预测视频或动态视频生成中的<a id="id72" class="indexterm"/>下一帧:(<a class="ulink" href="http://carlvondrick.com/tinyvideo/">http://carlvondrick.com/tinyvideo/</a>)。</li></ul></div></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec23"/>使用Keras通过DCGAN生成图像</h2></div></div></div><p>论文中介绍了<strong>深度卷积生成对抗网络</strong>(<strong>DCGAN</strong>):<em>深度卷积生成对抗网络</em>的无监督表示学习，作者<em> A .拉德福德，l .梅斯，s .钦塔拉，arXiv:1511.06434，2015 </em>。</p><p>生成器使用一个<a id="id73" class="indexterm"/> 100维的均匀分布空间<em> Z </em>，然后通过一系列卷积运算投影到一个更小的空间。下图显示了一个示例:</p><div><img src="img/B08086_02_8.png.jpg" alt="Image generation with DCGAN using Keras"/><div><p>图2:发生器的DCGAN架构</p><p>资料来源:arXiv，1511.06434，2015年</p></div></div><p>DCGAN通过以下架构限制来稳定网络:</p><div><ul class="itemizedlist"><li class="listitem" style="list-style-type: disc">用鉴别器中的步长卷积和生成器中的分数步长卷积替换任何<a id="id74" class="indexterm"/>池层</li><li class="listitem" style="list-style-type: disc">在发生器和鉴别器中使用batchnorm <a id="id75" class="indexterm"/></li><li class="listitem" style="list-style-type: disc">为更深的架构移除完全连接的隐藏层，并在最后简单地使用平均池</li><li class="listitem" style="list-style-type: disc">在发生器中对所有层使用ReLU激活，输出层除外，输出层使用<code class="literal">tanh</code></li><li class="listitem" style="list-style-type: disc">在所有层的鉴别器中使用泄漏ReLU激活</li></ul></div><p>DCGAN发生器可以用下面的Keras实现的代码来描述:<a class="ulink" href="https://github.com/jacobgil/keras-dcgan">https://github.com/jacobgil/keras-dcgan</a>。</p><p>使用以下命令启动训练/生成过程:</p><div><pre class="programlisting">
+<strong>python dcgan.py --mode train --batch_size &lt;batch_size&gt;</strong>
+<strong>python dcgan.py --mode generate --batch_size &lt;batch_size&gt; --nice</strong>
+</pre></div><div><img src="img/B08086_02_9.png.jpg" alt="Image generation with DCGAN using Keras"/></div><p>请注意，先前打印的<a id="id77" class="indexterm"/>批次数量是根据输入图像形状/批次大小(已提供)计算的。</p><p>现在让我们进入代码。发电机可描述如下:</p><div><pre class="programlisting">def generator_model():
+    model = Sequential()
+    model.add(Dense(input_dim=100, output_dim=1024))
+    model.add(Activation('tanh'))
+    model.add(Dense(128*7*7))
+    model.add(BatchNormalization())
+    model.add(Activation('tanh'))
+    model.add(Reshape((7, 7, 128), input_shape=(128*7*7,)))
+    model.add(UpSampling2D(size=(2, 2)))
+    model.add(Conv2D(64, (5, 5), padding='same'))
+    model.add(Activation('tanh'))
+    model.add(UpSampling2D(size=(2, 2)))
+    model.add(Conv2D(1, (5, 5), padding='same'))
+    model.add(Activation('tanh'))
+    return model</pre></div><p>生成器的第一密集层将100维的向量作为输入，并通过激活函数<code class="literal">tanh</code>产生1024维的输出。</p><p>网络中的下一个密集层使用批量标准化在输出中产生128 x 7 x 7的数据(参见<em>批量标准化通过减少内部协变量偏移加速深度网络训练</em>，作者<em> S. Ioffe </em>和<em> C.Szegedy </em>，<em> arXiv: 1502.03167 </em>，2014)，这种技术通常通过用零均值和单位方差标准化输入来帮助稳定学习。经验证明，批量标准化可以在许多情况下加快训练速度，减少不良初始化的问题，并且通常会产生更准确的结果。还有一个<code class="literal">Reshape()</code>模块产生128 x 7 x 7 (128个通道，7个宽度，7个高度)<code class="literal">dim_ordering</code>到<code class="literal">tf</code>的数据，还有一个<code class="literal">UpSampling()</code>模块产生每一个到2 x 2正方形的重复。之后，我们有一个卷积层，它在5 x 5卷积核/片上产生64个滤波器，激活为<code class="literal">tanh</code>，具有相同的填充，后跟一个新的<code class="literal">UpSampling()</code>和一个滤波器的最终卷积，在5 x 5卷积核上，激活为<code class="literal">tanh</code>。请注意，在ConvNet中没有池操作。</p><p>鉴别器可以用以下代码描述:</p><div><pre class="programlisting">def discriminator_model():
+    model = Sequential()
+    model.add(Conv2D(64, (5, 5), padding='same',input_shape=(28, 28, 1)))
+    model.add(Activation('tanh'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Conv2D(128, (5, 5)))
+    model.add(Activation('tanh'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Flatten())
+    model.add(Dense(1024))
+    model.add(Activation('tanh'))
+    model.add(Dense(1))
+    model.add(Activation('sigmoid'))
+    return model</pre></div><p>鉴别器采用形状为(<code class="literal">1, 28, 28</code>)的标准MNIST图像，并以<code class="literal">tanh</code>作为激活函数，应用与64个大小为5×5的滤波器的卷积。然后跟随<a id="id79" class="indexterm"/>的是大小为2×2的最大汇集运算和进一步的卷积最大汇集运算。</p><p>最后两个阶段是密集的，最后一个阶段是对伪造的预测，它仅由具有<code class="literal">sigmoid</code>激活功能的单个神经元组成。对于给定的历元数，通过使用<code class="literal">binary_crossentropy</code>作为<code class="literal">loss</code>功能来训练发生器和鉴别器。在每个时期，生成器预测一个数字(例如，它创建伪造的MNIST图像)，鉴别器在将预测与真实的MNIST图像混合后尝试学习。几个时期后，生成器会自动学习伪造这组手写数字:</p><div><img src="img/B08086_02_10.png.jpg" alt="Image generation with DCGAN using Keras"/><div><p>图3:深度卷积GAN生成的手写数字输出</p></div></div><p>请注意，训练GANs可能非常困难，因为需要找到两个玩家之间的平衡<a id="id80" class="indexterm"/>，因此本章的最后一节给出了练习者使用的一些有价值的技巧和提示。</p></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec24"/>使用TensorFlow实现SSGAN</h2></div></div></div><p><strong>半监督学习生成对抗网络</strong> ( <strong> SSGAN </strong>)的基本<a id="id81" class="indexterm"/>直觉是利用生成器生成的样本，通过提高泛化能力来增强鉴别器的图像分类<a id="id82" class="indexterm"/>任务的性能。关键思想是将其中一个网络训练为图像分类器和鉴别器(从真实图像中识别生成的图像)。</p><p>对于有<em> n </em>类的数据集，双重训练(鉴别器/分类器)网络将把一幅图像作为输入，把真实图像分类到前<em> n </em>类，把生成的图像分类到第<em> n+1个</em>类，如下图所示:</p><div><img src="img/B08086_02_11.png.jpg" alt="Implementing SSGAN using TensorFlow"/><div><p>来源:<a class="ulink" href="https://github.com/gitlimlab/SSGAN-Tensorflow/blob/master/figure/ssgan.png">https://github . com/gitlim lab/SSGAN-tensor flow/blob/master/figure/SSGAN . png</a></p></div></div><p>这个多任务学习框架包括两个损失，第一个是监督损失:</p><div><img src="img/B08086_02_12.jpg" alt="Implementing SSGAN using TensorFlow"/></div><p>其次是鉴频器的GAN损耗:</p><div><img src="img/B08086_02_13.jpg" alt="Implementing SSGAN using TensorFlow"/></div><p>在<a id="id83" class="indexterm"/>训练阶段，这两种损失被共同最小化。</p><div><div><div><div><h3 class="title"><a id="ch02lvl3sec03"/>设置环境</h3></div></div></div><p>执行以下步骤在Cifar-10数据集上执行SSGAN:</p><div><ol class="orderedlist arabic"><li class="listitem">克隆<a id="id84" class="indexterm"/><code class="literal">git</code>回购:<a class="ulink" href="https://github.com/gitlimlab/SSGAN-Tensorflow">https://github.com/gitlimlab/SSGAN-Tensorflow</a>:<div><img src="img/B08086_02_14.png.jpg" alt="Setting up the environment"/></div></li><li class="listitem">更改<a id="id85" class="indexterm"/>目录:<div> <pre class="programlisting"> <strong>cd SSGAN-Tensorflow/</strong> </pre> </div></li><li class="listitem">下载<code class="literal">CIFAR-10</code>数据集:<div>T33</div></li><li class="listitem">训练模型:<div> <img src="img/B08086_02_16.png.jpg" alt="Setting up the environment"/> </div></li><li class="listitem">测试或评估模型:<div> <pre class="programlisting"> <strong>python evaler.py --dataset CIFAR10 --checkpoint ckpt_dir</strong> </pre> </div></li></ol></div><p>现在让我们深入研究代码。发生器从均匀分布中提取随机噪声:</p><div><pre class="programlisting">z = tf.random_uniform([self.batch_size, n_z], minval=-1, maxval=1, dtype=tf.float32)</pre></div><p>然后，发电机模型使用<code class="literal">reshape</code>方法将输入噪声平坦化为一维向量。然后对激活了<code class="literal">ReLU</code>的输入噪声应用三层去卷积，然后再应用一层激活了<code class="literal">tanh</code>的去卷积，以生成尺寸为[<em>h</em>=高度，<em>w</em>=宽度，<em> c </em> ]的输出图像，其中<em> c </em>是通道数(灰度图像:1，彩色图像:3):</p><div><pre class="programlisting"># Generator model function
+        def G(z, scope='Generator'):
+            with tf.variable_scope(scope) as scope:
+                print ('\033[93m'+scope.name+'\033[0m')
+                z = tf.reshape(z, [self.batch_size, 1, 1, -1])
+                g_1 = deconv2d(z, deconv_info[0], is_train, name='g_1_deconv') 
+                print (scope.name, g_1)
+                g_2 = deconv2d(g_1, deconv_info[1], is_train, name='g_2_deconv')
+                print (scope.name, g_2)
+                g_3 = deconv2d(g_2, deconv_info[2], is_train, name='g_3_deconv')
+                print (scope.name, g_3)
+                g_4 = deconv2d(g_3, deconv_info[3], is_train, name='g_4_deconv', activation_fn='tanh')
+                print (scope.name, g_4)
+                output = g_4
+                assert output.get_shape().as_list() == self.image.get_shape().as_list(), output.get_shape().as_list()
+            return output
+
+# Deconvolution method
+def deconv2d(input, deconv_info, is_train, name="deconv2d", stddev=0.02,activation_fn='relu'):
+    with tf.variable_scope(name):
+        output_shape = deconv_info[0]
+        k = deconv_info[1]
+        s = deconv_info[2]
+        deconv = layers.conv2d_transpose(input,
+            num_outputs=output_shape,
+            weights_initializer=tf.truncated_normal_initializer(stddev=stddev),
+            biases_initializer=tf.zeros_initializer(),
+            kernel_size=[k, k], stride=[s, s], padding='VALID')
+        if activation_fn == 'relu':
+            deconv = tf.nn.relu(deconv)
+            bn = tf.contrib.layers.batch_norm(deconv, center=True, scale=True, 
+                decay=0.9, is_training=is_train, updates_collections=None)
+        elif activation_fn == 'tanh':
+            deconv = tf.nn.tanh(deconv)
+        else:
+            raise ValueError('Invalid activation function.')
+        return deconv</pre></div><p><a id="id87" class="indexterm"/>鉴别器将图像作为输入，并尝试输出到<code class="literal">n+1</code>类标签中。它应用具有批量标准化的泄漏ReLU的卷积的一些层，在输入图像上跟随<a id="id88" class="indexterm"/>的丢失，最后使用<code class="literal">softmax</code>函数输出类别<code class="literal">label</code>:</p><div><pre class="programlisting"># Discriminator model function
+        def D(img, scope='Discriminator', reuse=True):
+            with tf.variable_scope(scope, reuse=reuse) as scope:
+                if not reuse: print ('\033[93m'+scope.name+'\033[0m')
+                d_1 = conv2d(img, conv_info[0], is_train, name='d_1_conv')
+                d_1 = slim.dropout(d_1, keep_prob=0.5, is_training=is_train, scope='d_1_conv/')
+                if not reuse: print (scope.name, d_1)
+                d_2 = conv2d(d_1, conv_info[1], is_train, name='d_2_conv')
+                d_2 = slim.dropout(d_2, keep_prob=0.5, is_training=is_train, scope='d_2_conv/')
+                if not reuse: print (scope.name, d_2)
+                d_3 = conv2d(d_2, conv_info[2], is_train, name='d_3_conv')
+                d_3 = slim.dropout(d_3, keep_prob=0.5, is_training=is_train, scope='d_3_conv/')
+                if not reuse: print (scope.name, d_3)
+                d_4 = slim.fully_connected(
+                    tf.reshape(d_3, [self.batch_size, -1]), n+1, scope='d_4_fc', activation_fn=None)
+                if not reuse: print (scope.name, d_4)
+                output = d_4
+                assert output.get_shape().as_list() == [self.batch_size, n+1]
+                return tf.nn.softmax(output), output
+
+
+# Convolution method with dropout
+def conv2d(input, output_shape, is_train, k_h=5, k_w=5, stddev=0.02, name="conv2d"):
+    with tf.variable_scope(name):
+        w = tf.get_variable('w', [k_h, k_w, input.get_shape()[-1], output_shape],
+                initializer=tf.truncated_normal_initializer(stddev=stddev))
+        conv = tf.nn.conv2d(input, w, strides=[1, 2, 2, 1], padding='SAME')
+
+        biases = tf.get_variable('biases', [output_shape], initializer=tf.constant_initializer(0.0))
+        conv = lrelu(tf.reshape(tf.nn.bias_add(conv, biases), conv.get_shape()))
+        bn = tf.contrib.layers.batch_norm(conv, center=True, scale=True, 
+            decay=0.9, is_training=is_train, updates_collections=None)
+    return bn
+
+# Leaky Relu method
+def lrelu(x, leak=0.2, name="lrelu"):
+   with tf.variable_scope(name):
+   f1 = 0.5 * (1 + leak)
+   f2 = 0.5 * (1 - leak)
+return f1 * x + f2 * abs(x)</pre></div><p>鉴别器网络具有两个<code class="literal">loss</code>功能，一个(<code class="literal">s_loss</code>)用于使用huber损失(与平方误差损失相比，Huber损失对异常值是鲁棒的)对来自CIFAR-10图像的真实数据进行监督分类<a id="id89" class="indexterm"/>，另一个(<code class="literal">d_loss</code>)损失用于使用具有交叉熵的<code class="literal">softmax</code>功能将生成器生成的图像分类为标量形式的真实/虚假:</p><div><pre class="programlisting"># Discriminator/classifier loss
+s_loss = tf.reduce_mean(huber_loss(label, d_real[:, :-1]))</pre></div><div><img src="img/B08086_02_17.png.jpg" alt="Setting up the environment"/><div><p>图4a:监控鉴频器的损耗</p></div></div><div><pre class="programlisting">d_loss_real = tf.nn.softmax_cross_entropy_with_logits(logits=d_real_logits, labels=real_label)
+ d_loss_fake = tf.nn.softmax_cross_entropy_with_logits(logits=d_fake_logits, labels=fake_label)
+d_loss = tf.reduce_mean(d_loss_real + d_loss_fake)</pre></div><div><img src="img/B08086_02_18.png.jpg" alt="Setting up the environment"/><div><p>图4b:总鉴频器损耗(真实+虚假损耗)</p></div></div><div><pre class="programlisting">
+# Huber loss
+def huber_loss(labels, predictions, delta=1.0):
+    residual = tf.abs(predictions - labels)
+    condition = tf.less(residual, delta)
+    small_res = 0.5 * tf.square(residual)
+    large_res = delta * residual - 0.5 * tf.square(delta)
+    return tf.where(condition, small_res, large_res)
+
+
+# Generator loss
+g_loss = tf.reduce_mean(tf.log(d_fake[:, -1]))
+
+g_loss += tf.reduce_mean(huber_loss(real_image, fake_image)) * self.recon_weight</pre></div><div><div><h3 class="title"><a id="note02"/>注意</h3><p>注意:权重<a id="id90" class="indexterm"/>退火是作为一个辅助损失来完成的，以帮助生成器摆脱初始的局部最小值。</p></div></div><div><img src="img/B08086_02_19.png.jpg" alt="Setting up the environment"/><div><p>图4c:发电机损耗</p></div></div><p>使用<code class="literal">AdamOptimizer</code>优化发生器和鉴别器网络的<code class="literal">loss</code>功能，并使用<a id="id91" class="indexterm"/>梯度削波(<code class="literal">clip_gradients</code>)来稳定训练:</p><div><pre class="programlisting"># Optimizer for discriminator
+self.d_optimizer = tf.contrib.layers.optimize_loss(
+loss=self.model.d_loss,
+global_step=self.global_step,
+learning_rate=self.learning_rate*0.5,
+optimizer=tf.train.AdamOptimizer(beta1=0.5),
+clip_gradients=20.0,
+name='d_optimize_loss',
+variables=d_var
+)
+
+
+# Optimizer for generator
+self.g_optimizer = tf.contrib.layers.optimize_loss(
+loss=self.model.g_loss,
+global_step=self.global_step,
+learning_rate=self.learning_rate,
+optimizer=tf.train.AdamOptimizer(beta1=0.5),
+clip_gradients=20.0,
+name='g_optimize_loss',
+variables=g_var
+)</pre></div><p>最后，监督损失(<code class="literal">s_loss</code>)和生成对抗损失(是鉴别器损失(<code class="literal">d_loss</code>)和发电机损失(<code class="literal">g_loss</code>)的组合<a id="id92" class="indexterm"/>)被联合训练以最小化总损失:</p><div><pre class="programlisting">for s in xrange(max_steps):
+             step, accuracy, summary, d_loss, g_loss, s_loss, step_time, prediction_train, gt_train, g_img = \
+               self.run_single_step(self.batch_train, step=s, is_train=True)</pre></div><p>150个时期后产生的样本的输出如下:</p><div><img src="img/B08086_02_20.png.jpg" alt="Setting up the environment"/></div></div></div></div></div></div>
+<title>Challenges of GAN models</title><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+<!-- kobo-style -->
+
+<script type="text/javascript" src="img/kobo.js"/>
+<style type="text/css" id="kobostylehacks">div#book-inner p, div#book-inner div { font-size: 1.0em; } a { color: black; } a:link, a:visited, a:hover, a:active { color: blue; } div#book-inner * { margin-top: 0 !important; margin-bottom: 0 !important;}</style>
+
+<div><div><div><div><div><div><h1 class="title"><a id="ch02lvl1sec13"/>甘模式的挑战</h1></div></div></div><p>训练一个GAN <a id="id93" class="indexterm"/>基本上就是关于两个网络，生成器<em> G(z) </em>和鉴别器<em> D(z) </em>，试图和对方赛跑，试图达到一个最优，更确切的说是一个纳什均衡。维基百科对<a id="id94" class="indexterm"/>纳什均衡的定义(在经济学和博弈论中)是一个涉及不同参与者互动的系统的稳定状态，在这个系统中，如果其他参与者的策略保持不变，任何参与者都不能通过单方面改变策略而获益。</p><div><div><div><div><h2 class="title"><a id="ch02lvl2sec25"/>设置失败，初始化不良</h2></div></div></div><p>如果你仔细想想，这正是甘正在努力做的；发生器和鉴别器达到一种状态，在这种状态下，如果另一个保持不变，它们就不能再改进。现在，梯度下降的设置是朝着减少问题上定义的损失度量的方向迈出一步，但我们绝不是强制网络在GAN中达到纳什均衡，其具有连续高维参数的非凸目标。网络试图采取连续的步骤来最小化非凸目标，并以振荡过程结束，而不是减少潜在的真实目标。</p><p>在大多数情况下，当你的鉴别器达到非常接近零的亏损时，你马上就能发现你的模型有问题。但最大的困难是找出问题所在。</p><p>GAN训练过程中做的另一件实事，就是有目的地让其中一个网络失速或者学习变慢，让另一个网络赶上来。在大多数情况下，是生成器滞后，所以我们通常让鉴别器等待。这在某种程度上可能是好的，但是记住，为了让生成器变得更好，它需要一个好的鉴别器，反之亦然。理想情况下，系统会希望两个网络都以一定的速度学习，这样两个网络都会随着时间的推移而变得更好。鉴别器的理想最小损耗接近0.5，从鉴别器的角度来看，这是产生的图像与真实图像无法区分的地方。</p></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec26"/>模式崩溃</h2></div></div></div><p>训练生成性敌对网络的<a id="id96" class="indexterm"/>主要失败模式之一被称为模式崩溃，有时也称为helvetica场景。基本思路是生成器可以偶然开始产生几份完全相同的图像，所以原因和博弈论设置有关。我们可以认为我们训练生成性对抗网络的方式是首先相对于鉴别器最大化，然后相对于生成器最小化。如果我们在开始最小化关于发生器的值之前，完全最大化关于鉴别器的值<a id="id97" class="indexterm"/>，那么一切都会很好。但是，如果我们反过来，相对于发生器最小化，然后相对于鉴别器最大化，一切都将中断，原因是如果我们保持鉴别器不变，它会将空间中的单个区域描述为最有可能是真实而不是虚假的点，然后发生器会选择将所有噪声输入值映射到同样最有可能是真实的点。</p></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec27"/>计数的问题</h2></div></div></div><p>GANs有时会有远视，无法区分某个地点应该出现的特定物体的数量。正如我们所见，它在头部提供了比原来更多的眼睛:</p><div><img src="img/B08086_02_21.png.jpg" alt="Problems with counting"/><div><p>资料来源:NIPS 2016- arXiv: 1701.00160，2017年</p></div></div></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec28"/>透视问题</h2></div></div></div><p>GANs <a id="id99" class="indexterm"/>有时不能区分前视图和后视图，因此在从3D对象生成2D表示时不能很好地适应3D对象，如下所示:</p><div><img src="img/B08086_02_22.png.jpg" alt="Problems with perspective"/><div><p>资料来源:NIPS 2016- <em> arXiv: 1701.00160，2017 </em></p></div></div></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec29"/>全球结构的问题</h2></div></div></div><p>GANs不理解整体结构，类似于透视问题。例如，在左下角的图像中，它生成了一个四头牛的图像，即一只牛用后腿站立，同时用四条腿站立。那在现实生活中肯定是不现实的，不可能的！</p><div><img src="img/B08086_02_23.png.jpg" alt="Problems with global structures"/><div><p>资料来源:NIPS 2016-<em>arXiv:1701</em><em>. 00160，2017 </em></p></div></div></div></div></div></div>
+<title>Improved training approaches and tips for GAN</title><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+<!-- kobo-style -->
+
+<script type="text/javascript" src="img/kobo.js"/>
+<style type="text/css" id="kobostylehacks">div#book-inner p, div#book-inner div { font-size: 1.0em; } a { color: black; } a:link, a:visited, a:hover, a:active { color: blue; } div#book-inner * { margin-top: 0 !important; margin-bottom: 0 !important;}</style>
+
+<div><div><div><div><div><div><h1 class="title"><a id="ch02lvl1sec14"/>改进了GAN的培训方法和技巧</h1></div></div></div><p>为了<a id="id101" class="indexterm"/>克服GAN模型的困难，深度学习实践者根据问题的性质进行各种黑客攻击。下面几节将提到一些即兴创作的技巧。</p><div><div><div><div><h2 class="title"><a id="ch02lvl2sec30"/>特征匹配</h2></div></div></div><p>通过为发生器指定一个新的目标来解决GANs的不稳定性，防止其对电流鉴别器<a id="id103" class="indexterm"/>过度训练。</p><p>其想法是使用鉴别器中中间层的特征来匹配真实和虚假图像，并将其作为监控信号来训练发生器。</p><p>具体来说，我们训练生成器生成与真实数据的统计数据相匹配的数据，并在鉴别器的中间层上匹配特征的期望值。通过<a id="id104" class="indexterm"/>训练鉴别器，我们要求它找出最能区分真实数据和当前模型生成的数据的特征。</p></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec31"/>迷你批量</h2></div></div></div><p>模式<a id="id105" class="indexterm"/>崩溃的问题可以通过向鉴别器添加一些额外的特征来解决，其中鉴别器实际上一次查看整个“小批量样本”,而不是查看单个样本。如果这些特征测量诸如到其他样本的距离之类的东西，那么鉴别器可以检测生成器是否开始以这种方式崩溃，而不是鼓励来自生成器的每个样本向单个最可能的点移动。小批量作为一个整体必须看起来真实，不同样品之间有正确的间距。</p></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec32"/>历史平均</h2></div></div></div><p>历史平均值的概念是增加一个惩罚项，惩罚那些远离历史平均值的权重。例如，成本是:</p><div><pre class="programlisting">distance (current parameters, average of parameters over the last t batches)</pre></div></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec33"/>单面标签平滑</h2></div></div></div><p>通常人们会使用标签0(图像是真实的)和1(图像是假的)。相反，使用一些更平滑的标签(0.1和0.9)似乎会使网络更能抵抗敌对的例子。</p></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec34"/>标准化输入</h2></div></div></div><p>大多数情况下<a id="id108" class="indexterm"/>最好将图像归一化到-1和1之间，并使用<code class="literal">tanh</code>作为发生器输出的最后一层。</p></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec35"/>批量定额</h2></div></div></div><p>想法是<a id="id109" class="indexterm"/>为真实和虚假构造不同的迷你批次，即每个迷你批次只需要包含所有真实图像或所有生成的图像。但是当批次标准不是一个选项时，您可以使用实例标准化(对于每个样本，减去平均值并除以标准偏差)。</p></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec36"/>使用ReLU、MaxPool避免稀疏梯度</h2></div></div></div><p>如果你有稀疏的梯度，GAN游戏的稳定性会受到影响。泄漏ReLU非常适合发生器和鉴别器。</p><p>在下采样的情况下，使用<a id="id111" class="indexterm"/>平均池的组合<code class="literal">Conv2d + stride</code>，而对于上采样，使用<code class="literal">PixelShuffle</code>、<code class="literal">ConvTranspose2d + stride</code>的组合:</p><div><pre class="programlisting">PixelShuffle- arXiv: 1609.05158, 2016 </pre></div></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec37"/>优化器和噪声</h2></div></div></div><p>对生成器使用ADAM优化器<a id="id112" class="indexterm"/>，对鉴别器使用SGD。并以压差的形式向发生器的几层<a id="id113" class="indexterm"/>提供噪声。</p></div><div><div><div><div><h2 class="title"><a id="ch02lvl2sec38"/>不要只通过统计来平衡损失</h2></div></div></div><p>取而代之的是有原则的方法，而不是直觉:</p><div><pre class="programlisting">while lossD &gt; A:
+  train D
+while lossG &gt; B:
+  train G</pre></div><div><div><h3 class="title"><a id="note03"/>注意</h3><p>注意:尽管有所有这些提示和训练增强步骤，但生成对抗模型在人工智能和深度学习领域仍然相对较新，因此像任何其他快速发展的领域一样，它也需要大量改进。</p></div></div></div></div></div></div>
+<title>Summary</title><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+<!-- kobo-style -->
+
+<script type="text/javascript" src="img/kobo.js"/>
+<style type="text/css" id="kobostylehacks">div#book-inner p, div#book-inner div { font-size: 1.0em; } a { color: black; } a:link, a:visited, a:hover, a:active { color: blue; } div#book-inner * { margin-top: 0 !important; margin-bottom: 0 !important;}</style>
+
+<div><div><div><div><div><div><h1 class="title"><a id="ch02lvl1sec15"/>总结</h1></div></div></div><p>到目前为止，您已经了解了深度学习是如何通过GAN的概念进入无监督领域的。您已经使用<code class="literal">MNIST</code>、<code class="literal">CIFAR</code>数据集生成了一些逼真的图像，如手写数字、飞机、汽车、鸟等。此外，你已经了解了与生成性对抗网络相关的各种挑战，以及如何通过实用的调整技巧来克服这些挑战。</p><p>在接下来的几章中，我们将继续我们的旅程，使用不同种类的基于GAN的架构来执行一些使用真实数据集的宏伟任务。</p></div></div></div></body></html>

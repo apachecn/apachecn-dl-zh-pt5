@@ -1,0 +1,423 @@
+<html><head/><body>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Introduction to Intelligent Agents and Learning Environments</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="K0RQ0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">智能代理和学习环境介绍</h1>
+                
+            
+            
+                
+<p class="calibre2">问候！欢迎阅读本书的第一章。这本书将向你介绍令人敬畏的OpenAI Gym学习环境，并引导你经历一段激动人心的旅程，让你具备足够的技能来训练最先进的人工智能代理系统。这本书将通过实际项目，从开发自动驾驶汽车到开发可以超越人类表现的雅达利游戏代理，帮助您开发强化学习和深度强化学习的实践经验。当你完成这本书时，你将能够探索使用人工智能解决算法任务、玩游戏和修复控制问题的无限可能性。</p>
+<p class="calibre2">本章将涵盖以下主题:</p>
+<ul class="calibre10">
+<li class="calibre11">理解智能代理和学习环境</li>
+<li class="calibre11">了解OpenAI健身房是怎么回事</li>
+<li class="calibre11">可用任务/环境的不同类别，以及每个类别适用的简要描述</li>
+<li class="calibre11">了解OpenAI健身房的主要特点</li>
+<li class="calibre11">了解你可以用OpenAI健身房工具包做什么</li>
+<li class="calibre11">创建和想象你的第一个健身房环境</li>
+</ul>
+<p class="calibre2">让我们从理解什么是智能代理开始我们的旅程。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>What is an intelligent agent?</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="KVCC0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">什么是智能代理？</h1>
+                
+            
+            
+                
+<p class="calibre2">人工智能的一个主要目标是构建智能代理。感知他们的环境，理解，推理和学习计划，并作出决定和采取行动是智能代理的基本特征。我们将从理解什么是智能代理开始我们的第一章，从代理的基本定义，到在此基础上增加智能。</p>
+<p class="calibre2">一个<em class="calibre13">代理</em>是一个基于对其环境的观察(感知)而行动的实体。人类和机器人是具有物理形态的智能体的例子。</p>
+<p>人类或动物是一个代理的例子，它使用其器官(眼睛、耳朵、鼻子、皮肤等)作为传感器来观察/感知其环境，并使用其身体(手臂、手、腿、头等)来行动。机器人使用其传感器(摄像机、麦克风、激光雷达、雷达等)来观察/感知其环境，并使用其物理机器人身体(机械臂、机器人手/抓具、机器人腿、扬声器等)来行动。</p>
+<p class="calibre2"><em class="calibre13">软件代理</em>是能够通过与环境交互来做出决定和采取行动的计算机程序。软件代理可以体现为物理形式，例如机器人。<em class="calibre13">自主代理</em>是自主地做出决定并根据他们对环境的观察的理解和推理采取行动的实体。</p>
+<p class="calibre2">智能代理是一个自主实体，它可以根据与环境的交互进行学习和改进。一个智能代理能够使用它的观察来分析它自己的行为和性能。</p>
+<p class="calibre2">在本书中，我们将开发智能代理来解决顺序决策问题，这些问题可以在(松散的)马尔可夫环境中使用一系列(独立的)决策/行动来解决，其中至少在某些环境条件下，奖励信号形式的反馈是可用的(通过感知)。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Learning environments</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="LTSU0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">学习环境</h1>
+                
+            
+            
+                
+<p class="calibre2">学习环境是系统的一个组成部分，在这里智能代理可以被训练来开发智能系统。学习环境定义了代理要完成的问题或任务。</p>
+<p class="calibre2">一个问题或任务的结果依赖于一系列的决策或行动，这就是顺序决策问题。以下是一些不同的学习环境:</p>
+<ul class="calibre10">
+<li class="calibre11">完全可观察与部分可观察</li>
+<li class="calibre11">确定性与随机性</li>
+<li class="calibre11">情节与顺序</li>
+<li class="calibre11">静态与动态</li>
+<li class="calibre11">离散与连续</li>
+<li class="calibre11">离散状态空间与连续状态空间</li>
+<li class="calibre11">离散动作空间与连续动作空间</li>
+</ul>
+<p class="calibre2">在本书中，我们将使用通过OpenAI Gym Python库实现的学习环境，因为它提供了一个简单的标准接口和环境实现，以及实现新的自定义环境的能力。</p>
+<p class="calibre2">在下面的小节中，我们将对OpenAI Gym toolkit有所了解。本节旨在让一个完全的新手熟悉OpenAI健身房工具包。不需要预先的知识或经验。我们将首先尝试对Gym toolkit有所了解，并浏览不同类别下可用的各种环境。然后我们将讨论你可能感兴趣的Gym特性，不管你感兴趣的应用领域是什么。然后，我们将简要讨论健身房工具包的价值主张以及如何利用它。在接下来的章节中，我们将在Gym toolkit的基础上构建几个很酷的智能代理。所以，这一章是所有这些的基础。在本章的最后，我们还将快速创建并可视化我们的第一个OpenAI健身房环境。激动吗？让我们直接开始吧。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>What is OpenAI Gym?</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="MSDG0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">什么是OpenAI健身房？</h1>
+                
+            
+            
+                
+<p class="calibre2">OpenAI Gym是一个开源工具包，它提供了一系列不同的任务，称为环境，并提供了一个用于开发和测试智能代理算法的通用接口。该工具包引入了一个标准的<strong class="calibre4">应用编程接口</strong> ( <strong class="calibre4"> API </strong>)，用于与为强化学习设计的环境进行交互。每个环境都有一个版本，这确保了与不断发展的算法和环境本身进行有意义的比较和可重复的结果。</p>
+<p class="calibre2">Gym toolkit通过其各种环境，为强化学习提供了一个情节设置，其中代理的经历被分解为一系列情节。在每一集里，主体的初始状态是从一个分布中随机抽取的，主体和环境之间的相互作用一直进行到环境达到终态。如果你不熟悉强化学习，不要担心。将在<a href="part0033.html#VF2I0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第二章</a>、<em class="calibre13">强化学习和深度强化学习</em>中向您介绍强化学习。</p>
+<p class="mce-root1">OpenAI Gym库中可用的一些基本环境如以下截图所示:</p>
+<div><img src="img/00005.jpeg" class="calibre18"/></div>
+<p>OpenAI健身房中可用的基本环境示例以及任务的简短描述</p>
+<p class="calibre2">在写这本书的时候，OpenAI Gym本身有大约797个环境，分布在不同的任务类别中。著名的Atari类别拥有大约116个(一半是屏幕输入，一半是RAM输入)环境的最大份额！工具包支持的任务/环境类别如下:</p>
+<ul class="calibre10">
+<li class="calibre11">算法的</li>
+<li class="calibre11">雅达利</li>
+<li class="calibre11">棋盘游戏</li>
+<li class="calibre11">Box2D</li>
+<li class="calibre11">经典控件</li>
+<li class="calibre11">厄运(非官方)</li>
+<li class="calibre11">《我的世界》(非官方)</li>
+<li class="calibre11">穆乔科</li>
+<li class="calibre11">足球</li>
+<li class="calibre11">玩具文本</li>
+<li class="calibre11">机器人技术(新增)</li>
+</ul>
+<p class="calibre2">下面给出了不同类别下可用的各种类型的环境(或任务),以及每个环境的简要描述。请记住，您可能需要在您的系统上安装一些额外的工具和软件包，以运行这些类别的环境。不要担心！在接下来的章节中，我们将详细介绍让任何环境启动并运行所需的每一个步骤。敬请期待！</p>
+<p class="calibre2">我们现在将详细了解前面提到的类别，如下所示:</p>
+<ul class="calibre19">
+<li class="calibre11"><strong class="calibre1">算法环境</strong>:它们提供需要代理执行计算的任务，比如多位数的加法，从输入序列中复制数据，反转序列，等等。</li>
+<li class="calibre11">雅达利环境(Atari environments):这些提供了几个经典雅达利主机游戏的接口。这些环境接口是在<strong xmlns:epub="http://www.idpf.org/2007/ops" class="calibre1">街机学习环境</strong> ( <strong xmlns:epub="http://www.idpf.org/2007/ops" class="calibre1"> ALE </strong>)之上的包装器。他们提供游戏的屏幕图像或RAM作为训练代理的输入。</li>
+<li class="calibre11">棋盘游戏:这一类别拥有在9 x 9和19 x 19棋盘上运行流行游戏围棋的环境。对于那些一直在关注谷歌DeepMind在围棋比赛中的最新突破的人来说，这可能非常有趣。DeepMind开发了一个名为AlphaGo的代理，它使用强化学习和其他学习和规划技术，包括蒙特卡罗树搜索，击败了世界上排名第一的人类围棋选手，包括范辉和李·塞多尔。DeepMind还发表了他们在AlphaGo Zero上的工作，AlphaGo Zero是从零开始训练的，不像最初的alpha go使用人类玩的样本游戏。AlphaGo Zero超越了最初AlphaGo的表现。后来AlphaZero发表了；这是一个自主系统，它通过自我游戏(没有任何人类监督的训练)学会了下棋、下围棋和下日本象棋，并达到了比以前开发的系统更高的性能水平。</li>
+<li class="calibre11"><strong class="calibre1"> Box2D </strong>:这是一个开源的物理引擎，用于模拟2D的刚体。健身房工具包有一些使用Box2D模拟器开发的连续控制任务:</li>
+</ul>
+<div><img src="img/00006.jpeg" class="calibre20"/></div>
+<p>使用Box2D模拟器构建的环境示例列表</p>
+<p class="calibre21">这些任务包括训练双足机器人行走，将月球着陆器导航到其着陆垫，以及训练赛车在赛道上行驶。激动人心！在本书中，我们将使用强化学习来训练一个AI智能体，让它在赛道上自主驾驶赛车！敬请关注。</p>
+<ul class="calibre10">
+<li class="calibre11"><strong class="calibre1">经典控制</strong>:这个类别有许多为其开发的任务，在过去的强化学习文献中被广泛使用。这些任务为强化学习算法的早期开发和基准测试奠定了基础。例如，在经典控制类别下可用的环境之一是山地汽车环境，其由Andrew Moore(CMU计算机科学学院院长，匹兹堡创始人)在1990年的博士论文中首次提出。这种环境有时仍被用作强化学习算法的测试平台。在本章快结束的时候，你将从这个类别中创建你的第一个OpenAI健身房环境！</li>
+<li class="calibre11"><strong xmlns:epub="http://www.idpf.org/2007/ops" class="calibre1"> Doom </strong>:这个类别为流行的第一人称射击游戏Doom提供了一个环境界面。它是一个非官方的、社区创建的健身房环境类别，基于ViZDoom，这是一个基于Doom的人工智能研究平台，提供了一个易于使用的API，适用于从原始视觉输入开发智能代理。它使得人工智能机器人的开发成为可能，这些机器人可以仅使用屏幕缓冲区玩几轮具有挑战性的末日游戏！如果你玩过这个游戏，你就会知道在游戏中不失去生命的情况下通过一些回合是多么惊险和困难！虽然这不是一个像一些新的第一人称射击游戏那样有很酷的图形的游戏，但除了视觉效果，这是一个很棒的游戏。最近，机器学习中的几项研究，特别是深度强化学习，已经利用了ViZDoom平台，并开发了新的算法来解决游戏中遇到的目标导向导航问题。您可以访问ViZDoom的研究网页(【http://vizdoom.cs.put.edu.pl/research】T2)获取使用该平台的研究列表。下面的屏幕截图列出了一些任务，这些任务在健身房中作为单独的环境提供，用于培训您的代理:</li>
+</ul>
+<div><img src="img/00007.jpeg" class="calibre22"/></div>
+<p>厄运环境中可用的任务或回合列表</p>
+<ul class="calibre10">
+<li class="calibre11"><strong class="calibre1"> MineCraft </strong>:这是另一个伟大的平台。游戏人工智能开发者尤其可能对这种环境非常感兴趣。MineCraft是爱好者中很受欢迎的视频游戏。MineCraft Gym环境是使用微软的Malmo项目构建的，这是一个基于《我的世界》构建的人工智能实验和研究平台。在下面的截图中显示了OpenAI Gym中作为环境可用的一些任务。这些环境为开发解决方案以应对这一独特环境带来的挑战性新问题提供了灵感:</li>
+</ul>
+<div><img src="img/00008.jpeg" class="calibre23"/></div>
+<p>OpenAI健身房提供的MineCraft环境</p>
+<ul class="calibre10">
+<li class="calibre11">你对机器人感兴趣吗？你是否梦想开发出能够让人形机器人行走和奔跑的算法，或者像波士顿动力公司的Atlas机器人那样做后空翻？你可以！您将能够在OpenAI Gym MuJoCo环境中应用您将在本书中学习的强化学习方法来开发您自己的算法，该算法可以使2D机器人行走、奔跑、游泳或跳跃，或者使3D多足机器人行走或奔跑！在下面的截图中，MuJoCo环境下提供了一些很酷的、真实世界的、类似机器人的环境:</li>
+</ul>
+<div><img src="img/00009.jpeg" class="calibre24"/></div>
+<ul class="calibre10">
+<li class="calibre11"><strong class="calibre1">足球</strong>:这是一个适合训练多个可以合作的智能体的环境。通过Gym toolkit获得的足球环境具有连续的状态和动作空间。想知道那是什么意思吗？当我们在下一章讨论强化学习时，你会学到所有的东西。现在，这里有一个简单的解释:连续的状态和动作空间意味着代理可以采取的动作和代理接收的输入都是连续的值。这意味着它们可以取任何实数值，比如说，<em class="calibre25"> 0 </em>和<em class="calibre25"> 1 </em> ( <em class="calibre25"> 0.5 </em>，<em class="calibre25"> 0.005 </em>，等等)，而不是局限于几个离散的值集合，比如{1，2，3}。有三种环境。普通足球环境初始化球场上的单个对手，并为进球给予奖励<em class="calibre25"> +1 </em>，否则给予奖励<em class="calibre25"> 0 </em>。为了让代理人得分，它需要学习识别球，接近球，并将球踢向球门。听起来够简单吗？但是对于一台计算机来说，自己算出来真的很难，特别是当它得分时，你说的都是<em class="calibre25"> +1 </em>，而在其他任何情况下都是<em class="calibre25"> 0 </em>。它没有任何其他线索！你可以开发代理人，让他们自己学习所有关于足球的知识，并学习使用你将在本书中学到的方法得分。</li>
+</ul>
+<ul class="calibre10">
+<li class="calibre11"><strong class="calibre1">玩具文字</strong> : <strong class="calibre1"> </strong> OpenAI Gym在这个分类下也有一些简单的基于文字的环境。其中包括一些经典问题，如冰湖，目标是找到一条安全的路径穿过冰和水瓷砖的网格。它被归类在玩具文本之下，因为它使用了一种更简单的环境表示——主要是通过文本。</li>
+</ul>
+<p class="calibre2">至此，你对OpenAI Gym toolkit提供的所有不同类别和类型的环境有了一个很好的了解。值得注意的是，OpenAI健身房工具包的发布伴随着OpenAI健身房网站(<a href="http://gym.openai.com" class="calibre9">gym.openai.com</a>)，该网站为提交评估的每个算法维护了一个记分牌。它展示了用户提交的算法的性能，一些提交的内容还附有详细的解释和源代码。不幸的是，OpenAI决定撤销对评估网站的支持。该服务于2017年9月下线。</p>
+<p class="calibre2">现在你已经很好的了解了OpenAI Gym中各种类型的环境，以及每种类型为你提供了什么。接下来，我们将看看OpenAI Gym的关键特性，这些特性使其成为当今智能代理开发中许多进步不可或缺的组件，特别是那些使用强化学习或深度强化学习的组件。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Understanding the features of OpenAI Gym</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="NQU20-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">了解开放式健身房的特点</h1>
+                
+            
+            
+                
+<p class="calibre2">在这一节中，我们将看看使OpenAI Gym toolkit在强化学习社区中非常受欢迎并导致它被广泛采用的关键特性。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Simple environment interface</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="OPEK0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">简单环境界面</h1>
+                
+            
+            
+                
+<p class="calibre2">OpenAI Gym为环境提供了一个简单而通用的Python接口。具体来说，它将一个动作作为输入，并根据每个步骤的输出，提供<em class="calibre13">观察、奖励、完成</em>和可选的<kbd class="calibre12">info</kbd>对象。如果这对你来说还不是很有意义，不要担心。我们将以更详细的方式再次回顾界面，以帮助您理解。这一段只是给你一个界面的概述，让你清楚它有多简单。这为用户提供了极大的灵活性，因为他们可以基于他们喜欢的任何范例来设计和开发他们的代理算法，并且由于这种简单和方便的接口，他们不会被约束使用任何特定的范例。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Comparability and reproducibility</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="PNV60-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">可比性和再现性</h1>
+                
+            
+            
+                
+<p class="calibre2">我们直觉地认为，我们应该能够将一个代理或算法在特定任务中的性能与另一个代理或算法在相同任务中的性能进行比较。例如，如果一个代理在Atari的《太空入侵者》游戏中平均得分为<em class="calibre13">1000</em>，我们应该能够判断出这个代理在相同的训练时间内，比一个在《太空入侵者》游戏中平均得分为<em class="calibre13"> 5000 </em>的代理表现更差。但是如果游戏的评分系统稍微改变一下会怎么样呢？或者环境界面是否被修改以包括关于游戏状态的附加信息，这将为第二代理提供优势？这会使分数与分数的比较变得不公平，对吗？</p>
+<p class="calibre2">为了处理环境中的这种变化，OpenAI Gym对环境使用严格的版本控制。该工具包保证，如果环境有任何变化，它将伴随着不同的版本号。因此，如果Atari Space Invaders游戏环境的原始版本被命名为<kbd class="calibre12">SpaceInvaders-v0</kbd>，并且为了提供关于游戏状态的更多信息而对环境进行了一些更改，那么环境的名称将被更改为<kbd class="calibre12">SpaceInvaders-v1</kbd>。这个简单的版本控制系统确保我们总是在完全相同的环境设置下比较性能。这样，获得的结果具有可比性和可重复性。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Ability to monitor progress</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="QMFO0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">监控进度的能力</h1>
+                
+            
+            
+                
+<p class="calibre2">作为健身房工具包的一部分，所有可用的环境都配有监视器。该监视器记录模拟的每个时间步长和环境的每次重置。这意味着环境会自动跟踪我们的代理如何学习和适应每一步。您甚至可以将显示器配置为在您的代理学习游戏时自动录制游戏视频。多酷啊。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>What can you do with the OpenAI Gym toolkit?</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="RL0A0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">用OpenAI健身房工具包可以做什么？</h1>
+                
+            
+            
+                
+<p class="calibre2">Gym toolkit提供了一种标准化的方法来定义为解决问题而开发的环境的界面，这些问题可以使用强化学习来解决。如果你熟悉或听说过<strong class="calibre4"> ImageNet大规模视觉识别挑战赛</strong> ( <strong class="calibre4"> ILSVRC </strong>)，你可能会意识到一个标准的基准测试平台对加速研发的影响有多大。对于那些不熟悉ILSVRC的人，这里有一个简单的总结:这是一个竞赛，参赛团队评估他们为给定数据集开发的监督学习算法，并通过几个视觉识别任务竞争实现更高的准确性。这个通用平台，加上AlexNet推广的基于深度神经网络的算法的成功(<a href="https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf" class="calibre9">https://papers . nips . cc/paper/4824-imagenet-classification-with-deep-convolutionary-neural-networks . pdf</a>)，为我们目前所处的深度学习时代铺平了道路。</p>
+<p class="calibre2">以类似的方式，Gym toolkit提供了一个通用平台来对强化学习算法进行基准测试，并鼓励研究人员和工程师开发可以为几项具有挑战性的任务实现更高回报的算法。简而言之，Gym toolkit对于强化学习就像ILSVRC对于监督学习一样。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Creating your first OpenAI Gym environment</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="SJGS0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">创造你的第一个开放式健身环境</h1>
+                
+            
+            
+                
+<p class="calibre2">我们将在<a href="part0056.html#1LCVG0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第3章</a>、<em class="calibre13">OpenAI Gym和深度强化学习入门</em>中详细介绍设置open ai Gym依赖项和培训强化学习代理所需的其他工具的步骤。本节提供了一种在Linux和macOS上使用<kbd class="calibre12">virtualenv</kbd>快速入门OpenAI Gym Python API的方法，这样您就可以偷偷摸摸地进入健身房了！</p>
+<p class="calibre2">MacOS和Ubuntu Linux系统默认安装Python。您可以通过从终端窗口运行<kbd class="calibre12">python --version</kbd>来检查Python的安装版本。如果返回的<kbd class="calibre12">python</kbd>后面跟着一个版本号，那么您就可以继续下一步了！如果您得到一个错误，说没有找到Python命令，那么您必须安装Python。请参考本书<a href="part0056.html#1LCVG0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第三章</a>、<em class="calibre13">open ai健身房入门和深度强化学习</em>中的详细安装部分:</p>
+<ol class="calibre14">
+<li class="calibre11" value="1">安装<kbd class="calibre12">virtualenv</kbd>:</li>
+</ol>
+<pre class="calibre26"><strong class="calibre1">$pip install virtualenv</strong></pre>
+<p>如果您的系统上没有安装<strong class="calibre27"> pip </strong>，您可以通过键入<kbd class="calibre28">sudo easy_install pip</kbd>进行安装。</p>
+<ol start="2" class="calibre14">
+<li value="2" class="calibre11">使用virtualenv工具创建一个名为<kbd class="calibre12">openai-gym</kbd>的虚拟环境:</li>
+</ol>
+<pre class="calibre26"><strong class="calibre1"> $virtualenv openai-gym</strong></pre>
+<ol start="3" class="calibre14">
+<li value="3" class="calibre11">激活<kbd class="calibre12">openai-gym</kbd>虚拟环境:</li>
+</ol>
+<pre class="calibre26"><strong class="calibre1">$source openai-gym/bin/activate</strong></pre>
+<ol start="4" class="calibre14">
+<li value="4" class="calibre11">从上游安装健身房工具包的所有包:</li>
+</ol>
+<pre class="calibre26"><strong class="calibre1">$pip install -U gym</strong></pre>
+<p>如果您在运行<kbd class="calibre28">pip install</kbd>命令时得到权限被拒绝或失败的错误代码1，很可能是因为您试图将软件包安装到的目录(在本例中是<kbd class="calibre28">virtualenv</kbd>中的<kbd class="calibre28">openai-gym</kbd>目录)上的权限需要特殊/root权限。您可以运行<kbd class="calibre28">sudo -H pip install -U gym[all]</kbd>来解决这个问题，或者通过运行<kbd class="calibre28">sudo chmod -R o+rw ~/openai-gym</kbd>来更改对<kbd class="calibre28">openai-gym</kbd>目录的权限。</p>
+<ol start="5" class="calibre14">
+<li value="5" class="calibre11">测试以确保安装成功:</li>
+</ol>
+<pre class="calibre26"><strong class="calibre1">$python -c 'import gym; gym.make("CartPole-v0");'</strong></pre>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Creating and visualizing a new Gym environment</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="TI1E0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">创造和想象一个新的健身房环境</h1>
+                
+            
+            
+                
+<p class="calibre2">在短短的一两分钟内，您已经创建了一个OpenAI Gym环境的实例，可以开始使用了！</p>
+<p class="calibre2">让我们打开一个新的Python提示符<strong class="calibre4"> </strong>并导入<kbd class="calibre12">gym</kbd>模块:</p>
+<pre class="calibre17"><strong class="calibre1">&gt;&gt;import gym</strong></pre>
+<p class="calibre2">一旦导入了<kbd class="calibre12">gym</kbd>模块，我们就可以使用<kbd class="calibre12">gym.make</kbd>方法来创建我们的新环境，如下所示:</p>
+<pre class="calibre17">&gt;&gt;env = gym.make('CartPole-v0')<br class="title-page-name"/>&gt;&gt;env.reset()<br class="title-page-name"/>env.render()</pre>
+<p class="calibre2">这将弹出一个类似这样的窗口:</p>
+<div><img src="img/00010.jpeg" class="calibre29"/></div>
+<p class="calibre2">万岁！</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Summary</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="UGI00-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">摘要</h1>
+                
+            
+            
+                
+<p class="calibre2">恭喜你完成了第一章！希望你在创造自己的环境时玩得开心。在这一章中，你学习了OpenAI Gym是什么，它提供了什么特性，以及你可以用它做什么。你现在对开放式健身房有了很好的了解。在下一章，我们将复习强化学习的基础知识，给你一个良好的基础，这将帮助你在阅读本书的过程中构建你的智能代理。激动吗？进入下一章！</p>
+
+
+            
+
+            
+        
+    </body></html>
+</body></html>

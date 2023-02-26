@@ -1,0 +1,1837 @@
+<html><head/><body>
+
+
+
+
+
+	
+
+		<title>B18522_03</title>
+
+		
+
+	
+
+	
+
+		<div><h1 id="_idParaDest-61" class="chapter-number"><a id="_idTextAnchor062"/> 3</h1>
+
+			<h1 id="_idParaDest-62"><a id="_idTextAnchor063"/>开发强大的深度学习模型</h1>
+
+			<p>在本章中，我们将描述如何设计和训练一个<strong class="bold">深度学习</strong>(<strong class="bold">D1</strong>)模型。在前一章描述的笔记本环境中，数据科学家调查各种网络设计和模型训练设置，以生成给定任务的工作模型。本章的主要话题包括DL背后的理论以及如何使用最流行的DL框架训练一个模型:<strong class="bold"> PyTorch </strong>和<strong class="bold"> TensorFlow </strong> ( <strong class="bold"> TF </strong>)。在本章的最后，我们将分解<strong class="bold"> StyleGAN </strong>实现，一个流行的用于图像生成的DL模型，来解释如何使用我们在本章中介绍的组件来构建一个复杂的模型。</p>
+
+			<p>在本章中，我们将讨论以下主要话题:</p>
+
+			<ul>
+
+				<li>了解数字图书馆的基本理论</li>
+
+				<li>理解DL框架的组件</li>
+
+				<li>在PyTorch中实现和训练模型</li>
+
+				<li>在TF中实现和训练模型</li>
+
+				<li>分解一个复杂的、最先进的模型实现</li>
+
+			</ul>
+
+			<h1 id="_idParaDest-63"><a id="_idTextAnchor064"/>技术要求</h1>
+
+			<p>可以从以下GitHub链接下载本章的补充材料:<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter_3">https://GitHub . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 3</a>。</p>
+
+			<p>本章中的示例可以在任何安装了必要包的Python环境中执行。可以使用上一章介绍的样例环境:<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter_2/dockerfiles">https://github . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 2/docker files</a>。</p>
+
+			<h1 id="_idParaDest-64"><a id="_idTextAnchor065"/>梳理DL的基础理论</h1>
+
+			<p>正如<a href="B18522_01.xhtml#_idTextAnchor014"> <em class="italic">第一章</em></a><em class="italic">深度学习驱动项目的有效规划</em>中所简要描述的，DL是一种基于<strong class="bold">人工神经网络</strong> ( <strong class="bold"> ANNs </strong>)的<strong class="bold">机器学习</strong> ( <strong class="bold"> ML </strong>)技术。在这一部分，我们的<a id="_idIndexMarker199"/>目标是解释人工神经网络是如何工作的，而<a id="_idIndexMarker200"/>不会太深入数学。</p>
+
+			<h2 id="_idParaDest-65"><a id="_idTextAnchor066"/>DL是如何工作的？</h2>
+
+			<p>人工神经网络基本上是一组相互连接的神经元。如<em class="italic">图3.1 </em>所示，来自人工神经网络的神经元和来自我们大脑的神经元的行为方式相似。人工神经网络中的每个连接都包含一个可调的<a id="_idIndexMarker201"/>参数，称为<strong class="bold">权重</strong>。当从神经元A到神经元B有一个连接时，神经元A的输出乘以该连接的权重；加权值成为神经元b的输入。<strong class="bold"> Bias </strong>是神经元内另一个可调的<a id="_idIndexMarker203"/>参数；一个神经元将所有的输入相加，然后加上偏差。最后一个操作是激活函数，它将计算值映射到不同的范围。新范围中的值是神经元的输出，它根据连接传递给其他神经元。</p>
+
+			<p>在整个研究过程中，人们发现神经元群根据它们的组织捕捉不同的模式。一些强大的组织被标准化为<strong class="bold">层</strong>，并且<a id="_idIndexMarker204"/>已经成为人工神经网络的主要构件，在神经元之间复杂的相互作用之上提供了一个抽象层。</p>
+
+			<div><div><img src="img/B18522_03_01.jpg" alt="Figure 3.1 – A comparison of a biological neuron and a mathematical model of an ANN neuron&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.1–生物神经元和人工神经网络神经元数学模型的比较</p>
+
+			<p>如上图所述，DL中的运算基于数值。因此，网络的输入数据必须转换为数值。例如，<strong class="bold">红、绿、蓝</strong> ( <strong class="bold"> RGB </strong>)颜色<a id="_idIndexMarker205"/>代码是使用数值表示图像的标准方式。在文本数据的情况下，经常使用单词嵌入。类似地，网络的输出将是一组数值。这些值的解释可能<a id="_idIndexMarker206"/>因任务和定义而异。</p>
+
+			<h2 id="_idParaDest-66"><a id="_idTextAnchor067"/> DL模型训练</h2>
+
+			<p>总的来说，训练人工神经网络是一个寻找一组权重、偏差和激活函数的过程<a id="_idIndexMarker207"/>,使网络能够从数据中提取有意义的模式。现在，下一个问题如下:<em class="italic">我们如何找到正确的参数集？</em>许多研究人员试图用各种技术解决这个问题。在所有的试验中，发现的最有效的算法是一种叫做<strong class="bold">梯度下降</strong>的优化算法<a id="_idIndexMarker208"/>，这是一种寻找局部或全局最小值的迭代过程。</p>
+
+			<p>当训练一个DL模型时，我们需要定义一个函数，将预测和真实标签<a id="_idIndexMarker209"/>之间的差异量化为一个称为<strong class="bold">损失</strong>的数值。明确定义损失函数后，我们迭代生成中间预测，计算损失值，并朝着最小损失的方向更新模型参数。</p>
+
+			<p>考虑到优化的目标是找到最小的损失，模型参数需要根据<strong class="bold">列车组</strong>在坡度相反方向的样本进行更新(见<em class="italic">图3.2 </em>)。为了计算梯度，网络跟踪在<a id="_idIndexMarker210"/>预测过程中计算的中间值(<strong class="bold">正向传播</strong>)。然后，从最后一层开始，利用<a id="_idIndexMarker211"/>链规则(<strong class="bold">反向传播</strong>)计算每个参数的梯度。有趣的是，基于每次迭代中参数的更新方式，模型性能和训练时间会有很大的不同。不同的参数更新规则在优化器的概念中被捕获。DL中的主要任务之一是选择能够产生具有最佳性能的模型的优化器类型。</p>
+
+			<div><div><img src="img/B18522_03_02.jpg" alt="Figure 3.2 – With gradient descent, model parameters will be updated in the opposite direction of the gradient at every iteration&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.2–使用梯度下降，模型参数将在每次迭代中以梯度的相反方向更新</p>
+
+			<p>然而，这个过程有一个警告。如果模型被训练以实现特定训练集的最佳性能，则在看不见的数据上的性能可能会恶化。这就是<a id="_idIndexMarker212"/>所谓的<strong class="bold">过拟合</strong>；该模型专门针对它以前看到的数据进行训练，但无法对新数据做出正确的预测。另一方面，训练不足<a id="_idIndexMarker213"/>会导致<strong class="bold">不适合</strong>，这是一种模型无法捕捉训练集的基本模式的情况。为了防止这些问题，训练集的一部分被放在一边，用于在整个<a id="_idIndexMarker214"/>训练中评估被训练的模型:即<strong class="bold">验证集</strong>。总的来说，DL的训练包括基于训练<a id="_idIndexMarker215"/>集更新模型参数的过程，但是选择在验证集上表现最好的模型。最后一种类型的数据集，即<strong class="bold">测试集</strong>，代表了<a id="_idIndexMarker216"/>模型一旦被部署将与之交互的内容。在模型训练时，测试集可能可用，也可能不可用。测试集的目的是了解经过训练的模型在生产中的表现。为了进一步理解整体训练逻辑，我们可以看看<em class="italic">图3.3 </em>:</p>
+
+			<div><div><img src="img/B18522_03_03.jpg" alt="Figure 3.3 – The steps for training a DL model&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.3–训练DL模型的步骤</p>
+
+			<p>该图清楚地描述了迭代过程中的步骤以及每种类型的数据集在场景中扮演的角色。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.训练人工神经网络是一个寻找一组权重、偏差和激活函数的过程，使网络能够从数据中提取有意义的模式。</p>
+
+			<p class="callout">b.训练流中有三种类型的数据集。使用训练集更新模型参数，并选择在验证集上产生最佳性能的模型参数。测试集反映了经过训练的模型在部署时将与之交互的数据分布。</p>
+
+			<p>接下来，我们将看看设计用来帮助我们进行模型训练的DL框架。</p>
+
+			<h1 id="_idParaDest-67"><a id="_idTextAnchor068"/>DL框架的组件</h1>
+
+			<p>由于不管底层任务如何，模型训练的配置<a id="_idIndexMarker218"/>都遵循相同的过程，所以许多工程师和研究人员已经将通用的构建模块整合到框架中。大多数框架通过保持数据加载逻辑和模型定义独立于训练逻辑来简化DL模型开发。</p>
+
+			<h2 id="_idParaDest-68"><a id="_idTextAnchor069"/>数据加载逻辑</h2>
+
+			<p><strong class="bold">数据加载</strong>逻辑包括<a id="_idIndexMarker219"/>从在内存中加载原始数据到准备每个样本用于训练和评估的一切。在许多情况下，训练集、验证集和测试集的数据存储在不同的位置，因此它们中的每一个都需要不同的加载和准备逻辑。标准框架将这些逻辑与其他构建模块分开，以便可以使用不同的数据集以动态方式训练模型，而对模型侧的更改最小。此外，框架已经标准化了定义这些逻辑的方式，以提高可重用性和可读性。</p>
+
+			<h2 id="_idParaDest-69"><a id="_idTextAnchor070"/>模型定义</h2>
+
+			<p>另一个构建块，<strong class="bold">模型定义</strong>，指的是ANN架构本身和相应的前向和后向<a id="_idIndexMarker220"/>传播逻辑。尽管使用算术运算构建模型是一种选择，但标准的<a id="_idIndexMarker221"/>框架提供了通用的层定义，用户可以将它们放在一起构建一个复杂的模型。因此，用户负责实例化必要的网络组件，连接组件，并定义模型应该如何进行训练和推理。</p>
+
+			<p>在接下来的<em class="italic">在PyTorch中实现并训练一个模型</em>和<em class="italic">在TF中实现并训练一个模型</em>两节中，我们将分别介绍如何在PyTorch和TF中实例化流行层:密集(线性)、池化、规范化、下降、卷积和递归层。</p>
+
+			<h2 id="_idParaDest-70"><a id="_idTextAnchor071"/>模型训练逻辑</h2>
+
+			<p>最后，我们需要组合两个<a id="_idIndexMarker222"/>组件，并定义训练逻辑的细节。这个包装器组件必须清楚地描述模型训练的基本部分，例如损失函数、学习率、优化器、时期、迭代和批量大小。</p>
+
+			<p>损失函数可以根据学习任务的类型分为两大类:<strong class="bold">分类损失</strong>和<strong class="bold">回归损失</strong>。这两个类别的主要区别来自于<a id="_idIndexMarker223"/>输出格式；分类任务的输出是<a id="_idIndexMarker224"/>分类的，而回归任务的输出是连续值。出于不同的损失，我们将主要讨论回归损失的<strong class="bold">均方误差</strong> ( <strong class="bold">均方误差</strong> ) <strong class="bold">损失</strong>和<strong class="bold">平均绝对误差</strong> ( <strong class="bold"> MAE </strong> ) <strong class="bold">损失</strong>，以及<strong class="bold">交叉熵</strong> ( <strong class="bold"> CE </strong> ) <strong class="bold">损失</strong>和<strong class="bold">二元交叉熵</strong> ( <strong class="bold"/></p>
+
+			<p><strong class="bold">学习率</strong> ( <strong class="bold"> LR </strong>)定义了梯度下降在局部最小值方向上的步长<a id="_idIndexMarker225"/>。选择<a id="_idIndexMarker226"/>LR速率将有助于该过程更快地收敛，但是如果它太高或太低，则不能保证收敛(参见<em class="italic">图3.4 </em>):</p>
+
+			<div><div><img src="img/B18522_03_04.jpg" alt="Figure 3.4 – The impact of the LR within gradient descent&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.4–坡度下降中LR的影响</p>
+
+			<p>说到<strong class="bold">优化器</strong>，我们重点关注两个主要的优化器:<strong class="bold">随机梯度下降</strong> ( <strong class="bold"> SGD </strong>)，一个具有固定LR的基本优化器<a id="_idIndexMarker227"/>，以及<strong class="bold">自适应矩估计</strong> ( <strong class="bold"> Adam </strong>)，一个基于自适应LR的优化器，在大多数<a id="_idIndexMarker228"/>场景中工作得最好。如果你有兴趣了解不同的优化器和它们背后的数学原理，我们推荐你阅读Choi等人(<a href="https://arxiv.org/pdf/1910.05446.pdf">https://arxiv.org/pdf/1910.05446.pdf</a>)的一篇调查论文。</p>
+
+			<p>单个<strong class="bold">时期</strong>表示<a id="_idIndexMarker229"/>训练集中的每个样本已经通过网络向前和向后传递，并且网络参数已经更新。在许多情况下，训练集中的样本数量太大，无法在一个队列中通过，因此<a id="_idIndexMarker230"/>被分成<strong class="bold">小批</strong>。<strong class="bold">批量</strong>是指单个小批量的样品数量。假设一组小批量构成了整个数据集，迭代次数指的是模型需要与每个样本交互的梯度更新事件的次数(更准确地说，是小批量的次数)。例如，如果小批量有100个样本，总共有1000个样本，则需要10次迭代来完成一个时期。选择正确的历元数不是一件容易的事情。它根据LR <a id="_idIndexMarker232"/>和批量等其他训练参数而变化。因此，它通常需要一个试错过程，记住欠拟合和过拟合。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.模型训练的组件可以分为数据加载逻辑、模型定义和模型训练逻辑。</p>
+
+			<p class="callout">b.数据加载逻辑包括从在存储器中加载原始数据到准备每个样本用于训练和评估的所有内容。</p>
+
+			<p class="callout">c.模型定义是指网络架构及其前向和后向传播逻辑的定义。</p>
+
+			<p class="callout">d.模型训练逻辑通过将数据加载逻辑和模型定义放在一起来处理实际的训练。</p>
+
+			<p>在各种可用的框架中，我们将讨论本书中最流行的两个:<strong class="bold"> TF </strong>和<strong class="bold"> PyTorch </strong>。运行在TF上的Keras 在今天已经很流行，而PyTorch以其异常的灵活性和简单性被大量用于研究。</p>
+
+			<h1 id="_idParaDest-71"><a id="_idTextAnchor072"/>在PyTorch中实现和训练模型</h1>
+
+			<p>PyTorch是Torch的Python <a id="_idIndexMarker233"/>库，Lua的ML包。PyTorch的主要特点包括<strong class="bold">图形处理单元</strong> - ( <strong class="bold"> GPU </strong> -)加速矩阵计算和自动微分，用于构建和训练神经网络。PyTorch随着代码的执行动态地创建计算图，由于它的灵活性和易用性，以及它在模型训练中的效率，它越来越受欢迎。</p>
+
+			<p>建立在PyTorch之上的<strong class="bold">py torch Lightning</strong>(<strong class="bold">PL</strong>)提供了另一个抽象层，隐藏了许多样板代码。新框架通过将PyTorch的研究相关组件与工程相关的<a id="_idIndexMarker234"/>组件分离，更加关注研究人员。PL代码通常比PyTorch代码更具可扩展性，也更易于阅读。甚至<a id="_idIndexMarker235"/>尽管本书中的代码片段更强调PL，PyTorch和PL共享许多功能，所以大多数组件是可互换的。如果你愿意深入了解<a id="_idIndexMarker236"/>细节，我们推荐官方网站，<a href="https://pytorch.org">https://pytorch.org</a>。</p>
+
+			<p>市场上还有PyTorch的其他扩展:</p>
+
+			<ul>
+
+				<li>斯科奇(<a href="https://github.com/skorch-dev/skorch">https://github.com/skorch-dev/skorch</a>)——一个scikit-learn兼容的神经网络库<a id="_idIndexMarker237"/>，它包装了PyTorch</li>
+
+				<li>catalyst(<a href="https://github.com/catalyst-team/catalyst">https://github.com/catalyst-team/catalyst</a>)–一个PyTorch框架，专门用于<a id="_idIndexMarker238"/>再现性、快速实验和代码库重用</li>
+
+				<li>fastai(<a href="https://github.com/fastai/fastai">https://github.com/fastai/fastai</a>)——一个不仅为从业者标准化高级组件，也为研究人员交付低级组件的库</li>
+
+				<li>py torch Ignite(<a href="https://pytorch.org/ignite/">https://pytorch.org/ignite/</a>)——一个旨在帮助培训和评估从业者的库</li>
+
+			</ul>
+
+			<p>我们不会在本书中介绍这些库，但是如果您是这个领域的新手，您可能会发现它们很有帮助。</p>
+
+			<p>现在，让我们深入PyTorch和PL。</p>
+
+			<h2 id="_idParaDest-72"><a id="_idTextAnchor073"/> PyTorch数据加载逻辑</h2>
+
+			<p>为了可读性和模块化，PyTorch <a id="_idIndexMarker241"/>和PL利用一个名为<code>Dataset</code>的类进行数据管理，另一个名为<code>DataLoader</code>的类用于迭代访问样本。</p>
+
+			<p>当<code>Dataset</code>类处理获取单个样本时，模型训练成批接受输入数据，并需要重新洗牌以减少模型过度拟合。<code>DataLoader</code>通过提供简单的API为用户抽象出这种复杂性。此外，它在幕后利用Python的多处理特性来加速数据检索。</p>
+
+			<p><code>Dataset</code>的子类必须<a id="_idIndexMarker242"/>实现的两个核心功能是<code>__len__</code>和<code>__getitem__</code>。如下面的类大纲所述，<code>__len__</code>应该返回样本总数，而<code>__getitem__</code>应该返回给定索引的样本:</p>
+
+			<pre class="source-code">
+
+from torch.utils.data import Dataset
+
+class SampleDataset(Dataset):
+
+   def __len__(self):
+
+      """return number of samples"""
+
+   def __getitem__(self, index):
+
+      """loads and returns a sample from the dataset at the given index"""</pre>
+
+			<p>PL的<code>LightningDataModule</code>封装了处理数据所需的所有步骤。关键组件包括下载和清理数据、预处理每个样本以及将每种类型的数据集包装在<code>DataLoader</code>内。下面的代码片段描述了如何创建一个<code>LightningDataModule</code>类。该类具有用于下载和预处理数据的<code>prepare_data</code>函数，以及用于实例化每种类型数据集的<code>DataLoader</code>、<code>train_dataloader</code>、<code>val_dataloader</code>和<code>test_dataloader</code>的三个函数:</p>
+
+			<pre class="source-code">
+
+from torch.utils.data import DataLoader
+
+from pytorch_lightning.core.lightning import LightningDataModule
+
+class SampleDataModule(LightningDataModule):
+
+   def prepare_data(self):
+
+       """download and preprocess the data; triggered only on single GPU"""
+
+       ...
+
+   def setup(self):
+
+       """define necessary components for data loading on each GPU"""
+
+       ...
+
+   def train_dataloader(self):
+
+       """define train data loader"""
+
+       return data.DataLoader(
+
+         self.train_dataset, 
+
+           batch_size=self.batch_size, 
+
+           shuffle=True)
+
+   def val_dataloader(self):
+
+       """define validation data loader"""
+
+       return data.DataLoader(
+
+          self.validation_dataset, 
+
+          batch_size=self.batch_size, 
+
+          shuffle=False)             
+
+   def test_dataloader(self):
+
+       """define test data loader"""
+
+       return data.DataLoader(
+
+          self.test_dataset, 
+
+          batch_size=self.batch_size, 
+
+          shuffle=False)</pre>
+
+			<p><code>LightningDataModule</code>的官方<a id="_idIndexMarker243"/>文档可以在<a href="https://pytorch-lightning.readthedocs.io/en/latest/data/datamodule.html">https://py torch-lightning . readthe docs . io/en/stable/extensions/data modules . html</a>找到。</p>
+
+			<h2 id="_idParaDest-73"><a id="_idTextAnchor074"/> PyTorch模型定义</h2>
+
+			<p><a id="_idIndexMarker244"/> PL的主要优势来自<code>LightningModule</code>，它将复杂的PyTorch代码简化为六个部分:</p>
+
+			<ul>
+
+				<li>计算(<code>__init__</code>)</li>
+
+				<li>列车回路(<code>training_step</code>)</li>
+
+				<li>验证循环(<code>validation_step</code>)</li>
+
+				<li>测试循环(<code>test_step</code>)</li>
+
+				<li>预测循环(<code>predict_step</code>)</li>
+
+				<li>优化器和LR调度器(<code>configure_optimizers</code>)</li>
+
+			</ul>
+
+			<p>模型架构是计算部分的一部分。必要的层在<code>__init__</code>方法中实例化，计算逻辑在<code>forward</code>方法中定义。在下面的代码片段中，三个线性层在<code>__init__</code>方法中注册到<code>LightningModule</code>模块，它们之间的关系在<code>forward</code>方法中定义:</p>
+
+			<pre class="source-code">
+
+from pytorch_lightning import LightningModule
+
+from torch import nn
+
+class SampleModel(LightningModule):
+
+   def __init__(self):
+
+      """instantiate necessary layers"""
+
+       self.individual_layer_1 = nn.Linear(..., ...)
+
+       self.individual_layer_2 = nn.Linear(..., ...)
+
+       self.individual_layer_3 = nn.Linear(..., ...)
+
+   def forward(self, input):
+
+       """define forward propagation logic"""
+
+       output_1 = self.individual_layer_1(input)
+
+       output_2 = self.individual_layer_2(output_1)
+
+       final_output = self.individual_layer_3(output_2)
+
+       return final_output</pre>
+
+			<p>定义网络的另一种方式是使用<code>torch.nn.Sequential</code>，如下面的代码所示。使用<a id="_idIndexMarker245"/>这个模块，一组层可以被组合在一起，并且输出链接被自动实现:</p>
+
+			<pre class="source-code">
+
+class SampleModel(LightningModule):
+
+   def __init__(self):
+
+       """instantiate necessary layers"""
+
+       self.multiple_layers = nn.Sequential(
+
+       nn.Linear(    ,    ),
+
+       nn.Linear(    ,    ),
+
+       nn.Linear(    ,    ))
+
+   def forward(self, input):
+
+       """define forward propagation logic"""
+
+       final_output = self.multiple_layers(input)
+
+       return final_output</pre>
+
+			<p>在前面的代码中，三个线性图层被组合在一起，并存储为一个实例变量<code>self.multiple_layers</code>。在<code>forward</code>方法中，我们简单地用输入张量触发<code>self.multiple_layers</code>，让张量逐个通过每一层。</p>
+
+			<p>以下部分旨在介绍流行的层实现。</p>
+
+			<h3>PyTorch DL层</h3>
+
+			<p>DL框架的一个主要好处来自各种层定义:梯度计算逻辑已经是层定义的一部分，因此您可以专注于为您的任务找到最佳的<a id="_idIndexMarker246"/>模型架构。在这一部分，我们将<a id="_idIndexMarker247"/>了解项目中常用的层。如果您感兴趣的层没有包含在本节中，请参考官方文档(<a href="https://pytorch.org/docs/stable/nn.html">https://pytorch.org/docs/stable/nn.html</a>)。</p>
+
+			<h4>PyTorch致密(线性)层</h4>
+
+			<p>第一种类型的<a id="_idIndexMarker248"/>层是<code>torch.nn.Linear</code>。顾名思义，它对输入张量应用线性变换。该函数的两个主要参数是<code>in_features</code>和<code>out_features</code>，它们分别定义了输入和输出张量维度:</p>
+
+			<pre class="source-code">
+
+linear_layer = torch.nn.Linear(
+
+              in_features,   # Size of each input sample
+
+              out_features,  # Size of each output sample)
+
+# N = batch size
+
+# * = any number of additional dimensions
+
+input_tensor = torch.rand(N, *, in_features)
+
+output_tensor = linear_layer(input_tensor) # (N, *, out_features)</pre>
+
+			<p>来自<code>torch.nn</code>模块的层实现已经定义了<code>forward</code>函数，因此您可以像使用函数一样使用层变量来触发向前传播。</p>
+
+			<h4>PyTorch池层</h4>
+
+			<p>池层通常<a id="_idIndexMarker249"/>用于缩减张量采样。最流行的两种类型是最大池和平均池。这些层的关键参数是<code>kernel_size</code>和<code>stride</code>，它们定义了窗口的大小以及它如何为每个池操作移动。</p>
+
+			<p>最大池图层通过为每个窗口选择最大值对输入张量进行缩减采样:</p>
+
+			<pre class="source-code">
+
+# 2D max pooling
+
+max_pool_layer = torch.nn.MaxPool2d(
+
+   kernel_size,         # the size of the window to take a max over
+
+   stride=None,         # the stride of the window. Default value is kernel_size
+
+   padding=0,           # implicit zero padding to be added on both sides
+
+   dilation=1,          # a parameter that controls the stride of elements in the window)
+
+# N = batch size
+
+# C = number of channels
+
+# H = height of input planes in pixels
+
+# W = width of input planes in pixels
+
+input_tensor = torch.rand(N, C, H, W)
+
+output_tensor = max_pool_layer(input_tensor) # (N, C, H_out, W_out) </pre>
+
+			<p>另一方面，<a id="_idIndexMarker250"/>平均池层通过计算每个窗口的平均值对输入张量进行下采样:</p>
+
+			<pre class="source-code">
+
+# 2D average pooling
+
+avg_pool_layer = torch.nn.AvgPool2d(
+
+   kernel_size,         # the size of the window to take a max over
+
+   stride=None,         # the stride of the window. Default value is kernel_size
+
+   padding=0,           # implicit zero padding to be added on both sides)
+
+# N = batch size
+
+# C = number of channels
+
+# H = height of input planes in pixels
+
+# W = width of input planes in pixels
+
+input_tensor = torch.rand(N, C, H, W)
+
+output_tensor = avg_pool_layer(input_tensor) # (N, C, H_out, W_out)</pre>
+
+			<p>你可以在<a href="https://pytorch.org/docs/stable/nn.html#pooling-layers">https://pytorch.org/docs/stable/nn.html#pooling-layers</a>找到<a id="_idIndexMarker251"/>其他类型的汇集层。</p>
+
+			<h4>PyTorch标准化图层</h4>
+
+			<p>通常用于数据<a id="_idIndexMarker252"/>处理，归一化的目的是在不扭曲分布的情况下，将数字数据缩放到一个共同的比例。在DL的情况下，归一化层用于训练具有更大数值稳定性的网络(<a href="https://pytorch.org/docs/stable/nn.html#normalization-layers">https://py torch . org/docs/stable/nn . html # normalization-layers</a>)。</p>
+
+			<p>最受欢迎的规范化图层是批处理规范化图层，它以小批处理的形式缩放一组值。在下面的代码片段中，我们引入了<code>torch.nn.BatchNorm2d</code>，这是一个批量标准化层，它是为具有额外通道维度的小型批量2D张量设计的:</p>
+
+			<pre class="source-code">
+
+batch_norm_layer = torch.nn.BatchNorm2d(
+
+   num_features,      # Number of channels in the input image
+
+   eps=1e-05,         # A value added to the denominator for numerical stability
+
+   momentum=0.1,      # The value used for the running_mean and running_var computation
+
+   affine=True,       # a boolean value that when set to True, this module has learnable affine parameters)
+
+# N = batch size
+
+# C = number of channels
+
+# H = height of input planes in pixels
+
+# W = width of input planes in pixels
+
+input_tensor = torch.rand(N, C, H, W)
+
+output_tensor = batch_norm_layer(input_tensor) # same shape as input (N, C, H, W)</pre>
+
+			<p>在各种参数中，<a id="_idIndexMarker253"/>最主要的是<code>num_features</code>，它表示通道的数量。该层的输入是4D张量，其中每个索引指示批量大小(<code>N</code>)、通道数量(<code>C</code>)、图像高度(<code>H</code>)和图像宽度(<code>W</code>)。</p>
+
+			<h4>PyTorch脱落层</h4>
+
+			<p>dropout层通过将一组值随机设置为零来帮助<a id="_idIndexMarker254"/>模型提取一般特征。此操作可防止模型过度适应训练集。话虽如此，PyTorch的dropout层实现主要对单个参数<code>p</code>进行操作，该参数控制元素归零的概率:</p>
+
+			<pre class="source-code">
+
+drop_out_layer = torch.nn.Dropout2d(
+
+   p=0.5,  # probability of an element to be zeroed )
+
+# N = batch size
+
+# C = number of channels
+
+# H = height of input planes in pixels
+
+# W = width of input planes in pixels
+
+input_tensor = torch.rand(N, C, H, W)
+
+output_tensor = drop_out_layer(input_tensor) # same shape as input (N, C, H, W)</pre>
+
+			<p>在这个例子中，我们删除了50%的元素(<code>p=0.5</code>)。类似于批量标准化层，<code>torch.nn.Dropout2d</code>的<a id="_idIndexMarker255"/>输入张量的大小为<code>N, C, H, W</code>。</p>
+
+			<h4>PyTorch卷积层</h4>
+
+			<p>专门用于图像处理的<a id="_idIndexMarker256"/>卷积层设计用于使用滑动窗口技术对输入张量应用卷积运算。在图像处理的情况下，中间数据表示为大小为<code>N, C, H, W</code>的4D张量，<code>torch.nn.Conv2d</code>是标准选择:</p>
+
+			<pre class="source-code">
+
+conv_layer = torch.nn.Conv2d(
+
+   in_channels,         # Number of channels in the input image
+
+   out_channels,        # Number of channels produced by the convolution
+
+   kernel_size,         # Size of the convolving kernel
+
+   stride=1,            # Stride of the convolution
+
+   padding=0,           # Padding added to all four sides of the input.
+
+   dilation=1,          # Spacing between kernel elements)
+
+# N = batch size
+
+# C = number of channels
+
+# H = height of input planes in pixels
+
+# W = width of input planes in pixels
+
+input_tensor = torch.rand(N, C_in, H, W)
+
+output_tensor = conv_layer(input_tensor) # (N, C_out, H_out, W_out)</pre>
+
+			<p><code>torch.nn.Conv2d</code>类的第一个参数<code>in_channels</code>表示输入张量<a id="_idIndexMarker257"/>中的通道数量。第二个参数<code>out_channels</code>表示输出张量中通道的数量，等于滤波器的数量。其他参数<code>kernel_size</code>、<code>stride</code>和<code>padding</code>决定如何对该层执行卷积操作。</p>
+
+			<h4>PyTorch循环层</h4>
+
+			<p>循环层<a id="_idIndexMarker258"/>是为顺序数据设计的。在各种类型的递归层中，我们将在本节中介绍<code>torch.nn.RNN</code>，它将多层<a id="_idIndexMarker259"/> Elman <strong class="bold">递归神经网络</strong> ( <strong class="bold"> RNN </strong>)应用于给定序列(<a href="https://onlinelibrary.wiley.com/doi/abs/10.1207/s15516709cog1402_1">https://online library . Wiley . com/doi/ABS/10.1207/s 15516709 cog 1402 _ 1</a>)。如果你想尝试不同的轮回层，可以参考官方文档:<a href="https://pytorch.org/docs/stable/nn.html#recurrent-layers">https://pytorch.org/docs/stable/nn.html#recurrent-layers</a>:</p>
+
+			<pre class="source-code">
+
+# multi-layer Elman RNN with tanh or ReLU non-linearity to an input sequence.
+
+rnn = torch.nn.RNN(
+
+   input_size,                     # The number of expected features in the input x
+
+   hidden_size,                    # The number of features in the hidden state h
+
+   num_layers = 1,                 # Number of recurrent layers
+
+   nonlinearity="tanh",            # The non-linearity to use. Can be either 'tanh' or 'relu'
+
+   bias=True,                      # If False, then the layer does not use bias weights
+
+   batch_first=False,              # If True, then the input and output tensors are provided
+
+                                                                                                 # as (batch, seq, feature) instead of (seq, batch, feature)
+
+             dropout=0,                                                # If non-zero, introduces a Dropout layer on the outputs of each RNN layer
+
+                                                                                                 # except the last layer, with dropout probability equal to dropout
+
+   bidirectional=False,             # If True, becomes a bidirectional RNN)
+
+# N = batch size
+
+# L = sequence length
+
+# D = 2 if bidirectionally, otherwise 1
+
+# H_in = input_size
+
+# H_out = hidden_size
+
+rnn = nn.RNN(H_in, H_out, num_layers)
+
+input_tensor = torch.randn(L, N, H_in)
+
+# H_0 = tensor containing the initial hidden state for each element in the batch
+
+h0 = torch.randn(D * num_layers, N, H_out)
+
+# output_tensor (L, N, D * H_out)
+
+# hn (D * num_layers, N, H_out) 
+
+output_tensor, hn = rnn(input_tensor, h0)</pre>
+
+			<p><code>torch.nn.RNN</code>的三个关键参数是<code>input_size</code>、<code>hidden_size</code>和<code>num_layers</code>。它们分别指输入张量中的预期特征数、<a id="_idIndexMarker260"/>隐藏状态中的特征数以及要使用的递归层数。要触发前向传播，需要传递两个东西，一个输入张量和一个包含初始隐藏状态的张量。</p>
+
+			<h2 id="_idParaDest-74"><a id="_idTextAnchor075"/> PyTorch模特培训</h2>
+
+			<p>在本节中，我们<a id="_idIndexMarker261"/>将描述PL的模型培训组件。如下面的代码块所示，<code>LightningModule</code>是您必须为该组件继承的基类。它的<code>configure_optimizers</code>函数用于定义用于训练的优化器。然后，在<code>training_step</code>功能<a id="_idTextAnchor076"/>中定义实际的训练逻辑:</p>
+
+			<pre class="source-code">
+
+class SampleModel(LightningModule):
+
+   def configure_optimizers(self):
+
+      """Define optimizer to use"""
+
+      return torch.optim.Adam(self.parameters(), lr=0.02)
+
+   def training_step(self, batch, batch_idx):
+
+      """Define single training iteration"""
+
+      x, y = batch
+
+      y_hat = self(x)
+
+      loss = F.cross_entropy(y_hat, y)
+
+      return loss</pre>
+
+			<p>验证、预测和测试循环具有相似的功能定义；将一批数据输入网络，以计算必要的预测和损失值。收集到的数据也可以使用PL的内置日志系统进行存储和显示。详情请参考官方文档(<a href="https://pytorch-lightning.readthedocs.io/en/latest/common/lightning_module.html">https://py torch-lightning . readthe docs . io/en/latest/common/lightning _ module . html</a>):</p>
+
+			<pre class="source-code">
+
+   def validation_step(self, batch, batch_idx):
+
+      """Define single validation iteration"""
+
+      loss, acc = self._shared_eval_step(batch, batch_idx)
+
+      metrics = {"val_acc": acc, "val_loss": loss}
+
+      self.log_dict(metrics)
+
+      return metrics
+
+   def test_step(self, batch, batch_idx):
+
+      """Define single test iteration"""
+
+      loss, acc = self._shared_eval_step(batch, batch_idx)
+
+      metrics = {"test_acc": acc, "test_loss": loss}
+
+      self.log_dict(metrics)
+
+      return metrics
+
+   def _shared_eval_step(self, batch, batch_idx):
+
+      x, y = batch
+
+      outputs = self(x)
+
+      loss = self.criterion(outputs, targets)
+
+      acc = accuracy(outputs.round(), targets.int())
+
+      return loss, acc
+
+   def predict_step(self, batch, batch_idx, dataloader_idx=0):
+
+      """Compute prediction for the given batch of data"""
+
+      x, y = batch
+
+      y_hat = self(x)
+
+      return y_hat</pre>
+
+			<p>在<a id="_idIndexMarker262"/>罩下，<code>LightningModule</code>执行以下一组简化PyTorch代码:</p>
+
+			<pre class="source-code">
+
+model.train()
+
+torch.set_grad_enabled(True)
+
+outs = []
+
+for batch_idx, batch in enumerate(train_dataloader):
+
+   loss = training_step(batch, batch_idx)
+
+   outs.append(loss.detach())
+
+   # clear gradients
+
+   optimizer.zero_grad()
+
+   # backward
+
+   loss.backward()
+
+   # update parameters
+
+   optimizer.step()
+
+   if validate_at_some_point
+
+      model.eval()
+
+      for val_batch_idx, val_batch in enumerate(val_dataloader):
+
+         val_out = model.validation_step(val_batch, val_batch_idx)
+
+         model.train()</pre>
+
+			<p>将<code>LightningDataModule</code>和<code>LightningModule</code>放在一起，对测试集的训练和推理可以简单地实现如下:</p>
+
+			<pre class="source-code">
+
+from pytorch_lightning import Trainer
+
+data_module = SampleDataModule()
+
+trainer = Trainer(max_epochs=num_epochs)
+
+model = SampleModel()
+
+trainer.fit(model, data_module)
+
+result = trainer.test()</pre>
+
+			<p>到目前为止，您应该已经了解了使用PyTorch建立模型训练需要实现什么。接下来的两个部分专门讨论损失函数和优化器，这是模型训练的两个主要组成部分。</p>
+
+			<h3>PyTorch损失函数</h3>
+
+			<p>首先，我们将查看PL中可用的不同损失函数。本节中的损失函数可在<code>torch.nn</code>模块中找到。</p>
+
+			<h4>PyTorch MSE / L2损失函数</h4>
+
+			<p>MSE损失函数可使用<code>torch.nn.MSELoss</code>创建<a id="_idIndexMarker265"/>。然而，这仅计算平方误差分量，并利用<code>reduction</code>参数提供变量。当<code>reduction</code>为<code>None</code>时，计算值原样返回。另一方面，当设置为<code>sum</code>时，输出将被累加。要获得准确的MSE损失，必须将减少量设置为<code>mean</code>，如以下代码片段所示:</p>
+
+			<pre class="source-code">
+
+loss = nn.MSELoss(reduction='mean')
+
+input = torch.randn(3, 5, requires_grad=True)
+
+target = torch.randn(3, 5)
+
+output = loss(input, target)</pre>
+
+			<p>接下来，我们来看看MAE loss。</p>
+
+			<h4>皮托奇·梅/ L1损失函数</h4>
+
+			<p>MAE损失函数可以使用<code>torch.nn.L1Loss</code>实例化<a id="_idIndexMarker266"/>。类似于MSE损失函数，该函数基于<code>reduction</code>参数计算不同的值:</p>
+
+			<pre class="source-code">
+
+Loss = nn.L1Loss(reduction='mean')
+
+input = torch.randn(3, 5, requires_grad=True)
+
+target = torch.randn(3, 5)
+
+output = loss(input, target)</pre>
+
+			<p>我们现在可以继续讨论CE损失，它用于多类分类任务。</p>
+
+			<h4>PyTorch CE损失函数</h4>
+
+			<p><code>torch.nn.CrossEntropyLoss</code>在为具有多个类别的分类问题训练模型时非常有用。如下面代码片段中的<a id="_idIndexMarker267"/>所示，这个类也有一个用于计算不同变量的<code>reduction</code>参数。您可以使用<code>weight</code>和<code>ignore_index</code>参数进一步改变损失的行为，这两个参数分别对每个类别进行加权并忽略特定的指数:</p>
+
+			<pre class="source-code">
+
+loss = nn.CrossEntropyLoss(reduction="mean")
+
+input = torch.randn(3, 5, requires_grad=True)
+
+target = torch.empty(3, dtype=torch.long).random_(5)
+
+output = loss(input, target)</pre>
+
+			<p>以类似的方式，我们可以定义BCE损失。</p>
+
+			<h4>PyTorch BCE损失函数</h4>
+
+			<p>与CE损耗类似，PyTorch <a id="_idIndexMarker268"/>将BCE损耗定义为具有相同参数集的<code>torch.nn.BCELoss</code>。然而，PyTorch利用了<code>torch.nn.BCELoss</code>和sigmoid运算之间的密切关系，提供了<code>torch.nn.BCEWithLogitsLoss</code>，它通过在一个<a id="_idIndexMarker269"/>类中结合<code>softmax</code>运算和BCE损失计算来实现更高的数值稳定性。下面的代码片段显示了用法:</p>
+
+			<pre class="source-code">
+
+loss = torch.nn.BCEWithLogitsLoss(reduction="mean")
+
+input = torch.randn(3, requires_grad=True)
+
+target = torch.empty(3).random_(2)
+
+output = loss(input, target)</pre>
+
+			<p>最后，让我们来看看PyTorch中自定义损失的构造。</p>
+
+			<h4>PyTorch自定义损失函数</h4>
+
+			<p>定义自定义损失<a id="_idIndexMarker270"/>函数非常简单。用PyTorch运算定义的任何函数都可以用作损失函数。</p>
+
+			<p>以下是使用<code>mean</code>操作符实现<code>torch.nn.MSELoss</code>的示例:</p>
+
+			<pre class="source-code">
+
+def custom_mse_loss(output, target):
+
+   loss = torch.mean((output - target)**2)
+
+   return loss
+
+input = torch.randn(3, 5, requires_grad=True)
+
+target = torch.randn(3, 5)
+
+output = custom_mse_loss(input, target)</pre>
+
+			<p>现在，我们将转向PyTorch中优化器的概述。</p>
+
+			<h3>PyTorch优化器</h3>
+
+			<p>如<em class="italic"> PyTorch模型训练</em>部分所述，<code>LightningModule</code>的<code>configure_optimizers</code>函数指定<a id="_idIndexMarker271"/>训练的优化器。在PyTorch中，预定义的<a id="_idIndexMarker272"/>优化器可以在<code>torch.optim</code>模块中找到。优化器实例化需要模型参数，这些参数可以通过调用模型上的<code>parameters</code>函数来获得，如下面几节所示。</p>
+
+			<h4>PyTorch SGD优化器</h4>
+
+			<p>下面的代码片段实例化了一个LR为<code>0.1</code>的SGD优化器，并演示了如何实现模型参数更新的单个步骤。</p>
+
+			<p><code>torch.optim.SGD</code>内置动量和加速度支持，进一步提高训练性能。可以使用<code>momentum</code>和<code>nesterov</code>参数进行配置:</p>
+
+			<pre class="source-code">
+
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1 momentum=0.9, nesterov=True)</pre>
+
+			<h4>PyTorch Adam优化器</h4>
+
+			<p>类似地，可以使用<code>torch.optim.Adam</code>实例化Adam <a id="_idIndexMarker274"/>优化器，如下面的代码行所示:</p>
+
+			<pre class="source-code">
+
+optimizer = torch.optim.Adam(model.parameters(), lr=0.1) </pre>
+
+			<p>如果你对PyTorch中的优化器是如何工作的感到好奇，我们推荐阅读官方文档:<a href="https://pytorch.org/docs/stable/optim.html">https://pytorch.org/docs/stable/optim.html</a>。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.PyTorch是一个流行的DL框架，提供GPU加速的矩阵计算和自动微分。PyTorch因其灵活性、易用性以及在模型训练中的效率而越来越受欢迎。</p>
+
+			<p class="callout">b.为了可读性和模块化，PyTorch使用了一个名为<code>Dataset</code>的类进行数据管理，另一个名为<code>DataLoader</code>的类用于迭代访问样本。</p>
+
+			<p class="callout">c.PL的主要优势来自于<code>LightningModule</code>，它将复杂的PyTorch代码结构简化为六个部分:计算、训练循环、验证循环、测试循环、预测循环，以及优化器和LR调度器</p>
+
+			<p class="callout">d.PyTorch和PL共享各种图层和损失函数的<code>torch.nn</code>模块。预定义的优化器可以在<code>torch.optim</code>模块中找到。</p>
+
+			<p>在下面的<a id="_idIndexMarker275"/>部分，我们将看看另一个DL框架，TF。用TF设置的训练与用PyTorch设置的训练非常相似。</p>
+
+			<h1 id="_idParaDest-75"><a id="_idTextAnchor078"/>在TF中实现和训练模型</h1>
+
+			<p>PyTorch面向研究项目，而TF更强调行业用例。虽然PyTorch、Torch Serve和<a id="_idIndexMarker277"/> Torch Mobile的部署特性仍处于试验阶段，但TF、TF Serve和TF Lite的部署特性是稳定的，正在积极使用中。TF的第一个版本是由Google Brain团队在2011年推出的，他们一直在不断更新TF，使其更加灵活、用户友好和高效。TF和PyTorch的主要区别最初要大得多，因为TF的第一个版本使用静态图。然而，这种情况在版本2中有所改变，因为它引入了急切执行，模仿PyTorch中的动态图。TF版本2经常和<strong class="bold"> Keras </strong>一起使用，一个ANN的接口(<a href="https://keras.io/getting_started/"> https://keras.io </a>)。Keras <a id="_idIndexMarker278"/>允许用户快速开发DL模型并运行实验。在接下来的部分中，我们将带您了解TF的关键组件。</p>
+
+			<h2 id="_idParaDest-76"><a id="_idTextAnchor079"/> TF数据加载逻辑</h2>
+
+			<p>可以通过多种方式为TF <a id="_idIndexMarker279"/>型号加载数据。您应该了解的一个关键数据操作模块是<code>tf.data</code>，它帮助您构建高效的输入管道。<code>tf.data</code>提供了<code>tf.data.Dataset</code>和<code>tf.data.TFRecordDataset</code>类，用于加载不同数据格式的数据集。此外，还有<code>tensorflow_datasets</code> ( <code>tfds</code>)模块(<a href="https://www.tensorflow.org/datasets/api_docs/python/tfds">【https://www.tensorflow.org/datasets/api_docs/python/tfds】</a>)和<code>tensorflow_addons</code>模块(<a href="https://www.tensorflow.org/addons"/>)在很多情况下进一步简化了数据加载过程。还值得一提的是TF I/O包(<a href="https://www.tensorflow.org/io/overview">https://www.tensorflow.org/io/overview</a>)，它扩展了标准TF文件系统交互的能力。</p>
+
+			<p>不管您将使用哪个包，您都应该考虑创建一个<code>DataLoader</code>类。在本课程中，您将明确定义如何加载目标数据，以及如何在培训前对其进行预处理。以下代码片段是加载逻辑的示例实现:</p>
+
+			<pre class="source-code">
+
+import tensorflow_datasets as tfds
+
+class DataLoader: 
+
+   """ DataLoader class"""
+
+   @staticmethod 
+
+   def load_data(config): 
+
+      return tfds.load(config.data_url)</pre>
+
+			<p>在前面的例子中，我们<a id="_idIndexMarker280"/>使用<code>tfds</code>从外部URL ( <code>config.data_url</code>)加载数据。更多关于<code>tfds.load</code>的信息可以在线查询:<a href="https://www.tensorflow.org/datasets/api_docs/python/tfds/load">https://www . tensor flow . org/datasets/API _ docs/python/tfds/load</a>。</p>
+
+			<p>数据有多种格式。因此，使用<code>tf.data</code>模块提供的功能将其预处理成TF模型可以使用的格式是很重要的。那么，让我们看看如何使用这个包来读取常见格式的数据:</p>
+
+			<ul>
+
+				<li>首先，<code>tfrecord</code>中的数据，一种为存储二进制数据序列而设计的格式，可以如下读取:<pre>import tensorflow as tf  dataset = tf.data.TFRecordDataset(list_of_files)</pre></li>
+
+				<li>我们可以使用<code>tf.data.Dataset.from_tensor_slices</code>函数从NumPy数组创建一个dataset对象，如下所示:<pre>dataset = tf.data.Dataset.from_tensor_slices(numpy_array)</pre></li>
+
+				<li>使用相同的<code>tf.data.Dataset.from_tensor_slices</code>功能:<pre>dataset = tf.data.Dataset.from_tensor_slices((df_features.values, df_target.values))</pre>也可以将Pandas数据帧作为数据集加载</li>
+
+				<li>另一个选择是<a id="_idIndexMarker281"/>使用Python生成器。下面是一个简单的例子，它强调了如何使用生成器来输入成对的图像和标签:<pre>def data_generator(images, labels):    def fetch_examples():         i = 0         while True:            example = (images[i], labels[i])            i += 1            i %= len(labels)            yield example         return fetch_examples training_dataset = tf.data.Dataset.from_generator(    data_generator(images, labels),    output_types=(tf.float32, tf.int32),     output_shapes=(tf.TensorShape(features_shape), tf.TensorShape(labels_shape)))</pre></li>
+
+			</ul>
+
+			<p>如最后一段代码所示，<code>tf.data.Dataset</code>为我们提供了内置的数据加载功能，比如批处理、重复和混排。这些选项是不言自明的:批处理创建特定大小的小批，重复允许我们多次迭代数据集，而混排将每个时期的数据条目混合在一起。</p>
+
+			<p>在结束本节之前，我们想提一下用Keras实现的模型可以直接使用NumPy数组和Pandas数据帧。</p>
+
+			<h2 id="_idParaDest-77"><a id="_idTextAnchor080"/> TF模型定义</h2>
+
+			<p>类似于PyTorch和<a id="_idIndexMarker282"/> PL处理模型定义的方式，TF提供了多种定义网络架构的方式。首先，我们将看一下<code>Keras.Sequential</code>，它将一组层链接起来以构建一个网络。该类为您处理链接，因此您不需要显式定义层之间的链接:</p>
+
+			<pre class="source-code">
+
+import tensorflow as tf
+
+from tensorflow import keras
+
+from tensorflow.keras import layers
+
+input_shape = 50
+
+model = keras.Sequential(
+
+   [
+
+      keras.Input(shape=input_shape),
+
+      layers.Dense(128, activation="relu", name="layer1"),
+
+      layers.Dense(64, activation="relu", name="layer2"),
+
+      layers.Dense(1, activation="sigmoid", name="layer3"),
+
+   ])</pre>
+
+			<p>在前面的示例中，我们正在创建一个模型，该模型由一个输入层、两个密集层和一个生成单个神经元作为输出的输出层组成。这是一个简单的模型，可用于二元分类。</p>
+
+			<p>如果模型定义更复杂，并且不能以顺序方式构建，另一个选择是使用<code>keras.Model</code>类，如下面的代码片段所示:</p>
+
+			<pre class="source-code">
+
+num_classes = 5 
+
+input_1 = layers.Input(50)
+
+input_2 = layers.Input(10)
+
+x_1 = layers.Dense(128, activation="relu", name="layer1x")(input_1)
+
+x_1 = layers.Dense(64, activation="relu", name="layer1_2x")(x_1)
+
+x_2 = layers.Dense(128, activation="relu", name="layer2x")(input_2)
+
+x_2 = layers.Dense(64, activation="relu", name="layer2_1x")(x_2)
+
+x = layers.concatenate([x_1, x_2], name="concatenate")
+
+out = layers.Dense(num_classes, activation="softmax", name="output")(x)
+
+model = keras.Model((input_1,input_2), out)</pre>
+
+			<p>在本例中，我们有两个具有不同计算集合的输入。两条路径在最后一个连接层中合并，该层将连接的张量传输到具有五个神经元的最终密集<a id="_idIndexMarker283"/>层。鉴于最后一层使用<code>softmax</code>激活，该模型可用于多类分类。</p>
+
+			<p>如下所示，第三个选项是创建一个继承<code>keras.Model</code>的类。此选项为您提供了最大的灵活性，因为它允许您自定义模型和培训流程的每个部分:</p>
+
+			<pre class="source-code">
+
+class SimpleANN(keras.Model):
+
+   def __init__(self):
+
+      super().__init__()
+
+      self.dense_1 = layers.Dense(128, activation="relu", name="layer1")
+
+      self.dense_2 = layers.Dense(64, activation="relu", name="layer2")
+
+      self.out = layers.Dense(1, activation="sigmoid", name="output")
+
+   def call(self, inputs):
+
+      x = self.dense_1(inputs)
+
+      x = self.dense_3(x)
+
+      return self.out(x)
+
+model = SimpleANN()</pre>
+
+			<p><code>SimpleANN</code>，来自前面的代码，继承了<code>Keras.Model</code>。在<code>__init__</code>功能中，我们需要使用<code>tf.keras.layers</code>模块或基本TF操作来定义网络架构。正向传播逻辑是在<code>call</code>方法中定义的，就像PyTorch有<code>forward</code>方法一样。</p>
+
+			<p>当模型被定义为一个不同的类时，你可以将额外的功能链接到这个类。在下面的例子中，添加了<code>build_graph</code>方法来返回一个<code>keras.Model</code>实例，因此，例如，您可以使用<code>summary</code>函数将网络架构可视化为一个更简单的表示:</p>
+
+			<pre class="source-code">
+
+class SimpleANN(keras.Model):
+
+   def __init__(self):
+
+   ...
+
+   def call(self, inputs):
+
+   ...
+
+   def build_graph(self, raw_shape):
+
+      x = tf.keras.layers.Input(shape=raw_shape)
+
+      return keras.Model(inputs=[x], outputs=self.call(x))</pre>
+
+			<p>现在，我们来看看TF是如何通过Keras提供一套层实现的。</p>
+
+			<h3>TF DL层</h3>
+
+			<p>正如前面的<a id="_idIndexMarker285"/>部分提到的，<code>tf.keras.layers</code>模块<a id="_idIndexMarker286"/>提供了一组层实现，您可以使用它们来构建一个TF模型。在这一节中，我们将讨论我们在<em class="italic">在PyTorch </em>中实现和训练模型一节中描述的同一组层。可在<a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers">https://www.tensorflow.org/api_docs/python/tf/keras/layers</a>找到本模块可用层的完整列表。</p>
+
+			<h4>TF密集(线性)层</h4>
+
+			<p>第一个是<code>tf.keras.layers.Dense</code>，它<a id="_idIndexMarker287"/>执行线性变换:</p>
+
+			<pre class="source-code">
+
+tf.keras.layers.Dense(units, activation=None, use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, **kwargs)</pre>
+
+			<p><code>units</code>参数定义了密集层中神经元的数量(输出的维度)。如果没有定义<code>activation</code>参数，层的输出将被原样返回。如以下代码所示，我们也可以在层定义之外应用<code>Activation</code>操作:</p>
+
+			<pre class="source-code">
+
+X = layers.Dense(128, name="layer2")(input)
+
+x = tf.keras.layers.Activation('relu')(x)</pre>
+
+			<p>在某些情况下，您需要构建一个自定义层。以下示例演示了如何通过继承<code>tensorflow.keras.layers.Layer</code>类使用基本TF操作创建密集层:</p>
+
+			<pre class="source-code">
+
+import tensorflow as tf
+
+from tensorflow.keras.layers import Layer
+
+class CustomDenseLayer(Layer):
+
+   def __init__(self, units=32):
+
+      super(SimpleDense, self).__init__()
+
+      self.units = units
+
+   def build(self, input_shape):
+
+      w_init = tf.random_normal_initializer()
+
+      self.w = tf.Variable(name="kernel", initial_value=w_init(shape=(input_shape[-1], self.units),
+
+      dtype='float32'),trainable=True)
+
+      b_init = tf.zeros_initializer()
+
+      self.b = tf.Variable(name="bias",initial_value=b_init(shape=(self.units,), dtype='float32'),trainable=True)
+
+   def call(self, inputs):
+
+      return tf.matmul(inputs, self.w) + self.b</pre>
+
+			<p>在<code>CustomDenseLayer</code>类的<code>__init__</code>函数中，我们定义了输出的维度(<code>units</code>)。然后，在<code>build</code>方法中实例化层的状态；我们<a id="_idIndexMarker288"/>创建并初始化层的权重和偏差。最后一个方法<code>call</code>，定义了计算本身。对于密集图层，它包括将输入乘以权重并添加偏差。</p>
+
+			<h4>TF池层</h4>
+
+			<p><code>tf.keras.layers</code>为一维时态数据、二维或三维空间数据提供不同种类的池图层:平均、最大、全局平均和全局最大池<a id="_idIndexMarker289"/>图层。在本节中，我们将向您展示二维最大池层和平均池层:</p>
+
+			<pre class="source-code">
+
+tf.keras.layers.MaxPool2D(
+
+   pool_size=(2, 2), strides=None, padding='valid', data_format=None,
+
+   kwargs)
+
+tf.keras.layers.AveragePooling2D(
+
+   pool_size=(2, 2), strides=None, padding='valid', data_format=None,
+
+   kwargs)</pre>
+
+			<p>这两层都接受<code>pool_size</code>，它定义了窗口的大小。<code>strides</code>参数用于定义窗口在整个汇集操作中的移动方式。</p>
+
+			<h4>TF标准化层</h4>
+
+			<p>在下面的例子中，我们<a id="_idIndexMarker290"/>展示了一个用于批量标准化的图层，<code>tf.keras.layers.BatchNormalization</code>:</p>
+
+			<pre class="source-code">
+
+tf.keras.layers.BatchNormalization(
+
+   axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
+
+   beta_initializer='zeros', gamma_initializer='ones',
+
+   moving_mean_initializer='zeros',
+
+   moving_variance_initializer='ones', beta_regularizer=None,
+
+   gamma_regularizer=None, beta_constraint=None, gamma_constraint=None, **kwargs)</pre>
+
+			<p>该层的输出<a id="_idIndexMarker291"/>将具有接近<code>0</code>的平均值和接近<code>1</code>的标准偏差。关于每个参数的详细信息可以在<a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/BatchNormalization">https://www . tensor flow . org/API _ docs/python/TF/keras/layers/batch normalization</a>找到。</p>
+
+			<h4>TF辍学层</h4>
+
+			<p><code>Tf.keras.layers.Dropout</code>层应用dropout，一种将<a id="_idIndexMarker292"/>选择的值随机设置为零的正则化方法:</p>
+
+			<pre class="source-code">
+
+tf.keras.layers.Dropout(rate, noise_shape=None, seed=None, **kwargs)</pre>
+
+			<p>在前面的层实例化中，<code>rate</code>参数，一个在<code>0</code>和<code>1</code>之间的浮点值，决定了将被丢弃的输入单元的分数。</p>
+
+			<h4>TF卷积层</h4>
+
+			<p><code>tf.keras.layers</code>提供了<a id="_idIndexMarker293"/>卷积层、<code>tf.keras.layers.Conv1D</code>、<code>tf.keras.layers.Conv2D</code>、<code> tf.keras.layers.Conv3D</code>的各种实现，以及相应的转置卷积层(反卷积层)、<code>tf.keras.layers.Conv1DTranspose</code>、<code>tf.keras.layers.Conv2DTranspose</code>和<code> tf.keras.layers.Conv3DTranspose</code>。</p>
+
+			<p>以下代码片段描述了二维卷积层的实例化:</p>
+
+			<pre class="source-code">
+
+tf.keras.layers.Conv2D(
+
+   filters, kernel_size, strides=(1, 1), padding='valid',
+
+   data_format=None, dilation_rate=(1, 1), groups=1,
+
+   activation=None, use_bias=True,
+
+   kernel_initializer='glorot_uniform',
+
+   bias_initializer='zeros', kernel_regularizer=None,
+
+   bias_regularizer=None, activity_regularizer=None,
+
+   kernel_constraint=None, bias_constraint=None, **kwargs)</pre>
+
+			<p><a id="_idIndexMarker294"/>前一层定义中的主要参数是<code>filters</code>和<code>kernel_size</code>。<code>filters</code>参数定义输出的维度，而<code>kernel_size</code>参数定义二维卷积窗口的大小。其他参数请看<a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/Conv2D">https://www . tensor flow . org/API _ docs/python/TF/keras/layers/Conv2D</a>。</p>
+
+			<h4>TF循环层</h4>
+
+			<p>以下<a id="_idIndexMarker295"/>递归层列表在Keras中实现:<code>LSTM</code>层、<code>GRU</code>层、<code>SimpleRNN</code>层、<code>TimeDistributed</code>层、<code>Bidirectional</code>层、<code>ConvLSTM2D</code>层、<code>Base RNN</code>层。</p>
+
+			<p>在下面的代码片段中，我们演示了如何实例化<code>Bidirectional</code>和<code>LSTM</code>层:</p>
+
+			<pre class="source-code">
+
+model = Sequential()
+
+model.add(Bidirectional(LSTM(10, return_sequences=True), input_shape=(5, 10)))
+
+model.add(Bidirectional(LSTM(10)))
+
+model.add(Dense(5))
+
+model.add(Activation('softmax'))</pre>
+
+			<p>在前面的例子中，<code>LSTM</code>层被<code>Bidirectional</code>包装器修改，以向隐藏层的两个副本提供初始序列和反向序列。这两层的输出合并为最终输出。默认情况下，输出被连接，但是<code>merge_mode</code>参数允许我们选择不同的合并选项。输出空间的维度由第一个参数定义。要在每个时间步长访问每个输入的隐藏状态，可以启用<code>return_sequences</code>。更多详情请看<a href="https://www.tensorflow.org/api_docs/python/tf/keras/layers/LSTM">https://www . tensor flow . org/API _ docs/python/TF/keras/layers/LSTM</a>。</p>
+
+			<h2 id="_idParaDest-78"><a id="_idTextAnchor081"/> TF模型训练</h2>
+
+			<p>对于Keras模型，用优化器和损失函数调用<code>compile</code>函数后，只需在模型上调用<code>fit</code>函数，就可以实现模型<a id="_idIndexMarker296"/>训练。<code>fit</code>函数使用所提供的数据集为给定数量的时期训练模型。</p>
+
+			<p>以下代码片段描述了<code>fit</code>函数的参数:</p>
+
+			<pre class="source-code">
+
+model.fit(
+
+   x=None, y=None, batch_size=None, epochs=1,
+
+   verbose='auto', callbacks=None, validation_split=0.0,
+
+   validation_data=None, shuffle=True,
+
+   class_weight=None, sample_weight=None, 
+
+   initial_epoch=0, steps_per_epoch=None,
+
+   validation_steps=None, validation_batch_size=None,
+
+   validation_freq=1, max_queue_size=10, workers=1,
+
+   use_multiprocessing=False)</pre>
+
+			<p><code>x</code>和<code>y</code>代表输入张量和标签。它们可以以各种格式提供:NumPy数组、TF张量、TF数据集、生成器或<code>tf.keras.utils.experimental.DatasetCreator</code>。除了<code>fit</code>，Keras模型还有一个<code>train_on_batch</code>函数，只对单批数据执行渐变更新。</p>
+
+			<p>虽然TF版本1要求为训练循环编译计算图，但TF版本2允许我们在没有任何编译的情况下定义训练逻辑，就像PyTorch一样。典型的训练循环如下所示:</p>
+
+			<pre class="source-code">
+
+Optimizer = tf.keras.optimizers.Adam()
+
+loss_fn = tf.keras.losses.CategoricalCrossentropy()
+
+train_acc_metric = tf.keras.metrics.CategoricalAccuracy()
+
+for epoch in range(epochs):
+
+   for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
+
+       with tf.GradientTape() as tape:
+
+          logits = model(x_batch_train, training=True)
+
+          loss_value = loss_fn(y_batch_train, logits)
+
+       grads = tape.gradient(loss_value, model.trainable_weights)
+
+       optimizer.apply_gradients(zip(grads, model.trainable_weights))
+
+       train_acc_metric.update_state(y, logits)</pre>
+
+			<p>在前面的代码<a id="_idIndexMarker297"/>片段中，外循环遍历所有的历元，内循环遍历所有的训练集。正向传播和损耗计算在<code>GradientTape</code>的范围内，记录每批自动微分的操作。在该范围之外，优化器使用计算的梯度来更新权重。在前面的示例中，TF函数立即执行操作，而不是像在急切执行中那样将操作添加到计算图中。我们想提一下，如果您使用的是TF版本1，那么您将需要使用<code>@tf.function</code> decorator，其中计算图的显式构造是必要的。</p>
+
+			<p>接下来，我们将看看TF中的损失函数。</p>
+
+			<h3>TF损失函数</h3>
+
+			<p>在TF中，需要在编译模型时指定<a id="_idIndexMarker298"/>损失函数。虽然<a id="_idIndexMarker299"/>你可以从头开始构建一个定制的损失函数，但是你可以通过<code>tf.keras.losses</code>模块(<a href="https://www.tensorflow.org/api_docs/python/tf/keras/losses">https://www.tensorflow.org/api_docs/python/tf/keras/losses</a>)使用Keras提供的预定义损失函数。以下示例演示了如何使用Keras中的损失函数来编译模型:</p>
+
+			<pre class="source-code">
+
+model.compile(loss=tf.keras.losses.BinaryFocalCrossentropy(gamma=2.0, from_logits=True), ...)</pre>
+
+			<p>此外，您可以将字符串别名传递给loss参数，如下面的代码片段所示:</p>
+
+			<pre class="source-code">
+
+model.compile(loss='sparse_categorical_crossentropy', ...)</pre>
+
+			<p>在本节中，我们将解释如何在TF中实例化<em class="italic"> PyTorch损失函数</em>一节中描述的损失函数。</p>
+
+			<h4>TF均方误差/ L2损失函数</h4>
+
+			<p>MSE / L2损失函数<a id="_idIndexMarker300"/>可以定义如下(<a href="https://www.tensorflow.org/api_docs/python/tf/keras/losses/MeanSquaredError">https://www . tensor flow . org/API _ docs/python/TF/keras/loss/meansquaderror</a>):</p>
+
+			<pre class="source-code">
+
+mse = tf.keras.losses.MeanSquaredError()</pre>
+
+			<p>这是最常用的<a id="_idIndexMarker301"/>回归损失函数——它计算标签和预测之间的平方差的<code>mean</code>值。默认设置将计算MSE。然而，与PyTorch实现类似，我们可以提供一个<code>reduction</code>参数来改变该行为。例如，如果您想应用<code>sum</code>运算而不是均值运算，您可以在损失函数中添加<code>reduction=tf.keras.losses.Reduction.SUM</code>。假设PyTorch中的<code>torch.nn.MSELoss</code>原样返回平方差，您可以通过将<code>reduction=tf.keras.losses.Reduction.NONE</code>传递给构造函数来获得TF中的相同损失。</p>
+
+			<p>接下来，我们将看看MAE损失。</p>
+
+			<h4>TF梅/ L1损失函数</h4>
+
+			<p><code>tf.keras.losses.MeanAbsoluteError</code>是Keras中MAE loss的函数(<a href="https://www.tensorflow.org/api_docs/python/tf/keras/losses/MeanAbsoluteError">https://www . tensor flow . org/API _ docs/python/TF/Keras/loss/meanasoluteerror</a>):</p>
+
+			<pre class="source-code">
+
+mae = tf.keras.losses.MeanAbsoluteError()</pre>
+
+			<p>顾名思义，这个<a id="_idIndexMarker302"/>损失计算真实值和预测值之间的绝对差值的平均值。它还有一个<code>reduction</code>参数，使用方式与<code>tf.keras.losses.MeanSquaredError</code>相同。</p>
+
+			<p>现在，我们来看一看损耗分类，即CE损耗。</p>
+
+			<h4>TF CE损失函数</h4>
+
+			<p>CE loss计算两个概率分布之间的<a id="_idIndexMarker303"/>差。Keras提供了<code>tf.keras.losses.CategoricalCrossentropy</code>类，用于分类多个类(<a href="https://www.tensorflow.org/api_docs/python/tf/keras/losses/CategoricalCrossentropy">https://www . tensor flow . org/API _ docs/python/TF/keras/loss/CategoricalCrossentropy</a>)。以下代码片段显示了实例化:</p>
+
+			<pre class="source-code">
+
+cce = tf.keras.losses.CategoricalCrossentropy()</pre>
+
+			<p>在Keras的情况下，标签需要被格式化为一个热矢量。例如，当目标类是五个类中的第一个时，应该是<code>[1, 0, 0, 0, 0]</code>。</p>
+
+			<p>还存在为二进制分类设计的CE损失，BCE损失。</p>
+
+			<h4>TF BCE损失函数</h4>
+
+			<p>在二进制<a id="_idIndexMarker304"/>分类的情况下，标签为<code>0</code>或<code>1</code>。专门为二元分类设计的损失函数BCE loss可以定义如下(<a href="https://www.tensorflow.org/api_docs/python/tf/keras/losses/BinaryFocalCrossentropy">https://www . tensor flow . org/API _ docs/python/TF/keras/loss/BinaryFocalCrossentropy</a>):</p>
+
+			<pre class="source-code">
+
+loss = tf.keras.losses.BinaryFocalCrossentropy(from_logits=True)</pre>
+
+			<p>这个损耗的关键参数是<code>from_logits</code>。当该标志设置为<code>False</code>时，我们必须提供概率，即<code>0</code>和<code>1</code>之间的连续值。当设置为<code>True</code>时，我们需要提供logits，即<code>-infinity</code>和<code>+infinity</code>之间的值。</p>
+
+			<p>最后，让我们看看如何在TF中定义自定义损失。</p>
+
+			<h4>TF自定义损失函数</h4>
+
+			<p>为了构建一个定制的损失函数，我们<a id="_idIndexMarker305"/>需要创建一个将预测和标签作为参数并执行所需计算的函数。虽然TF语法只需要这两个参数，但是我们也可以通过将函数包装到另一个返回损失的函数中来添加一些额外的参数。以下示例演示了如何将Huber Loss创建为自定义损失函数:</p>
+
+			<pre class="source-code">
+
+def custom_huber_loss(threshold=1.0):
+
+   def huber_fn(y_true, y_pred):
+
+       error = y_true - y_pred
+
+       is_small_error = tf.abs(error) &lt; threshold
+
+       squared_loss = tf.square(error) / 2
+
+       linear_loss = threshold * tf.abs(error) - threshold**2 / 2
+
+       return tf.where(is_small_error, squared_loss, linear_loss)
+
+   return huber_fn
+
+model.compile(loss=custom_huber_loss (2.0), optimizer="adam"</pre>
+
+			<p>另一个选择是<a id="_idIndexMarker306"/>创建一个继承<code>tf.keras.losses.Loss</code>类的类。我们需要在这种情况下实现<code>__init__</code>和<code>call</code>方法，如下所示:</p>
+
+			<pre class="source-code">
+
+class CustomLoss(tf.keras.losses.Loss):
+
+   def __init__(self, threshold=1.0):
+
+      super().__init__()
+
+      self.threshold = threshold
+
+   def call(self, y_true, y_pred):
+
+      error = y_true - y_pred 
+
+      is_small_error = tf.abs(error) &lt; threshold
+
+      squared_loss = tf.square(error) / 2 
+
+      linear_loss = threshold*tf.abs(error) - threshold**2 / 2 
+
+      return tf.where(is_small_error, squared_loss, linear_loss)
+
+model.compile(optimizer="adam", loss=CustomLoss(),</pre>
+
+			<p>为了使用这个loss <a id="_idIndexMarker307"/>类，您必须实例化它，并通过一个<code>loss</code>参数将其传递给<code>compile</code>函数，如本节开头所述。</p>
+
+			<h3>TF优化器</h3>
+
+			<p>在本节中，我们将描述<a id="_idIndexMarker308"/>如何在TF中为模型训练设置不同的优化器。类似于上一节中的损失函数，Keras <a id="_idIndexMarker309"/>为TF到<code>tf.keras.optimizers</code>提供了一组优化器。在各种优化器中，我们将在下一节中研究两个主要的优化器，SGD和Adam优化器。</p>
+
+			<h4>TF SGD优化器</h4>
+
+			<p>SGD优化器设计有固定的<a id="_idIndexMarker310"/> LR，是可以用于许多模型的最典型的优化器。以下代码片段描述了如何在TF中实例化SGD优化器:</p>
+
+			<pre class="source-code">
+
+tf.keras.optimizers.SGD(
+
+   learning_rate=0.01,
+
+   momentum=0.0,
+
+   nesterov=False,
+
+   name='SGD',
+
+   kwargs)</pre>
+
+			<p>与PyTorch实现类似，<code>tf.keras.optimizers.SGD</code>也支持使用<code>momentum</code>和<code>nesterov</code>参数的增强SGD <a id="_idIndexMarker311"/>优化器。</p>
+
+			<h4>TF Adam优化器</h4>
+
+			<p>如<em class="italic">模型训练逻辑</em>部分所述，Adam优化器设计有自适应LR。在TF中，可以将<a id="_idIndexMarker312"/>实例化如下:</p>
+
+			<pre class="source-code">
+
+tf.keras.optimizers.Adam(
+
+   learning_rate=0.001, beta_1=0.9, beta_2=0.999,
+
+   epsilon=1e-07, amsgrad=False, name='Adam', **kwargs)</pre>
+
+			<p>对于这两个优化器，虽然<code>learning_rate</code>在定义初始LR中起着最重要的作用，但我们建议您也阅读官方文档，以熟悉其他参数:<a href="https://www.tensorflow.org/api_docs/python/tf/keras/optimizers">https://www . tensor flow . org/API _ docs/python/TF/keras/optimizer</a>。</p>
+
+			<h3>TF回调</h3>
+
+			<p>在这一部分，我们将简要描述回调。这些是在训练的不同阶段用于执行特定动作的物品。使用最多的回调是<code>EarlyStopping</code>、<code>ModelCheckpoint</code>和<code>TensorBoard</code>，它们分别在满足特定条件时停止训练，在每个历元后保存模型，并可视化训练状态。</p>
+
+			<p>下面是一个<code>EarlyStopping</code>回调的例子，它监控验证损失，如果监控的损失停止减少，则停止训练:</p>
+
+			<pre class="source-code">
+
+tf.keras.callbacks.EarlyStopping(
+
+   monitor='val_loss', min_delta=0.1, patience=2, 
+
+   verbose=0, mode='min', baseline=None, 
+
+   restore_best_weights=False)</pre>
+
+			<p><code>min_delta</code>参数定义了被视为改进的变化的监控量的最小变化，而<code>patience</code>参数定义了没有任何改进的时期数，在此之后训练将停止。</p>
+
+			<p>构建自定义回调可以通过继承<code>keras.callbacks.Callback</code>来实现。为特定事件定义逻辑可以通过覆盖其方法来实现，这些方法清楚地描述了它绑定到哪个事件:</p>
+
+			<ul>
+
+				<li><code>on_train_begin</code></li>
+
+				<li><code>on_train_end</code></li>
+
+				<li><code>on_epoch_begin</code></li>
+
+				<li><code>on_epoch_end</code></li>
+
+				<li><code>on_test_begin</code></li>
+
+				<li><code>on_test_end</code></li>
+
+				<li><code>on_predict_begin</code></li>
+
+				<li><code>on_predict_end</code></li>
+
+				<li><code>on_train_batch_begin</code></li>
+
+				<li><code>on_train_batch_end</code></li>
+
+				<li><code>on_predict_batch_begin</code></li>
+
+				<li><code>on_predict_batch_end</code></li>
+
+				<li><code>on_test_batch_begin</code></li>
+
+				<li>或者<code>on_test_batch_end</code></li>
+
+			</ul>
+
+			<p>关于完整的细节，我们<a id="_idIndexMarker314"/>建议你看一下<a href="https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/Callback">https://www . tensor flow . org/API _ docs/python/TF/keras/callbacks/Callback</a>。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.<code>tf.data</code>允许您构建高效的数据加载逻辑。<code>tfds</code>、<code>tensorflow addons</code>或TF I/O等包对于读取不同格式的数据很有用。</p>
+
+			<p class="callout">b.在Keras的支持下，TF允许用户使用三种不同的方法构建模型:顺序的、功能的和子类化的。</p>
+
+			<p class="callout">c.为了简化使用TF的模型开发，<code>tf.keras.layers</code>模块提供了各种层实现，<code>tf.keras.losses</code>模块包括不同的损失函数，<code>tf.keras.optimizers</code>模块提供了一组标准优化器。</p>
+
+			<p class="callout">d.<code>Callbacks</code>可用于在训练的各个阶段执行特定的动作。常用的回调有<code>EarlyStopping</code>和<code>ModelCheckpoint</code>。</p>
+
+			<p>到目前为止，我们已经学习了如何使用最流行的DL框架PyTorch和TF建立一个DL模型训练。在下一节中，我们将看看我们在这一节中描述的组件在现实中是如何使用的。</p>
+
+			<h1 id="_idParaDest-79"><a id="_idTextAnchor082"/>分解复杂、先进的模型实现</h1>
+
+			<p>即使你已经掌握了TF和PyTorch的基础知识，从头开始建立一个模型训练可能会让人不知所措。幸运的是，这两个框架有完整的文档和教程，很容易理解:</p>
+
+			<ul>
+
+				<li>法国南部（French Southern Territories的缩写）<ul><li>带卷积层的图像分类<a id="_idIndexMarker316"/>:<a href="https://www.tensorflow.org/tutorials/images/classification">https://www.tensorflow.org/tutorials/images/classification</a>。</li><li>带递归层的文本分类:<a href="https://www.tensorflow.org/text/tutorials/text_classification_rnn">https://www . tensor flow . org/text/tutorials/text _ classification _ rnn</a>。</li></ul></li>
+
+				<li>PyTorch<ul><li>卷积层的物体检测:<a href="https://pytorch.org/tutorials/intermediate/torchvision_tutorial.html">https://py torch . org/tutorials/intermediate/torch vision _ tutorial . html</a>。</li><li>带递归层的机器翻译<a id="_idIndexMarker317"/>:<a href="https://pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html">https://py torch . org/tutorials/intermediate/seq 2 seq _ translation _ tutorial . html</a>。</li></ul></li>
+
+			</ul>
+
+			<p>在这一节中，我们想看一个更加复杂的模型，StyleGAN。我们的主要目标是解释如何将前面章节中描述的组件放在一起用于一个复杂的DL项目。对于模型架构和性能的完整描述，我们推荐NVIDIA发布的出版物，可在<a href="https://ieeexplore.ieee.org/document/8953766">https://ieeexplore.ieee.org/document/8953766</a>获得。</p>
+
+			<h2 id="_idParaDest-80">StyleGAN</h2>
+
+			<p>StyleGAN作为一个<strong class="bold">生成对抗网络</strong> ( <strong class="bold"> GAN </strong>)的变种，目的是从潜在代码(随机噪声向量)中生成新的图像<a id="_idIndexMarker318"/>。它的架构可以分为三个部分:一个映射网络、一个生成器和一个鉴别器。在高层次上，映射网络和生成器一起工作，从一组随机值生成图像。鉴别器在训练期间指导生成器生成逼真的图像方面起着关键作用。让我们仔细看看每个组件。</p>
+
+			<h3>映射网络和生成器</h3>
+
+			<p>虽然发生器被设计为<a id="_idIndexMarker320"/>在传统GAN中直接处理潜在代码，但潜在代码首先在StyleGAN中被馈送到映射网络，如图<em class="italic">图3.5 </em>所示。映射网络的输出然后被馈送到生成器的每一步，改变生成的图像的风格和细节。生成器以较低的分辨率开始，以4 x 4或8 x 8的张量大小构建图像的轮廓。当生成器处理较大的张量时，图像的细节被填充。在最后几层，生成器与大小为64 x 64和1024 x 1024的张量交互以构建高分辨率要素:</p>
+
+			<div><div><img src="img/B18522_03_05.jpg" alt="Figure 3.5 – A mapping network (left) and generator (right) of StyleGAN&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.5–StyleGAN的映射网络(左)和生成器(右)</p>
+
+			<p>在上图中，网络<a id="_idIndexMarker321"/>接受一个潜在向量<strong class="bold"> z </strong>，并生成<strong class="bold"> w </strong>就是映射网络。右边的网络是发电机，<strong class="bold"> g </strong>，它接收一组噪声向量，还有<strong class="bold"> w </strong>。与生成器相比，鉴别器相当简单。这些层在<em class="italic">图3.6 </em>中描述:</p>
+
+			<div><div><img src="img/B18522_03_06.jpg" alt="Figure 3.6 – A StyleGAN discriminator architecture for the FFHQ dataset at 1024 × 1024 resolution&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.6–1024×1024分辨率的FFHQ数据集的StyleGAN鉴别器架构</p>
+
+			<p>如前面的<a id="_idIndexMarker322"/>图所示，鉴别器由多个卷积层块和下采样操作组成。它接收大小为1024 x 1024的图像，并生成一个介于<code>0</code>和<code>1</code>之间的数值，描述图像的逼真程度。</p>
+
+			<h3>培训风格g</h3>
+
+			<p>训练StyleGAN需要大量的计算，因此需要多个GPU来实现合理的训练时间<a id="_idIndexMarker323"/>。估计值汇总在<em class="italic">图3.7 </em>中:</p>
+
+			<div><div><img src="img/B18522_03_07.jpg" alt="Figure 3.7 – The training time for StyleGAN with an FFHQ dataset on Tesla V100 GPUs &#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US"> </p>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图3.7–style gan在Tesla V100 GPUs上使用FFHQ数据集的训练时间</p>
+
+			<p>因此，如果你想玩StyleGAN，我们建议遵循官方GitHub库的说明，那里提供了预先训练的模型:<a href="https://github.com/NVlabs/stylegan">https://github.com/NVlabs/stylegan</a>。</p>
+
+			<h2 id="_idParaDest-81"><a id="_idTextAnchor084"/>在PyTorch中实现</h2>
+
+			<p>遗憾的是，NVIDIA还没有<a id="_idIndexMarker324"/>在PyTorch中分享StyleGAN的公开实现。相反，他们发布了StyleGAN2，它共享了大部分相同的组件。因此，我们将在PyTorch示例中使用StyleGAN2实现:<a href="https://github.com/NVlabs/stylegan2-ada-pytorch">https://github.com/NVlabs/stylegan2-ada-pytorch</a>。</p>
+
+			<p>所有的网络组件都在<code>training/network.py</code>下。三个组件的命名如前一节所述:<code>MappingNetwork</code>、<code>Generator</code>和<code>Discriminator</code>。</p>
+
+			<h3>PyTorch中的映射网络</h3>
+
+			<p><code>MappingNetwork</code>的实现<a id="_idIndexMarker325"/>不言自明。以下代码片段包括映射网络的核心逻辑:</p>
+
+			<pre class="source-code">
+
+class MappingNetwork(torch.nn.Module):
+
+   def __init__(self, ...):
+
+       ...
+
+       for idx in range(num_layers):
+
+          in_features = features_list[idx]
+
+          out_features = features_list[idx + 1]
+
+          layer = FullyConnectedLayer(in_features, out_features, activation=activation, lr_multiplier= lr_multiplier) setattr(self, f'fc{idx}', layer)
+
+       
+
+   def forward(self, z, ...):
+
+       # Embed, normalize, and concat inputs.
+
+       x = normalize_2nd_moment(z.to(torch.float32))
+
+       
+
+       # Main layers
+
+       for idx in range(self.num_layers):
+
+          layer = getattr(self, f'fc{idx}')
+
+          x = layer(x)
+
+       return x</pre>
+
+			<p>在这个网络定义中，<code>MappingNetwork</code>继承了<code>torch.nn.Module</code>。在<code>__init__</code>函数中，必要的<code>FullyConnectedLayer</code>实例被初始化。<code>forward</code>方法<a id="_idIndexMarker326"/>将潜在向量<code>z</code>输入到每一层。</p>
+
+			<h3>PyTorch的发电机</h3>
+
+			<p>下面的代码片段描述了生成器是如何实现的。由<code>MappingNetwork</code>和<code>SynthesisNetwork</code>组成，如图<em class="italic">图3.5 </em>所示:</p>
+
+			<pre class="source-code">
+
+class Generator(torch.nn.Module):
+
+   def __init__(self, …):
+
+       self.z_dim = z_dim
+
+       self.c_dim = c_dim
+
+       self.w_dim = w_dim
+
+       self.img_resolution = img_resolution
+
+       self.img_channels = img_channels
+
+       self.synthesis = SynthesisNetwork(
+
+          w_dim=w_dim, 
+
+          img_resolution=img_resolution,
+
+          img_channels=img_channels,
+
+          synthesis_kwargs)
+
+       self.num_ws = self.synthesis.num_ws
+
+       self.mapping = MappingNetwork(
+
+          z_dim=z_dim, c_dim=c_dim, w_dim=w_dim,
+
+          num_ws=self.num_ws, **mapping_kwargs)
+
+   def forward(self, z, c, truncation_psi=1, truncation_cutoff=None, **synthesis_kwargs):
+
+       ws = self.mapping(z, c, 
+
+       truncation_psi=truncation_psi, 
+
+       truncation_cutoff=truncation_cutoff)
+
+       img = self.synthesis(ws, **synthesis_kwargs)
+
+       return img</pre>
+
+			<p>发电机<a id="_idIndexMarker328"/>网络<code>Generator</code>也继承了<code>torch.nn.Module</code>。<code>SynthesisNetwork</code>和<code>MappingNetwork</code>在<code>__init__</code>函数中被实例化，并在<code>forward</code>函数中被顺序触发。下面的代码片段总结了<code>SynthesisNetwork</code>的实现:</p>
+
+			<pre class="source-code">
+
+class SynthesisNetwork(torch.nn.Module):
+
+   def __init__(self, ...):
+
+       for res in self.block_resolutions:
+
+          block = SynthesisBlock(
+
+             in_channels, out_channels, w_dim=w_dim,
+
+             resolution=res, img_channels=img_channels,
+
+             is_last=is_last, use_fp16=use_fp16,
+
+             block_kwargs)
+
+          setattr(self, f'b{res}', block)
+
+       ...
+
+   def forward(self, ws, **block_kwargs):
+
+       ...
+
+       x = img = None
+
+       for res, cur_ws in zip(self.block_resolutions, block_ws):
+
+          block = getattr(self, f'b{res}')
+
+          x, img = block(x, img, cur_ws, **block_kwargs)
+
+       return img</pre>
+
+			<p><code>SynthesisNetwork</code>有多个<code>SynthesisBlock</code>块。<code>SynthesisBlock</code>接收噪声矢量和<code>MappingNetwork</code>的输出，生成最终成为输出图像的张量。</p>
+
+			<h3>PyTorch中的鉴别器</h3>
+
+			<p>下面的代码片段总结了<code>Discriminator</code>的PyTorch实现。网络<a id="_idIndexMarker330"/>架构遵循<em class="italic">图3.6 </em>所示的结构:</p>
+
+			<pre class="source-code">
+
+class Discriminator(torch.nn.Module):
+
+   def __init__(self, ...):
+
+       self.block_resolutions = [2 ** i for i in range(self.img_resolution_log2, 2, -1)]
+
+       for res in self.block_resolutions:
+
+          block = DiscriminatorBlock(
+
+              in_channels, tmp_channels, out_channels,
+
+              resolution=res,
+
+              first_layer_idx = cur_layer_idx,
+
+              use_fp16=use_fp16, **block_kwargs, 
+
+              common_kwargs)
+
+          setattr(self, f'b{res}', block)
+
+   def forward(self, img, c, **block_kwargs):
+
+       x = None
+
+       for res in self.block_resolutions:
+
+          block = getattr(self, f'b{res}')
+
+          x, img = block(x, img, **block_kwargs)
+
+       return x</pre>
+
+			<p>与<code>SynthesisNetwork</code>类似，<code>Discriminator</code>利用<code>DiscriminatorBlock</code>类来动态创建一组不同大小的卷积层。它们是在<code>__init__</code>函数中定义的，张量在<code>forward</code>函数中被顺序馈送给每个模块。</p>
+
+			<h3>PyTorch中的模型训练逻辑</h3>
+
+			<p>训练逻辑在<code>training/train_loop.py</code>的<code>training_loop</code>功能中定义。<a id="_idIndexMarker331"/>原始实现包含了很多细节。在下面的代码片段中，我们将查看与我们在<em class="italic"> PyTorch模型培训</em>部分所学内容一致的主要组件:</p>
+
+			<pre class="source-code">
+
+def training_loop(...):
+
+   ...
+
+training_set_iterator = iter(torch.utils.data.DataLoader(dataset=training_set, sampler=training_set_sampler, batch_size=batch_size//num_gpus, **data_loader_kwargs))
+
+   loss = dnnlib.util.construct_class_by_name(device=device, **ddp_modules, **loss_kwargs) # subclass of training.loss.Loss
+
+   while True:
+
+      # Fetch training data.
+
+      with torch.autograd.profiler.record_function('data_fetch'):
+
+         phase_real_img, phase_real_c = next(training_set_iterator)
+
+      # Execute training phases.
+
+      for phase, phase_gen_z, phase_gen_c in zip(phases, all_gen_z, all_gen_c):
+
+         # Accumulate gradients over multiple rounds.
+
+      for round_idx, (real_img, real_c, gen_z, gen_c) in enumerate(zip(phase_real_img, phase_real_c, phase_gen_z, phase_gen_c)):
+
+         loss.accumulate_gradients(phase=phase.name, real_img=real_img, real_c=real_c, gen_z=gen_z, gen_c=gen_c, sync=sync, gain=gain)
+
+      # Update weights.
+
+      phase.module.requires_grad_(False)
+
+      with torch.autograd.profiler.record_function(phase.name + '_opt'):
+
+         phase.opt.step()</pre>
+
+			<p>该功能接收各种训练组件的配置，并训练<code>Generator</code>和<code>Discriminator</code>。外环迭代训练样本，内环处理梯度计算和模型参数更新。训练设置由单独的脚本<code>main/train.py</code>配置<a id="_idIndexMarker332"/>。</p>
+
+			<p>这总结了PyTorch实现的结构。尽管由于大量的文件，存储库看起来很庞大，但是我们已经向您介绍了如何将实现分解成我们在<em class="italic">在PyTorch </em>部分中描述的组件。在下一节中，我们将看看TF中的实现。</p>
+
+			<h2 id="_idParaDest-82"><a id="_idTextAnchor085"/>在TF中实现</h2>
+
+			<p>尽管<a id="_idIndexMarker333"/>的官方实现是在TF(<a href="https://github.com/NVlabs/stylegan">https://github.com/NVlabs/stylegan</a>)中，我们将在Soon Yau Cheong的<em class="italic">用TensorFlow实际生成图像:</em> <em class="italic">使用深度学习生成图像和视频的实用指南</em>中查看一个不同的实现。这个版本是基于TF版本2的，与我们在本书中描述的更加一致。实现可以在<a href="https://github.com/PacktPublishing/Hands-On-Image-Generation-with-TensorFlow-2.0/blob/master/Chapter07/ch7_faster_stylegan.ipynb">https://github . com/packt publishing/Hands-On-Image-Generation-with-tensor flow-2.0/blob/master/chapter 07/ch7 _ faster _ style gan . ipynb</a>找到。</p>
+
+			<p>与上一节描述的PyTorch实现类似，原始TF实现由映射网络的<code>G_mapping</code>、发生器的<code>G_style</code>和<a id="_idIndexMarker334"/>鉴别器的<code>D_basic</code>组成。</p>
+
+			<h3>TF中的映射网络</h3>
+
+			<p>让我们看看在<a href="https://github.com/NVlabs/stylegan/blob/1e0d5c781384ef12b50ef20a62fee5d78b38e88f/training/networks_stylegan.py#L384">https://github . com/NV labs/style gan/blob/1e 0 D5 c 781384 ef 12 b 50 ef 20 a 62 fee 5d 78 b 38 e 88 f/training/networks _ style gan . py # L384</a>中定义的映射<a id="_idIndexMarker335"/>网络及其TF版本2实现如下所示:</p>
+
+			<pre class="source-code">
+
+def Mapping(num_stages, input_shape=512):
+
+   z = Input(shape=(input_shape))
+
+   w = PixelNorm()(z)
+
+   for i in range(8):
+
+      w = DenseBlock(512, lrmul=0.01)(w)
+
+      w = LeakyReLU(0.2)(w)
+
+      w = tf.tile(tf.expand_dims(w, 1), (1,num_stages,1))
+
+   return Model(z, w, name='mapping') </pre>
+
+			<p><code>MappingNetwork</code>的实现几乎是不言自明的。我们可以看到，映射网络从向量w开始，使用PixelNorm自定义层从潜在向量z构建。自定义层定义如下:</p>
+
+			<pre class="source-code">
+
+class PixelNorm(Layer):
+
+   def __init__(self, epsilon=1e-8):
+
+      super(PixelNorm, self).__init__()
+
+      self.epsilon = epsilon                
+
+   def call(self, input_tensor):
+
+      return input_tensor / tf.math.sqrt(tf.reduce_mean(input_tensor**2, axis=-1, keepdims=True) + self.epsilon)</pre>
+
+			<p>如<em class="italic"> TF dense (linear) layers </em>部分所述，<code>PixelNorm</code>继承了<code>tensorflow.keras.layers.Layer</code>类，并在<code>call</code>函数中定义了计算。</p>
+
+			<p>剩余的<code>Mapping</code>的<a id="_idIndexMarker336"/>组件是一组带有<code>LeakyReLU</code>激活的密集层。</p>
+
+			<p>接下来，我们将看看发电机网络。</p>
+
+			<h3>TF中的发电机</h3>
+
+			<p><a id="_idIndexMarker337"/>原码中的发电机<code>G_style</code>由两个网络组成:<code>G_mapping</code>和<code>G_synthesis</code>。参见以下:<a href="https://github.com/NVlabs/stylegan/blob/1e0d5c781384ef12b50ef20a62fee5d78b38e88f/training/networks_stylegan.py#L299">https://github . com/NV labs/style gan/blob/1e 0 D5 c 781384 ef 12 b 50 ef 20 a 62 fee 5d 78 b 38 e 88 f/training/networks _ style gan . py # L299</a>。</p>
+
+			<p>存储库中的完整实现初看起来可能极其复杂。但是，你很快就会发现，<code>G_style</code>只是顺序调用了<code>G_mapping</code>和<code>G_synthesis</code>。</p>
+
+			<p>下面的代码片段总结了<code>SynthesisNetwork</code>的实现:<a href="https://github.com/NVlabs/stylegan/blob/1e0d5c781384ef12b50ef20a62fee5d78b38e88f/training/networks_stylegan.py#L440">https://github . com/NV labs/style gan/blob/1e 0 D5 c 781384 ef 12 b 50 ef 20 a 62 fee 5d 78 b 38 e 88 f/training/networks _ style gan . py # L440</a>。</p>
+
+			<p>在TF版本2中，生成器的实现如下:</p>
+
+			<pre class="source-code">
+
+def GenBlock(filter_num, res, input_shape, is_base):
+
+   input_tensor = Input(shape=input_shape, name=f'g_{res}')
+
+   noise = Input(shape=(res, res, 1), name=f'noise_{res}')
+
+   w = Input(shape=512)
+
+   x = input_tensor
+
+   if not is_base:
+
+      x = UpSampling2D((2,2))(x)
+
+      x = ConvBlock(filter_num, 3)(x)
+
+   x = AddNoise()([x, noise])
+
+   x = LeakyReLU(0.2)(x)
+
+   x = InstanceNormalization()(x)
+
+   x = AdaIN()([x, w])
+
+   # Adding noise
+
+   x = ConvBlock(filter_num, 3)(x)
+
+   x = AddNoise()([x, noise])
+
+   x = LeakyReLU(0.2)(x)
+
+   x = InstanceNormalization()(x)                    
+
+   x = AdaIN()([x, w])
+
+   return Model([input_tensor, w, noise], x, name=f'genblock_{res}x{res}')</pre>
+
+			<p>该网络遵循<em class="italic">图3.5 </em>中描述的<a id="_idIndexMarker338"/>架构；<code>SynthesisNetwork</code>由一组<code>AdaIn</code>和<code>ConvBlock</code>自定义图层构成。</p>
+
+			<p>让我们继续讨论鉴别器网络。</p>
+
+			<h3>TF中的鉴别器</h3>
+
+			<p><code>D_basic</code>函数实现了<em class="italic">图3.6 </em>中描述的<a id="_idIndexMarker339"/>鉴别器。(<a href="https://github.com/NVlabs/stylegan/blob/1e0d5c781384ef12b50ef20a62fee5d78b38e88f/training/networks_stylegan.py#L562">https://github . com/NV labs/style gan/blob/1e 0 D5 c 781384 ef 12 b 50 ef 20 a 62 fee 5d 78 b 38 e 88 f/training/networks _ style gan . py # L562</a>)。由于鉴别器由一组卷积层块组成，<code>D_basic</code>有一个专用函数<code>block</code>，它根据输入张量大小构建一个块。该函数的核心组件如下所示:</p>
+
+			<pre class="source-code">
+
+def block(x, res): # res = 2 … resolution_log2
+
+   with tf.variable_scope('%dx%d' % (2**res, 2**res)):
+
+       x = act(apply_bias(conv2d(x, fmaps=nf(res-1), kernel=3, gain=gain, use_wscale=use_wscale)))
+
+       x = act(apply_bias(conv2d_downscale2d(blur(x), fmaps=nf(res-2), kernel=3, gain=gain, use_wscale=use_wscale, fused_scale=fused_scale)))
+
+   return x</pre>
+
+			<p>在前面的代码中，<code>block</code>函数通过组合<a id="_idIndexMarker340"/>卷积和下采样层来处理在鉴别器中创建每个块。<code>D_basic</code>的其余逻辑很简单，因为它只是通过将一个块的输出作为输入传递给下一个块来链接一组卷积层块。</p>
+
+			<h4>TF中的模型训练逻辑</h4>
+
+			<p>TF <a id="_idIndexMarker341"/>执行的训练逻辑可以在<code>train_step</code>函数中找到。理解实施细节并不困难，因为它们遵循了我们在<em class="italic"> TF模型培训</em>部分的描述。</p>
+
+			<p>总的来说，我们已经了解了如何使用本章中描述的TF构件在TF版本2中实现StyleGAN。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.无论实现的复杂性如何，任何DL模型训练实现都可以分为三个部分(数据加载逻辑、模型定义和模型训练逻辑)。</p>
+
+			<p>在这个阶段，您应该理解StyleGAN存储库在每个框架中是如何构造的。我们强烈建议您使用预先训练好的模型来生成有趣的图像。如果你掌握了StyleGAN，那么跟随<a id="_idIndexMarker342"/>style gan 2(<a href="https://arxiv.org/abs/1912.04958">https://arxiv.org/abs/1912.04958</a>)、style gan 3(<a href="https://arxiv.org/abs/2106.12423">https://arxiv.org/abs/2106.12423</a>)和HyperStyle(<a href="https://arxiv.org/abs/2111.15666">https://arxiv.org/abs/2111.15666</a>)的实现应该很容易。</p>
+
+			<h1 id="_idParaDest-83"><a id="_idTextAnchor086"/>总结</h1>
+
+			<p>在这一章中，我们探讨了DL的灵活性从何而来。DL使用数学神经元网络来学习一组数据中的隐藏模式。训练网络包括基于训练集更新模型参数并选择在验证集上表现最佳的模型的迭代过程，目标是在测试集上产生最佳性能。</p>
+
+			<p>意识到模型训练中的重复过程，许多工程师和研究人员已经将常见的构建块放入框架中。我们已经描述了两个最流行的框架:PyTorch和TF。这两个框架的结构相似，允许用户使用三个构建块来设置模型训练:数据加载逻辑、模型定义和模型训练逻辑。作为本章的最后一个主题，我们分解了最流行的GAN实现之一StyleGAN，以了解构建模块在现实中是如何使用的。</p>
+
+			<p>由于DL需要大量的数据来进行成功的培训，因此有效的数据管理、模型实现和各种培训结果对于任何项目的成功都是至关重要的。在下一章中，我们将介绍用于DL实验监控的有用工具。</p>
+
+		</div>
+
+		<div><div/>
+
+		</div>
+
+	
+
+
+
+</body></html>

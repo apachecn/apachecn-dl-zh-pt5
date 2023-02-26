@@ -1,0 +1,1026 @@
+<html><head/><body>
+
+
+    
+        <title>Going Further - 21 Problems</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">更进一步- 21个问题</h1>
+                
+            
+            
+                
+<p>在本章中，我们将介绍21个现实生活中的问题，您可以使用深度学习和TensorFlow来解决这些问题。先说一些公开的大规模数据集和比赛。然后，我们会在Github上展示一些牛逼的TensorFlow项目。我们还将介绍一些在其他深度学习框架中完成的有趣项目，以便您获得灵感并实现自己的TensorFlow解决方案。最后，我们将通过一个简单的技术将Caffe模型转换为TensorFlow模型，并使用一个高级TensorFlow库TensorFlow-Slim进行介绍。</p>
+<p>在本章中，我们将探讨以下主题:</p>
+<ul>
+<li>大规模公共数据集和竞赛</li>
+<li>令人敬畏的TensorFlow项目</li>
+<li>一些从其他框架中获得了深度学习项目的灵感</li>
+<li>将Caffe模型转换为张量流</li>
+<li>介绍TensorFlow-Slim</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Dataset and challenges</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">数据集和挑战</h1>
+                
+            
+            
+                
+<p>在本节中，我们将向您展示一些流行的数据集和竞赛。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 1 - ImageNet dataset</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题1 - ImageNet数据集</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="http://image-net.org/">http://image-net.org/</a></p>
+<p><strong> ImageNet </strong>是一项大规模的视觉识别挑战，自2010年以来每年举办一次。数据集是根据工作网层次结构组织的。有超过1000万个图片的URL带有手写标签，以指示图片中的对象。至少有一百万张图像包含了边界框。</p>
+<p>ImageNet挑战赛每年举办一次，旨在评估以下三个问题的算法:</p>
+<ul>
+<li>1000个类别的对象本地化。</li>
+<li>200个全标记类别的对象检测。</li>
+<li>30个完全标记类别的视频对象检测。2017年7月17日，公布了2017挑战赛的结果，里面有很多先进有趣的算法。</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 2 - COCO dataset</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题2 - COCO数据集</h1>
+                
+            
+            
+                
+<p>项目链接:【http://mscoco.org/ T4】</p>
+<p>COCO是由微软赞助的用于图像识别、分割和字幕的数据集。该数据集中有80个对象类别，包含300，000多幅图像和200万个实例。每年都有检测、字幕和关键点的挑战。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 3 - Open Images dataset</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题3 -打开图像数据集</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://github.com/openimages/dataset">https://github.com/openimages/dataset</a></p>
+<p>Open Images是谷歌的一个新数据集，拥有超过6000个类别的900多万个网址。每张图像都由谷歌的视觉模型处理，并由人类验证。截至2017年7月20日，还有超过200万个跨越600多个对象的边界框注释。</p>
+<p>不同之处在于，开放图像比其他图像覆盖更多的真实对象，这在开发真实应用程序时非常有用。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 4 - YouTube-8M dataset</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题4 - YouTube-8M数据集</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://research.google.com/youtube8m/">https://research.google.com/youtube8m/</a></p>
+<p>YouTube-8M是来自谷歌的大规模视频数据集，拥有超过4，716个类的700万个视频URL和45万小时的视频。谷歌还提供预先计算的、最先进的视听功能，因此人们可以轻松地基于这些功能构建他们的模型。从原始视频进行训练可能需要数周时间，这在正常情况下是不合理的。该数据集的目标是实现视频理解、表示学习、噪声数据建模、迁移学习和视频的域适应。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 5 - AudioSet dataset</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题5 -音频数据集</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://research.google.com/audioset/">https://research.google.com/audioset/</a></p>
+<p>AudioSet是一个来自Google的大规模音频事件数据集，包含632个音频事件类和超过210万个手动注释的声音剪辑。音频课程从人类和动物的声音到乐器和常见的日常环境声音。使用这个数据集，您可以创建一个系统来识别音频事件，用于音频理解、安全应用等。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 6 - LSUN challenge</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题6 - LSUN挑战</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="http://lsun.cs.princeton.edu/2017/">http://lsun.cs.princeton.edu/2017/</a></p>
+<p>LSUN challenge提供大规模场景理解数据集，涵盖三个主要问题:</p>
+<ul>
+<li>场景分类</li>
+<li>街道图像的分割任务</li>
+<li>显著性预测</li>
+</ul>
+<p>在场景分类问题中，算法的期望输出是图像中最可能的场景类别。在写作时，有10个不同的类，如卧室，教室，和餐厅。在分割问题上，可以尝试解决像素级分割和实例特定分割。在显著性预测问题中，目标是预测人在场景图像中的位置。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 7 - MegaFace dataset</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题7 -百万面数据集</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="http://megaface.cs.washington.edu/">http://megaface.cs.washington.edu/</a></p>
+<p>MegaFace为人脸识别提供了大规模数据集。MegaFace数据集分为三个部分:</p>
+<ul>
+<li>训练集</li>
+<li>测试装置</li>
+<li>干扰物</li>
+</ul>
+<p><strong>训练集</strong>包含超过672，057个唯一身份的470万张照片。<strong>测试集</strong>包含来自FaceScrub和FGNet数据集的图像。<strong>干扰项</strong>包含690，572个独立用户的一百万张照片。目前，MegaFace网站面临两大挑战。在挑战1中，你可以使用任何数据集进行训练，并用一百万个干扰物来测试你的方法。你的方法需要区分一组已知的人，同时将干扰物归类为未知的人。在挑战2中，您将使用具有672K个唯一身份的训练集进行训练，并使用100万个干扰项进行测试。在撰写本文时，MegaFace是目前最大的人脸识别数据集。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 8 - Data Science Bowl 2017 challenge</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题8 -数据科学碗2017挑战</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://www.kaggle.com/c/data-science-bowl-2017">https://www.kaggle.com/c/data-science-bowl-2017</a></p>
+<p>2017年数据科学碗是一项百万美元的挑战，重点是肺癌检测。在数据集中，您将获得一千多张高危患者的CT图像。这项挑战的目标是创建一个自动系统，可以确定患者是否会在一年内被诊断为肺癌。这是一个非常有趣和重要的项目，在不久的将来将拯救成千上万的人。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 9 - StarCraft Game dataset</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题9 -星际争霸游戏数据集</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://github.com/TorchCraft/StarData">https://github.com/TorchCraft/StarData</a></p>
+<p>在写这本书的时候，这是最大的星际争霸-育雏战争回放数据集。该数据集包含365GB的60，000多个游戏、15.35亿帧和4.96亿个玩家动作。这个数据集最适合那些想研究人工智能游戏的人。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>TensorFlow-based Projects</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">基于TensorFlow的项目</h1>
+                
+            
+            
+                
+<p>本节将向大家介绍几个在TensorFlow和Github上开源实现的问题。我们建议你看看这些项目，学习如何提高你的张量流技能。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 10 - Human Pose Estimation</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题10 -人体姿态估计</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://github.com/eldar/pose-tensorflow">https://github.com/eldar/pose-tensorflow</a></p>
+<p>这个项目是人体姿态估计中Deep Cut和ArtTrack的开源实现。这个项目的目标是联合解决检测和姿态估计的任务。我们可以将这种方法用于各种应用，例如安全中的人员检测或人类行为理解。这个项目也为大量关于人体形状估计的进一步研究提供了很好的起点，应用于虚拟试穿或服装推荐。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 11 - Object Detection - YOLO</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题11 -物体检测- YOLO</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://github.com/thtrieu/darkflow">https://github.com/thtrieu/darkflow</a></p>
+<p>目标检测是计算机视觉中一个有趣的问题。有很多方法可以解决这个问题。约瑟夫·雷德蒙和其他人的《YOLO》是最先进的技术之一。YOLO使用深度神经网络提供实时对象检测。第二版YOLO可以实时高精度地识别多达9000个不同的物体。最初的YOLO项目是在darknet框架中编程的。</p>
+<p>在TensorFlow中，有一个很棒的YOLO实现，叫做<strong> darkflow </strong>。darkflow存储库甚至有一个工具，允许您导出模型并在移动设备上提供服务。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 12 - Object Detection - Faster RCNN</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题12 -对象检测-更快的RCNN</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://github.com/smallcorgi/Faster-RCNN_TF">https://github.com/smallcorgi/Faster-RCNN_TF</a></p>
+<p>更快的RCNN是另一种最先进的对象检测方法。这种方法提供了高精度的结果，也启发了许多其他问题的许多方法。更快的RCNN的推理速度没有YOLO快。但是，如果你需要高精度的检测结果，你可以考虑更快的RCNN。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 13 - Person Detection - tensorbox</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题13 -人员检测-张量盒</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://github.com/Russell91/TensorBox">https://github.com/Russell91/TensorBox</a></p>
+<p>Tensorbox是Russell Stewart和Mykhaylo Andriluka对该方法的TensorFlow实现。这种方法的目标与前面的方法有点不同。Tensorbox专注于解决人群人物检测问题。他们使用递归LSTM层用于边界框的序列生成，并定义了一个新的损失函数，该函数对一组检测结果进行操作。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 14 - Magenta</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题14 -洋红色</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://github.com/tensorflow/magenta">https://github.com/tensorflow/magenta</a></p>
+<p>Magenta是谷歌大脑团队的一个项目，专注于使用深度学习进行音乐和艺术生成。这是一个非常活跃的资源库，有许多有趣问题的实现，如图像风格化、旋律生成或生成草图。您可以访问以下链接来访问Magenta的模型:</p>
+<p><a href="https://github.com/tensorflow/magenta/tree/master/magenta/models">https://github . com/tensor flow/magenta/tree/master/magenta/models</a></p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 15 - Wavenet</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题15 - Wavenet</h1>
+                
+            
+            
+                
+<p>项目链接:【https://github.com/ibab/tensorflow-wavenet T2】</p>
+<p>WaveNet是Google Deep Mind的一个用于音频生成的神经网络架构。WaveNet被训练来生成原始音频波形，并且已经显示出用于文本到语音和音频生成的良好结果。根据Deep Mind的说法，WaveNet在美国英语和汉语普通话的文本到语音转换问题中，将以前的方法和人类水平的性能之间的差距减少了50%以上。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 16 - Deep Speech</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题16 -深度演讲</h1>
+                
+            
+            
+                
+<p>项目链接:【https://github.com/mozilla/DeepSpeech T4】</p>
+<p>Deep Speech是一个开源的语音转文本引擎，基于百度的一篇研究论文。语音转文本是一个非常有趣的问题，深度语音是解决这个问题的最先进的方法之一。使用Mozilla的TensorFlow实现，您甚至可以学习如何在多台机器上使用TensorFlow。然而，仍然存在一个问题，即个人研究人员无法像大公司一样访问大规模的语音到文本数据集。因此，即使我们可以使用深度语音或自己实现它，仍然很难有一个好的生产模型。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Interesting Projects</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">有趣的项目</h1>
+                
+            
+            
+                
+<p>在本节中，我们将向您展示一些在其他深度学习框架中实现的有趣项目。这些项目在非常困难的问题上取得了显著的成果。您可能想要挑战自己，在TensorFlow中实现这些方法。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 17 - Interactive Deep Colorization - iDeepColor</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题17 -交互式深度着色- iDeepColor</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://richzhang.github.io/ideepcolor/">https://richzhang.github.io/ideepcolor/</a></p>
+<p>交互式深度彩色化是张曦轲和尊俊彦等人正在进行的研究，用于用户指导的图像彩色化。在这个系统中，用户可以为图像中的一些点提供一些颜色提示，网络将传播用户输入以及从大规模数据中学习的语义信息。可以通过一次正向传递来实时执行着色。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 18 - Tiny face detector</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题18 -微小的人脸检测器</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://github.com/peiyunh/tiny">https://github.com/peiyunh/tiny</a></p>
+<p>这个项目是一个人脸检测器，重点是寻找由胡佩云和Deva Ramanan图像中的小脸。虽然大多数人脸检测器只关注图像中的大对象，但这种微小的人脸检测器方法可以处理非常小的人脸，但与更宽的人脸数据集上的现有方法相比，仍然可以将误差降低两倍。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 19 - People search</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题19 -人员搜索</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://github.com/ShuangLI59/person_search">https://github.com/ShuangLI59/person_search</a></p>
+<p>这个项目是肖童和其他人的论文的实施，该论文集中在人的检测和重新识别的问题上。该项目可用于视频监控。现有的人物再识别方法主要假设人物被裁剪和对齐。然而，在真实世界的场景中，人检测算法可能无法提取人的完美裁剪区域，并降低识别准确度。在这个项目中，作者在一个受更快的RCNN启发的新架构中联合解决了检测和识别问题。目前的项目是在Caffe深度学习框架中实现的。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 20 - Face Recognition - MobileID</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题20 -人脸识别- MobileID</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://github.com/liuziwei7/mobile-id">https://github.com/liuziwei7/mobile-id</a></p>
+<p>这个项目提供了一个速度极快的人脸识别系统，可以以250 FPS的速度高精度运行。通过使用最先进的人脸识别DeepID的输出来学习该模型。但是，移动ID模型的执行速度非常快，可以在处理和内存有限的情况下使用。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Problem 21 - Question answering - DrQA</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">问题21 -问答- DrQA</h1>
+                
+            
+            
+                
+<p>项目链接:<a href="https://github.com/facebookresearch/DrQA">https://github.com/facebookresearch/DrQA</a></p>
+<p>DrQA是一个来自脸书的开放领域问题回答系统。DrQA专注于解决<em>机器阅读</em>的任务，其中模型将尝试理解维基百科文档，并为用户的任何问题给出答案。目前的项目是在PyTorch实施的。您可能会发现在TensorFlow中实现我们自己的解决方案很有趣。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Caffe to TensorFlow</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">咖啡到张量流</h1>
+                
+            
+            
+                
+<p>在这一部分，我们将向你展示如何利用来自Caffe模型动物园(<a href="https://github.com/BVLC/caffe/wiki/Model-Zoo">https://github.com/BVLC/caffe/wiki/Model-Zoo</a>)的许多预先训练好的模型。有许多Caffe模型用于各种架构的不同任务。将这些模型转换为TensorFlow后，您可以将其用作您的架构的一部分，也可以针对不同的任务对我们的模型进行微调。使用这些预训练的模型作为初始权重是一种有效的训练方法，而不是从头开始训练。我们将在<a href="https://github.com/ethereon/caffe-tensorflow">https://github.com/ethereon/caffe-tensorflow</a>向你展示如何使用索米特罗·达斯古普塔的<kbd>caffe-to-tensorflow</kbd>方法。</p>
+<p>然而，Caffe和TensorFlow之间有很多不同之处。该技术仅支持Caffe中图层类型的子集。即使有一些Caffe架构是由这个项目的作者验证的，如ResNet、VGG和GoogLeNet。</p>
+<p>首先，我们需要使用<kbd>git clone</kbd>命令克隆<kbd>caffe-tensorflow</kbd>存储库:</p>
+<pre><strong>ubuntu@ubuntu-PC:~/github$ git clone https://github.com/ethereon/caffe-tensorflow</strong>
+<strong>Cloning into 'caffe-tensorflow'...</strong>
+<strong>remote: Counting objects: 479, done.</strong>
+<strong>remote: Total 479 (delta 0), reused 0 (delta 0), pack-reused 479</strong>
+<strong>Receiving objects: 100% (510/510), 1.71 MiB | 380.00 KiB/s, done.</strong>
+<strong>Resolving deltas: 100% (275/275), done.</strong>
+<strong>Checking connectivity... done.</strong></pre>
+<p>然后，我们需要将目录更改为<kbd>caffe-to-tensorflow</kbd>目录，并运行convert python脚本来查看一些帮助消息:</p>
+<pre><strong>cd caffe-tensorflow</strong>
+<strong>python convert.py -h</strong>
+<strong>The resulting console will look like this:</strong>
+<strong>usage: convert.py [-h] [--caffemodel CAFFEMODEL]</strong>
+    <strong>              [--data-output-path DATA_OUTPUT_PATH]</strong>
+    <strong>              [--code-output-path CODE_OUTPUT_PATH] [-p PHASE]</strong>
+    <strong>              def_path</strong>
+    
+<strong>positional arguments:</strong>
+<strong>def_path              Model definition (.prototxt) path</strong>
+    
+<strong>optional arguments:</strong>
+  <strong>-h, --help            show this help message and exit</strong>
+  <strong>--caffemodel CAFFEMODEL</strong>
+    <strong>                    Model data (.caffemodel) path</strong>
+ <strong> --data-output-path DATA_OUTPUT_PATH</strong>
+    <strong>                    Converted data output path</strong>
+  <strong>--code-output-path CODE_OUTPUT_PATH</strong>
+    <strong>                    Save generated source to this path</strong>
+  <strong>-p PHASE, --phase PHASE</strong>
+    <strong>                    The phase to convert: test (default) or train</strong></pre>
+<p>根据这个帮助信息，我们可以知道<kbd>convert.py</kbd>脚本的参数。总之，我们将使用此<kbd>convert.py</kbd>在TensorFlow中创建带有标志code-output-path的网络架构，并使用标志data-output-path转换预训练的权重。</p>
+<p>在我们开始转换模型之前，我们需要从这个项目的贡献者那里获得一些拉请求。目前的master分支存在一些问题，我们无法使用最新的TensorFlow(编写时为1.3版本)和python-protobuf(编写时为3.4.0版本)。因此，我们将使用以下拉请求获取代码:</p>
+<p><a href="https://github.com/ethereon/caffe-tensorflow/pull/105">https://github.com/ethereon/caffe-tensorflow/pull/105</a></p>
+<p><a href="https://github.com/ethereon/caffe-tensorflow/pull/133">https://github.com/ethereon/caffe-tensorflow/pull/133</a></p>
+<p>您需要打开前面的链接来查看拉请求是否被合并。如果仍处于<kbd>open</kbd>状态，则需要进行下一部分。否则，您可以跳过合并的<kbd>pull</kbd>请求。</p>
+<p>首先，我们将从拉取请求<kbd>105</kbd>中获取代码:</p>
+<pre><strong>ubuntu@ubuntu-PC:~/github$ git pull origin pull/105/head</strong>
+<strong>remote: Counting objects: 33, done.</strong>
+<strong>remote: Total 33 (delta 8), reused 8 (delta 8), pack-reused 25</strong>
+<strong>Unpacking objects: 100% (33/33), done.</strong>
+<strong>From https://github.com/ethereon/caffe-tensorflow</strong>
+<strong>* branch            refs/pull/105/head -&gt; FETCH_HEAD</strong>
+<strong>Updating d870c51..ccd1a52</strong>
+<strong>Fast-forward</strong>
+<strong>.gitignore                               |  5 +++++</strong>
+<strong>convert.py                               |  8 ++++++++</strong>
+<strong>examples/save_model/.gitignore           | 11 ++++++++++</strong>
+<strong>examples/save_model/READMD.md            | 17 ++++++++++++++++</strong>
+<strong>examples/save_model/__init__.py          |  0</strong>
+<strong>examples/save_model/save_model.py        | 51 ++++++++++++++++++++++++++++++++++++++++++++++</strong>
+<strong>kaffe/caffe/{caffepb.py =&gt; caffe_pb2.py} |  0</strong>
+<strong>kaffe/caffe/resolver.py                  |  4 ++--</strong>
+<strong>kaffe/tensorflow/network.py              |  8 ++++----</strong>
+<strong>9 files changed, 98 insertions(+), 6 deletions(-)</strong>
+<strong>create mode 100644 examples/save_model/.gitignore</strong>
+<strong>create mode 100644 examples/save_model/READMD.md</strong>
+<strong>create mode 100644 examples/save_model/__init__.py</strong>
+<strong>create mode 100755 examples/save_model/save_model.py</strong>
+<strong>rename kaffe/caffe/{caffepb.py =&gt; caffe_pb2.py} (100%)</strong></pre>
+<p>然后，从拉请求<kbd>133</kbd>:</p>
+<pre><strong>- git pull origin pull/133/head</strong>
+<strong>remote: Counting objects: 31, done.</strong>
+<strong>remote: Total 31 (delta 20), reused 20 (delta 20), pack-reused 11</strong>
+<strong>Unpacking objects: 100% (31/31), done.</strong>
+<strong>From https://github.com/ethereon/caffe-tensorflow</strong>
+<strong>* branch            refs/pull/133/head -&gt; FETCH_HEAD</strong>
+<strong>Auto-merging kaffe/tensorflow/network.py</strong>
+<strong>CONFLICT (content): Merge conflict in kaffe/tensorflow/network.py</strong>
+<strong>Auto-merging .gitignore</strong>
+<strong>CONFLICT (content): Merge conflict in .gitignore</strong>
+<strong>Automatic merge failed; fix conflicts and then commit the result.</strong></pre>
+<p>如您所见，在<kbd>kaffe/tensorflow/network.py</kbd>文件中有一些冲突。我们将向您展示如何解决这些<kbd>conflicts</kbd>，如下所示。</p>
+<p>首先，我们将解决第137行的冲突:</p>
+<div><img class=" image-border" src="img/8cbf68bc-d3f7-4fb7-997b-3f6daa91a467.png"/></div>
+<p>我们从第137行到第140行移除头部。最终结果将如下所示:</p>
+<div><img class=" image-border" src="img/24ec3b97-1597-4c60-87e7-ea065ad10bcc.png"/></div>
+<p>接下来，我们将解决第185行的冲突:</p>
+<div><img height="128" width="647" class=" image-border" src="img/e98bcebb-7236-47f4-8628-55673a01f83a.png"/></div>
+<p>我们还删除了第185行到第187行的头部分。最终结果将如下所示:</p>
+<div><img height="77" width="644" class=" image-border" src="img/699ebeba-5219-4f3e-851c-c7970784f55e.png"/></div>
+<p>在<kbd>caffe-to-tensorflow</kbd>目录中，有一个名为examples的目录，其中包含MNIST和ImageNet挑战的代码和数据。我们将向您展示如何使用MNIST模型。ImageNet挑战并没有太大的不同。</p>
+<p>首先，我们将使用以下命令将MNIST体系结构从Caffe转换为TensorFlow:</p>
+<pre>    <strong>ubuntu@ubuntu-PC:~/github$ python ./convert.py examples/mnist/lenet.prototxt --code-output-path=./mynet.py</strong>
+    <strong>The result will look like this:</strong>
+    
+    <strong>------------------------------------------------------------</strong>
+    <strong>    WARNING: PyCaffe not found!</strong>
+    <strong>    Falling back to a pure protocol buffer implementation.</strong>
+    <strong>    * Conversions will be drastically slower.</strong>
+    <strong>    * This backend is UNTESTED!</strong>
+    <strong>------------------------------------------------------------</strong>
+    
+    <strong>Type                 Name                                          Param               Output</strong>
+    <strong>----------------------------------------------------------------------------------------------</strong>
+    <strong>Input                data                                             --      (64, 1, 28, 28)</strong>
+    <strong>Convolution          conv1                                            --     (64, 20, 24, 24)</strong>
+    <strong>Pooling              pool1                                            --     (64, 20, 12, 12)</strong>
+    <strong>Convolution          conv2                                            --       (64, 50, 8, 8)</strong>
+    <strong>Pooling              pool2                                            --       (64, 50, 4, 4)</strong>
+    <strong>InnerProduct         ip1                                              --      (64, 500, 1, 1)</strong>
+    <strong>InnerProduct         ip2                                              --       (64, 10, 1, 1)</strong>
+    <strong>Softmax              prob                                             --       (64, 10, 1, 1)</strong>
+    <strong>Converting data...</strong>
+    <strong>Saving source...</strong>
+    <strong>Done.</strong></pre>
+<p>然后，我们将使用以下命令在<kbd>examples/mnist/lenet_iter_10000.caffemodel</kbd>转换MNIST预训练的Caffe模型:</p>
+<pre style="padding-left: 60px"> ubuntu@ubuntu-PC:~/github$ python ./convert.py  <br/> examples/mnist/lenet.prototxt --caffemodel  <br/> examples/mnist/lenet_iter_10000.caffemodel --data-output- <br/> path=./mynet.npy</pre>
+<p>结果将如下所示:</p>
+<pre>    <strong>------------------------------------------------------------</strong>
+    <strong>    WARNING: PyCaffe not found!</strong>
+    <strong>    Falling back to a pure protocol buffer implementation.</strong>
+    <strong>    * Conversions will be drastically slower.</strong>
+    <strong>    * This backend is UNTESTED!</strong>
+    <strong>------------------------------------------------------------</strong>
+    
+    <strong>Type                 Name                                          Param               Output</strong>
+    <strong>----------------------------------------------------------------------------------------------</strong>
+    <strong>Input                data                                             --      (64, 1, 28, 28)</strong>
+    <strong>Convolution          conv1                                 <br/>(20, 1, 5, 5)     (64, 20, 24, 24)</strong>
+    <strong>Pooling              pool1                                            --     (64, 20, 12, 12)</strong>
+    <strong>Convolution          conv2                               <br/> (50, 20, 5, 5)       (64, 50, 8, 8)</strong>
+    <strong>Pooling              pool2                                            --       (64, 50, 4, 4)</strong>
+    <strong>InnerProduct         ip1                                   <br/>   (500, 800)      (64, 500, 1, 1)</strong>
+    <strong>InnerProduct         ip2                                      <br/> (10, 500)       (64, 10, 1, 1)</strong>
+    <strong>Softmax              prob                                             --       (64, 10, 1, 1)</strong>
+    <strong>Converting data...</strong>
+    <strong>Saving data...</strong>
+    <strong>Done.</strong></pre>
+<p>如您所见，这些命令将在当前目录中创建一个名为<kbd>mynet.py</kbd>的python文件和一个名为<kbd>mynet.npy</kbd>的<kbd>numpy</kbd>文件。我们还需要将当前目录添加到<kbd>PYTHONPATH</kbd>中，以允许进一步的代码导入<kbd>mynet.py</kbd>:</p>
+<pre><strong>ubuntu@ubuntu-PC:~/github$ export PYTHONPATH=$PYTHONPATH:.</strong>
+<strong>ubuntu@ubuntu-PC:~/github$ python examples/mnist/finetune_mnist.py</strong>
+<strong>....</strong>
+<strong>('Iteration: ', 900, 0.0087626642, 1.0)</strong>
+<strong>('Iteration: ', 910, 0.018495116, 1.0)</strong>
+<strong>('Iteration: ', 920, 0.0029206357, 1.0)</strong>
+<strong>('Iteration: ', 930, 0.0010091728, 1.0)</strong>
+<strong>('Iteration: ', 940, 0.071255416, 1.0)</strong>
+<strong>('Iteration: ', 950, 0.045163739, 1.0)</strong>
+<strong>('Iteration: ', 960, 0.005758767, 1.0)</strong>
+<strong>('Iteration: ', 970, 0.012100354, 1.0)</strong>
+<strong>('Iteration: ', 980, 0.12018739, 1.0)</strong>
+<strong>('Iteration: ', 990, 0.079262167, 1.0)</strong></pre>
+<p>每行最后两个数字是微调过程的损耗和精度。您可以看到，使用来自Caffe模型的预训练权重，微调过程可以轻松实现100%的准确性。</p>
+<p>现在，我们将查看<kbd>finetune_mnist.py</kbd>文件，了解预训练权重是如何使用的。</p>
+<p>首先，他们用下面的代码导入了<kbd>mynet</kbd> python:</p>
+<pre>    from mynet import LeNet as MyNet  </pre>
+<p>然后，他们为<kbd>images</kbd>和<kbd>labels</kbd>创建一些占位符，并使用图层<kbd>ip2</kbd>计算<kbd>loss</kbd>，如下所示:</p>
+<pre style="padding-left: 60px"> images = tf.placeholder(tf.float32, [None, 28, 28, 1]) 
+ labels = tf.placeholder(tf.float32, [None, 10]) 
+ net = MyNet({'data': images}) 
+ 
+ ip2 = net.layers['ip2'] 
+ pred = net.layers['prob'] 
+ 
+ loss =  <br/> tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=ip2,  <br/> labels=labels), 0) 
+ Finally, they load the numpy file into the graph, using the load  <br/> method in the network class. 
+ with tf.Session() as sess: 
+    # Load the data 
+    sess.run(tf.global_variables_initializer()) 
+    net.load('mynet.npy', sess) </pre>
+<p>之后，微调过程独立于Caffe框架。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>TensorFlow-Slim</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">张量流-超薄</h1>
+                
+            
+            
+                
+<p>TensorFlow-Slim是一个轻量级的库，用于定义、训练和评估TensorFlow中的复杂模型。使用TensorFlow-Slim库，我们可以通过提供大量高级层、变量和正则化子来更容易地构建、训练和评估模型。我们建议您通过以下链接查看TensorFlow-Slim库:<a href="https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/slim">https://github . com/tensor flow/tensor flow/tree/master/tensor flow/contrib/Slim</a></p>
+<p>TensorFlow-Slim还提供了许多预训练模型。您可以通过以下链接利用高级TensorFlow层和模型:</p>
+<p><a href="https://github.com/tensorflow/tensorflow/tree/master/tensorflow/contrib/slim">https://github . com/tensor flow/tensor flow/tree/master/tensor flow/contrib/slim</a></p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Summary</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">摘要</h1>
+                
+            
+            
+                
+<p>在这一章中，我们提供了许多有趣的挑战和问题，你可以尝试解决并从中学习，以提高你的张量流技能。在本章的最后，我们还指导您将Caffe模型转换为TensorFlow，并向您介绍了高级TensorFlow库TensorFlow-Slim。</p>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>

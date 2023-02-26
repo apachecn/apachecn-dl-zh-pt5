@@ -1,0 +1,1490 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Recurrent and Convolutional Neural Networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">递归和卷积神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>到目前为止，我们一直在研究前馈网络，其中数据沿一个方向移动，各层节点之间没有互联。在存在与一些问题相互作用的基本假设的情况下，前馈网络的固有单向结构具有很大的局限性。然而，有可能从它开始并创建网络，其中一个单元的计算结果影响另一个单元的计算过程。显然，管理这些网络动态的算法必须满足新的收敛标准。</p>
+
+<p>本章我们将介绍<strong>递归神经网络</strong> ( <strong> RNN </strong>)，这是一种具有循环数据流的网络。我们还会看到<strong>卷积神经网络</strong> ( <strong> CNN </strong>)，这是主要用于图像识别的标准化神经网络。对于这两种类型的网络，我们将在r中进行一些示例实现，包括以下主题:</p>
+
+<ul>
+
+<li>RNN</li>
+
+<li><kbd>rnn</kbd>套餐</li>
+
+<li><strong>长短期记忆</strong> ( <strong> LSTM </strong>)模型</li>
+
+<li>美国有线新闻网；卷积神经网络</li>
+
+<li>通用CNN架构- <strong> LeNet </strong></li>
+
+</ul>
+
+<p>在本章的最后，我们将了解培训、测试和评估RNN。我们将学习如何在R环境中可视化RNN模型。我们也可以训练一个LSTM模型。我们将介绍CNN和公共CNN架构- LeNet的概念。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Recurrent Neural Network</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">递归神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在<strong>人工神经网络</strong> ( <strong> ANN </strong>)的集合中，根据隐含层数和数据流有几种变体。其中一个变体是RNN，神经元之间的连接可以形成一个循环。与前馈网络不同，rnn可以使用内存进行处理。rnn是一类人工神经网络，其特征在于隐藏层之间的连接，隐藏层通过时间传播以学习序列。RNN用例包括以下字段:</p>
+
+<ul>
+
+<li>股票市场预测</li>
+
+<li>图像字幕</li>
+
+<li>天气预报</li>
+
+<li>基于时间序列的预测</li>
+
+<li>语言翻译</li>
+
+<li>语音识别</li>
+
+<li>手写识别</li>
+
+<li>音频或视频处理</li>
+
+<li>机器人动作排序</li>
+
+</ul>
+
+<p>到目前为止，我们所研究的网络(前馈网络)是基于输入数据的，这些输入数据被提供给网络并被转换成输出。如果是监督学习算法，输出就是能识别输入的标签。基本上，这些算法通过识别模式将原始数据与特定类别联系起来。另一方面，递归网络不仅将向网络供电的当前输入数据作为其输入，还将它们随时间推移所经历的数据作为其输入。</p>
+
+<p>循环网络在特定时刻做出的决策会影响它随后立即做出的决策。因此，递归网络有两个输入源——现在和最近的过去——结合起来决定它们如何对新数据做出反应，就像人们在日常生活中所做的那样。</p>
+
+<p class="mce-root">递归网络不同于前馈网络，这是因为反馈回路与它们过去的决策相关联，从而暂时接受它们的输出作为输入。可以通过说递归网络具有记忆来强调这个特征。给神经网络增加记忆是有目的的:序列本身就有信息，递归网络用它来完成前馈网络不能完成的任务。</p>
+
+<p>RNN是一类神经网络，其中神经元之间存在连接，形成有向循环。典型的RNN如下图所示:</p>
+
+<div><img class="alignnone size-full wp-image-583 image-border" height="300" src="img/2fffc470-ada2-4785-b338-3c7be5cc1846.png" width="343"/></div>
+
+<p class="mce-root">这里，一个实例的输出被用作同一神经元的下一个实例的输入。数据保存在内存中以及在不同时间段流动的方式使得RNNs强大而成功。</p>
+
+<p>在RNNs下，数据反向流动的方式有更多的变体:</p>
+
+<ul>
+
+<li>完全循环</li>
+
+<li>递归的</li>
+
+<li>霍普菲尔德</li>
+
+<li>埃尔曼和乔丹网络公司</li>
+
+<li>神经历史压缩器</li>
+
+<li>LSTM</li>
+
+<li><strong>门控循环单元</strong> ( <strong> GRU </strong>)</li>
+
+<li>双向的</li>
+
+<li>复发性MLP</li>
+
+</ul>
+
+<p class="mce-root">递归网络被设计为将模式识别为数据序列，并且有助于预测和预报。他们可以处理文本、图像、语音和时间序列数据。rnn是强大的ann之一，代表生物大脑，包括具有处理能力的记忆。递归网络从当前输入(类似前馈网络)和先前计算的输出获取输入:</p>
+
+<div><img class="alignnone size-full wp-image-584 image-border" height="411" src="img/a6c3a3db-e763-45ca-93fb-69070af51223.png" width="690"/></div>
+
+<p>为了更好地理解这一点，我们认为RNN是一个神经网络的网络，其循环性质以下面的方式展开。在不同的时间周期(<em> -t-1 </em>、<em> t </em>、<em> t+1 </em>等等)考虑神经元<em> h </em>的状态，直到达到收敛或总次数。</p>
+
+<p>Vanilla是引入的第一个递归神经网络模型。下图显示了一个普通的RNN:</p>
+
+<div><img class="alignnone size-full wp-image-585 image-border" height="381" src="img/2b84694e-2939-4bb1-aa9a-f56776d0514f.png" width="1386"/></div>
+
+<p class="mce-root">诸如GRU或LSTM网络之类的其他变体由于实现简单而更加广泛，并且它们已经在涉及诸如语言建模、语音识别、图像字幕和自动翻译之类的序列的广泛应用中表现出显著的性能。</p>
+
+<p class="mce-root">RNNs可以通过以下包在R中实现:</p>
+
+<ul>
+
+<li><kbd>rnn</kbd></li>
+
+<li class="mce-root"><kbd>MxNetR</kbd></li>
+
+<li class="mce-root"><kbd>TensorFlow</kbd>为居</li>
+
+</ul>
+
+<div><p>rnn主要用于序列建模。输入和输出被视为向量(数字矩阵)。对于RNNs的另一个层次的理解，我建议你去看看Andrej Karpathy的字符排序例子。</p>
+
+<p class="mce-root">RNN的特点使它像一个有记忆的人工神经网络。人工神经网络的记忆更像人类的大脑。有了记忆，我们可以让机器从头开始思考，从它们的“记忆”中学习。rnn基本上是带有环路的ann，允许信息在网络中持续存在。该循环允许信息从状态t传递到状态<em> t+1 </em>。</p>
+
+<p class="mce-root">如上图所示，rnn可以看作是同一个ANN的多个副本，其中一个的输出作为输入传递给下一个。当我们保存信息时，随着模式的改变，RNN能够预测出<em> t+1 </em>的值。这对于分析基于时间序列的问题特别有用。</p>
+
+<p class="mce-root">没有具体的标签要求；作为输入一部分的值构成了时间序列变量，RNN可以学习模式并进行预测。</p>
+
+<p class="mce-root">RNN的内部状态在学习过程的每个时间步都会更新。RNN的前馈机制类似于ANN然而，反向传播是一种误差项校正，跟随在时间<strong xmlns:epub="http://www.idpf.org/2007/ops">反向传播之后(<strong xmlns:epub="http://www.idpf.org/2007/ops"> BPTT </strong>)。</strong></p>
+
+<p class="mce-root">时间反向传播遵循以下伪代码:</p>
+
+<ol>
+
+<li>展开RNN以包含<em> n </em>个前馈网络。</li>
+
+<li>将权重<em> w </em>初始化为随机值。</li>
+
+<li>执行以下操作，直到满足停止标准或完成所需的时期数。</li>
+
+<li>用值<em> x <sub> i. </sub> </em>设置每个网络的输入</li>
+
+<li>通过整个展开的网络向前传播输入。</li>
+
+<li>通过展开的网络反向传播错误。</li>
+
+<li>更新网络中的所有权重。</li>
+
+<li>平均权重，找出折叠网络中的最终权重。</li>
+
+</ol>
+
+</div>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>The rnn package in R</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">R中的rnn包</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>要在R环境中实现RNN，我们可以使用CRAN提供的<kbd>rnn</kbd>包。这个包广泛用于实现RNN。从官方文件中摘录的<kbd>rnn</kbd>包的简要描述如下表所示:</p>
+
+<table style="width: 709px;height: 319px">
+
+<tbody>
+
+<tr>
+
+<td><strong> rnn </strong>:递归神经网络</td>
+
+</tr>
+
+<tr>
+
+<td><strong>描述</strong>:</td>
+
+</tr>
+
+<tr>
+
+<td>R中RNN的实现</td>
+
+</tr>
+
+<tr>
+
+<td><strong>详情</strong>:</td>
+
+</tr>
+
+<tr>
+
+<td>包:<kbd>rnn</kbd> <br/>类型:包<br/>版本:0.8.0 <br/>日期:2016-09-11 <br/>许可证:GPL-3</td>
+
+</tr>
+
+<tr>
+
+<td><strong>作者</strong>:</td>
+
+</tr>
+
+<tr>
+
+<td>
+
+<p class="mce-root">迪米特里·菲乔</p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p class="mce-root"><kbd>rnn</kbd>包中使用的主要功能如下表所示:</p>
+
+<table style="width: 709px;height: 319px">
+
+<tbody>
+
+<tr>
+
+<td>
+
+<p><kbd>predict_rnn</kbd></p>
+
+</td>
+
+<td>
+
+<p class="mce-root">预测RNN模型的输出:</p>
+
+<p><kbd>predict_rnn(model, X, hidden = FALSE, real_output = T, ...)</kbd></p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td>
+
+<p><kbd>run.rnn_demo</kbd></p>
+
+</td>
+
+<td>
+
+<p class="mce-root">启动<kbd>rnn_demo</kbd>应用程序的功能:</p>
+
+<p><kbd>run.rnn_demo(port = NULL)</kbd></p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td>
+
+<p><kbd>trainr</kbd></p>
+
+</td>
+
+<td>
+
+<p>这列火车开往RNN。该模型由<kbd>predictr</kbd>功能使用。</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td>
+
+<p><kbd>predictr</kbd></p>
+
+</td>
+
+<td>
+
+<p class="mce-root">这预测了RNN模型的输出:</p>
+
+<p><kbd>predictr(model, X, hidden = FALSE, real_output = T, ...)</kbd></p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p> </p>
+
+<p class="mce-root"/>
+
+<p class="mce-root">和往常一样，为了能够使用一个库，我们必须首先安装，然后将它加载到我们的脚本中。</p>
+
+<p>记住，要安装R的初始发行版中没有的库，必须使用<kbd>install.package</kbd>函数。这是安装包的主要功能。它接受一个名称向量和一个目的库，从存储库中下载包并安装它们。这个函数应该只使用一次，而不是每次运行代码时都使用。</p>
+
+<p class="mce-root">因此，让我们安装并加载库:</p>
+
+<pre><strong>install.packages("rnn")</strong><br/><strong>library("rnn")</strong></pre>
+
+<p>当我们加载库(<kbd>library("rnn")</kbd>)时，我们可能会收到以下错误:</p>
+
+<pre><strong>&gt; library("rnn")</strong><br/><strong>Error: package or namespace load failed for ‘rnn’ in get(Info[i, 1], envir = env):</strong><br/><strong> cannot open file 'C:/Users/Giuseppe/Documents/R/win-library/3.4/digest/R/digest.rdb': No such file or directory</strong></pre>
+
+<p>别担心，没什么大不了的。r只是说，为了运行<kbd>rnn</kbd>库，你还需要安装<kbd>digest</kbd>库。记住它；将来，如果发生这样的问题，你现在知道如何解决它。只需添加以下命令:</p>
+
+<pre><strong>install.packages("digest")</strong></pre>
+
+<p>现在我们可以开始演示了:</p>
+
+<pre><strong>run.rnn_demo()</strong></pre>
+
+<p class="mce-root">当我们在安装<kbd>rnn</kbd>包后运行<kbd>run.rnn_demo()</kbd>时，我们可以通过<kbd>127.0.0.1:5876</kbd>访问一个网页，这允许我们运行一个带有预置值的RNN的演示，并且还可以直观地看到参数如何影响RNN，如下图所示:</p>
+
+<div><img height="300" src="img/1c3ec475-9dd4-4b4f-b1a7-94d6b55df54f.jpg" style="font-size: 1em" width="564"/></div>
+
+<p>在这一点上，我们将能够设置我们的网络的参数，并选择合适的值通过它的标签插入到框中。必须正确设置以下参数:</p>
+
+<ul>
+
+<li><kbd>time dimension</kbd></li>
+
+<li><kbd>training sample dimension</kbd></li>
+
+<li><kbd>testing sample dimension</kbd></li>
+
+<li><kbd>number of hidden layers</kbd></li>
+
+<li><kbd>Number of unit in the layer number 1</kbd></li>
+
+<li><kbd>Number of unit in the layer number 2</kbd></li>
+
+<li><kbd>learningrate</kbd></li>
+
+<li><kbd>batchsize</kbd></li>
+
+<li><kbd>numepochs</kbd></li>
+
+<li><kbd>momentum</kbd></li>
+
+<li><kbd>learningrate_decay</kbd></li>
+
+</ul>
+
+<p>完成此操作后，我们只需单击train按钮，命令就会被构建和训练。</p>
+
+<p>下图显示了模拟的结果:</p>
+
+<p class="mce-root"/>
+
+<div><img class="alignnone size-full wp-image-585 image-border" height="284" src="img/e92f5c06-1c28-4df0-8d81-e2c09c69f278.jpg" width="524"/></div>
+
+<p class="mce-root"><kbd>trainr</kbd>和<kbd>predictr</kbd>功能是<kbd>rnn</kbd>包中最重要的功能。<kbd>trainr()</kbd>函数用一组<kbd>X</kbd>和<kbd>Y</kbd>参数训练一个模型，该模型可用于使用<kbd>predictr()</kbd>函数的预测:</p>
+
+<pre><strong>trainr(Y, X, </strong><br/><strong>      learningrate, </strong><br/><strong>      learningrate_decay = 1, </strong><br/><strong>      momentum = 0, </strong><br/><strong>      hidden_dim = c(10), </strong><br/><strong>      network_type = "rnn", </strong><br/><strong>      numepochs = 1, </strong><br/><strong>      sigmoid = c("logistic", "Gompertz", "tanh"), </strong><br/><strong>      use_bias = F, </strong><br/><strong>      batch_size = 1, </strong><br/><strong>      seq_to_seq_unsync = F, </strong><br/><strong>      update_rule = "sgd", </strong><br/><strong>      epoch_function = c(epoch_print, epoch_annealing), </strong><br/><strong>      loss_function = loss_L1, ...) </strong><br/><br/><strong>predictr(model, </strong><br/><strong>      X, </strong><br/><strong>      hidden = FALSE, </strong><br/><strong>      real_output = T, </strong><br/><strong>      arguments to pass to sigmoid function)</strong></pre>
+
+<p><kbd>trainr()</kbd>函数采用以下参数。输出是可用于预测的模型:</p>
+
+<table>
+
+<tbody>
+
+<tr>
+
+<td><kbd>Y</kbd></td>
+
+<td>
+
+<p class="mce-root">输出值数组:</p>
+
+<ul>
+
+<li><kbd>dim 1</kbd>:样品(必须等于<kbd>X</kbd>的尺寸1)</li>
+
+<li><kbd>dim 2</kbd>:时间(必须等于<kbd>X</kbd>的尺寸2)</li>
+
+<li><kbd>dim 3</kbd>:变量(可以是一个或多个，如果是矩阵，将被强制为数组)</li>
+
+</ul>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td><kbd>X</kbd></td>
+
+<td>
+
+<p class="mce-root">输入值数组:</p>
+
+<ul>
+
+<li class="mce-root"><kbd>dim 1</kbd>:样品</li>
+
+<li class="mce-root"><kbd>dim 2</kbd>:时间</li>
+
+<li class="mce-root"><kbd>dim 3</kbd>:变量(可以是一个或多个；如果是矩阵，将被强制为数组)</li>
+
+</ul>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td><kbd>learningrate</kbd></td>
+
+<td>要应用于权重迭代的学习率。</td>
+
+</tr>
+
+<tr>
+
+<td><kbd>learningrate_decay</kbd></td>
+
+<td>通过<kbd>epoch_annealing</kbd>功能应用于每个时期学习率的系数。</td>
+
+</tr>
+
+<tr>
+
+<td><kbd>momemtum</kbd></td>
+
+<td>为加快学习速度而保留的上次权重迭代的系数。</td>
+
+</tr>
+
+<tr>
+
+<td><kbd>hidden_dim</kbd></td>
+
+<td>隐藏层的尺寸。</td>
+
+</tr>
+
+<tr>
+
+<td><kbd>network_type</kbd></td>
+
+<td>网络类型，可以是<kbd>rnn</kbd>、<kbd>gru</kbd>或<kbd>lstm</kbd>。</td>
+
+</tr>
+
+<tr>
+
+<td><kbd>numepochs</kbd></td>
+
+<td>迭代次数，即整个数据集呈现给网络的次数</td>
+
+</tr>
+
+<tr>
+
+<td><kbd>sigmoid</kbd></td>
+
+<td>要传递给<kbd>sigmoid</kbd>函数的方法。</td>
+
+</tr>
+
+<tr>
+
+<td><kbd>batch size</kbd></td>
+
+<td>每次权重迭代中使用的样本数。暂时只支持一个。</td>
+
+</tr>
+
+<tr>
+
+<td><kbd>epoch_function</kbd></td>
+
+<td>要在每个历元循环中应用的函数向量。使用它与列表模型中的对象进行交互，或者在每个时期进行打印和绘图。它应该返回模型。</td>
+
+</tr>
+
+<tr>
+
+<td><kbd>loss function</kbd></td>
+
+<td>应用于每个样本循环，词汇验证。</td>
+
+</tr>
+
+<tr>
+
+<td><kbd>...</kbd></td>
+
+<td>
+
+<p class="mce-root">传递给方法的参数，用于用户定义的函数。</p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p>现在让我们看一个简单的例子。该示例包含在CRAN <kbd>rnn</kbd>包的官方文档中，用于演示<kbd>trainr</kbd>和<kbd>predictr</kbd>功能并查看预测的准确性。</p>
+
+<p>我们有随机数在范围<em> 0-127 </em>内的<kbd>X1</kbd>和<kbd>X</kbd>。<kbd>Y</kbd>初始化为<kbd>X1+X2</kbd>。将<kbd>X1</kbd>、<kbd>X2</kbd>、<kbd>Y</kbd>转换成二进制值后，我们使用<kbd>trainr</kbd>基于<kbd>X(array of X1 and X2)</kbd>训练<kbd>Y</kbd>。</p>
+
+<p>使用该模型，我们根据<kbd>A1+A2</kbd>的另一个样本预测<kbd>B</kbd>。误差差被绘制成直方图:</p>
+
+<pre><strong>library("rnn")</strong><br/><br/><strong>#Create a set of random numbers in X1 and X2</strong><br/><strong>X1=sample(0:127, 7000, replace=TRUE)</strong><br/><strong>X2=sample(0:127, 7000, replace=TRUE)</strong><br/><br/><strong>#Create training response numbers</strong><br/><strong>Y=X1 + X2</strong><br/><br/><strong># Convert to binary</strong><br/><strong>X1=int2bin(X1)</strong><br/><strong>X2=int2bin(X2)</strong><br/><strong>Y=int2bin(Y)</strong><br/><br/><strong># Create 3d array: dim 1: samples; dim 2: time; dim 3: variables.</strong><br/><strong>X=array( c(X1,X2), dim=c(dim(X1),2) )</strong><br/><br/><strong># Train the model</strong><br/><strong>model &lt;- trainr(Y=Y[,dim(Y)[2]:1],</strong><br/><strong>                X=X[,dim(X)[2]:1,],</strong><br/><strong>                learningrate = 0.1,</strong><br/><strong>                hidden_dim = 10,</strong><br/><strong>                batch_size = 100,</strong><br/><strong>                numepochs = 100)</strong><br/><br/><strong>plot(colMeans(model$error),type='l',xlab='epoch',ylab='errors')</strong><br/><br/><strong># Create test inputs</strong><br/><strong>A1=int2bin(sample(0:127, 7000, replace=TRUE))</strong><br/><strong>A2=int2bin(sample(0:127, 7000, replace=TRUE))</strong><br/><br/><strong># Create 3d array: dim 1: samples; dim 2: time; dim 3: variables</strong><br/><strong>A=array( c(A1,A2), dim=c(dim(A1),2) )</strong><br/><br/><strong># Now, let us run prediction for new A</strong><br/><strong>B=predictr(model,</strong><br/><strong> A[,dim(A)[2]:1,] )</strong><br/><strong>B=B[,dim(B)[2]:1]</strong><br/><br/><strong># Convert back to integers</strong><br/><strong>A1=bin2int(A1)</strong><br/><strong>A2=bin2int(A2)</strong><br/><strong>B=bin2int(B)</strong><br/><br/><strong># Plot the differences as histogram</strong><br/><strong>hist( B-(A1+A2)</strong> )</pre>
+
+<p>像往常一样，我们将逐行分析代码，详细解释用于捕获结果的所有特性:</p>
+
+<pre><strong>library("rnn")</strong></pre>
+
+<p>初始代码的第一行用于加载运行分析所需的库。让我们转到以下命令:</p>
+
+<pre><strong>X1=sample(0:127, 7000, replace=TRUE)</strong><br/><strong>X2=sample(0:127, 7000, replace=TRUE)</strong></pre>
+
+<p>这些行创建训练响应号码；这两个向量将是我们将要建立的网络的输入。我们已经使用<kbd>sample()</kbd>功能从<kbd>x</kbd>的元素中抽取指定大小的样本，无论有无替换。这两个向量包含在<kbd>1</kbd>和<kbd>127</kbd>之间的7000个随机整数值。</p>
+
+<pre><strong>Y = X1 + X2</strong></pre>
+
+<p>此命令创建训练响应号；这就是我们的目标，或者说我们希望借助网络来预测的东西。</p>
+
+<pre><strong>X1=int2bin(X1)</strong><br/><strong>X2=int2bin(X2)</strong><br/><strong>Y=int2bin(Y)</strong></pre>
+
+<p>这三行代码将整数转换成二进制序列。在一点一点相加之前，我们需要将数字转换成二进制。最后，我们得到每个值的八个值的序列，这些值是<kbd>0</kbd>或<kbd>1</kbd>。为了理解这种转换，我们先分析其中一个变量:</p>
+
+<pre><strong>&gt; head(X1,n=10)</strong><br/><strong>      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8]</strong><br/><strong> [1,]    1    1    1    0    0    1    0    0</strong><br/><strong> [2,]    0    0    0    1    0    0    0    0</strong><br/><strong> [3,]    1    0    0    0    1    0    1    0</strong><br/><strong> [4,]    0    0    0    0    0    0    1    0</strong><br/><strong> [5,]    0    1    0    0    0    0    0    0</strong><br/><strong> [6,]    0    0    0    1    1    1    0    0</strong><br/><strong> [7,]    1    0    1    1    0    1    1    0</strong><br/><strong> [8,]    1    1    0    0    0    1    0    0</strong><br/><strong> [9,]    1    0    1    0    0    0    0    0</strong><br/><strong>[10,]    0    0    0    1    0    0    0    0</strong></pre>
+
+<p>我们回过头来分析一下代码:</p>
+
+<pre><strong>X=array( c(X1,X2), dim=c(dim(X1),2) )</strong></pre>
+
+<p>该代码根据<kbd>trainr()</kbd>功能的要求创建一个3D数组。在此阵列中，我们有以下内容:</p>
+
+<ul>
+
+<li><kbd>dim 1</kbd>:样本(必须等于输入的<kbd>dim 1</kbd>)</li>
+
+<li><kbd>dim 2</kbd>:时间(必须等于输入的<kbd>dim 2</kbd>)</li>
+
+<li><kbd>dim 3</kbd>:变量(可以是一个或多个；如果是矩阵，这将被强制为数组)</li>
+
+</ul>
+
+<pre><strong>model &lt;- trainr(Y=Y[,dim(Y)[2]:1],</strong><br/><strong>                X=X[,dim(X)[2]:1,],</strong><br/><strong>                learningrate = 0.1,</strong><br/><strong>                hidden_dim = 10,</strong><br/><strong>                batch_size = 100,</strong><br/><strong>                numepochs = 100)</strong></pre>
+
+<p><kbd>trainr()</kbd>函数在原生r中训练RNN。这需要几分钟，因为训练是基于<kbd>X</kbd>和<kbd>Y</kbd>进行的。以下代码显示了在R提示符下显示的最后10个训练历元结果:</p>
+
+<pre><strong>Trained epoch: 90 - Learning rate: 0.1</strong><br/><strong>Epoch error: 3.42915263914405</strong><br/><strong>Trained epoch: 91 - Learning rate: 0.1</strong><br/><strong>Epoch error: 3.44100549476955</strong><br/><strong>Trained epoch: 92 - Learning rate: 0.1</strong><br/><strong>Epoch error: 3.43627697030863</strong><br/><strong>Trained epoch: 93 - Learning rate: 0.1</strong><br/><strong>Epoch error: 3.43541472188254</strong><br/><strong>Trained epoch: 94 - Learning rate: 0.1</strong><br/><strong>Epoch error: 3.43753094787383</strong><br/><strong>Trained epoch: 95 - Learning rate: 0.1</strong><br/><strong>Epoch error: 3.43622412149714</strong><br/><strong>Trained epoch: 96 - Learning rate: 0.1</strong><br/><strong>Epoch error: 3.43604894997742</strong><br/><strong>Trained epoch: 97 - Learning rate: 0.1</strong><br/><strong>Epoch error: 3.4407798878595</strong><br/><strong>Trained epoch: 98 - Learning rate: 0.1</strong><br/><strong>Epoch error: 3.4472752590403</strong><br/><strong>Trained epoch: 99 - Learning rate: 0.1</strong><br/><strong>Epoch error: 3.43720125450988</strong><br/><strong>Trained epoch: 100 - Learning rate: 0.1</strong><br/><strong>Epoch error: 3.43542353819336</strong></pre>
+
+<p>我们可以通过绘制算法对后续时期造成的误差来了解算法的演变:</p>
+
+<pre><strong>plot(colMeans(model$error),type='l',xlab='epoch',ylab='errors')</strong></pre>
+
+<p>该图显示了历元与误差的关系:</p>
+
+<div><img class="alignnone size-full wp-image-583 image-border" src="img/de0f5105-1073-4cc3-902c-bea11531a201.png"/></div>
+
+<p>现在模型准备好了，我们可以用它来测试网络。但是首先，我们需要创建一些测试数据:</p>
+
+<pre><strong>A1=int2bin(sample(0:127, 7000, replace=TRUE))</strong><br/><strong>A2=int2bin(sample(0:127, 7000, replace=TRUE))</strong><br/><strong>A=array( c(A1,A2), dim=c(dim(A1),2) )</strong></pre>
+
+<p>现在，让我们对新数据进行预测:</p>
+
+<pre><strong>B=predictr(model, A[,dim(A)[2]:1,] ) </strong><br/><strong>B=B[,dim(B)[2]:1]</strong></pre>
+
+<p>转换回整数:</p>
+
+<pre><strong>A1=bin2int(A1)</strong><br/><strong>A2=bin2int(A2)</strong><br/><strong>B=bin2int(B)</strong></pre>
+
+<p>最后，将差异绘制成直方图:</p>
+
+<pre><strong>hist( B-(A1+A2) )</strong></pre>
+
+<p>误差直方图如下所示:</p>
+
+<div><img class="alignnone size-full wp-image-583 image-border" src="img/702e1857-c591-4578-8bee-8edd927f5b11.png"/></div>
+
+<p>正如这里可以看到的，频率较高的箱接近零，表明在大多数情况下，预测值与当前值一致。所有其他箱都与误差相关。因此，我们可以说网络以良好的性能模拟了系统。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>LSTM model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">LSTM模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们已经看到，RNNs有一个存储器，它使用持久的先前信息，用于当前的神经网络处理。先前的信息用于当前任务。然而，记忆是短期的，我们没有一个神经节点所有可用的先前信息的列表。</p>
+
+<p>当我们将长期记忆引入RNN时，我们能够记住大量先前的信息，并将其用于当前的处理。这个概念被称为RNN的LSTM模型，它在视频、音频、文本预测和各种其他应用程序中有许多用例。</p>
+
+<p>LSTMs是由Hochreiter &amp; Schmidhuber在1997年提出的。</p>
+
+<p>使用<strong> BPTT </strong>训练LSTM网络，并减少消失梯度问题。LSTMs在时间序列预测中具有强大的应用，并且可以创建大型的递归网络来解决机器学习中的困难序列问题。</p>
+
+<p>LSTM有<strong>门</strong>，使得长期/短期记忆成为可能。这些包含在通过层连接的存储器块中:</p>
+
+<div><img class="alignnone size-full wp-image-586 image-border" height="459" src="img/e4cef953-cbd2-4d21-a933-1ba4022fd44e.png" width="647"/></div>
+
+<p>一个单元内有三种类型的门:</p>
+
+<ul>
+
+<li><strong>输入门:</strong>缩放输入到单元(写入)</li>
+
+<li><strong>输出门</strong>:将输出缩放至单元格(读取)</li>
+
+<li><strong>忘记门</strong>:缩放旧单元值(复位)</li>
+
+</ul>
+
+<p>每个门就像一个控制读/写的开关，从而将长期记忆功能纳入了LSTM模型。</p>
+
+<p>LSTMs可用于解决以下序列预测问题:</p>
+
+<ul>
+
+<li>直接序列预测</li>
+
+<li>序列分类</li>
+
+<li>序列生成</li>
+
+<li>序列间预测</li>
+
+</ul>
+
+<p>GRU和LSTM的主要区别在于:</p>
+
+<ul>
+
+<li>GRU有两个门，而LSTM有三个门。</li>
+
+<li>GRUs没有任何不同于暴露隐藏状态的内部记忆。它们没有LSTMs中的输出门。</li>
+
+<li>计算GRU中的输出时，没有应用二次非线性。</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Convolutional Neural Networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">卷积神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>深度学习中另一组重要的神经网络是CNN。它们是专门为图像识别和分类而设计的。CNN有多层神经网络，从图像中提取信息，并确定它们所属的类别。</p>
+
+<p>例如，如果CNN使用一组猫的图像进行训练，它可以检测出图像是否是猫。在这一节中，我们将看到CNN的架构和工作方式。</p>
+
+<p>对于一个程序来说，任何图像都只是一组矢量格式的RGB数字。如果我们能让一个神经网络理解模式，它就能组成一个CNN并检测图像。</p>
+
+<p>常规神经网络是通用的数学逼近器，它接受输入，通过一系列函数对其进行转换，并导出输出。然而，这些常规神经网络不能很好地适应图像分析。对于32 x 32像素的RGB图像，隐藏层的权重为<em> 32*32*3=3072 </em>。常规的神经网络在这种情况下工作良好。但是，当RGB图像缩放到大小为<em> 200 x 200 </em>像素时，隐藏层中所需的权重数为<em>200 * 200 * 3 = 120000</em>，网络表现不佳。</p>
+
+<p>进入CNN解决这个扩展性问题。在CNN中，一个CNN的层有三维排列的神经元(<strong>高</strong>、<strong>宽</strong>、<strong>深</strong>)。</p>
+
+<p>下图显示了神经网络和CNN:</p>
+
+<div><img class="alignnone size-full wp-image-587 image-border" height="170" src="img/12fe00f5-4035-407d-a5c4-ac56779017f7.png" width="702"/></div>
+
+<p>CNN是一系列神经网络层，其中每一层通过可微分函数将一个激活量转换为另一个激活量。构建CNN有三种类型的层:</p>
+
+<ul>
+
+<li>卷积层</li>
+
+<li>汇集层</li>
+
+<li>全连接层</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Step #1 – filtering</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">步骤# 1–过滤</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>卷积层执行繁重的数学运算。在计算机视觉中，处理图像的一种典型方法是用过滤器对其进行卷积，以仅提取其中的显著特征。这是CNN的第一次行动。输入图像被应用过滤逻辑以创建<strong>激活图</strong>或<strong>特征图</strong>:</p>
+
+<div><img class="alignnone size-full wp-image-589 image-border" height="229" src="img/2009c470-759a-4fb7-a1a3-982c4bae841c.png" width="510"/></div>
+
+<p>通过在图像的每个3×3向量上应用核向量来创建回旋特征向量。</p>
+
+<p>过滤的数学步骤如下:</p>
+
+<ol>
+
+<li>对齐特征和图像补片。</li>
+
+<li>将每个图像像素乘以相应的特征像素。</li>
+
+<li>把它们加起来。</li>
+
+<li>将每个总和除以特征中的像素总数。</li>
+
+</ol>
+
+<p>过滤完成后，下一步是压缩过滤后的像素。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Step #2 – pooling</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">第2步–汇集</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在这一步中，我们收缩图像堆栈。对于在卷积步骤中获得的每个特征，我们建立一个矩阵，现在在每个选择的矩阵中找到最大值，以缩小整个输入。这些步骤如下:</p>
+
+<ol>
+
+<li>选择一个窗口大小(通常为2或3)。</li>
+
+<li>选择一个步幅移动的像素范围(通常为2)。</li>
+
+<li>在过滤后的图像上滑动窗口。</li>
+
+<li>对于每个窗口，我们取最大值。</li>
+
+</ol>
+
+<p>如果滑动窗口不像在先前的窗口中那样具有所需数量的单元，我们采用任何可用的值。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Step #3 – ReLU for normalization</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">第3步–ReLU进行标准化</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在这一步中，我们获取每个像素的池输出和，并应用ReLU规范化来调整这些值。如果任何一个值是负的，我们让它为零。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Step #4 – voting and classification in the fully connected layer</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">步骤# 4–全连接层中的投票和分类</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>最后一层是全连接层，通过一组值进行投票来确定输出的类别。完全连接的层只是所有先前输出的合并矩阵。</p>
+
+<p>这是最后一层，输出是根据投票最高的类别决定的。</p>
+
+<p>通过堆叠步骤1、2和3中的层，我们形成卷积网络，它可以通过反向传播减少误差项，从而给出最佳预测。</p>
+
+<p>这些层可以重复多次，并且每个层的输出形成下一层的输入。</p>
+
+<p>一个经典的CNN架构应该是这样的:</p>
+
+<div><img class="alignnone size-full wp-image-583 image-border" height="55" src="img/6072c6ed-ba27-43a5-a6c5-5789d90cc502.jpg" width="513"/></div>
+
+<p>下图显示了一个使用CNN的分类预测示例:</p>
+
+<div><img class="alignnone size-full wp-image-590 image-border" height="189" src="img/dfdc992c-7cd0-4bcd-97b5-374f0528315c.png" width="574"/></div>
+
+<p>我们将在<a href="e3bdb377-05bc-40d2-87ed-6085861eca56.xhtml">第7章</a>、<em>神经网络用例-高级主题</em>中看到使用R的CNN实现。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Common CNN architecture - LeNet</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">通用CNN架构- LeNet</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">LeNet-5是Le Cun在20世纪90年代设计的用于手写和机器印刷字符识别的卷积网络。<br/>这是卷积网络的首次成功应用。它具有以下架构:</p>
+
+<div><img class="alignnone size-full wp-image-591 image-border" height="168" src="img/0eb6d87a-5d33-4b5d-8270-ba35df7e28f6.jpg" width="690"/></div>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Humidity forecast using RNN</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">利用RNN进行湿度预报</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>作为RNNs的第一个用例，我们看到如何使用<kbd>trainr()</kbd>函数<em>来训练和预测RNN。</em>我们的目的是预测某个位置一天的湿度。输入文件包含来自多个澳大利亚气象站的每日天气观测。这些观测数据是从澳大利亚联邦气象局获得的，随后经过处理以创建一个相对较大的样本数据集，用于使用R和rattle.data包说明分析、数据挖掘和数据科学。<kbd>weatherAUS</kbd>数据集定期更新，并且该包的更新通常对应于该数据集的更新。数据是从气象局网站更新的。<kbd>locationsAUS</kbd>数据集记录了每个气象站的位置。源数据集版权归澳大利亚联邦气象局所有，经许可使用。</p>
+
+<p>该数据集的CSV版本可从以下链接获得:<br/><a href="https://rattle.togaware.com/weatherAUS.csv">https://rattle.togaware.com/weatherAUS.csv</a></p>
+
+<p><kbd>weatherAUS</kbd>数据集是一个数据帧，包含来自超过45个澳大利亚气象站的超过140，000条每日观测数据。该数据集包含以下变量:</p>
+
+<ul>
+
+<li><kbd>Date</kbd>:观察日期(一个<kbd>Date</kbd>对象)。</li>
+
+<li><kbd>Location</kbd>:气象站所在地的俗称。</li>
+
+<li><kbd>MinTemp</kbd>:以摄氏度为单位的最低温度。</li>
+
+<li><kbd>MaxTemp</kbd>:最高温度，单位为摄氏度。</li>
+
+<li><kbd>Rainfall</kbd>:当天记录的降雨量，单位为毫米</li>
+
+<li><kbd>Evaporation</kbd>:所谓a级蒸发皿蒸发量(毫米)在24小时至9点之间</li>
+
+<li><kbd>Sunshine</kbd>:一天中日照充足的小时数。</li>
+
+<li><kbd>WindGustDir</kbd>:24小时至午夜最强阵风的方向。</li>
+
+<li><kbd>WindGustSpeed</kbd>:24小时至午夜最强阵风的速度(km/h)。</li>
+
+<li><kbd>Temp9am</kbd>:上午9点的温度(摄氏度)</li>
+
+<li><kbd>RelHumid9am</kbd>:上午9点的相对湿度(百分比)</li>
+
+<li>上午9点，天空中被云遮住的部分。这是用奥克塔来衡量的，奥克塔是八分之一的单位。它记录了八分之几的天空被云遮住。零表示天空完全晴朗，而8表示天气完全阴沉。</li>
+
+<li><kbd>WindSpeed9am</kbd>:上午9点前10分钟的平均风速(公里/小时)6 <kbd>weatherAUS</kbd>。</li>
+
+<li><kbd>Pressure9am</kbd>:上午9时，大气压力降至平均海平面</li>
+
+<li><kbd>Temp3pm</kbd>:下午3点的温度(摄氏度)</li>
+
+<li><kbd>RelHumid3pm</kbd>:下午3点的相对湿度(百分比)</li>
+
+<li>下午3点被云遮住的天空比例(单位:八分之一)</li>
+
+<li>下午3点前10分钟的平均风速(公里/小时)</li>
+
+<li><kbd>Pressure3pm</kbd>:下午3时气压降至平均海平面</li>
+
+<li><kbd>ChangeTemp</kbd>:温度变化。</li>
+
+<li><kbd>ChangeTempDir</kbd>:温度变化方向。</li>
+
+<li><kbd>ChangeTempMag</kbd>:温度变化幅度。</li>
+
+<li><kbd>ChangeWindDirect</kbd>:风向改变。</li>
+
+<li><kbd>MaxWindPeriod</kbd>:最大风期。</li>
+
+<li><kbd>RainToday</kbd>:截止到上午9点的24小时内降雨量(mm)超过1 mm时为整数1，否则为0。</li>
+
+<li><kbd>TempRange</kbd>:截至上午9点的24小时内最低温度和最高温度之差(℃)</li>
+
+<li><kbd>PressureChange</kbd>:压力变化。</li>
+
+<li><kbd>RISK_MM</kbd>:降雨量。一种衡量风险的方法。</li>
+
+<li><kbd>RainTomorrow</kbd>:目标变量。明天会下雨吗？</li>
+
+</ul>
+
+<p class="mce-root">在我们的例子中，我们将只使用其中的两个变量:</p>
+
+<ul>
+
+<li><kbd>Date</kbd>:观察日期(一个<kbd>Date</kbd>对象)</li>
+
+<li><kbd>RelHumid9am</kbd>:上午9时的相对湿度(百分比)</li>
+
+</ul>
+
+<p>如前所述，本例的目的是预测某个位置一天的湿度。以下是我们将在本例中使用的代码:</p>
+
+<pre><strong>##########################################################</strong><br/><strong>### Chapter 6 - Introduction to RNNs - using R  ##########</strong><br/><strong>########## Humidity forecasting with RNNs#################</strong><br/><strong>##########################################################</strong><br/><strong><br/>library("rattle.data")</strong><br/><strong>library("rnn")</strong><br/><br/><strong>data(weatherAUS)</strong><br/><strong>View(weatherAUS)</strong><br/><br/><strong>#extract only 1 and 14 clumn and first 3040 rows (Albury location)</strong><br/><strong>data=weatherAUS[1:3040,c(1,14)]</strong><br/><strong>summary(data)</strong><br/><br/><strong>data_cleaned &lt;- na.omit(data) </strong><br/><strong>data_used=data_cleaned[1:3000]</strong><br/><br/><strong>x=data_cleaned[,1]</strong><br/><strong>y=data_cleaned[,2]</strong><br/><br/><strong>head(x)</strong><br/><strong>head(y)</strong><br/><br/><strong>X=matrix(x, nrow = 30)</strong><br/><strong>Y=matrix(y, nrow = 30)</strong><br/><br/><strong># Standardize in the interval 0 - 1</strong><br/><strong>Yscaled = (Y - min(Y)) / (max(Y) - min(Y))</strong><br/><strong>Y=t(Yscaled)</strong><br/><br/><strong>train=1:70</strong><br/><strong>test=71:100</strong><br/><br/><strong>model &lt;- trainr(Y = Y[train,],</strong><br/><strong>                X = Y[train,],</strong><br/><strong>                learningrate = 0.05,</strong><br/><strong>                hidden_dim = 16,</strong><br/><strong>                numepochs = 1000)</strong><br/><br/><strong>plot(colMeans(model$error),type='l',xlab='epoch',ylab='errors')</strong><br/><br/><strong>Yp &lt;- predictr(model, Y[test,])</strong><br/><br/><strong>plot(as.vector(t(Y[test,])), col = 'red', type='l', </strong><br/><strong>     main = "Actual vs Predicted Humidity: testing set", </strong><br/><strong>     ylab = "Y,Yp")</strong><br/><strong>lines(as.vector(t(Yp)), type = 'l', col = 'black')</strong><br/><strong>legend("bottomright", c("Predicted", "Actual"), </strong><br/><strong>       col = c("red","black"), </strong><br/><strong>       lty = c(1,1), lwd = c(1,1))</strong><br/><br/><strong>############################################################</strong></pre>
+
+<p>我们开始逐行分析代码，详细解释用于捕获结果的所有特性:</p>
+
+<pre><strong>library("rattle.data")</strong><br/><strong>library("rnn")</strong></pre>
+
+<p class="mce-root">初始代码的前两行用于加载运行分析所需的库。</p>
+
+<p>记住，要安装R的初始发行版中没有的库，必须使用<kbd>install.package</kbd>函数。这是安装包的主要功能。它接受一个名称向量和一个目的库，从存储库中下载包并安装它们。这个函数应该只使用一次，而不是每次运行代码时都使用。</p>
+
+<p><kbd>rattle.data</kbd>库包含被<kbd>rattle</kbd>包用作默认例子的数据集。数据集本身可以独立于<kbd>rattle</kbd>包来说明分析、数据挖掘和数据科学任务。</p>
+
+<p><kbd>rnn</kbd>库包含了几个在R中实现RNN的函数:</p>
+
+<pre><strong>data(weatherAUS)</strong><br/><strong>View(weatherAUS)</strong></pre>
+
+<p>使用这个命令，我们上传名为<kbd>weatherAUS</kbd>的数据集，如上所述，包含在<kbd>rattle.data</kbd>库中。在第二行中，<kbd>view</kbd>函数用于调用dataframe对象上的电子表格样式的数据查看器，如下图所示:</p>
+
+<div><img class="alignnone size-full wp-image-585 image-border" src="img/b695e4f7-c598-4c3f-a49a-c33eef03fad1.png"/></div>
+
+<p>回到代码，和以前一样，我们只使用两个变量。此外，该数据集包含来自澳大利亚不同地点的数据。我们将把研究限制在第一个位置(<kbd>Albury</kbd>):</p>
+
+<pre><strong>data=weatherAUS[1:3040,c(1,14)]</strong></pre>
+
+<p>让我们使用<kbd>summary()</kbd>功能进行初步的数据分析:</p>
+
+<pre><strong>&gt; summary(data)</strong><br/><strong>      Date             Humidity9am  </strong><br/><strong> Min.   :2008-12-01   Min.   : 18.00 </strong><br/><strong> 1st Qu.:2010-12-30   1st Qu.: 61.00 </strong><br/><strong> Median :2013-04-27   Median : 76.00 </strong><br/><strong> Mean   :2013-03-22   Mean   : 74.07 </strong><br/><strong> 3rd Qu.:2015-05-27   3rd Qu.: 88.00 </strong><br/><strong> Max.   :2017-06-25   Max.   :100.00 </strong><br/><strong>                      NA's   :9      </strong> </pre>
+
+<p><kbd>summary()</kbd>函数返回每个变量的一组统计数据。特别是，突出显示为<kbd>Humidity9am</kbd>变量提供的结果是有用的；这代表了我们的目标。对于该变量，检测到9种缺失值的情况。为了删除丢失的值，我们将使用<kbd>na.omit()</kbd>函数；它会删除任何缺少值的行，并永远忘记它们:</p>
+
+<pre><strong>data_cleaned &lt;- na.omit(data) </strong><br/><strong>data_used=data_cleaned[1:3000]</strong></pre>
+
+<p>对于第二行代码，我们将分析限制在第一个<kbd>3000</kbd>观察值。现在我们必须将输入和输出数据设置为<kbd>trainr()</kbd>功能要求的格式:</p>
+
+<pre><strong>x=data_cleaned[,1]</strong><br/><strong>y=data_cleaned[,2]</strong></pre>
+
+<p>这样，<kbd>x</kbd>将代表我们的输入，<kbd>y</kbd>将代表我们的目标:</p>
+
+<pre><strong>X=matrix(x, nrow = 30)</strong><br/><strong>Y=matrix(y, nrow = 30)</strong></pre>
+
+<p>通过这段代码，我们用可用的数据构建了一个由<kbd>30</kbd>行和<kbd>100</kbd>列组成的矩阵。召回是我们将用于模型构建的功能所需的大小设置。我们现在可以对此进行标准化:</p>
+
+<pre><strong>Yscaled = (Y - min(Y)) / (max(Y) - min(Y))</strong><br/><strong>Y=t(Yscaled)</strong></pre>
+
+<p class="mce-root">对于本例，我们使用了最小-最大方法(通常称为特征缩放)来获取范围<em>【0，1】</em>内的所有缩放数据。其公式如下:</p>
+
+<div><img height="36" src="img/3b1ba3e2-f861-4465-b921-b5689b80d268.png" width="170"/></div>
+
+<p> </p>
+
+<p>在规范化过程中，我们必须计算每个数据库列的最小值和最大值。然后我们转置得到的矩阵:</p>
+
+<pre><strong>train=1:70</strong><br/><strong>test=71:100</strong></pre>
+
+<p>在这几行代码中，数据集被分成了<kbd>70:30</kbd>，目的是使用我们所掌握的<kbd>70</kbd>百分比的数据来训练网络，剩余的<kbd>30</kbd>百分比来测试网络。现在是构建和训练模型的时候了:</p>
+
+<pre><strong>model &lt;- trainr(Y = Y[train,],</strong><br/><strong>                X = Y[train,],</strong><br/><strong>                learningrate = 0.05,</strong><br/><strong>                hidden_dim = 16,</strong><br/><strong>                numepochs = 1000)</strong></pre>
+
+<p><kbd>trainr()</kbd>功能在R环境中训练RNN。我们已经在隐藏层中使用了<kbd>16</kbd>神经元，并且历元的数量是<kbd>1,000</kbd>。<kbd>trainr()</kbd>功能需要几分钟，因为训练是基于<kbd>X</kbd>和<kbd>Y</kbd>进行的。以下是R提示符上显示的最后10个<kbd>Trained epoch</kbd>结果:</p>
+
+<pre class="CodePACKT"><strong>Trained epoch: 990 - Learning rate: 0.05<br/>Epoch error: 0.382192317958489<br/>Trained epoch: 991 - Learning rate: 0.05<br/>Epoch error: 0.376313106021699<br/>Trained epoch: 992 - Learning rate: 0.05<br/>Epoch error: 0.380178990096884<br/>Trained epoch: 993 - Learning rate: 0.05<br/>Epoch error: 0.379260612039631<br/>Trained epoch: 994 - Learning rate: 0.05<br/>Epoch error: 0.380475314573825<br/>Trained epoch: 995 - Learning rate: 0.05<br/>Epoch error: 0.38169633378182<br/>Trained epoch: 996 - Learning rate: 0.05<br/>Epoch error: 0.373951666567461<br/>Trained epoch: 997 - Learning rate: 0.05<br/>Epoch error: 0.374880624458934<br/>Trained epoch: 998 - Learning rate: 0.05<br/>Epoch error: 0.384185799764121<br/>Trained epoch: 999 - Learning rate: 0.05<br/>Epoch error: 0.381408598560978<br/>Trained epoch: 1000 - Learning rate: 0.05<br/>Epoch error: 0.375245688144538</strong></pre>
+
+<p>我们可以通过绘制算法对后续时期造成的误差来了解算法的演变:</p>
+
+<pre><strong>plot(colMeans(model$error),type='l',xlab='epoch',ylab='errors')</strong></pre>
+
+<p>该图显示了<strong>时期</strong>与<strong>误差</strong>:</p>
+
+<div><img class="alignnone size-full wp-image-592 image-border" height="359" src="img/0fce681f-797a-42e4-bd1b-a3e549ebea6e.png" width="713"/></div>
+
+<p>我们终于训练好了网络，可以使用了；现在我们可以用它来做预测。请记住，我们已经留出30%的可用数据来测试网络。是时候使用它了:</p>
+
+<pre><strong>Yp &lt;- predictr(model, Y[test,])</strong></pre>
+
+<p>最后，为了比较结果，让我们绘制一个图表，按顺序显示测试集和预测结果中的水分含量:</p>
+
+<pre><strong>plot(as.vector(t(Y[test,])), col = 'red', type='l', </strong><br/><strong>     main = "Actual vs Predicted Humidity: testing set", </strong><br/><strong>     ylab = "Y,Yp")</strong><br/><strong>lines(as.vector(t(Yp)), type = 'l', col = 'black')</strong><br/><strong>legend("bottomright", c("Predicted", "Actual"), </strong><br/><strong>       col = c("red","black"), </strong><br/><strong>       lty = c(1,1), lwd = c(1,1))</strong></pre>
+
+<p>下图显示了实际值和预测值:</p>
+
+<div><img class="alignnone size-full wp-image-583 image-border" src="img/1b048d39-6f7f-4cda-9452-da2b97a8b4c0.png"/></div>
+
+<p>从该图的分析中，可以注意到一件事:该数据适合于良好的近似，以表明该模型能够以良好的性能预测湿度条件。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">摘要</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本章中，我们看到了rnn以及如何使用内存进行处理。我们还介绍了CNN，它是主要用于图像识别的标准化神经网络。对于RNNs，我们研究了r中的一些示例实现。</p>
+
+<p>我们学习了如何训练、测试和评估RNN。我们还学习了如何在R环境中可视化RNN模型。我们发现了LSTM模型。我们介绍了CNN的概念和一个通用的CNN架构:LeNet。</p>
+
+<p class="mce-root">在下一章中，我们将看到更多涉及神经网络和深度学习的R实现的用例。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

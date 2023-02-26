@@ -1,0 +1,1021 @@
+<html><head/><body>
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">线性代数</h1>
+                
+            
+            
+                
+<p>在这一章中，我们将讨论线性代数的主要概念，在这里学到的概念将作为我们学习后面章节中所有概念的基础，所以你一定要集中注意力。</p>
+<p>对你来说，知道这些章节不能代替数学教育是非常重要的；它们的存在仅仅是为了帮助你更好地掌握深度学习的概念以及各种架构是如何工作的，并发展一种直觉，以便你可以成为该领域更好的从业者。</p>
+<p>就其核心而言，代数只不过是对数学符号和操作这些符号的规则的研究。代数领域充当了所有数学的统一者，并为我们提供了一种思维方式。我们不用数字，而是用字母来表示变量。</p>
+<p>然而，线性代数只涉及线性变换和向量空间。它允许我们通过向量、矩阵和张量来表示信息，对线性代数的良好理解将使你在对深度学习的理解上走得很远。都说一个数学问题，只有化为线性代数中的一个计算，才能解决。这说明了线性代数的能力和用途。</p>
+<p>本章将涵盖以下主题:</p>
+<ul>
+<li>比较标量和向量</li>
+<li>线性方程</li>
+<li>矩阵运算</li>
+<li>向量空间和子空间</li>
+<li>线性地图</li>
+<li>矩阵分解</li>
+</ul>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">比较标量和向量</h1>
+                
+            
+            
+                
+<p>标量是常规数字，如7、82和93，454。它们只有一个量值，用来表示时间、速度、距离、长度、质量、功、功率、面积、体积等等。</p>
+<p>另一方面，向量在许多维度上都有大小和方向。我们用向量来表示速度、加速度、位移、力和动量。我们用粗体写向量——比如<strong> <em> a </em> </strong>而不是<em> a— </em>，它们通常是多个数字的数组，数组中的每个数字都是向量的一个元素。</p>
+<p>我们对此表示如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/182b5235-dd83-4e93-bb5f-7ffb0b494aa2.png" style="width:6.58em;height:8.17em;"/></p>
+<p>这里，<img class="fm-editor-equation" src="img/4e0dc3f8-4384-43dd-a3ee-ae289462d55f.png" style="width:4.33em;height:1.25em;"/>表示向量在<em> n </em>维实空间中，这是取<img class="fm-editor-equation" src="img/e4c8153a-ac55-41a2-bded-96c31ad09cb7.png" style="width:1.08em;height:1.25em;"/> <em> n </em>次笛卡尔积的结果；<sub> <img class="fm-editor-equation" src="img/be3c5f05-bafc-4fa7-ba6a-7ef8fa77a41a.png" style="width:4.00em;height:1.42em;"/> </sub>显示每个元素是一个实数；<em> i </em>是每个元素的位置；最后，<img class="fm-editor-equation" src="img/2e60c6b4-990a-48c3-ab6c-7be222119a91.png" style="width:3.58em;height:1.25em;"/>是一个自然数，告诉我们向量中有多少个元素。</p>
+<p>和普通数字一样，你可以加减向量。但是，也有一些限制。</p>
+<p>让我们将之前看到的向量(<em> x </em>)与另一个向量(<em> y </em>)相加，这两个向量都在<img class="fm-editor-equation" src="img/4e64ae8f-de5b-4140-9e5f-c10c59a33e28.png" style="width:1.75em;height:1.25em;"/>中，因此如下适用:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/3289f2fc-8c7f-4a4e-b3cd-326e542b31b2.png" style="width:18.08em;height:8.17em;"/></p>
+<p>然而，我们不能将维数或标量不同的向量相加。</p>
+<p>注意，当<img class="fm-editor-equation" src="img/8d0ad35c-1f10-4286-8a31-584a4c2afe33.png" style="width:1.50em;height:1.08em;"/>中的<img class="fm-editor-equation" src="img/f5721bc0-a2b6-415e-90d0-13304d25a4e7.png" style="width:3.00em;height:1.08em;"/>时，我们减少到二维(例如，一张纸的表面)，当<em> n = 3 </em>时，我们减少到三维(真实世界)。</p>
+<p>然而，我们可以用向量乘标量。设λ是一个任意的标量，我们将把它乘以矢量<img class="fm-editor-equation" src="img/a3312634-96a4-46f8-bdc8-624d2ab782aa.png" style="width:4.33em;height:1.25em;"/>，因此下面的公式适用:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/eb17ae75-c9c2-47a1-a950-17b930f6b6b4.png" style="width:14.92em;height:8.17em;"/></p>
+<p>正如我们所见，λ乘以向量中的每个<em> x <sub> i </sub> </em>。这个操作的结果是向量被标量的值缩放。</p>
+<p>比如让<img class="fm-editor-equation" src="img/6479accd-0fcb-4c42-9a5e-f9d36bd87288.png" style="width:3.42em;height:1.25em;"/>，和<img class="fm-editor-equation" src="img/017c6d94-ddc4-4711-9039-49e898bd9771.png" style="width:4.42em;height:4.17em;"/>。然后，我们有以下内容:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/77f4a99d-ec7c-4f3a-8474-5d7cf0bda91f.png" style="width:26.58em;height:5.50em;"/></p>
+<p>虽然这对于乘以一个整数很有效，但对于处理分数没有帮助，但是您应该能够猜出它是如何工作的。让我们看一个例子。</p>
+<p>设<img class="fm-editor-equation" src="img/10896d38-44f3-4208-b47d-e9b8c3c7ad1f.png" style="width:3.00em;height:2.42em;"/>，和<img class="fm-editor-equation" src="img/15e24cac-aff8-4358-a2ee-51bc9e15a589.png" style="width:4.25em;height:4.08em;"/>。然后，我们有以下内容:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/7d0fc872-48e8-4ab3-bba0-5d6136ca205f.png" style="width:12.92em;height:6.25em;"/></p>
+<p>有一个非常特殊的向量，我们可以通过任何向量乘以标量得到，<strong> 0 </strong>。我们将此表示为<strong> 0 </strong>，并将其称为<strong>零向量</strong>(仅包含零的向量)。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">线性方程</h1>
+                
+            
+            
+                
+<p>线性代数的核心是解一组线性方程，称为<strong>方程组</strong>。许多问题可以用线性方程组来描述。</p>
+<p>我们有两个方程和两个未知数，如下所示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/7517d76f-e4f5-4316-90b5-447587adf16d.png" style="width:5.33em;height:2.67em;"/></p>
+<p class="mce-root">两个方程都产生直线。这两个方程的解是两条线相交的点。在这种情况下，答案是点(3，1)。</p>
+<p class="mce-root">但是为了我们的目的，在线性代数中，我们将前面的方程写成如下所示的向量方程:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/76e54c6c-f5a2-4080-b865-6f014b81ca89.png" style="width:13.17em;height:2.75em;"/></p>
+<p>这里，<strong> b </strong>是结果向量。</p>
+<p class="mce-root">将点(3，1)放入向量方程，我们得到如下结果:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/486783f2-84f5-4d1f-988e-6589190e3b32.png" style="width:10.17em;height:10.25em;"/></p>
+<p>正如我们所看到的，左手边等于右手边，所以它实际上是一个解！不过，我个人更喜欢把这个写成系数矩阵，像这样:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/372c5f68-002c-4d39-84ea-db6b6e783b5c.png" style="width:6.67em;height:2.67em;"/></p>
+<p>使用系数矩阵，我们可以将方程组表示为形式为<img class="fm-editor-equation" src="img/6b7983fe-ee48-44a0-b74c-59fb3cd58c61.png" style="width:3.83em;height:1.00em;"/>的矩阵问题，其中列向量<em> v </em>是变量向量。我们这样写，如下所示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/2adc65f3-31fd-471e-9eef-d2074df5d327.png" style="width:9.83em;height:2.67em;"/>。</p>
+<p>接下来，我们将以这种形式表达我们所有的问题。</p>
+<p>为了更好地理解，我们将分解矩阵<em> A </em>和向量<em> v </em>的乘法。最简单的是把它想成向量的线性组合。让我们来看看下面的例子，一个3x3的矩阵和一个3x1的向量:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/791c49d6-f452-406a-904c-c786dd91dbd8.png" style="width:31.92em;height:4.00em;"/></p>
+<p>重要的是要注意，只有当矩阵中的列数等于向量中的行数(元素)时，矩阵和向量乘法才是可能的。</p>
+<p>例如，让我们看看下面的矩阵:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/40d1e7b3-1f2f-4475-a5b5-58972acaf62a.png" style="width:9.00em;height:5.00em;"/></p>
+<p>这可以相乘，因为矩阵中的列数等于向量中的行数，但是下面的矩阵不能相乘，因为列数和行数不相等:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/e1fbdf70-7cf3-4e4c-8cac-fc3a61635393.png" style="width:7.42em;height:4.92em;"/></p>
+<p>让我们将向量上的一些操作形象化，以直观地了解它们是如何工作的。看看下面的截图:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-543 image-border" src="img/a1d03a07-cc24-4dbf-be7f-db99e763e835.png" style="width:40.58em;height:14.58em;"/></p>
+<p>我们处理的前面的向量都在<img class="fm-editor-equation" src="img/76445ae4-3f8e-42c9-adea-ff3339448905.png" style="width:1.67em;height:1.50em;"/>(二维空间)中，这些向量的所有结果组合也将在<img class="fm-editor-equation" src="img/faf91354-3538-4a30-924e-42dc074da709.png" style="width:1.67em;height:1.50em;"/>中。这同样适用于<img class="fm-editor-equation" src="img/8eb58b6f-21bf-4860-873f-ed3e5a65f586.png" style="width:1.67em;height:1.50em;"/>、<img class="fm-editor-equation" src="img/2b7e9af7-c89e-44e8-af1c-7c14ece9527f.png" style="width:1.67em;height:1.50em;"/>和<img class="fm-editor-equation" src="img/533cd992-1a9f-4589-9ffa-520098985a13.png" style="width:1.75em;height:1.25em;"/>中的矢量。</p>
+<p>还有一种非常重要的向量运算叫做点积，是乘法的一种。我们取<img class="fm-editor-equation" src="img/643c9f21-82b7-49a6-b8ef-eaf073e41d6c.png" style="width:1.42em;height:1.25em;"/>、<strong> v </strong>和<strong> w </strong>中的两个任意向量，求其点积，像这样:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/c194786f-cefc-4ae2-8306-9afe5231bfa7.png" style="width:14.92em;height:3.42em;"/></p>
+<p>以下是产品:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/c113d54b-9c6e-4691-a17c-df055b4386fc.png" style="width:12.50em;height:1.25em;"/>。</p>
+<p>让我们继续，使用我们之前处理的相同向量，如下所示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/07226613-36d6-4cd9-96ea-609f4e4736a3.png" style="width:13.42em;height:3.17em;"/></p>
+<p>通过取它们的点积，我们得到零，这告诉我们这两个向量是垂直的(它们之间有90°角)，如下所示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/9a7ed323-155b-45e6-a628-d7424b8cce1a.png" style="width:19.33em;height:3.33em;"/></p>
+<p class="mce-root">垂直向量最常见的例子是代表<em> x </em>轴、<em> y </em>轴等的向量。在<img class="fm-editor-equation" src="img/66ae3c43-3e63-4682-a9a7-fc82c039451c.png" style="width:1.67em;height:1.50em;"/>中，我们把<em> x </em>轴矢量写成<sub> <img class="fm-editor-equation" src="img/63b86189-6d7f-4aa7-baab-a1ebfb6ac991.png" style="width:3.92em;height:2.83em;"/> </sub>，把<em> y </em>轴矢量写成<sub> <img class="fm-editor-equation" src="img/5c747d51-ecf1-4d10-ac7e-5af1dfde6bc9.png" style="width:4.00em;height:2.83em;"/> </sub>。如果我们取点积<em>I</em><em>j</em>，我们发现它等于零，因此它们是垂直的。</p>
+<p>通过将<em> i </em>和<em> j </em>组合成一个2x2矩阵，我们得到如下的单位矩阵，这是一个非常重要的矩阵:</p>
+<p><img class="fm-editor-equation" src="img/0fe94128-1604-47f8-a2b8-a999f83cd53b.png" style="width:5.58em;height:2.75em;"/></p>
+<p class="CDPAlignCenter CDPAlign">以下是我们在求解<img class="fm-editor-equation" src="img/6b7983fe-ee48-44a0-b74c-59fb3cd58c61.png" style="width:3.83em;height:1.00em;"/>类型的线性方程时会遇到的一些情况:</p>
+<p>让我们考虑矩阵<sub> <img style="color: #333333;width:3.75em;height:2.83em;" class="fm-editor-equation" src="img/59d7a363-9573-4da7-9d5e-e40f4c8a433d.png"/> </sub>和方程<sub><img style="color: #333333;width:7.25em;height:1.25em;" class="fm-editor-equation" src="img/e6b6fc6a-c0e5-4e8e-89f9-c3f767e5e9bf.png"/></sub><sub><img style="color: #333333;width:7.25em;height:1.25em;" class="fm-editor-equation" src="img/37a4cfcb-522a-4687-9f9d-4cef1a955fa0.png"/></sub>。如果我们做代数，把第一个方程乘以3，就得到<sub> <img style="color: #333333;width:7.42em;height:1.17em;" class="fm-editor-equation" src="img/ccc9c421-0c52-4f15-a3aa-e0d9fc771341.png"/> </sub>。但是第二个方程等于零，这意味着这两个方程不相交，因此无解。当一列依赖于另一列(即，是另一列的倍数)时，<sub> <img style="color: #333333;width:1.50em;height:2.00em;" class="fm-editor-equation" src="img/50950cd5-e2c2-409e-8183-deacbc2d2ed0.png"/> </sub>和<sub> <img style="color: #333333;width:1.50em;height:2.00em;" class="fm-editor-equation" src="img/9fb0c18b-5ed3-49f9-a5a0-ef39e12d4767.png"/> </sub>的所有组合都位于同一方向。然而，由于<sub> <img style="color: #333333;width:1.58em;height:2.00em;" class="fm-editor-equation" src="img/caa1a971-d158-4ab0-93b6-1b04e55e2fc0.png"/> </sub>不是上述两个列向量的组合，并且不在同一直线上，所以它不能是方程的解。</p>
+<ul>
+<li>让我们采取和以前一样的矩阵，但这一次，<sub> <img class="fm-editor-equation" src="img/d49790e7-c5f8-47b4-9bf4-2e64bbcb2700.png" style="width:4.42em;height:2.58em;"/> </sub>。因为<strong> b </strong>在直线上，并且是相关向量的组合，所以有无限多个解。我们说<strong> b </strong>在a的列空间中。虽然只有一个产生<strong> b </strong>的<strong> v </strong>的特定组合，但是有无限个产生零向量的列向量组合(<strong> 0 </strong>)。例如，对于任何值，<em> a </em>，我们得到如下:</li>
+<li><img class="fm-editor-equation" src="img/c4eeebdc-0420-47b0-96ce-1d4e2e90bfab.png" style="width:12.67em;height:3.08em;"/></li>
+</ul>
+<p class="CDPAlignCenter CDPAlign">这就引出了另一个非常重要的概念，即完整解决方案。完整的解决方案是产生<sub> <img class="fm-editor-equation" src="img/f6146508-ced5-40a4-a9d0-1bfb8c6e4ac5.png" style="width:4.08em;height:2.42em;"/> </sub>的所有可能方式。我们把这个写成<sub> <img class="fm-editor-equation" src="img/dd655452-f231-4ca3-9157-3fd61d2eb9ee.png" style="width:8.33em;height:1.42em;"/> </sub>，这里的<sub> <img class="fm-editor-equation" src="img/a4763160-2b3e-4dd3-a820-89698095c2ad.png" style="width:19.42em;height:3.17em;"/> </sub>。</p>
+<p>求解n维线性方程</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">既然我们已经处理了二维的线性方程，并对它们有了进一步的理解，让我们更进一步，看看三维的方程。</h1>
+                
+            
+            
+                
+<p>早先，我们的方程在二维空间(<em> xy </em>平面)中产生曲线。现在，我们将要处理的方程将产生三维空间中的平面(<em>XYZ</em>-平面)。</p>
+<p class="mce-root">让我们取一个任意的3×3矩阵，如下所示:</p>
+<p><img class="fm-editor-equation" src="img/2d9e7043-cc8b-4743-a537-7d71f68e6688.png" style="width:5.92em;height:4.42em;"/></p>
+<p class="CDPAlignCenter CDPAlign">我们从前面处理二维线性方程中知道，我们的解<strong> b </strong>和前面一样，是三个列向量的线性组合，因此<sub> <img class="fm-editor-equation" src="img/b6269a28-f488-440d-856a-abec7d06726e.png" style="width:23.83em;height:1.33em;"/> </sub>。</p>
+<p>方程式<sub> <img class="fm-editor-equation" src="img/ccd382f2-fa54-459a-be3a-8043fd2ba13d.png" style="width:10.25em;height:1.25em;"/> </sub>(方程式1)产生一个平面，同样的还有<sub> <img class="fm-editor-equation" src="img/2467172b-cec3-4323-b81a-fc6acc1a5059.png" style="width:9.92em;height:1.25em;"/> </sub>(方程式2)，以及<sub> <img class="fm-editor-equation" src="img/5fa43033-d4aa-4585-9de8-35138fdbb6eb.png" style="width:10.42em;height:1.33em;"/> </sub>(方程式3)。</p>
+<p>当两个平面相交时，它们相交于一条直线；然而，当三个平面相交时，它们相交于一点。那个点就是矢量<sub> <img class="fm-editor-equation" src="img/1d78b343-c418-4a7e-9216-a937b806d8bf.png" style="width:4.42em;height:3.83em;"/> </sub>，这就是我们问题的解决方法。</p>
+<p>但是，如果三个平面不相交于一点，则线性方程无解。解线性方程的相同概念可以扩展到更多的维度。</p>
+<p>假设现在我们有一个包含15个线性方程和15个未知变量的系统。我们可以使用前面的方法，根据它，我们需要找到满足所有15个方程的点——也就是它们相交的地方(如果存在的话)。</p>
+<p>它看起来会像这样:</p>
+<p><img class="fm-editor-equation" src="img/c72baa97-897f-4a90-94c0-850d1abd9c00.png" style="width:30.92em;height:1.50em;"/></p>
+<p class="CDPAlignCenter CDPAlign">如你所知，我们需要处理很多方程，维数越大，就越难解决。</p>
+<p>用消元法解线性方程</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">解线性方程的最好方法之一是用一种系统的方法，叫做<strong>消去法</strong>。这是一种允许我们系统地消除变量并使用替换来求解方程的方法。</h1>
+                
+            
+            
+                
+<p>让我们来看看两个带有两个变量的方程，如下所示:</p>
+<p><img class="fm-editor-equation" src="img/4f496b41-d3fd-4919-ac59-2eb5d4300ada.png" style="width:5.50em;height:2.75em;"/></p>
+<p class="CDPAlignCenter CDPAlign">消除之后，这变成如下:</p>
+<p class="CDPAlignLeft CDPAlign"><img class="fm-editor-equation" src="img/ba4ab482-dfc9-49f6-adae-aad2f001d085.png" style="width:5.50em;height:2.75em;"/></p>
+<p class="CDPAlignCenter CDPAlign">正如我们所见，变量<em> x </em>不再出现在第二个方程中。我们可以将<em> y </em>值插回到第一个等式中，并求解<em> x </em>。这样做，我们发现<em> x = 3 </em>和<em> y = 1 </em>。</p>
+<p class="CDPAlignLeft CDPAlign">我们把这个叫做<strong>三角因式分解</strong>。有两种类型——下三角形和上三角形。我们用一个叫做<strong>回代</strong>的过程从上到下解决上三角系统，这个过程适用于任何规模的系统。</p>
+<p>虽然这是一种有效的方法，但它不是万无一失的。我们可能会遇到这样的情况，方程比变量多，或者变量比方程多，这是无法解决的。或者，我们可以有一个场景，比如<em> 0x = 7 </em>，我们知道，被零除是不可能的。</p>
+<p>让我们用三个变量求解三个方程，如下所示:</p>
+<p><img class="fm-editor-equation" src="img/de168eab-7179-44f1-a395-d1da75a426c9.png" style="width:15.75em;height:4.17em;"/></p>
+<p class="CDPAlignCenter CDPAlign">我们将使用上三角分解并消除变量，从<em> y </em>开始，然后是<em> z </em>。让我们首先将它放入矩阵形式，如下所示:</p>
+<p><img class="fm-editor-equation" src="img/8fc3e9e1-ee34-4538-9177-9ed91be78ac4.png" style="width:15.17em;height:4.25em;"/></p>
+<p class="CDPAlignCenter CDPAlign">出于我们的目的，为了使事情更简单，我们将去掉列向量<strong> <em> v </em> </strong>，得到以下结果:</p>
+<p><img class="fm-editor-equation" src="img/587fb1a2-2227-4b48-8a83-2f4feaa340aa.png" style="width:13.42em;height:4.50em;"/></p>
+<p class="CDPAlignCenter CDPAlign">然后，交换第2行和第3行，就像这样:</p>
+<p><img class="fm-editor-equation" src="img/961c5862-e493-4a5e-bf05-1faa01c3542d.png" style="width:13.17em;height:4.42em;"/></p>
+<p class="CDPAlignCenter CDPAlign">然后，将第2行和第1行相加，以消除第2行中的第一个值，如下所示:</p>
+<p><img class="fm-editor-equation" src="img/66ed810d-f02d-4d1b-a71c-0a3614fdd40f.png" style="width:12.58em;height:4.50em;"/></p>
+<p class="CDPAlignCenter CDPAlign">接下来，将第1行乘以3/2，然后从第3行减去它，就像这样:</p>
+<p><img class="fm-editor-equation" src="img/4b9907b5-99c4-4fe0-b5d8-9cc881331eb1.png" style="width:13.33em;height:4.58em;"/></p>
+<p class="CDPAlignCenter CDPAlign">最后，将第2行乘以6，然后从第3行减去它，就像这样:</p>
+<p><img class="fm-editor-equation" src="img/d1af6fb1-b98c-416a-81de-9ffe836300b6.png" style="width:13.67em;height:4.50em;"/></p>
+<p class="CDPAlignCenter CDPAlign">你可以注意到，矩阵中的值现在形成了一个向上的三角形，这就是为什么我们称它为上三角形。将数值向后(自下而上)代入上一个方程，即可求解，发现<sub><img class="fm-editor-equation" src="img/a01e9e4a-2748-428d-aebd-1ea043400ed1.png" style="width:2.75em;height:1.00em;"/></sub><sub><img class="fm-editor-equation" src="img/5f884d7a-e7a1-499a-a4f1-54c2dcc6377c.png" style="width:3.58em;height:1.25em;"/></sub><sub><img class="fm-editor-equation" src="img/ed84a059-cdf7-4685-8b2e-a6c294e503a9.png" style="width:2.58em;height:1.00em;"/></sub>。</p>
+<p>综上所述，<img class="fm-editor-equation" src="img/d9373151-de9b-4942-812a-70b29d99c5fb.png" style="width:4.17em;height:1.08em;"/>变成了<img class="fm-editor-equation" src="img/9621aa55-0027-41be-84c4-8417adb89d0d.png" style="width:3.75em;height:1.00em;"/>，如下图所示:</p>
+<p><img class="aligncenter size-full wp-image-1242 image-border" src="img/e1a093f9-bad6-47ba-a9bf-47741619dff3.png" style="width:32.75em;height:6.92em;"/></p>
+<p style="padding-left: 120px">为了检查我们找到的解是否正确，我们使用我们找到的<em> x </em>、<em> y、</em>和<em> z </em>的值来求解<img class="fm-editor-equation" src="img/1194653c-0df1-4954-ac63-f40786e74eac.png" style="width:3.58em;height:0.92em;"/>，如下所示:</p>
+<div><strong>Note</strong>: The values across the diagonal in the triangular factorized matrix are called pivots, and when factorized, the values below the diagonal are all zeros.</div>
+<p><img class="fm-editor-equation" src="img/8067f820-eff7-435d-980b-6daff80a91e5.png" style="width:16.25em;height:4.33em;"/></p>
+<p class="CDPAlignCenter CDPAlign">这就变成了下面的等式:</p>
+<p><img class="aligncenter size-full wp-image-1244 image-border" src="img/c7cf7b61-401c-4446-b92b-84bcfa47f15f.png" style="width:20.25em;height:9.17em;"/></p>
+<p style="padding-left: 150px">正如我们所见，左手边和右手边相等。</p>
+<p>经过上三角分解后，任意4x4矩阵将如下所示:</p>
+<p><img class="fm-editor-equation" src="img/aaf4ec59-37bf-41ad-b82e-5b0028860e2b.png" style="width:9.75em;height:5.67em;"/></p>
+<p class="CDPAlignCenter CDPAlign">我们可以更进一步，分解上三角矩阵，直到我们最终得到一个只包含沿对角线的枢轴值，而其他地方都为零的矩阵。这个结果矩阵<strong> P </strong>本质上完全解决了我们的问题，而不需要我们求助于向前或向后替换，它看起来像这样:</p>
+<p><img class="fm-editor-equation" src="img/574b75b9-9eb5-4b4c-bb07-ce0154c385df.png" style="width:9.67em;height:5.67em;"/></p>
+<p class="CDPAlignCenter CDPAlign">但是正如你所知，让我们从<strong> A </strong>到<strong> P </strong>有很多步骤。</p>
+<p>还有一种非常重要的因式分解方法叫做<strong>上下</strong> ( <strong> LU)分解</strong>。其工作方式是我们将<strong> A </strong>因式分解成一个上三角矩阵<strong> U </strong>，并将高斯消去的步骤记录在一个下三角矩阵<strong> L </strong>中，这样<sub> <img class="fm-editor-equation" src="img/b5ee1b4e-a497-4c37-873c-b147e73f74d1.png" style="width:3.92em;height:0.92em;"/> </sub>。</p>
+<p>让我们重温一下我们之前上三角分解过的矩阵，并将其转化为LU分解形式，如下所示:</p>
+<p><img class="aligncenter size-full wp-image-1331 image-border" src="img/37dce8d5-7c0a-45fb-a51b-80f7269227ec.png" style="width:23.42em;height:4.50em;"/></p>
+<p style="padding-left: 150px">如果我们将右边的两个矩阵相乘，我们将得到原始矩阵<strong> A </strong>。但是我们是怎么到这里的呢？让我们按照如下步骤进行操作:</p>
+<p>我们从<img class="fm-editor-equation" src="img/42357787-303e-434f-8a90-864135a19ec1.png" style="width:4.00em;height:1.00em;"/>开始，因此以下内容适用:</p>
+<ol>
+<li><img class="fm-editor-equation" src="img/5f11564a-313c-4613-a616-89d647c9ad71.png" style="width:24.17em;height:4.42em;"/></li>
+</ol>
+<p class="CDPAlignCenter CDPAlign">我们在<em> l <sub> 2，1</sub>T28】处的单位矩阵上加-1来表示操作(第2行)-(-1)(第1行)，所以它变成如下:</em></p>
+<ol start="2">
+<li><img class="fm-editor-equation" src="img/a9dac746-1c92-4770-aa75-3c6ef67aff43.png" style="width:26.00em;height:4.75em;"/></li>
+</ol>
+<p class="CDPAlignCenter CDPAlign">然后我们将<sub> <img class="fm-editor-equation" src="img/5931f8e1-70cc-4886-9256-66f4880fb85d.png" style="width:0.92em;height:2.25em;"/> </sub>加到矩阵中的<em> l <sub> 3，1 </sub> </em>处来表示<sub> <img class="fm-editor-equation" src="img/cd8b62e1-0be4-491f-a862-2a64a5781bf4.png" style="width:9.17em;height:2.42em;"/> </sub>的运算，所以变成如下:</p>
+<ol start="3">
+<li><img class="fm-editor-equation" src="img/d999f17f-ba8e-4058-af67-e4ff6a6f7555.png" style="width:24.75em;height:4.75em;"/></li>
+</ol>
+<p class="CDPAlignCenter CDPAlign">然后我们在矩阵的<em> l <sub> 3，2</sub>T44】处加6来表示操作(第3行)-6(第2行)，所以它变成如下:</em></p>
+<ol start="4">
+<li><img class="fm-editor-equation" src="img/231a078a-f411-4fc1-8631-016ecd7609a1.png" style="width:25.17em;height:4.83em;"/></li>
+</ol>
+<p class="CDPAlignCenter CDPAlign">这就是我们之前看到的LU分解矩阵。</p>
+<p>你现在可能想知道这和求解<img class="fm-editor-equation" src="img/60491e0d-7150-433b-ba6b-bf0c5bf0caeb.png" style="width:3.83em;height:1.00em;"/>有什么关系，这是非常正确的。消除过程往往工作得很好，但我们还必须额外应用我们在<strong> A </strong>到<em> <strong> b </strong> </em>上所做的所有操作，这涉及到额外的步骤。但是，LU因式分解只适用于<strong> A </strong>。</p>
+<p>现在让我们看看如何用这种方法来解线性方程组。</p>
+<p>为简单起见，我们去掉变量vector，将<strong> A </strong>和<strong> b </strong>写成如下:</p>
+<p><img class="fm-editor-equation" src="img/961c5862-e493-4a5e-bf05-1faa01c3542d.png" style="width:12.17em;height:4.08em;"/></p>
+<p class="CDPAlignCenter CDPAlign">但即使这样，在我们进行的过程中，编写起来也会很麻烦，因此为了进一步简化，我们将改为按以下方式编写:</p>
+<p><img class="fm-editor-equation" src="img/c766d0c3-0dec-4001-926a-43f3392d6f22.png" style="width:9.83em;height:1.33em;"/></p>
+<p class="CDPAlignCenter CDPAlign">然后，我们将两边乘以<img class="fm-editor-equation" src="img/799cb620-2b53-4a46-a42a-f0d351b4a4bc.png" style="width:2.25em;height:1.42em;"/>，得到以下结果:</p>
+<p><img class="fm-editor-equation" src="img/ff2aaab2-8480-4537-afa7-5242a9ef6029.png" style="width:11.58em;height:1.50em;"/></p>
+<p class="CDPAlignCenter CDPAlign">这告诉我们<img class="fm-editor-equation" src="img/6635e792-8f7a-4022-a2de-cd3f398a60c9.png" style="width:3.83em;height:1.08em;"/>，而我们从前面的等式中已经知道<sub> <img class="fm-editor-equation" src="img/43d8a95a-f8c4-49dd-92af-c96973a49357.png" style="width:4.08em;height:1.08em;"/> </sub>(所以<sub> <img class="fm-editor-equation" src="img/50f2f8f9-db05-4674-9982-fcf5570d9f71.png" style="width:5.08em;height:1.25em;"/> </sub>)。通过回代，我们可以找到向量<strong> v </strong>。</p>
+<p>在前面的例子中，您可能已经注意到一些我还没有介绍的新符号，但是不用担心，我们将在下一节中观察所有必要的符号和操作。</p>
+<p>矩阵运算</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">既然我们已经了解了如何求解类型为<img class="fm-editor-equation" src="img/c3085ddc-2bf6-43b2-81df-37ede45e7ed2.png" style="width:3.25em;height:0.83em;"/>的线性方程组，其中我们将一个矩阵乘以一个列向量，让我们继续处理我们可以对一个或多个矩阵进行的操作类型。</h1>
+                
+            
+            
+                
+<p>添加矩阵</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">与标量和向量一样，有时我们可能不得不将两个或更多的矩阵相加，这样做的过程相当简单。我们取两个<img class="fm-editor-equation" src="img/b70e9807-7600-4d82-bb97-4fe0408bf0ff.png" style="width:3.42em;height:1.33em;"/>矩阵，<em> A </em>和<em> B </em>，相加:</h1>
+                
+            
+            
+                
+<p><img class="aligncenter size-full wp-image-1250 image-border" src="img/d1a55f22-b8bb-421d-9e27-7ed05f8e1a72.png" style="width:60.42em;height:8.42em;"/></p>
+<p>值得注意的是，我们只能添加具有相同维数的矩阵，而且，正如您可能已经注意到的，我们是按元素添加矩阵的。</p>
+<p>乘法矩阵</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">到目前为止，我们只将一个矩阵乘以一个列向量。但是现在，我们将一个矩阵<em> A </em>与另一个矩阵<em> B </em>相乘。</h1>
+                
+            
+            
+                
+<p>有四个简单的规则可以帮助我们计算矩阵乘法，如下所示:</p>
+<p>首先，当矩阵<em> A </em>的列数等于矩阵<em> B </em>的行数时，我们只能将两个矩阵相乘。</p>
+<ul>
+<li>其次，矩阵<em>的第一行A </em>乘以矩阵<em> B </em>的第一列，得到矩阵<em> AB </em>中的第一个元素，以此类推。</li>
+<li>第三，乘法时，顺序很重要——具体来说，<em>AB</em>≦<em>BA</em>。</li>
+</ul>
+<ul>
+<li>最后，行<em> i </em>列<em> j </em>的元素是矩阵<em> A </em>的第<em> i <sup>行</sup>和矩阵<em> B </em>的第<em> j <sup>第</sup>列</em>的乘积。</em></li>
+<li>让我们用一个任意的4x5矩阵乘以一个任意的5x6矩阵，如下所示:</li>
+</ul>
+<p class="CDPAlignLeft CDPAlign"><img class="aligncenter size-full wp-image-1248 image-border" src="img/cf39a6fc-ea74-4d5c-9e27-b94ea3aff4c7.png" style="width:32.08em;height:8.08em;"/></p>
+<p style="padding-left: 90px">这会产生一个4x6矩阵，如下所示:</p>
+<p><img class="aligncenter size-full wp-image-1245 image-border" src="img/7f013907-7b56-409b-86c9-6c5ff9c29919.png" style="width:25.25em;height:5.50em;"/></p>
+<p style="padding-left: 120px">由此，我们可以推断，一般来说，以下情况适用:</p>
+<p class="CDPAlignLeft CDPAlign"><img class="aligncenter size-full wp-image-1329 image-border" src="img/3e89a845-02b9-437f-8f25-aa241cfdacf5.png" style="width:33.08em;height:1.33em;"/></p>
+<p style="padding-left: 120px">让我们把下面两个矩阵相乘，就像这样:</p>
+<p><img class="fm-editor-equation" src="img/d32786c0-cc3f-454e-86be-d69a00a1f9af.png" style="width:9.08em;height:4.42em;"/>和<img class="fm-editor-equation" src="img/23235442-c6f3-44fe-b693-076fc232e5dd.png" style="width:8.00em;height:4.33em;"/></p>
+<p class="CDPAlignCenter CDPAlign">这将为我们提供以下矩阵:</p>
+<p class="CDPAlignLeft CDPAlign"><img class="fm-editor-equation" src="img/bcc54925-a1dc-4772-b339-7d8ce304aac2.png" style="width:23.67em;height:4.33em;"/>。</p>
+<p class="CDPAlignCenter CDPAlign">单位矩阵在矩阵乘法中有两个独特的性质。与任意矩阵相乘时，返回原矩阵不变，相乘顺序无关紧要—所以，<em> AI = IA = A </em>。</p>
+<div><strong>Note</strong>: In this example, the matrix <em>B</em> is the identity matrix, usually written as <em>I</em>. </div>
+<p>例如，让我们使用前面的同一个矩阵<em> A </em>，并乘以另一个矩阵<em> B </em>，如下所示:</p>
+<p><img class="fm-editor-equation" src="img/73ae2b9e-33a7-4bb1-93bc-f2fc03ff02be.png" style="width:31.42em;height:4.42em;"/></p>
+<p class="CDPAlignCenter CDPAlign">另一个很特殊的矩阵是逆矩阵，写为<em> A <sup> -1 </sup> </em>。而当我们把<em> A </em>乘以<em> A <sup> -1 </sup> </em>时，就得到<em> I </em>，这个单位矩阵。</p>
+<p>如前所述，我们相乘的顺序很重要。我们必须保持矩阵有序，但我们确实有一些灵活性。正如我们在下面的等式中看到的，括号可以移动:</p>
+<p><img class="fm-editor-equation" src="img/2ee7c381-74a9-4daa-a773-3c492e1cf2e5.png" style="width:13.17em;height:1.33em;"/></p>
+<p class="CDPAlignCenter CDPAlign">这是矩阵运算的第一定律，被称为<strong>结合律</strong>。</p>
+<p>以下是三条不可违背的重要定律:</p>
+<p><strong>交换性</strong> : <sub> <img class="fm-editor-equation" src="img/b548464d-80d3-4bba-8ec9-997a3707ffd9.png" style="width:8.17em;height:1.08em;"/> </sub></p>
+<ul>
+<li><strong>分配性</strong> : <sub> <img class="fm-editor-equation" src="img/2d775123-c5e6-431e-b436-894b598fad3d.png" style="width:10.25em;height:1.33em;"/> </sub>或<sub> <img class="fm-editor-equation" src="img/44a52be2-f47b-4e4d-bad5-70277c329a46.png" style="width:10.92em;height:1.25em;"/> </sub></li>
+<li><strong>关联性</strong> : <sub> <img class="fm-editor-equation" src="img/2d6c6496-8c34-42be-880b-91170d0091f0.png" style="width:14.25em;height:1.33em;"/> </sub></li>
+<li>作为<em> AB ≠ BA </em>的证明，我们来看看下面的例子:</li>
+</ul>
+<p><img class="fm-editor-equation" src="img/f79ed756-09fc-4be7-9a14-997774bd40e7.png" style="width:16.92em;height:5.92em;"/></p>
+<p class="CDPAlignCenter CDPAlign">这最终表明这两个结果是不一样的。</p>
+<p class="CDPAlignLeft CDPAlign">我们知道我们可以将数字提升到幂，但是我们也可以将矩阵提升到幂。</p>
+<p>如果我们将矩阵<em> A </em>提升到幂<em> p </em>，我们得到如下结果:</p>
+<p><img class="fm-editor-equation" src="img/71d83d9f-212c-4d9d-a6e1-8d0e8c98ccc9.png" style="width:8.67em;height:1.08em;"/>(矩阵乘以自身<em> p </em>倍)</p>
+<p class="CDPAlignCenter CDPAlign">矩阵还有两个额外的幂律——<sub><img class="fm-editor-equation" src="img/3a088ac9-9eb6-48b3-b774-eb53eaeff2f7.png" style="width:8.33em;height:1.42em;"/></sub>和<sub> <img class="fm-editor-equation" src="img/ef86610b-94de-449e-85ec-14afe594593f.png" style="width:6.17em;height:1.33em;"/> </sub>。</p>
+<p>逆矩阵</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">让我们重温一下逆矩阵的概念，并更深入地了解它们。我们从前面知道<em>AA<sup>-1</sup></em>=<em>I</em>，但是并不是每个矩阵都有逆。</h1>
+                
+            
+            
+                
+<p>同样，在寻找矩阵的逆时，我们必须遵循一些规则，如下所示:</p>
+<p>只有通过上或下三角因式分解的过程，我们获得对角线上的所有主元值，逆矩阵才存在。</p>
+<ul>
+<li>如果矩阵是可逆的，那么它只有一个唯一的逆矩阵——即如果<em> AB </em> = <em> I </em>和<em> AC </em> = <em> I </em>，那么<em> B </em> = <em> C </em>。</li>
+<li>如果<em> A </em>是可逆的，那么为了求解<em> Av </em> = <em> b </em>我们将两边都乘以<em> A <sup> -1 </sup> </em>得到<em>AA<sup>-1</sup>v</em>=<em>A<sup>-1</sup>b</em>，最后得到我们= <em/></li>
+<li>如果<em> v </em>非零并且<em> b </em> = 0，那么矩阵没有逆矩阵。</li>
+<li>仅当<em> ad </em> - <em> bc </em> ≠ 0时，2 x 2矩阵才是可逆的，以下情况适用:</li>
+<li><img class="fm-editor-equation" src="img/013c60f9-7633-490c-aece-0fada2543d5e.png" style="width:15.42em;height:3.08em;"/></li>
+</ul>
+<p class="CDPAlignCenter CDPAlign">而<em> ad </em> - <em> bc </em>称为<em> A </em>的<strong>行列式</strong>。<em> A <sup> -1 </sup> </em>涉及用行列式除矩阵中的每个元素。</p>
+<p style="padding-left: 90px">最后，如果矩阵沿对角线有任何零值，则它是不可逆的。</p>
+<ul>
+<li>有时，我们可能不得不求两个矩阵乘积的逆矩阵，但这只有在两个矩阵都是可逆的情况下才有可能(遵循前面概述的规则)。</li>
+</ul>
+<p>举个例子，我们取两个矩阵A和B，它们都是可逆的。然后，<sub> <img class="fm-editor-equation" src="img/0c509cb9-9272-488f-a67b-f6374d0bdc38.png" style="width:9.25em;height:1.50em;"/> </sub>以便于<sub> <img class="fm-editor-equation" src="img/bb4a926f-aed2-4f85-983d-bf9a3547518e.png" style="width:19.00em;height:1.50em;"/> </sub>。</p>
+<p>矩阵转置</p>
+<div><strong>Note</strong>: Pay close attention to the order of the inverse—it too must follow the order. The left-hand side is the mirror image of the right-hand side.</div>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">我们来取一个<img class="fm-editor-equation" src="img/ab7680f6-95f0-4d68-ba9c-3d2e38318c94.png" style="width:3.42em;height:1.33em;"/>矩阵<em>一个</em>。如果矩阵的转置是<em> B </em>，那么<em> B </em>的维数是<img class="fm-editor-equation" src="img/94bb719d-cb12-4f62-9cce-0bc2b057effe.png" style="width:3.42em;height:1.33em;"/>，这样:<sub> <img class="fm-editor-equation" src="img/ee4e4aed-0235-496e-82b8-1afe39ab4c5e.png" style="width:5.58em;height:1.58em;"/> </sub>。这里是矩阵<em>一</em>:</h1>
+                
+            
+            
+                
+<p><img class="fm-editor-equation" src="img/867914db-b723-48b4-b247-5e036bf6bcb7.png" style="width:14.67em;height:6.83em;"/></p>
+<p class="CDPAlignCenter CDPAlign">然后，矩阵<em> B </em>如下所示:</p>
+<p><img class="fm-editor-equation" src="img/073aeb58-5497-4697-9ae1-2841d7b48e03.png" style="width:15.17em;height:7.08em;"/>。</p>
+<p class="CDPAlignCenter CDPAlign">本质上，我们可以认为这是将<em> A </em>的列写成转置矩阵<em> B </em>的行。</p>
+<p>我们通常把<em> A </em>的转置写成<em> A <sup> T </sup> </em>。</p>
+<p>对称矩阵是一种特殊的矩阵。它是一个<em> n×n </em>的矩阵，当它被转置时，和我们转置前完全一样。</p>
+<p>以下是倒置和转置的特性:</p>
+<p><sub> <img class="fm-editor-equation" src="img/8305ca1b-6dc0-4caa-8d2d-ba4b96592abc.png" style="width:9.50em;height:1.25em;"/> </sub></p>
+<ul>
+<li class="CDPAlignLeft CDPAlign"><sub>T51</sub></li>
+<li class="CDPAlignLeft CDPAlign"><sub>T54</sub></li>
+<li class="CDPAlignLeft CDPAlign"><sub>T57</sub></li>
+</ul>
+<ul>
+<li class="CDPAlignLeft CDPAlign"><sub> <img class="fm-editor-equation" src="img/a1710de3-2ebc-4e00-aae4-9822a0affca5.png" style="width:10.00em;height:1.42em;"/> </sub></li>
+<li class="CDPAlignLeft CDPAlign"><sub> <img class="fm-editor-equation" src="img/0846e2c5-db1a-43da-a3e8-24c6ef96fe48.png" style="width:8.00em;height:1.50em;"/> </sub></li>
+<li class="CDPAlignLeft CDPAlign">排列</li>
+</ul>
+<div><q>If A is an invertible matrix, then so is A<sup>T</sup>, and so (A<sup>-1</sup>)<sup>T</sup> = (A<sup>T</sup>)<sup>-1</sup> = A<sup>-T</sup>.</q></div>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">在解线性方程组的例子中，我们交换了第2行和第3行的位置。这就是所谓的<strong>排列</strong>。</h1>
+                
+            
+            
+                
+<p>当我们进行三角因式分解时，我们希望我们的主值沿着矩阵的对角线，但这不会每次都发生——事实上，通常不会。因此，相反，我们所做的是交换行，这样我们就可以在我们想要的地方获得透视值。</p>
+<p>但这不是他们唯一的用例。我们还可以使用它们来按标量值缩放单个行，或者向其他行添加行或从其他行中减去行。</p>
+<p>让我们从一些更基本的置换矩阵开始，我们通过交换单位矩阵的行来获得它们。一般来说，我们有<em> n！</em>可以由一个<em> n </em> x <em> n </em>单位矩阵形成的可能置换矩阵。在本例中，我们将使用一个3×3矩阵，因此有六个置换矩阵，如下所示:</p>
+<p><sub> <img class="fm-editor-equation" src="img/8edbd7d1-57ee-44ce-bdac-feaf61fe18b1.png" style="width:8.00em;height:3.75em;"/> </sub>该矩阵对其应用的矩阵不做任何改变。</p>
+<ul>
+<li><sub> <img class="fm-editor-equation" src="img/de0bdfe3-c2d9-4c81-be0b-738ab96987e1.png" style="width:8.17em;height:3.83em;"/> </sub>这个矩阵交换它所应用的矩阵的第二行和第三行。</li>
+<li><sub> <img class="fm-editor-equation" src="img/a9635367-129f-45b6-9fc8-21e88a13af91.png" style="width:8.17em;height:3.83em;"/> </sub>这个矩阵交换它所应用的矩阵的第一行和第二行。</li>
+<li><sub> <img class="fm-editor-equation" src="img/20133a22-4f28-4529-8da3-d6a0ae7eee8a.png" style="width:8.17em;height:3.83em;"/> </sub>此矩阵将第二行和第三行上移一行，并将第一行移动到它所应用的矩阵的第三行的位置。</li>
+</ul>
+<ul>
+<li><sub> <img class="fm-editor-equation" src="img/66df650f-aff2-4922-8f6a-df9e89e07d6e.png" style="width:8.17em;height:3.83em;"/> </sub>此矩阵将第一行和第二行下移一行，并将第三行移动到它所应用的矩阵的第一行位置。</li>
+<li><sub> <img class="fm-editor-equation" src="img/9b553584-caaf-4548-9864-6bcbde8f35dc.png" style="width:8.17em;height:3.83em;"/> </sub>这个矩阵交换它所应用的矩阵的第一行和第三行。</li>
+<li>值得注意的是，置换矩阵有一个特别有趣的性质，即如果我们有一个矩阵<img class="fm-editor-equation" src="img/26f5430f-c8bb-41e6-9a89-543e2bf9950a.png" style="width:6.00em;height:1.33em;"/>并且它是可逆的，那么存在一个置换矩阵，当应用于<em> A </em>时，它将给出<em> A </em>的LU因子。我们可以这样表达:</li>
+</ul>
+<p><img class="fm-editor-equation" src="img/92bc5c01-f9d3-489f-9ed6-8783132ac7ab.png" style="width:5.17em;height:1.00em;"/></p>
+<p class="CDPAlignCenter CDPAlign">向量空间和子空间</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">在这一节，我们将探索向量空间和子空间的概念。这些对我们理解线性代数非常重要。事实上，如果我们不理解向量空间和子空间，我们就不会真正理解如何解决线性代数问题。</h1>
+                
+            
+            
+                
+<p>间隔</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">向量空间是线性代数的基本设置之一，顾名思义，它们是所有向量驻留的空间。我们将用v来表示向量空间。</h1>
+                
+            
+            
+                
+<p>考虑维度最简单的方法是计算列向量中元素的数量。假设我们有<sub> <img class="fm-editor-equation" src="img/f844062d-c870-4c63-8da4-9c367d12665a.png" style="width:9.50em;height:1.33em;"/> </sub>，那么<img class="fm-editor-equation" src="img/b83dee00-ee90-44cc-a62b-be53a3b1779b.png" style="width:3.58em;height:1.33em;"/>。<img class="fm-editor-equation" src="img/c0be8f8b-2060-45d3-a5d3-84aac64ebf02.png" style="width:1.42em;height:1.25em;"/>是一条直线，<img class="fm-editor-equation" src="img/b306fc56-e969-41c7-8bfa-f37854133f01.png" style="width:1.33em;height:1.17em;"/>是<em> xy </em>平面上所有可能的点，<img class="fm-editor-equation" src="img/37a7dfff-6c23-4f1a-86af-e7ccc17cce8b.png" style="width:1.67em;height:1.50em;"/>是<em> xyz </em>平面上所有可能的点——也就是三维空间，以此类推。</p>
+<p>以下是向量空间的一些规则:</p>
+<p>在<em> V </em>中存在一个附加的相同元素，使得<img class="fm-editor-equation" src="img/9beb757e-6a2d-462b-8634-ee8c79d8ab11.png" style="width:5.25em;height:1.08em;"/>对于所有的<img class="fm-editor-equation" src="img/8c64162a-985e-488b-9afd-e2065e102868.png" style="width:2.92em;height:1.00em;"/>。</p>
+<ul>
+<li>对于所有的<img class="fm-editor-equation" src="img/72e37558-dab0-4707-95d1-e3531553ee79.png" style="width:2.67em;height:0.92em;"/>，都存在一个加法逆，如<sub> <img class="fm-editor-equation" src="img/7a4abfc2-17f6-48ca-9db4-f9754cc3ee0c.png" style="width:6.17em;height:1.25em;"/> </sub>。</li>
+<li>对于所有的<img class="fm-editor-equation" src="img/73b70efa-1d94-44f8-9bed-8f936ca38de0.png" style="width:2.67em;height:0.92em;"/>，存在一个乘法恒等式，使得<img class="fm-editor-equation" src="img/e6918d7b-3df3-4d99-952e-3f8655fc3501.png" style="width:3.42em;height:1.00em;"/>。</li>
+<li>向量是可换的，这样对于所有的<sub><img class="fm-editor-equation" src="img/8a616fa2-317e-45d6-b02f-d0aba9a4280d.png" style="width:3.92em;height:1.17em;"/></sub><sub><img class="fm-editor-equation" src="img/12689855-e010-4a34-acde-56945f94ab77.png" style="width:6.50em;height:1.00em;"/></sub>。</li>
+<li>向量是相联的，如<sub> <img class="fm-editor-equation" src="img/58b58922-0bd4-4d4e-bc68-c0c13907c741.png" style="width:12.50em;height:1.33em;"/> </sub>。</li>
+<li>向量具有分布性，如<sub> <img class="fm-editor-equation" src="img/447375df-bf81-4687-be00-faa44d6fae45.png" style="width:7.42em;height:1.00em;"/> </sub>和<sub> <img class="fm-editor-equation" src="img/4ef06655-1d74-49ea-b3b3-992d1569536b.png" style="width:7.42em;height:1.00em;"/> </sub>为所有<sub> <img class="fm-editor-equation" src="img/6a84499a-6142-43bc-9dd0-e436f6af128f.png" style="width:3.92em;height:1.17em;"/> </sub>和所有<sub> <img class="fm-editor-equation" src="img/9e915871-db33-4314-b024-9f8562c0a820.png" style="width:3.92em;height:1.17em;"/> </sub>。</li>
+<li>一组向量如果<sub> <img class="fm-editor-equation" src="img/81baafd7-b0d0-40f0-b313-132bb8b4012a.png" style="width:10.67em;height:1.08em;"/> </sub>就说是线性无关的，这就暗示了<sub> <img class="fm-editor-equation" src="img/f78c7ab6-2fa7-47ab-ac6d-d9e95aea9cd3.png" style="width:11.83em;height:1.17em;"/> </sub>。</li>
+</ul>
+<p class="mce-root">我们要知道的另一个重要概念叫做<strong>跨度</strong>。<sub> <img class="fm-editor-equation" src="img/7dd1d26b-d04e-4e28-b6c8-c7a64cfeb149.png" style="width:8.92em;height:1.42em;"/> </sub>的跨度是使用<em> n </em>个向量可以得到的所有线性组合的集合。因此，<sub> <img class="fm-editor-equation" src="img/c4e15e74-1733-4695-adba-78e26a18609c.png" style="width:34.42em;height:1.42em;"/> </sub>如果向量线性无关且完全跨越<em>V</em>；那么，向量<sub> <img class="fm-editor-equation" src="img/dbc93f18-3f2b-4d8c-a3e9-5688c00f0aeb.png" style="width:5.75em;height:1.08em;"/> </sub>就是<em> V </em>的基础。</p>
+<p>所以<em> V </em>的维数就是我们拥有的基向量的个数，我们将其表示为<em> dimV </em>。</p>
+<p>子空间</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">子空间是另一个非常重要的概念，它表明我们可以在另一个向量空间中拥有一个或多个向量空间。假设<em> V </em>是一个向量空间，我们有一个子空间<sub> <img class="fm-editor-equation" src="img/a602de35-3055-4e2e-82aa-563c44767ff1.png" style="width:3.17em;height:1.17em;"/> </sub>。那么，<em> S </em>只能是一个子空间，如果它遵循三个规则，陈述如下:</h1>
+                
+            
+            
+                
+<p><sub>T47</sub></p>
+<ul>
+<li><sub><img class="fm-editor-equation" src="img/61436647-3352-487a-9d71-4def0832edfe.png" style="width:4.17em;height:1.33em;"/></sub><sub><img class="fm-editor-equation" src="img/b3fb2604-8b33-4e9e-b336-36115f0f1a0f.png" style="width:4.75em;height:1.25em;"/></sub>，暗示<em> S </em>在加法下关闭</li>
+<li><sub> <img class="fm-editor-equation" src="img/e314788f-8f13-4302-92a0-d9e818fdbb12.png" style="width:3.00em;height:1.08em;"/> </sub>和<img class="fm-editor-equation" src="img/d1a7dedd-4412-4dee-a314-cca86bc4332d.png" style="width:2.92em;height:1.00em;"/>使得<sub> <img class="fm-editor-equation" src="img/ab71728c-9292-4dfc-8014-756cbebb2ea2.png" style="width:3.50em;height:1.00em;"/> </sub>，这暗示着<em> S </em>在标量乘法下是封闭的</li>
+<li>如果<sub> <img class="fm-editor-equation" src="img/8d92b7e1-bbfb-4388-a191-0e954364794b.png" style="width:4.83em;height:1.17em;"/> </sub>，那么它们的和就是<sub> <img class="fm-editor-equation" src="img/cda6b403-b85a-4810-8de1-a32ec98b2afb.png" style="width:16.83em;height:1.33em;"/> </sub>，其中结果也是<em> V </em>的一个子空间。</li>
+</ul>
+<p>总和<sub> <img class="fm-editor-equation" src="img/b464bbc9-fca3-4bce-b0ed-041fc6ba0dab.png" style="width:3.42em;height:1.00em;"/> </sub>的维度如下:</p>
+<p><img class="fm-editor-equation" src="img/f60e2d10-8138-4538-bc8f-68ed61411b04.png" style="width:23.42em;height:1.42em;"/></p>
+<p class="CDPAlignCenter CDPAlign">线性地图</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">线性地图是一个函数<sub> <img class="fm-editor-equation" src="img/ac0809fa-111a-40d8-b331-d7157fdd43b3.png" style="width:6.42em;height:1.17em;"/> </sub>，其中<em> V </em>和<em> W </em>都是向量空间。它们必须满足以下标准:</h1>
+                
+            
+            
+                
+<p><sub> <img class="fm-editor-equation" src="img/e1a8d556-6c13-4aee-896d-0b3ed210e527.png" style="width:11.42em;height:1.50em;"/> </sub>，为所有<sub> <img class="fm-editor-equation" src="img/36462293-378b-48df-928f-ad0affdb936e.png" style="width:4.25em;height:1.25em;"/> </sub></p>
+<ul>
+<li><sub> <img class="fm-editor-equation" src="img/fd7d3f66-580f-4603-84dc-b46f1ffec174.png" style="width:7.58em;height:1.50em;"/> </sub>，为所有<img class="fm-editor-equation" src="img/9f555bb5-8a65-46e2-99b2-e42246724dde.png" style="width:3.17em;height:1.08em;"/>和<img class="fm-editor-equation" src="img/72e1df16-deb3-4998-afe5-0d497cd2d20f.png" style="width:2.92em;height:1.00em;"/></li>
+<li>线性映射倾向于在加法和标量乘法下保持向量空间的性质。线性映射称为向量空间的<strong>同态；</strong>然而，如果同态是可逆的(其中逆是同态)，那么我们称映射为<strong>同构</strong>。</li>
+</ul>
+<p>当<em> V </em>和<em> W </em>同构时，我们将此表示为<sub> <img class="fm-editor-equation" src="img/26027ade-7a86-45e5-bb09-ac388bb121c9.png" style="width:3.83em;height:1.08em;"/> </sub>，它们都具有相同的代数结构。</p>
+<p>如果<em> V </em>和<em> W </em>是<img class="fm-editor-equation" src="img/910e77b1-f616-4036-bada-4c99ea52bede.png" style="width:1.75em;height:1.25em;"/>中的向量空间，而<sub> <img class="fm-editor-equation" src="img/09622b11-f715-4c5e-a913-ef23d82cd630.png" style="width:10.17em;height:1.08em;"/> </sub>，则称之为<strong>自然同构</strong>。我们这样写:</p>
+<p><img class="fm-editor-equation" src="img/22fa3783-7c2e-49c3-86ca-981bb4223707.png" style="width:17.92em;height:3.25em;"/></p>
+<p class="CDPAlignCenter CDPAlign">这里，<sub><img class="fm-editor-equation" src="img/601b901c-1bb0-46fa-8917-68127c269361.png" style="width:5.75em;height:1.08em;"/></sub><sub><img class="fm-editor-equation" src="img/4d96e1bb-bd16-47aa-83ef-6f74d21eb605.png" style="width:6.33em;height:1.08em;"/></sub>是<em> V </em>和<em> W </em>的基数。利用前面的等式，我们可以看到<sub> <img class="fm-editor-equation" src="img/34f9d116-e22a-4fb1-b265-f392c2ce11a7.png" style="width:3.83em;height:1.08em;"/> </sub>，这就告诉我们<img class="fm-editor-equation" src="img/67ebcbe5-26df-4898-90db-b048a6ff8448.png" style="width:0.92em;height:1.17em;"/>是一个同构。</p>
+<p class="CDPAlignLeft CDPAlign">让我们像以前一样取相同的向量空间<em> V </em>和<em> W </em>，分别以<sub> <img class="fm-editor-equation" src="img/601b901c-1bb0-46fa-8917-68127c269361.png" style="width:5.75em;height:1.08em;"/> </sub>和<sub> <img class="fm-editor-equation" src="img/12bd3b39-0d26-4da0-9d90-9cc966fe50d2.png" style="width:6.58em;height:1.08em;"/> </sub>为基数。我们知道<sub> <img class="fm-editor-equation" src="img/ac0809fa-111a-40d8-b331-d7157fdd43b3.png" style="width:5.92em;height:1.08em;"/> </sub>是一个线性映射，有条目<em> A <sub> ij </sub> </em>的矩阵<em> T </em>，其中<sub><img class="fm-editor-equation" src="img/e0df65fc-46d3-428d-9a8a-102f64731a6d.png" style="width:7.00em;height:1.33em;"/></sub><sub><img class="fm-editor-equation" src="img/6774c8d6-2f4f-4648-a039-903a08738ab9.png" style="width:6.33em;height:1.33em;"/></sub>可以定义如下:</p>
+<p><img class="fm-editor-equation" src="img/7cda3d08-be4c-413c-b1ff-60d1f1b9780f.png" style="width:17.33em;height:1.50em;"/>。</p>
+<p class="CDPAlignCenter CDPAlign">从我们的矩阵知识中应该知道，A的<em>j<sup>th</sup>T44】列在<em> W </em>的基础上包含了<em>Tv<sub>j</sub>T48】。</em></em></p>
+<p>于是，<sub> <img class="fm-editor-equation" src="img/4d5d4c14-13fc-4851-b71f-e678d1f5074e.png" style="width:5.58em;height:1.17em;"/> </sub>产生了一个线性映射<sub> <img class="fm-editor-equation" src="img/c358e717-1517-46e6-ad53-d3feed59270f.png" style="width:7.00em;height:1.08em;"/> </sub>，我们把它写成<sub> <img class="fm-editor-equation" src="img/6865cab1-d211-4b93-8a1a-615255d165b2.png" style="width:5.00em;height:1.08em;"/> </sub>。</p>
+<p>图像和内核</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">在处理线性映射时，我们会经常遇到两个重要的术语:像和核，它们都是具有相当重要性质的向量子空间。</h1>
+                
+            
+            
+                
+<p><strong>内核</strong>(有时称为<strong>零空间</strong>)为0(零向量)，由线性映射产生，如下所示:</p>
+<p><img class="fm-editor-equation" src="img/09bdec99-0281-4c85-ac22-23a61bf2b888.png" style="width:14.83em;height:1.50em;"/></p>
+<p class="CDPAlignCenter CDPAlign">T的<strong>图像</strong>(有时称为<strong>范围</strong>)定义如下:</p>
+<p><img class="fm-editor-equation" src="img/79f69b4a-54ec-4660-a8fc-7941a335376d.png" style="width:14.58em;height:1.50em;"/>使得<img class="fm-editor-equation" src="img/84c1e82c-9ade-4597-8e3f-01c258a99038.png" style="width:4.50em;height:1.33em;"/>。</p>
+<p class="CDPAlignCenter CDPAlign"><em> V </em>和<em> W </em>有时也被称为<em> T </em>的<strong>域</strong>和<strong>共域</strong>。</p>
+<p>最好把内核看成是把向量<sub> <img class="fm-editor-equation" src="img/7fb41e44-9879-45ab-9014-041563a056a1.png" style="width:3.17em;height:1.08em;"/> </sub>映射到<sub> <img class="fm-editor-equation" src="img/03d14613-91ca-452a-be46-a829033a023f.png" style="width:3.50em;height:1.08em;"/> </sub>的线性映射。然而，图像是所有可能的线性组合的集合，这些组合可以映射到向量集合<sub> <img class="fm-editor-equation" src="img/07b20ab5-840d-4c18-b6ae-6d3ce53df6ad.png" style="width:3.75em;height:1.08em;"/> </sub>。</p>
+<p><strong>秩-零性定理</strong>(有时称为线性映射的<strong>基本定理</strong>)指出，给定两个向量空间<em> V </em>和<em> W </em>以及一个线性映射<sub> <img class="fm-editor-equation" src="img/c1fc64ab-aeaa-4265-bf37-e1f82c113979.png" style="width:6.83em;height:1.25em;"/> </sub>，以下将保持为真:</p>
+<p><img class="fm-editor-equation" src="img/6fc2d842-a5e5-4b4b-86f4-d591b8978768.png" style="width:20.33em;height:1.50em;"/>。</p>
+<p class="CDPAlignCenter CDPAlign">度量空间和赋范空间</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">度量帮助定义欧几里得空间中的距离概念(用<img class="fm-editor-equation" src="img/b7bcefa4-b4a6-4848-8a71-a5d63b1ecf70.png" style="width:1.67em;height:1.25em;"/>表示)。然而，度量空间不一定总是向量空间。我们使用它们是因为它们允许我们定义除了实数以外的对象的极限。</h1>
+                
+            
+            
+                
+<p>到目前为止，我们一直在处理向量，但我们还不知道的是如何计算一个向量的长度或两个或多个向量之间的距离，以及两个向量之间的角度，从而得到正交性(垂直度)的概念。这就是欧几里得空间派上用场的地方。事实上，它们是几何的基本空间。这在目前看起来可能相当琐碎，但是随着我们在本书中的深入，它们的重要性将变得更加明显。</p>
+<p>集合<em> S </em>上的度量被定义为函数<img class="fm-editor-equation" src="img/6f786cc5-9264-4891-a248-778807493a47.png" style="width:6.83em;height:1.00em;"/>并满足以下标准:</p>
+<div><q>In Euclidean space, we tend to refer to vectors as points. </q></div>
+<p><sub> <img class="fm-editor-equation" src="img/8b8bb6a5-d500-45b4-ab76-6c08e4480d65.png" style="width:5.17em;height:1.33em;"/> </sub>，当<sub> <img class="fm-editor-equation" src="img/112dca43-e1ca-4662-9ae2-e384dfef930d.png" style="width:3.17em;height:1.17em;"/> </sub>然后<sub> <img class="fm-editor-equation" src="img/45075729-42e3-4fc0-b53a-63ec239465fd.png" style="width:5.17em;height:1.33em;"/> </sub></p>
+<ul>
+<li><sub> <img class="fm-editor-equation" src="img/331b5c2e-39e4-4584-b838-0cdff3ab4323.png" style="width:7.75em;height:1.33em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/52f95b13-d6af-4ed9-a372-42e71b11508a.png" style="width:12.17em;height:1.33em;"/> </sub>(俗称<strong>三角形不等式</strong>)</li>
+<li>对于所有<sub> <img class="fm-editor-equation" src="img/fb6600a3-ac68-4c0c-8740-f92106e6bff5.png" style="width:5.08em;height:1.33em;"/> </sub>。</li>
+</ul>
+<p>这很好，但是我们如何计算距离呢？</p>
+<p>假设我们有两点，<sub> <img class="fm-editor-equation" src="img/e6b07452-f8d1-424c-a80d-7365c8467686.png" style="width:4.08em;height:1.50em;"/> </sub>和<sub><img class="fm-editor-equation" src="img/dc41fe2e-6d5c-422a-8fe3-0e90c22efb13.png" style="width:3.83em;height:1.42em;"/></sub>；然后，它们之间的距离可以计算如下:</p>
+<p><img class="fm-editor-equation" src="img/65b4a10a-7be3-40ad-a9a0-e5b28ef19972.png" style="width:16.17em;height:2.17em;"/></p>
+<p class="CDPAlignCenter CDPAlign">并且我们可以扩展这个来找到<img class="fm-editor-equation" src="img/93d0f60e-ce6a-4ff9-b140-11ce34ca9ad2.png" style="width:1.75em;height:1.25em;"/>中的点的距离，如下所示:</p>
+<p><img class="fm-editor-equation" src="img/298ce5eb-d7eb-480f-97ac-c2519734d4a5.png" style="width:12.58em;height:3.75em;"/></p>
+<p class="CDPAlignCenter CDPAlign">度量有助于距离的概念，而范数定义了欧几里得空间中长度的概念。</p>
+<p>向量空间上的范数是函数<sub> <img class="fm-editor-equation" src="img/c834d5a8-9576-47b0-a9ae-c1822af7b8e8.png" style="width:6.50em;height:1.42em;"/> </sub>，并且满足以下条件:</p>
+<p><sub> <img class="fm-editor-equation" src="img/72bc7a6f-2a09-4ba9-bafa-9c695dcd10de.png" style="width:3.83em;height:1.33em;"/> </sub>，而当<img class="fm-editor-equation" src="img/a03f156f-b86c-4430-b2f3-3811be4bb295.png" style="width:3.00em;height:1.08em;"/>接着<sub> <img class="fm-editor-equation" src="img/25c15f48-aae3-4452-9b36-3d9abe6fc113.png" style="width:3.58em;height:1.25em;"/> </sub></p>
+<ul>
+<li><sub> <img class="fm-editor-equation" src="img/9f86425e-9412-4554-991e-0beea79e92bf.png" style="width:6.92em;height:1.25em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/a58c4997-49ac-4e80-8eb4-86efdab0d37f.png" style="width:10.33em;height:1.33em;"/> </sub>(又称三角形不等式)</li>
+<li>对于所有的<sub> <img class="fm-editor-equation" src="img/cab63016-71db-4057-ab15-3703ef992ad9.png" style="width:4.25em;height:1.25em;"/> </sub>和<sub> <img class="fm-editor-equation" src="img/0f046b15-4f88-4a7b-a403-58bba1534d5b.png" style="width:2.92em;height:1.00em;"/> </sub>。</li>
+</ul>
+<p>重要的是要注意，向量空间上的任何范数都在所述向量空间上创建距离度量，如下所示:</p>
+<p><img class="fm-editor-equation" src="img/6994d830-0dca-4777-be75-49cc53797436.png" style="width:9.17em;height:1.42em;"/></p>
+<p class="CDPAlignCenter CDPAlign">这满足了度量的规则，告诉我们赋范空间也是度量空间。</p>
+<p>一般来说，出于我们的目的，我们将只关注关于<img class="fm-editor-equation" src="img/0d75292c-8c3c-4994-ac3c-78a27dd24bac.png" style="width:1.75em;height:1.25em;"/>的四个规范，如下所示:</p>
+<p><sub> <img class="fm-editor-equation" src="img/cf34c63d-eda9-4b4c-bb3f-064673f30e83.png" style="width:8.00em;height:3.58em;"/> </sub></p>
+<ul>
+<li class="CDPAlignLeft CDPAlign"><sub> <img class="fm-editor-equation" src="img/f5ce1683-a04d-47b4-acad-6c74e6b2e768.png" style="width:8.00em;height:3.67em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/82f4939a-4a81-430f-93e6-ab044683ec6f.png" style="width:9.92em;height:3.42em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/7954e61a-5c7b-4e5b-8e0b-dd7a90b03c55.png" style="width:9.42em;height:2.25em;"/> </sub>(这只适用于<sub> <img class="fm-editor-equation" src="img/93e7929c-5409-4644-be2c-d041a2ebb7ed.png" style="width:3.33em;height:1.42em;"/> </sub>)</li>
+<li class="CDPAlignLeft CDPAlign">如果你仔细观察这四个规范，你会发现1-和2-规范是p-规范的版本。然而，<img class="fm-editor-equation" src="img/ea30e469-f5e2-49af-ab89-7aa947c30178.png" style="width:1.42em;height:0.83em;"/>-范数是p-范数的极限，因为p趋于无穷大。</li>
+</ul>
+<p>使用这些定义，如果满足以下条件，我们可以定义两个矢量正交:</p>
+<p><img class="fm-editor-equation" src="img/c826bdcc-b2bd-4ae8-9bce-6d974fb3159c.png" style="width:12.33em;height:1.67em;"/></p>
+<p class="CDPAlignCenter CDPAlign">内积空间</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">向量空间上的内积是函数<sub> <img class="fm-editor-equation" src="img/11fa8b10-ff24-4368-b7d8-ce2916a811d6.png" style="width:8.75em;height:1.17em;"/> </sub>，并满足以下规则:</h1>
+                
+            
+            
+                
+<p><sub> <img class="fm-editor-equation" src="img/edecd649-b285-42da-95d0-50ef97703613.png" style="width:5.08em;height:1.42em;"/> </sub></p>
+<ul>
+<li><sub> <img class="fm-editor-equation" src="img/c6897dba-84d1-4113-9a2c-376d7b02c3bf.png" style="width:12.67em;height:1.33em;"/> </sub>和<sub> <img class="fm-editor-equation" src="img/068f5509-eba5-4b14-9dce-5c73cc7cb6e4.png" style="width:8.92em;height:1.42em;"/> </sub></li>
+<li><sub>T38</sub></li>
+<li>对于所有的<sub> <img class="fm-editor-equation" src="img/360827c7-e6c8-48a2-b8b9-0d6c7c9c8915.png" style="width:5.00em;height:1.17em;"/> </sub>和<img class="fm-editor-equation" src="img/26da689b-7b4c-4897-bfea-5d3e05701f31.png" style="width:2.67em;height:0.92em;"/>。</li>
+</ul>
+<p>重要的是要注意，向量空间上的任何内积都在所述向量空间上产生范数，我们看到如下:</p>
+<p><img class="fm-editor-equation" src="img/9f4d1f5a-b9b4-4569-9a97-91b60b372e5c.png" style="width:6.58em;height:2.08em;"/></p>
+<p class="CDPAlignCenter CDPAlign">从这些规则和定义中我们可以注意到，所有的内积空间也是赋范空间，因此也是度量空间。</p>
+<p>另一个很重要的概念是正交性，简单来说就是两个向量从欧几里得空间看是互相垂直的(也就是互相成直角)。</p>
+<p>如果两个向量的内积为零，则这两个向量是正交的——即<sub> <img class="fm-editor-equation" src="img/9bfe6457-f3ef-4fa4-8dc3-edd1c2e176a6.png" style="width:6.00em;height:1.67em;"/> </sub>。作为垂直度的简写，我们写<sub> <img class="fm-editor-equation" src="img/d93ae4ed-625f-4062-8d2c-d621e791349e.png" style="width:3.58em;height:1.50em;"/> </sub>。</p>
+<p>此外，如果两个正交向量是单位长度的，即<sub> <img class="fm-editor-equation" src="img/65b6d59f-e6d0-47e8-994d-1ebd7b956809.png" style="width:7.58em;height:1.42em;"/> </sub>，那么它们被称为<strong>正交</strong>。</p>
+<p>一般来说，<img class="fm-editor-equation" src="img/94ad46fa-e5a2-4bdd-9200-ecc374b7114c.png" style="width:1.75em;height:1.25em;"/>中的内积如下:</p>
+<p><img class="fm-editor-equation" src="img/25a6f7b2-28ab-42b3-ba0b-d7abecd25de0.png" style="width:12.58em;height:3.58em;"/></p>
+<p class="CDPAlignCenter CDPAlign">矩阵分解</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">矩阵分解是一套方法，我们用更易理解的矩阵来描述矩阵，并让我们了解矩阵的性质。</h1>
+                
+            
+            
+                
+<p>决定因素</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">早些时候，当我们想确定一个正方形矩阵是否可逆时，我们快速浏览了一个正方形2x2矩阵的行列式。行列式是线性代数中一个非常重要的概念，在求解线性方程组时经常用到。</h1>
+                
+            
+            
+                
+<p class="mce-root">在符号上，行列式通常写成<sub> <img class="fm-editor-equation" src="img/0b5d46e7-aab7-404f-9c5a-2a521719a65e.png" style="width:4.25em;height:1.67em;"/> </sub>或<sub> <img class="fm-editor-equation" src="img/7bcc7667-d12b-4b59-8555-698b7a657630.png" style="width:2.00em;height:1.67em;"/> </sub>。</p>
+<div><strong>Note</strong>: The determinant only exists when we have square matrices.</div>
+<p>让我们取一个任意的<em> n </em> × <em> n </em>矩阵A，如下:</p>
+<p><img class="fm-editor-equation" src="img/fc549b9a-a279-4403-8cf3-d969793bb540.png" style="width:15.42em;height:7.50em;"/></p>
+<p class="CDPAlignCenter CDPAlign">我们也将取它的行列式，如下:</p>
+<p><img class="fm-editor-equation" src="img/fd70cd28-87b3-499f-831f-f601aa3060e7.png" style="width:17.42em;height:7.67em;"/></p>
+<p class="CDPAlignCenter CDPAlign">行列式将矩阵简化为实数(或者，换句话说，将<em> A </em>映射到实数)。</p>
+<p>我们首先检查一个方阵是否可逆。让我们取一个2x2的矩阵，根据前面的定义，我们知道这个矩阵应用于它的逆矩阵会产生单位矩阵。这与我们将<em> a </em>乘以<sub> <img class="fm-editor-equation" src="img/12381ce9-b5a4-484d-a30b-398b96719371.png" style="width:0.92em;height:2.33em;"/> </sub>(仅当<sub> <img class="fm-editor-equation" src="img/5d8ed9bc-035b-4b1f-8f4e-2f7c5055d0a9.png" style="width:3.00em;height:1.42em;"/> </sub>时为真)的工作方式没有什么不同，除了矩阵。因此，<em>AA<sup>-1</sup></em>=<em>I</em>。</p>
+<p>让我们继续寻找矩阵的逆矩阵，如下所示:</p>
+<p><img class="fm-editor-equation" src="img/389534d5-c840-4a54-9660-9d435f4bf5eb.png" style="width:20.17em;height:3.17em;"/></p>
+<p class="CDPAlignCenter CDPAlign">只有当<sub> <img class="fm-editor-equation" src="img/e692bb68-b0ff-4b7b-833d-11d882613c56.png" style="width:11.50em;height:1.42em;"/> </sub>时，a才是可逆的，这个结果值就是我们所说的<strong>决定子</strong>。</p>
+<p>现在我们知道了如何在2x2的情况下找到行列式，让我们继续到一个3x3的矩阵，并找到它的行列式。看起来是这样的:</p>
+<p><img class="aligncenter size-full wp-image-1251 image-border" src="img/dcaacbbd-301c-442c-8df0-943aaa3a4dd1.png" style="width:48.00em;height:5.75em;"/></p>
+<p>这会产生以下结果:</p>
+<p class="mce-root"><img class="aligncenter size-full wp-image-1252 image-border" src="img/b34b0f2a-e554-41c0-b9ba-8b6f21a6419d.png" style="width:52.42em;height:1.67em;"/></p>
+<p>我知道这可能看起来更吓人，但它真的不是。花点时间仔细看看我们做了什么，以及这对一个更大的<em> n </em> × <em> n </em>矩阵是如何工作的。</p>
+<p>如果我们有一个<em> n </em> × <em> n </em>矩阵，并且它可以三角分解(上或下)，那么它的行列式将是所有主元值的乘积。为了简单起见，我们将用<em> T </em>来表示所有可三角分解的矩阵。因此，行列式可以写成这样:</p>
+<p><img class="fm-editor-equation" src="img/da4fdfad-6530-4e3d-a1b0-890ab28ddc31.png" style="width:8.58em;height:3.42em;"/></p>
+<p class="CDPAlignCenter CDPAlign">看前面的3×3矩阵例子，我相信你已经明白计算矩阵的行列式是一个相当漫长的过程。幸运的是，有一种方法可以简化计算，这就是拉普拉斯展开式的用处。</p>
+<p>当我们想求一个n×n矩阵的行列式时，拉普拉斯展开式会求出(<em>n</em>×<em>1</em>)×(<em>n</em>×<em>1</em>)矩阵的行列式，如此反复，直到得到2×2矩阵。一般来说，我们可以用2×2矩阵来计算n×n矩阵的行列式。</p>
+<p>我们再来取一个<em> n </em>维的方阵，其中<img class="fm-editor-equation" src="img/71135850-46ac-4950-b5f2-fec0700bb77c.png" style="width:4.50em;height:1.00em;"/>。我们再把所有的<sub> <img class="fm-editor-equation" src="img/292e75e4-2d2c-4510-89bd-edf85b8ea306.png" style="width:5.75em;height:1.17em;"/> </sub>展开，如下:</p>
+<p>沿行<em> i </em>展开:</p>
+<ul>
+<li><img class="fm-editor-equation" src="img/740c3339-ac7b-43e0-b951-b5a16a378603.png" style="width:16.50em;height:3.58em;"/></li>
+</ul>
+<p class="CDPAlignCenter CDPAlign">沿着行<em> j </em>展开:</p>
+<ul>
+<li><img class="fm-editor-equation" src="img/3e2ee856-f224-4ed0-8a26-d0ba52f6e264.png" style="width:17.25em;height:3.75em;"/></li>
+</ul>
+<p class="CDPAlignCenter CDPAlign">而<sub> <img class="fm-editor-equation" src="img/7c55b884-5d5a-423d-96f4-b24ed9d40d33.png" style="width:8.92em;height:1.58em;"/> </sub>是<img class="fm-editor-equation" src="img/d3e70cf9-6931-454a-a598-aedda811b7ce.png" style="width:5.25em;height:1.17em;"/>的一个子矩阵，是我们去掉行<em> i </em>和列<em> j </em>后得到的。</p>
+<p>例如，我们有一个3×3矩阵，如下所示:</p>
+<p><sub> <img class="fm-editor-equation" src="img/fdfc3731-cb32-4bba-9f3a-4fb2d67d3fa0.png" style="width:7.75em;height:4.17em;"/> </sub></p>
+<p class="CDPAlignCenter CDPAlign">我们想用第一行的拉普拉斯展开式来求出它的行列式。这将导致以下结果:</p>
+<p><img class="fm-editor-equation" src="img/8e2a7584-c66f-447b-bcb9-e52b961806c2.png" style="width:37.92em;height:4.58em;"/></p>
+<p class="CDPAlignCenter CDPAlign">我们现在可以使用2×2情况下的上述等式，计算<em> A </em>的行列式，如下所示:</p>
+<p><img class="fm-editor-equation" src="img/d2636f71-4cb6-4e75-93a3-7dde21e0a3ab.png" style="width:17.92em;height:1.42em;"/>。</p>
+<p class="CDPAlignCenter CDPAlign">以下是行列式的一些非常重要的性质，了解这些性质很重要:</p>
+<p><sub> <img class="fm-editor-equation" src="img/16f6d3c7-74ba-43bf-92f7-2f16b8e8579b.png" style="width:5.42em;height:1.42em;"/> </sub></p>
+<ul>
+<li><sub>T31</sub></li>
+<li><sub>T34</sub></li>
+<li><sub><img class="fm-editor-equation" src="img/e9868c92-8b5d-4db8-ba77-71ec39270d0b.png" style="width:11.42em;height:1.67em;"/>T38】</sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/e8510fbc-b008-4249-b409-1e1ff4453953.png" style="width:10.92em;height:1.42em;"/> </sub></li>
+<li>行列式还有一个额外的性质，那就是我们可以用它来求<img class="fm-editor-equation" src="img/8ef7980e-5e44-44fc-a825-f5a9b7af77ce.png" style="width:1.75em;height:1.25em;"/>中一个顶点由矩阵中的列向量构成的物体的体积。</li>
+</ul>
+<p>举个例子，我们以<img class="fm-editor-equation" src="img/cb11cc18-bb9b-47d9-9429-042daa54d451.png" style="width:1.67em;height:1.50em;"/>中的平行四边形为例，向量为<sub><img class="fm-editor-equation" src="img/d639af5c-9a15-4fac-ac1a-aaba700f41b2.png" style="width:4.00em;height:2.75em;"/></sub><sub><img class="fm-editor-equation" src="img/0264b501-74e2-4b51-b168-40bac0458137.png" style="width:3.75em;height:2.67em;"/></sub>。通过取2×2矩阵的行列式，我们找到形状的面积(我们只能找到<img class="fm-editor-equation" src="img/cdb89bea-609f-4c72-9b15-180eecd91e80.png" style="width:1.50em;height:1.33em;"/>或更高的物体的体积)，如下所示:</p>
+<p class="CDPAlignLeft CDPAlign"><img class="fm-editor-equation" src="img/364c1723-9301-4179-976d-be8f35b9d566.png" style="width:19.08em;height:1.42em;"/></p>
+<p class="CDPAlignCenter CDPAlign">作为练习，欢迎您亲自尝试任何3×3矩阵。</p>
+<p>特征值和特征向量</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">我们假设一个任意的实n×n矩阵，a，很有可能当我们把这个矩阵应用到某个向量上时，它们被一个常数值缩放。如果是这样，我们说非零<img class="fm-editor-equation" src="img/c05b0be4-1382-4acb-b4bc-e5c2684a8f53.png" style="width:0.92em;height:0.92em;"/>维向量是<em> A </em>的一个特征向量，它对应一个特征值λ。我们这样写:</h1>
+                
+            
+            
+                
+<p><img class="fm-editor-equation" src="img/e06e0f16-b9c4-43ec-beec-7324ed13a11d.png" style="width:4.50em;height:1.00em;"/></p>
+<p class="CDPAlignCenter CDPAlign">让我们再次考虑一个矩阵<em> A </em>，它有一个特征向量<strong> x </strong>和一个相应的特征值λ。然后，将应用以下规则:</p>
+<div><strong>Note</strong>: The zero vector (0) cannot be an eigenvector of <em>A</em>, since <em>A</em>0 = 0 = λ0 for all λ.</div>
+<p>如果我们有一个矩阵<em> A </em>并且它已经从当前位置移动到了<sub> <img class="fm-editor-equation" src="img/d338804b-269b-4add-bc22-baccc681304c.png" style="width:3.50em;height:1.25em;"/> </sub>，那么它就有了特征向量<strong> x </strong>和对应的特征值<sub> <img class="fm-editor-equation" src="img/7a3942f7-0d59-4f5c-aded-9de201f01fa7.png" style="width:2.17em;height:1.00em;"/> </sub>，对于所有的<sub> <img class="fm-editor-equation" src="img/866b4328-a0bd-4c19-9f44-71ded4428307.png" style="width:2.08em;height:0.83em;"/> </sub>，这样就有了<sub> <img class="fm-editor-equation" src="img/54b269b0-a6ac-49eb-840c-5dc60ea59105.png" style="width:10.75em;height:1.33em;"/> </sub>。</p>
+<ul>
+<li>如果矩阵<em> A </em>可逆，那么<strong> x </strong>也是矩阵<sub> <img class="fm-editor-equation" src="img/92fb6002-13bb-400b-a9ef-a95ab7c53723.png" style="width:2.08em;height:1.25em;"/> </sub>的逆的一个特征向量，对应的特征值<sub> <img class="fm-editor-equation" src="img/1ad20846-524a-423b-8aab-e1b2c4d2bb04.png" style="width:1.92em;height:1.25em;"/> </sub>。</li>
+<li><sub> <img class="fm-editor-equation" src="img/034a9f84-edde-414f-bf6f-1be21c06138e.png" style="width:6.17em;height:1.42em;"/> </sub>为任意<sub> <img class="fm-editor-equation" src="img/e22e2d20-7d9f-434d-acc9-157ed4de652c.png" style="width:2.50em;height:0.92em;"/>为任意</sub>。</li>
+<li>从本章前面我们知道，每当我们把一个矩阵和一个向量相乘时，向量的方向就会改变，但特征向量不是这样。它们与<em> A </em>同向，因此<strong> x </strong>保持不变。特征值是一个标量值，它告诉我们特征向量是否被缩放，如果是，缩放了多少，以及向量的方向是否改变了。</li>
+</ul>
+<p>行列式的另一个非常有趣的性质是，它等价于矩阵特征值的乘积，它的写法如下:</p>
+<p><img class="fm-editor-equation" src="img/5f0dc73e-df42-4b6f-8403-e51d4e14fb74.png" style="width:9.58em;height:2.67em;"/></p>
+<p class="CDPAlignCenter CDPAlign">但这不是行列式与特征值的唯一关系。我们可以把<img class="fm-editor-equation" src="img/e06e0f16-b9c4-43ec-beec-7324ed13a11d.png" style="width:4.08em;height:0.92em;"/>改写成<sub> <img class="fm-editor-equation" src="img/54f8feb6-24e6-40ca-a150-a81609a01707.png" style="width:6.25em;height:1.17em;"/> </sub>的形式。因为它等于零，这意味着它是一个不可逆矩阵，因此它的行列式也必须等于零。利用这一点，我们可以用行列式来求特征值。让我们看看怎么做。</p>
+<p>假设我们有<sub> <img class="fm-editor-equation" src="img/8b38bf6a-c7d7-4140-82e5-d4448a14148a.png" style="width:4.17em;height:1.08em;"/> </sub>。那么，它的行列式如下所示:</p>
+<p><img class="aligncenter size-full wp-image-1253 image-border" src="img/c8f73db5-d21e-4319-8523-232236f34680.png" style="width:36.08em;height:3.75em;"/></p>
+<p style="padding-left: 90px">我们可以把它改写成下面的二次方程:</p>
+<p><img class="fm-editor-equation" src="img/b69adf5d-20df-41b5-a9a5-178ac85c62f0.png" style="width:22.33em;height:1.50em;"/></p>
+<p class="CDPAlignCenter CDPAlign">我们知道，二次方程会给我们两个特征值<sub> <img class="fm-editor-equation" src="img/cc10d4f1-77ba-4e34-b505-8163033da02c.png" style="width:3.58em;height:1.50em;"/> </sub>。所以，我们把我们的值代入二次公式，得到我们的根。</p>
+<p>另一个有趣的特性是，当我们有三角矩阵时，比如我们在本章前面找到的那些，它们的特征值就是枢轴值。所以，如果我们想找到一个三角矩阵的行列式，那么我们要做的就是找到对角线上所有元素的乘积。</p>
+<p>找到；查出</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">给定一个<em> n </em> × <em> n </em>矩阵<em> A </em>，对角线上所有元素之和称为<strong>迹</strong>。我们这样写它:</h1>
+                
+            
+            
+                
+<p><img class="fm-editor-equation" src="img/364d9cba-7c3e-47b9-aa4c-63463575bf6b.png" style="width:8.50em;height:3.58em;"/></p>
+<p class="CDPAlignCenter CDPAlign">以下是跟踪的四个重要属性:</p>
+<p><sub><img class="fm-editor-equation" src="img/f55f233e-e4eb-47ae-9e2f-90995eafbea4.png" style="width:13.17em;height:1.33em;"/>T2】</sub></p>
+<ul>
+<li><sub> <img class="fm-editor-equation" src="img/d913abcb-54c7-4539-9e57-732fab57c84c.png" style="width:8.83em;height:1.42em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/d225bee2-8f51-4b81-a891-eb1c01968470.png" style="width:7.42em;height:1.50em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/ed5a77f4-db75-4421-9830-c6c19b4ce1c6.png" style="width:24.92em;height:1.25em;"/> </sub></li>
+<li>轨迹的一个非常有趣的性质是，它等于其特征值之和，因此适用以下公式:</li>
+</ul>
+<p><img class="fm-editor-equation" src="img/6b6d57a8-b831-442e-8ed4-f3555b173032.png" style="width:9.08em;height:2.67em;"/></p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/6b6d57a8-b831-442e-8ed4-f3555b173032.png" style="width:9.08em;height:2.67em;"/></p>
+<p class="mce-root">正交矩阵</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">正交性的概念在线性代数中经常出现。它实际上只是垂直度的一个花哨的词，除了它超越了二维或一对向量。</h1>
+                
+            
+            
+                
+<p>但是为了得到一个理解，我们先从两个列向量<sub> <img class="fm-editor-equation" src="img/d048e20b-765d-4b6f-8f31-cd58d6b3d93c.png" style="width:5.75em;height:1.58em;"/> </sub>说起。如果它们是正交的，则以下成立:</p>
+<p><img class="fm-editor-equation" src="img/fbc99477-3307-41b6-9603-98bb8dd7cf1c.png" style="width:20.08em;height:1.67em;"/>。</p>
+<p class="CDPAlignCenter CDPAlign">正交矩阵是一种特殊的矩阵，其中的列是成对正交的。这意味着我们有一个具有以下属性的矩阵<sub> <img class="fm-editor-equation" src="img/7d7de76e-8356-43d4-88db-62dedaeb9347.png" style="width:5.08em;height:1.33em;"/> </sub>:</p>
+<p><img class="fm-editor-equation" src="img/e795f258-7b2f-461b-8bf9-052485c05a31.png" style="width:9.33em;height:1.50em;"/></p>
+<p class="CDPAlignCenter CDPAlign">那么，我们可以推导出<sub> <img class="fm-editor-equation" src="img/85df4b42-b4b9-4739-a142-15905a07a1d0.png" style="width:5.58em;height:1.50em;"/> </sub>(即<em> Q </em>的转置也是<em> Q </em>的逆)。</p>
+<p>与其他类型的矩阵一样，正交矩阵也有一些特殊的性质。</p>
+<p>首先，它们保存内部产品，因此适用以下内容:</p>
+<p><img class="fm-editor-equation" src="img/4fbd99a0-b27c-42e0-bb75-467eafd134ac.png" style="width:19.00em;height:1.50em;"/>。</p>
+<p class="CDPAlignCenter CDPAlign">这使我们想到第二个性质，它表明正交矩阵的2-范数是保持的，我们看到如下:</p>
+<p><img class="fm-editor-equation" src="img/a378af5b-63c5-47c5-b9b5-220bd5fddea5.png" style="width:19.08em;height:2.17em;"/></p>
+<p class="CDPAlignCenter CDPAlign">当乘以正交矩阵时，您可以将其视为保持长度的变换，但向量可能会围绕原点旋转一定角度。</p>
+<p>最著名的正交矩阵也是正交的，它是一个特殊的矩阵，我们已经讨论过几次了。它就是单位矩阵<em> I </em>，由于它表示的是轴方向的长度单位，所以我们一般称它为标准基。</p>
+<p>对角化和对称矩阵</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">假设我们有一个矩阵<sub> <img class="fm-editor-equation" src="img/d8bc4a80-34a1-4747-bf06-08764233ed32.png" style="width:4.17em;height:0.92em;"/> </sub>，它有<img class="fm-editor-equation" src="img/551f57d1-22cf-4fd0-9ca6-c835a358402c.png" style="width:0.92em;height:0.92em;"/>个特征向量。我们将这些向量放入一个可逆的矩阵<em> X </em>中，并将两个矩阵相乘。这为我们提供了以下信息:</h1>
+                
+            
+            
+                
+<p><img class="fm-editor-equation" src="img/52b2fc21-cdc0-4d05-87d8-3e9ec34e8f84.png" style="width:25.75em;height:1.25em;"/></p>
+<p class="CDPAlignCenter CDPAlign">我们从<img class="fm-editor-equation" src="img/7f206c31-9575-42b3-ab95-0284067d480c.png" style="width:4.50em;height:1.00em;"/>中得知，在处理矩阵时，这就变成了<img class="fm-editor-equation" src="img/e8874b7e-1006-4644-8838-c68a2d2d573f.png" style="width:5.33em;height:1.00em;"/>，其中<sub> <img class="fm-editor-equation" src="img/5d66989d-b7b4-409d-a682-045e3f9b0998.png" style="width:10.83em;height:1.42em;"/> </sub>和每个<em> x <sub> i </sub> </em>都有唯一的λ <em> <sub> i </sub> </em>。因此，<sub> <img class="fm-editor-equation" src="img/029ad3b2-e319-4292-b49c-9d0cb059f951.png" style="width:6.25em;height:1.17em;"/> </sub>。</p>
+<p>让我们继续讨论对称矩阵。这些是特殊的矩阵，当转置时，它们与原始矩阵相同，这意味着<sub> <img class="fm-editor-equation" src="img/678972cc-c1f8-4a32-9573-ae1a26083511.png" style="width:4.33em;height:1.33em;"/> </sub>和所有的<sub> <img class="fm-editor-equation" src="img/a0a6af0d-8910-4371-b3f3-31a7b0bcab0d.png" style="width:2.83em;height:1.67em;"/> </sub>、<sub> <img class="fm-editor-equation" src="img/023b2d00-ee92-4a7e-8dcb-972b27e910d1.png" style="width:5.58em;height:1.33em;"/> </sub>。这可能看起来相当琐碎，但它的含义相当强烈。</p>
+<p>谱定理指出，如果矩阵<img class="fm-editor-equation" src="img/d8bc4a80-34a1-4747-bf06-08764233ed32.png" style="width:4.50em;height:1.00em;"/>是对称矩阵，那么<img class="fm-editor-equation" src="img/879be859-9317-4137-9128-f37eb55dedad.png" style="width:1.42em;height:1.00em;"/>存在一个标准正交基，它包含a的特征向量。</p>
+<p>这个定理对我们很重要，因为它允许我们分解对称矩阵。我们称之为<strong>光谱分解</strong>(有时也称为<strong>特征分解</strong>)。</p>
+<p>假设我们有一个正交矩阵<em> Q </em>，特征向量<sub> <img class="fm-editor-equation" src="img/86835d82-66f0-4cdd-a720-32f72739bc8b.png" style="width:5.75em;height:1.17em;"/> </sub>和<sub> <img class="fm-editor-equation" src="img/5d66989d-b7b4-409d-a682-045e3f9b0998.png" style="width:10.83em;height:1.42em;"/> </sub>的正交基是具有相应特征值的矩阵。</p>
+<p>从前面我们知道，<sub> <img class="fm-editor-equation" src="img/0d19d219-6c28-4bb3-a122-c6b3469f13b3.png" style="width:5.92em;height:1.33em;"/> </sub>为全<sub><img class="fm-editor-equation" src="img/fc112d41-bab9-4fb3-9ffa-c8c20461ad16.png" style="width:6.42em;height:1.25em;"/></sub>；因此，我们有以下内容:</p>
+<p><img class="fm-editor-equation" src="img/1b6c7941-bb3b-423d-b124-92890c550716.png" style="width:5.92em;height:1.33em;"/></p>
+<p class="CDPAlignCenter CDPAlign">通过将两边乘以<em>Q<sup>T</sup>T10】，我们得到以下结果:</em></p>
+<div><strong>Note</strong>: Λ comes after <em>Q</em> because it is a diagonal matrix, and the <sub><img class="fm-editor-equation" src="img/c342b78a-6b41-47a3-9c17-eb7d0eb6726c.png" style="width:1.33em;height:1.50em;"/></sub>s need to multiply the individual columns of <em>Q</em>.</div>
+<p><img class="fm-editor-equation" src="img/5e69ce71-fb08-43b4-8c6f-4b0d4a45f36b.png" style="width:6.08em;height:1.42em;"/></p>
+<p class="CDPAlignCenter CDPAlign">奇异值分解</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title"><strong>奇异值分解</strong> ( <strong> SVD </strong>)在线性代数中被广泛使用，并以其强大而闻名，尤其是源于每个矩阵都有一个SVD的事实。看起来是这样的:</h1>
+                
+            
+            
+                
+<p><img class="fm-editor-equation" src="img/2a9d9100-4f2c-4d8e-a28d-2c79f1c394b7.png" style="width:6.42em;height:1.33em;"/></p>
+<p class="CDPAlignCenter CDPAlign">出于我们的目的，让我们假设<sub> <img class="fm-editor-equation" src="img/c983f0bd-e4c4-4f1c-b5a9-48f3864ef227.png" style="width:5.92em;height:1.25em;"/> </sub>、<sub> <img class="fm-editor-equation" src="img/c2a55e81-b23d-4b32-85c0-5a2549e917e9.png" style="width:5.75em;height:1.17em;"/> </sub>、<sub> <img class="fm-editor-equation" src="img/b0f481fc-deb2-4819-aeed-1b8187780c09.png" style="width:5.50em;height:1.17em;"/> </sub>和<sub> <img class="fm-editor-equation" src="img/f09fa2f7-db96-4689-b1cf-f2f61f5195f1.png" style="width:4.92em;height:1.08em;"/> </sub>，并且<em> U、V </em>是正交矩阵，而∑是包含沿着对角线的<em> A </em>的奇异值(由σ <sub> i </sub>表示)的矩阵。</p>
+<p>前面等式中的<em> ∑ </em>是这样的:</p>
+<p><img class="fm-editor-equation" src="img/be5c5338-fbd4-4dec-a368-1dd17f879ae2.png" style="width:13.33em;height:5.08em;"/></p>
+<p class="CDPAlignCenter CDPAlign">我们也可以这样写SVD:</p>
+<p><img class="fm-editor-equation" src="img/e2638ca7-7dbf-4dc0-a887-ae2af1fb7b08.png" style="width:8.67em;height:3.67em;"/></p>
+<p class="CDPAlignCenter CDPAlign">这里，<em>U<sub>I</sub>T42，<em>V<sub>I</sub>T46】是<em> U，V </em>的列向量。</em></em></p>
+<p>乔莱斯基分解</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">我相信你现在已经明白了，分解矩阵的方法不止一种，对于特殊的矩阵也有特殊的方法。</h1>
+                
+            
+            
+                
+<p>乔莱斯基分解类似平方根，只对对称正定矩阵有效。</p>
+<p>这通过将<em> A </em>分解成<em>LL<sup>T</sup>T54】的形式来实现。这里，<em> L </em>和之前一样，是下三角矩阵。</em></p>
+<p>一定要培养一些直觉。看起来是这样的:</p>
+<p><img class="aligncenter size-full wp-image-1249 image-border" src="img/dc5af252-82e4-4b19-9309-28bd423b9c64.png" style="width:42.17em;height:8.25em;"/></p>
+<p style="padding-left: 30px">然而，在这里，<em> L </em>被称为一个<strong>乔列斯基因子</strong>。</p>
+<p>让我们来看看<sub> <img class="fm-editor-equation" src="img/95c6b814-1506-4f8e-bad3-9f7771f0fab6.png" style="width:4.50em;height:1.17em;"/> </sub>的案例。</p>
+<p>从前面的矩阵我们知道<sub><img class="fm-editor-equation" src="img/14988fc6-2973-4534-9dbb-d2f0fa493a60.png" style="width:5.00em;height:1.33em;"/></sub>；因此，我们有以下内容:</p>
+<p class="CDPAlignLeft CDPAlign"><img class="fm-editor-equation" src="img/1cb6fb08-04e8-4ebe-8d22-8bee05f7c6a0.png" style="width:31.67em;height:5.42em;"/></p>
+<p class="CDPAlignCenter CDPAlign">让我们把右边的上下三角矩阵相乘，如下:</p>
+<p><img class="fm-editor-equation" src="img/6bc01725-9a50-450c-98fa-acb8d95d0de7.png" style="width:24.42em;height:5.42em;"/></p>
+<p class="CDPAlignCenter CDPAlign">完整地写出<em> A </em>，并将其等同于我们之前的矩阵，得到如下结果:</p>
+<p><img class="aligncenter size-full wp-image-1254 image-border" src="img/055c9913-37fa-491e-a439-7e0da68f09cc.png" style="width:36.83em;height:6.08em;"/></p>
+<p style="padding-left: 60px">然后，我们可以逐元素地比较<em> A </em>和<em> LL <sup> T </sup> </em>的相应条目，并对<sub> <img class="fm-editor-equation" src="img/26f39821-1aaa-4fb9-a9f1-c44a475c2371.png" style="width:1.75em;height:1.75em;"/>、</sub>进行代数求解，如下所示:</p>
+<p><img class="aligncenter size-full wp-image-1255 image-border" src="img/46bd6583-b5d0-4563-8b92-cf2fc765ffd0.png" style="width:16.42em;height:20.83em;"/></p>
+<p style="padding-left: 240px">我们可以对任意对称正定矩阵重复这个过程，计算给定<em> a <sub> i，j</sub>T28】的<em> l <sub> i，j</sub>T24】值。</em></em></p>
+<p>摘要</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">至此，我们结束了线性代数这一章。到目前为止，我们已经学习了线性代数的所有基本概念，如矩阵乘法和因式分解，这将引导您深入了解<strong>深度神经网络</strong> ( <strong> DNNs </strong>)如何工作和设计，以及是什么使它们如此强大。</h1>
+                
+            
+            
+                
+<p>在下一章中，我们将学习微积分，并将它与本章前面所学的概念相结合来理解向量微积分。</p>
+<p>In the next chapter, we will be learning about calculus and will combine it with the concepts learned earlier on in this chapter to understand vector calculus.</p>
+
+
+            
+
+            
+        
+    </div>
+</body></html>

@@ -1,0 +1,1032 @@
+<html><head/><body>
+
+
+
+
+
+	
+
+		<title>B18522_09</title>
+
+		
+
+	
+
+	
+
+		<div><h1 id="_idParaDest-178" class="chapter-number"><a id="_idTextAnchor187"/> 9</h1>
+
+			<h1 id="_idParaDest-179"><a id="_idTextAnchor188"/>扩展深度学习管道</h1>
+
+			<p><strong class="bold">亚马逊Web服务</strong> ( <strong class="bold"> AWS </strong>)在<strong class="bold">深度学习</strong> ( <strong class="bold"> DL </strong>)模型部署中开启了许多可能性。在这一章中，我们将介绍两个最流行的服务，它们被设计用于部署一个DL模型作为推理端点:<strong class="bold">弹性Kubernetes服务</strong> ( <strong class="bold"> EKS </strong>)和<strong class="bold"> SageMaker </strong>。</p>
+
+			<p>在前半部分，我们将描述基于EKS的方法。首先，我们将讨论如何为<strong class="bold">tensor flow</strong>(<strong class="bold">TF</strong>)和PyTorch模型创建推理端点，并使用EKS部署它们。我们还将引入<strong class="bold">弹性推断</strong> ( <strong class="bold"> EI </strong>)加速器，可以在降低成本的同时提高吞吐量。EKS集群拥有作为web服务器托管推理端点的pod。作为基于EKS的部署的最后一个主题，我们将介绍如何针对动态传入流量水平扩展pod。</p>
+
+			<p>在第二部分，我们将介绍基于SageMaker的部署。我们将讨论如何为TF、PyTorch和ONNX模型创建推断端点。此外，端点将使用<strong class="bold">亚马逊SageMaker Neo </strong>和EI加速器进行优化。然后，我们将为运行在SageMaker上的推理端点设置自动缩放。最后，我们将通过描述如何在单个SageMaker推理端点中托管多个模型来结束本章。</p>
+
+			<p>在本章中，我们将讨论以下主要话题:</p>
+
+			<ul>
+
+				<li>使用弹性Kubernetes服务进行推理</li>
+
+				<li>使用SageMaker进行推理</li>
+
+			</ul>
+
+			<h1 id="_idParaDest-180"><a id="_idTextAnchor189"/>技术要求</h1>
+
+			<p>你可以从本书的GitHub资源库下载本章的补充材料，网址是<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter_9">https://GitHub . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 9</a>。</p>
+
+			<h1 id="_idParaDest-181"><a id="_idTextAnchor190"/>使用弹性Kubernetes服务进行推理</h1>
+
+			<p>通过简化复杂的集群管理流程(<a href="https://aws.amazon.com/eks">https://aws.amazon.com/eks</a>)，EKS旨在<a id="_idIndexMarker874"/>为应用部署提供Kubernetes集群。创建EKS集群的详细步骤可以在<a href="https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html">https://docs . AWS . Amazon . com/eks/latest/user guide/create-cluster . html</a>找到。通常，EKS集群用于部署任何web服务应用程序，并根据需要进行扩展。EKS上的推理端点只是一个处理模型推理请求的web服务应用程序。在本节中，您将学习如何在EKS上托管DL模型推理端点。</p>
+
+			<p>Kubernetes集群有<a id="_idIndexMarker876"/>一个控制平面和一组节点。控制平面根据传入流量做出调度和扩展决策。通过调度，控制平面管理哪个节点在给定的时间点运行作业。通过扩展，控制平面会根据进入端点的流量增加或减少pod的大小。EKS在幕后管理这些组件，以便您可以专注于高效和有效地托管您的服务。</p>
+
+			<p>本节首先描述如何设置EKS集群。然后，我们将描述如何在EKS集群上使用TF和PyTorch创建端点来处理模型推断请求。接下来，我们将讨论EI加速器，它提高了推理性能，同时降低了成本。最后，我们将介绍一种基于传入流量动态扩展服务的方法。</p>
+
+			<h2 id="_idParaDest-182"><a id="_idTextAnchor191"/>准备EKS簇</h2>
+
+			<p>基于EKS的模型部署的第一步<a id="_idIndexMarker877"/>是创建一组适当的硬件资源。本节我们将使用AWS推荐的GPU Docker镜像(<a href="https://github.com/aws/deep-learning-containers/blob/master/available_images.md">https://github . com/AWS/deep-learning-containers/blob/master/available _ images . MD</a>)。这些标准图像已经在<strong class="bold">弹性容器注册表</strong> ( <strong class="bold"> ECR </strong>)上注册并可用，该注册表为Docker图像(<a href="https://aws.amazon.com/ecr">https://aws.amazon.com/ecr</a>)提供了一个安全、可扩展且可靠的<a id="_idIndexMarker878"/>注册表。接下来，我们应该将NVIDIA设备插件应用到容器中。这个插件使<strong class="bold">机器学习</strong> ( <strong class="bold"> ML </strong>)操作能够利用底层硬件来实现更低的延迟。关于NVIDIA设备插件的更多细节，我们推荐阅读<a href="https://github.com/awslabs/aws-virtual-gpu-device-plugin">https://github.com/awslabs/aws-virtual-gpu-device-plugin</a>。</p>
+
+			<p>在下面的代码片段中，我们将使用<code>kubectl</code>，<code>kubectl</code>，您需要提供一个YAML文件，其中包含关于集群、用户、名称空间和认证机制的信息(<a href="https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig">https://kubernetes . io/docs/concepts/configuration/organize-cluster-access-kube config</a>)。最流行的操作是<code>kubectl apply</code>，它在EKS集群中创建和修改资源:</p>
+
+			<pre>kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v1.12/nvidia-device-plugin.yml</pre>
+
+			<p>在前面的用例中，<code>kubectl apply</code>命令根据YAML文件中指定的规范将NVIDIA设备插件应用到Kubernetes集群。</p>
+
+			<h2 id="_idParaDest-183"><a id="_idTextAnchor192"/>配置EKS</h2>
+
+			<p>YAML文件用于<a id="_idIndexMarker881"/>配置构成Kubernetes集群的机器和集群中运行的应用程序。YAML文件中的配置可以根据它们的类型分为两部分:<em class="italic">部署</em>和<em class="italic">服务</em>。部署部分控制pod中运行的应用程序。在本节中，它将用于从DL模型中创建一个端点。在EKS环境中，在Kubernetes集群的一个或多个pod上运行的一组应用程序被称为服务。服务部分在集群上创建和配置服务。在整个服务部分，我们将为外部连接可以使用的服务创建一个唯一的URL，并为传入流量配置负载平衡。</p>
+
+			<p>管理EKS集群时，名称空间非常有用，因为它们隔离了集群中的一组资源。要创建名称空间，只需使用<code>kubectl create namespace</code>终端命令，如下所示:</p>
+
+			<pre>kubectl create namespace tf-inference</pre>
+
+			<p>在前面的命令中，我们为推理端点和<a id="_idIndexMarker882"/>服务构建了<code>tf-inference</code>名称空间，我们将在下一节中创建这些服务。</p>
+
+			<h2 id="_idParaDest-184"><a id="_idTextAnchor193"/>使用EKS上的张量流模型创建推理端点</h2>
+
+			<p>在这一节中，我们<a id="_idIndexMarker883"/>将描述一个EKS配置文件(<code>tf.yaml</code>)，它被设计成使用一个TF模型来托管一个推理<a id="_idIndexMarker884"/>端点。端点由<em class="italic"> TensorFlow服务</em>创建，这是一个为部署TF模型而设计的系统(<a href="https://www.tensorflow.org/tfx/guide/serving">https://www.tensorflow.org/tfx/guide/serving</a>)。由于我们的主要焦点是EKS配置，我们将简单地假设一个训练过的TF模型已经作为<code>.pb</code>文件<a id="_idIndexMarker885"/>在S3可用。</p>
+
+			<p>首先，让我们看看配置的<code>Deployment</code>部分，它处理端点创建:</p>
+
+			<pre class="source-code">
+
+kind: Deployment
+
+  apiVersion: apps/v1
+
+  metadata:
+
+    name: tf-inference # name for the endpoint / deployment
+
+    labels:
+
+      app: demo
+
+      role: master
+
+  spec:
+
+    replicas: 1 # number of pods in the cluster
+
+    selector:
+
+      matchLabels:
+
+        app: demo
+
+        role: master</pre>
+
+			<p>正如我们所见，配置的<code>Deployment</code>部分从<code>kind: Deployment</code>开始。在配置的第一部分，我们提供了一些关于端点的元数据，并通过填写<code>spec</code>部分来定义系统设置。</p>
+
+			<p>端点最重要的<a id="_idIndexMarker886"/>配置在<code>template</code>中指定。我们将创建一个端点，可以使用<strong class="bold">超文本传输协议</strong> ( <strong class="bold"> HTTP </strong>)请求以及<strong class="bold">远程过程调用</strong> ( <strong class="bold"> gRPC </strong>)请求来访问<a id="_idIndexMarker887"/>。HTTP是web客户端和服务器最基本的传输数据协议。gRPC建立在HTTP之上，是一个以二进制格式发送请求和接收响应的开源协议:</p>
+
+			<pre class="source-code">
+
+    template:      
+
+      metadata:
+
+        labels:
+
+          app: demo
+
+          role: master
+
+      spec:
+
+        containers:
+
+        - name: demo
+
+          image: 763104351884.dkr.ecr.us-east-1.amazonaws.com/tensorflow-inference:2.1.0-gpu-py36-cu100-ubuntu18.04 # ECR image for TensorFlow inference
+
+          command:
+
+          - /usr/bin/tensorflow_model_server # start inference endpoint
+
+          args: # arguments for the inference serving
+
+          - --port=9000
+
+          - --rest_api_port=8500
+
+          - --model_name=saved_model
+
+          - --model_base_path=s3://mybucket/models
+
+          ports:
+
+          - name: http
+
+            containerPort: 8500 # HTTP port
+
+          - name: gRPC
+
+            containerPort: 9000 # gRPC port</pre>
+
+			<p>在<code>template</code>部分，我们指定了要使用的ECR映像(<code>image: 763104351884.dkr.ecr.us-east-1.amazonaws.com/tensorflow-inference:2.1.0-gpu-py36-cu100-ubuntu18.04</code>)、创建TF推断端点的命令(<code>command: /usr/bin/tensorflow_model_server</code>)、TF服务的参数(<code>args</code>)以及<a id="_idIndexMarker890"/>容器的端口配置(<code>ports</code>)。</p>
+
+			<p>服务于<a id="_idIndexMarker891"/>参数的TF包含模型的名称(<code>--model_name=saved_model</code>)、模型在S3上的位置(<code>--model_base_path=s3://mybucket/models</code>)、HTTP访问端口(<code>--rest_api_port=8500</code>)和gRPC访问端口(<code>--port=9000</code>)。<code>ports</code>下的两个<code>ContainerPort</code>配置用于将端点暴露给外部连接(<code>containerPort: 8500</code>和<code>containerPort: 9000</code>)。</p>
+
+			<p>接下来，让我们看看YAML文件的第二部分——即<code>Service</code>的配置:</p>
+
+			<pre class="source-code">
+
+kind: Service
+
+  apiVersion: v1
+
+  metadata:
+
+    name: tf-inference # name for the service
+
+    labels:
+
+      app: demo
+
+  spec:
+
+    Ports:
+
+    - name: http-tf-serving
+
+      port: 8500 # HTTP port for the webserver inside the pods
+
+      targetPort: 8500 # HTTP port for access outside the pods
+
+    - name: grpc-tf-serving
+
+      port: 9000 # gRPC port for the webserver inside the pods
+
+      targetPort: 9000 # gRPC port for access outside the pods
+
+    selector:
+
+      app: demo
+
+      role: master
+
+    type: ClusterIP</pre>
+
+			<p>配置的<code>Service</code>部分从<code>kind: Service</code>开始。在<code>name: http-tf-serving</code>部分下面，我们有<code>port: 8500</code>，它指的是TF服务web服务器正在监听的端口<a id="_idIndexMarker892"/>在pods内部的HTTP请求。<code>targetPort</code>指定<a id="_idIndexMarker893"/>pod用来暴露相应端口的端口。在<code>name: grpc-tf-serving</code>部分，我们有另一组gRPC端口配置。</p>
+
+			<p>要将配置应用到底层集群，只需将这个YAML文件提供给<code>kubectl apply</code>命令。</p>
+
+			<p>接下来，我们将在EKS上为PyTorch模型创建一个端点。</p>
+
+			<h2 id="_idParaDest-185"><a id="_idTextAnchor194"/>在EKS上使用PyTorch模型创建推理端点</h2>
+
+			<p>在本节中，您将学习如何在EKS上创建PyTorch模型推理端点。首先，<a id="_idIndexMarker895"/>要介绍的是<em class="italic"> TorchServe </em>，一个py torch(<a href="https://pytorch.org/serve">https://pytorch.org/serve</a>)的开放<a id="_idIndexMarker896"/>源码模型服务框架。它旨在简化PyTorch模型的大规模部署过程。PyTorch模型部署的EKS <a id="_idIndexMarker897"/>配置与我们在上一节中描述的部署TF模型的配置非常相似。</p>
+
+			<p>首先需要将一个PyTorch模型<code>.pth</code>文件转换成一个<code>.mar</code>文件，这是torch serve(<a href="https://github.com/pytorch/serve/blob/master/model-archiver/README.md">https://github . com/py torch/serve/blob/master/model-Archiver/readme . MD</a>)要求的格式。使用<code>torch-model-archiver</code>包可以实现转换。TorchServe和<code>torch-model-archiver</code>可以通过<code>pip</code>下载安装，如下:</p>
+
+			<pre>pip install torchserve torch-model-archiver</pre>
+
+			<p>使用<code>torch-model-archiver</code>命令时，转换如以下代码所示:</p>
+
+			<pre>torch-model-archiver --model-name archived_model --version 1.0 --serialized-file model.pth --handler run_inference</pre>
+
+			<p>在前面的代码中，<code>torch-model-archiver</code>命令接受<code>model-name</code>(输出<code>.mar</code>文件的名称，即<code>archived_model</code>)、<code>version</code>(py torch 1.0版)、<code>serialized-file</code>(输入PyTorch <code>.pth</code>文件，即<code>model.pth</code>)和<code>handler</code>(定义TorchServe推理逻辑的文件的名称；即<code>run_inference</code>，表示名为<code>run_inference.py</code>的文件。该命令将生成一个<code>archived_model.mar</code>文件，该文件将通过EKS上传到端点托管的S3桶中。</p>
+
+			<p>在讨论EKS配置之前，我们想介绍的另一个命令是<code>mxnet-model-server</code>。该命令在DLAMI实例中可用，允许您托管一个web服务器，该服务器对传入的请求运行PyTorch推理:</p>
+
+			<pre>mxnet-model-server --start --mms-config /home/model-server/config.properties --models archived_model=https://dlc-samples.s3.amazonaws.com/pytorch/multi-model-server/archived_model.mar</pre>
+
+			<p>在前面的例子中，带有<code>start</code>参数的<code>mxnet-model-server</code>命令为通过<code>models</code>参数提供的模型创建了一个<a id="_idIndexMarker898"/>端点。如您所见，<code>models</code>参数指向S3 ( <code>archived_model=https://dlc-samples.s3.amazonaws.com/pytorch/multi-model-server/archived_model.mar</code>)上模型的位置。模型的输入参数在<code>/home/model-server/config.properties</code>文件中指定，该文件通过<code>mms-config</code>参数传递给命令。</p>
+
+			<p>现在，我们将讨论如何填充EKS配置的<code>Deployment</code>部分。每个<a id="_idIndexMarker899"/>组件都可以保持与TF车型的版本相似。主要区别来自于<code>template</code>部分的<a id="_idIndexMarker900"/>，如下面的代码片段所示:</p>
+
+			<pre class="source-code">
+
+       containers:
+
+       - name: pytorch-service
+
+         image: "763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-inference:1.3.1-gpu-py36-cu101-ubuntu16.04"
+
+         args:
+
+         - mxnet-model-server
+
+         - --start
+
+         - --mms-config /home/model-server/config.properties
+
+         - --models archived_model=https://dlc-samples.s3.amazonaws.com/pytorch/multi-model-server/archived_model.mar
+
+         ports:
+
+         - name: mms
+
+           containerPort: 8080</pre>
+
+			<p>在前面的代码中，我们使用了安装了py torch(<code>image: "763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-inference:1.3.1-gpu-py36-cu101-ubuntu16.04"</code>)的不同Docker映像。该配置接受<code>mxnet-model-server</code>命令来创建一个推理<a id="_idIndexMarker901"/>端点。我们将为这个端点使用的端口是<code>8080</code>。我们对<code>Service</code>部分所做的唯一更改可以在<code>Ports</code>部分找到；我们必须确保<a id="_idIndexMarker902"/>一个外部端口被分配并连接到端口<code>8080</code>，也就是端点所在的端口。同样，您可以使用<code>kubectl apply</code>命令来<a id="_idIndexMarker903"/>应用更改。</p>
+
+			<p>在下一节中，我们将描述如何与EKS集群托管的端点进行交互。</p>
+
+			<h2 id="_idParaDest-186"><a id="_idTextAnchor195"/>与EKS上的端点通信</h2>
+
+			<p>既然我们已经有了一个正在运行的<a id="_idIndexMarker904"/>端点，我们将解释如何发送一个请求并获取一个推理结果。首先，我们需要使用<code>kubectl get services</code>来识别服务的IP地址，如下面的代码片段所示:</p>
+
+			<pre>kubectl get services --all-namespaces -o wide</pre>
+
+			<p>前面的命令将返回服务及其外部IP地址的列表:</p>
+
+			<pre>NAME         TYPE      CLUSTER-IP   EXTERNAL-IP    PORT(S)  AGE 
+tf-inference ClusterIP 10.3.xxx.xxx 104.198.xxx.xx 8500/TCP 54s</pre>
+
+			<p>在这个例子中，我们将利用我们在<em class="italic">中创建的<code>tf-inference</code>服务，在EKS </em>部分使用TensorFlow模型创建推理端点。从<code>kubectl get services</code>的示例输出中，我们可以看到服务正在使用外部IP地址<code>104.198.xxx.xx</code>运行。要通过HTTP访问服务，您需要将HTTP的端口附加到IP地址:<code>http://104.198.xxx.xx:8500</code>。如果您有兴趣为IP地址创建一个显式URL，请访问<a href="https://aws.amazon.com/premiumsupport/knowledge-center/eks-kubernetes-services-cluster">https://AWS . Amazon . com/premium support/knowledge-center/eks-kubernetes-services-cluster</a>。</p>
+
+			<p>要向端点发送一个预测<a id="_idIndexMarker905"/>请求并接收一个推断结果，您需要发出一个POST-typed HTTP请求。如果您想从终端发送请求，您可以使用如下的<code>curl</code>命令:</p>
+
+			<pre>curl -d demo_input.json -X POST http://104.198.xxx.xx:8500/v1/models/demo:predict</pre>
+
+			<p>在前面的命令中，我们将JSON数据(<code>demo_input.json</code>)发送到端点(<code>http://104.198.xxx.xx:8500/v1/models/demo:predict</code>)。输入JSON文件<code>demo_input.json</code>由以下代码片段组成:</p>
+
+			<pre class="source-code">
+
+{
+
+    "instances": [1.0, 2.0, 5.0]
+
+}</pre>
+
+			<p>我们将从端点接收的响应数据也包含JSON数据，如下所示:</p>
+
+			<pre class="source-code">
+
+{
+
+    "predictions": [2.5, 3.0, 4.5]
+
+}</pre>
+
+			<p>关于输入输出JSON数据结构的详细解释可以在官方文档中找到:<a href="https://www.tensorflow.org/tfx/serving/api_rest">https://www.tensorflow.org/tfx/serving/api_rest</a>。</p>
+
+			<p>如果你对使用gRPC而不是HTTP感兴趣，你可以在<a href="https://aws.amazon.com/blogs/opensource/the-versatility-of-grpc-an-open-source-high-performance-rpc-framework">https://AWS . Amazon . com/blogs/open source/the-versatility-of-gRPC-an-open-source-high-performance-RPC-framework</a>找到细节。</p>
+
+			<p>恭喜你！您已经成功地为您的模型创建了一个您的应用程序可以通过网络访问的端点。接下来，我们将介绍亚马逊EI加速器，它可以<a id="_idIndexMarker906"/>降低推理延迟和EKS成本。</p>
+
+			<h2 id="_idParaDest-187"><a id="_idTextAnchor196"/>使用亚马逊弹性推理提高EKS端点性能</h2>
+
+			<p>在本节中，我们将描述如何使用EI加速器创建EKS集群，这是一种低成本的GPU加速。EI加速器可以链接到Amazon EC2和Sagemaker实例或者<code>eia2.*</code>类型的实例。eia2的完整描述。*实例可以在<a href="https://aws.amazon.com/machine-learning/elastic-inference/pricing">https://AWS . Amazon . com/machine-learning/elastic-inference/pricing</a>找到。</p>
+
+			<p>为了充分利用AWS资源，您<a id="_idIndexMarker910"/>还需要使用<em class="italic"> AWS神经元</em>(<a href="https://aws.amazon.com/machine-learning/neuron">https://aws.amazon.com/machine-learning/neuron</a>)来编译您的模型。神经元模型的优势在于它们可以利用Amazon EC2 Inf1实例。这些<a id="_idIndexMarker911"/>类型的机器由<em class="italic"> AWS推理</em>组成，这是AWS在云端为ML设计的定制芯片(<a href="https://aws.amazon.com/machine-learning/inferentia">https://aws.amazon.com/machine-learning/inferentia</a>)。</p>
+
+			<p>AWS Neuron SDK预装在<a id="_idIndexMarker912"/> AWS DL容器和<strong class="bold">亚马逊机器镜像</strong> ( <strong class="bold"> AMI </strong>)中。在这一节中，我们将集中讨论TF模型。然而，PyTorch模型编译也经历同样的过程。TF的详细步骤可以在<a href="https://docs.aws.amazon.com/dlami/latest/devguide/tutorial-inferentia-tf-neuron.html">https://docs . AWS . Amazon . com/dlami/latest/dev guide/tutorial-inferent ia-TF-neuron . html</a>找到，PyTorch的步骤可以在<a href="https://docs.aws.amazon.com/dlami/latest/devguide/tutorial-inferentia-pytorch-neuron.html">https://docs . AWS . Amazon . com/dlami/latest/dev guide/tutorial-inferent ia-py torch-neuron . html</a>找到。</p>
+
+			<p>使用TF的<code>tf.neuron.saved_model.compile</code>函数可以将TF模型编译成神经元模型:</p>
+
+			<pre class="source-code">
+
+import tensorflow as tf
+
+tf.neuron.saved_model.compile(
+
+    tf_model_dir, # input TF model dir 
+
+    neuron_model_dir # output neuron compiled model dir
+
+)</pre>
+
+			<p>对于这个函数，我们只需要提供输入模型所在的位置(<code>tf_model_dir</code>)和我们想要存储输出神经元模型的位置(<code>neuron_model_dir</code>)。就像我们上传一个TF模型到一个S3桶来创建端点一样，我们也需要将神经元模型转移到一个S3桶。</p>
+
+			<p>同样，您<a id="_idIndexMarker913"/>需要对EKS配置进行的更改只需要在<code>Deployment</code>部件的<code>template</code>部分完成。以下代码片段描述了<a id="_idIndexMarker914"/>配置的更新部分:</p>
+
+			<pre class="source-code">
+
+       containers:
+
+       - name: neuron-demo
+
+         image: 763104351884.dkr.ecr.us-east-1.amazonaws.com/tensorflow-inference-neuron:1.15.4-neuron-py37-ubuntu18.04
+
+         command:
+
+         - /usr/local/bin/entrypoint.sh
+
+         args:
+
+         - --port=8500
+
+         - --rest_api_port=9000
+
+         - --model_name=neuron_model
+
+         - --model_base_path=s3://mybucket/neuron_model/
+
+         ports:
+
+         - name: http
+
+           containerPort: 8500 # HTTP port
+
+         - name: gRPC
+
+           containerPort: 9000 # gRPC port</pre>
+
+			<p>我们从前面的配置中注意到的第一件事是，它非常类似于我们在<em class="italic">一节中描述的在EKS </em>上使用张量流模型创建推理端点。差异主要来自于<code>image</code>、<code>command</code>和<code>args</code>段。首先，我们<a id="_idIndexMarker915"/>需要使用一个带有AWS Neuron和TensorFlow服务应用程序的DL容器(<code>image: 763104351884.dkr.ecr.us-east-1.amazonaws.com/tensorflow-inference-neuron:1.15.4-neuron-py37-ubuntu18.04</code>)。接下来，模型工件文件的入口点脚本通过<code>command</code>键传递:<code>/usr/local/bin/entrypoint.sh</code>。入口点脚本用于使用<code>args</code>启动web <a id="_idIndexMarker916"/>服务器。为了从一个神经元模型创建一个端点，我们必须指定S3桶，目标神经元模型作为一个<code>model_base_path</code>参数(<code>--model_base_path=s3://mybucket/neuron_model/</code>)存储在该桶中。</p>
+
+			<p>要将更改应用到集群，只需将更新后的YAML文件传递给<code>kubectl apply</code>命令。</p>
+
+			<p>最后，我们将查看EKS的自动缩放功能，以提高端点的稳定性。</p>
+
+			<h2 id="_idParaDest-188"><a id="_idTextAnchor197"/>使用自动缩放动态调整EKS聚类的大小</h2>
+
+			<p>EKS集群可以根据流量自动调整集群的大小。水平pod自动伸缩的想法是随着传入请求数量的增加，通过增加pod的数量来扩大正在运行的应用程序的数量。类似地，当传入流量减少时，一些pod将被释放。</p>
+
+			<p>通过<code>kubectl apply</code>命令部署应用后，可使用<code>kubectl autoscale</code>命令设置自动缩放，如下所示:</p>
+
+			<pre>kubectl autoscale deployment &lt;application-name&gt; --cpu-percent=60 --min=1 --max=10</pre>
+
+			<p>如前面的示例所示，<code>kubectl autoscale</code>命令接受在YAML文件的<code>Deployment</code>部分中指定的应用程序的名称、<code>cpu-percent</code>(用于放大或缩小集群大小的截止CPU百分比)、<code>min</code>(要保留的最小pod数量)和<code>max</code>(要加速旋转的最大pod数量)。总而言之，示例命令将使用1到10个pod来运行服务，这取决于<a id="_idIndexMarker919"/>的流量，保持CPU使用率为60%。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.EKS旨在通过简化动态流量的复杂集群管理，为应用部署提供Kubernetes集群。</p>
+
+			<p class="callout">b.YAML文件用于配置构成Kubernetes集群的机器和集群中运行的应用程序。配置的两个部分，<code>Deployment</code>和<code>Service</code>，分别控制在pod内运行的应用程序和为底层目标集群配置服务。</p>
+
+			<p class="callout">c.可以在EKS集群上使用TF和PyTorch模型创建和托管推理端点。</p>
+
+			<p class="callout">d.通过利用具有使用AWS神经元编译的模型的EI加速器，有可能改善推理延迟，同时节省EKS集群的操作成本。</p>
+
+			<p class="callout">b.EKS集群可以配置为根据流量动态调整自身大小。</p>
+
+			<p>在本节中，我们<a id="_idIndexMarker920"/>讨论了TF和PyTorch模型的基于EKS的DL模型部署。我们描述了如何使用AWS神经元模型和EI加速器来提高服务性能。最后，我们介绍了自动伸缩，以便<a id="_idIndexMarker921"/>更有效地利用可用资源。在下一节中，我们将看看另一个托管推理端点的AWS服务:SageMaker。</p>
+
+			<h1 id="_idParaDest-189"><a id="_idTextAnchor198"/>使用SageMaker进行推理</h1>
+
+			<p>在本节中，您将学习如何使用SageMaker而不是EKS集群来创建端点。首先，我们将描述独立于框架的创建推理端点的方法(T2类)。然后，我们将看看如何使用<code>TensorFlowModel</code>和特定于TF的<code>Estimator</code>类来创建TF端点。下一节将关注使用<code>PyTorchModel</code>类和PyTorch特定的<code>Estimator</code>类为PyTorch模型创建端点。此外，我们将介绍如何从ONNX模型构建端点。此时，我们应该有一个针对传入请求的服务运行模型预测。之后，我们将描述如何使用<em class="italic"> AWS SageMaker Neo </em>和EI加速器来提高服务质量。最后，我们将讨论自动伸缩，并描述如何在单个端点上托管多个模型。</p>
+
+			<p>如<a href="B18522_05.xhtml#_idTextAnchor106"> <em class="italic">第五章</em></a><em class="italic">云中数据准备</em>中<em class="italic">利用SageMaker进行ETL </em>部分所述，SageMaker <a id="_idIndexMarker924"/>提供了一个内置的笔记本环境，名为SageMaker Studio。我们在本节中包含的代码片段将在本笔记本中执行。</p>
+
+			<h2 id="_idParaDest-190"><a id="_idTextAnchor199"/>使用模型类设置推理端点</h2>
+
+			<p>一般来说，SageMaker为<a id="_idIndexMarker926"/>端点创建提供了<a id="_idIndexMarker925"/>三个不同的类。最基础的是<code>Model</code>类，支持各种DL框架的模型。另一种选择是使用特定于框架的<code>Model</code>类。最后一个选项是使用<code>Estimator</code>类。在本节中，我们将查看第一个选项，即<code>Model</code>类。</p>
+
+			<p>在我们深入到端点创建过程之前，我们需要确保已经适当地准备好了必要的组件；必须为SageMaker配置正确的IAM角色，并且经过<a id="_idIndexMarker927"/>训练的模型应该在S3上可用<a id="_idIndexMarker928"/>。IAM角色可以按如下方式在笔记本中准备:</p>
+
+			<pre class="source-code">
+
+from sagemaker import get_execution_role
+
+from sagemaker import Session
+
+# IAM role of the notebook
+
+role = get_execution_role()
+
+# A Session object for SageMaker
+
+sess = Session()
+
+# default bucket object
+
+bucket = sess.default_bucket()</pre>
+
+			<p>在前面的代码中，已经设置了IAM访问角色和默认存储桶。要加载SageMaker笔记本的当前IAM角色，可以使用<code>sagemaker.get_execution_role</code>功能。要创建SageMaker会话，您需要为<code>Session</code>类创建一个实例。<code>Session</code>实例的<code>default_bucket</code>方法将创建一个默认的bucket，其名称为<code>sagemaker-{region}-{aws-account-id}</code>格式。</p>
+
+			<p>在将模型上传到S3铲斗之前，需要将模型压缩成一个<code>.tar</code>文件。以下代码片段描述了如何压缩模型并将压缩后的模型上传到笔记本内的目标buck <a id="_idTextAnchor200"/> et:</p>
+
+			<pre class="source-code">
+
+import tarfile
+
+model_archive = "model.tar.gz"
+
+with tarfile.open(model_archive, mode="w:gz") as archive:
+
+   archive.add("export", recursive=True) 
+
+# model artifacts uploaded to S3 bucket
+
+model_s3_path = sess.upload_data(path=model_archive, key_prefix="model")</pre>
+
+			<p>在前面的代码片段中，<a id="_idIndexMarker929"/>压缩是使用<code>tarfile</code>库执行的。<code>Session</code>实例的<code>upload_data</code>方法是<a id="_idIndexMarker930"/>，用于将编译后的模型上传到与SageMaker会话链接的S3桶。</p>
+
+			<p>现在，我们准备创建一个<code>Model</code>类的实例。在这个特定的例子中，我们将假设模型已经用TF训练:</p>
+
+			<pre class="source-code">
+
+from sagemaker.tensorflow.serving import Model
+
+# TF version
+
+tf_framework_version = "2.8"
+
+# Model instance for inference endpoint creation
+
+sm_model = Model(
+
+    model_data=model_s3_path, # S3 path for model
+
+    framework_version=tf_framework_version, # TF version
+
+    role=role) # IAM role of the notebook
+
+predictor = sm_model.deploy(
+
+    initial_instance_count=1, # number of instances used
+
+    instance_type="ml.c5.xlarge")</pre>
+
+			<p>如前面的代码所示，<code>Model</code>类的构造函数接受<code>model_data</code>(压缩模型文件所在的S3路径)、<code>framework_version</code>(TF的一个版本)和<code>role</code>(笔记本的IAM角色)。<code>Model</code>实例的<code>deploy</code>方法处理实际的端点创建。它接受<code>initial_instance_count</code>(启动端点的实例数量)和<code>instance_type</code>(要使用的EC2实例类型)。</p>
+
+			<p>此外，您可以提供一个已定义的<code>image</code>和drop <code>framework_version</code>。在这种情况下，将使用为<code>image</code>参数指定的Docker图像创建端点。它应该指向ECR上的一个图像。</p>
+
+			<p>接下来，我们将讨论如何使用创建的端点从<a id="_idIndexMarker932"/>笔记本中<a id="_idIndexMarker931"/>触发模型推理。<code>deploy</code>方法将返回一个<code>Predictor</code>实例。如下面的代码片段所示，您可以通过<code>Predictor</code>实例的<code>predict</code>函数来实现这一点。您需要传递给这个函数的只是一些表示输入的JSON数据:</p>
+
+			<pre class="source-code">
+
+input = {
+
+    "instances": [1.0, 2.0, 5.0]
+
+}
+
+results = predictor.predict(input)</pre>
+
+			<p><code>predict</code>函数的输出<code>results</code>由JSON数据组成，在我们的例子中，如下所示:</p>
+
+			<pre class="source-code">
+
+{
+
+    "predictions": [2.5, 3.0, 4.5]
+
+}</pre>
+
+			<p><code>predict</code>函数支持JSON、CSV、多维数组等不同格式的数据。如果需要使用JSON以外的类型，可以参考<a href="https://sagemaker.readthedocs.io/en/stable/frameworks/tensorflow/using_tf.html#tensorflow-serving-input-and-output">https://sagemaker . readthe docs . io/en/stable/frameworks/tensor flow/using _ TF . html # tensor flow-serving-input-and-output</a>。</p>
+
+			<p>触发模型推理的另一个选项是使用来自<code>boto3</code>库中的<code>SageMaker.Client</code>类。<code>SageMaker.Client</code>类是代表Amazon SageMaker服务的低级客户端。在下面的代码片段中，我们创建了一个<code>SageMaker.Client</code>的实例，并演示了如何使用<code>invoke_endpoint</code>方法访问端点:</p>
+
+			<pre class="source-code">
+
+import boto3
+
+client = boto3.client("runtime.sagemaker")
+
+# SageMaker Inference endpoint name
+
+endpoint_name = "run_model_prediction"
+
+# Payload for inference which consists of the input data
+
+payload = "..."
+
+# SageMaker endpoint called to get HTTP response (inference)
+
+response = client.invoke_endpoint(
+
+   EndpointName=endpoint_name,
+
+   ContentType="text/csv", # content type
+
+   Body=payload # input data to the endpoint)</pre>
+
+			<p>如前面的代码片段所示，<code>invoke_endpoint</code>方法接受<code>EndpointName</code>(端点<a id="_idIndexMarker933"/>的名称；即<code>run_model_prediction</code>)、<code>ContentType</code>(输入数据的<a id="_idIndexMarker934"/>类型；即<code>"text/csv"</code>)，和<code>Body</code>(模型预测的输入数据；也就是<code>payload</code>)。</p>
+
+			<p>事实上，许多公司利用亚马逊API网关(<a href="https://aws.amazon.com/api-gateway">https://aws.amazon.com/api-gateway</a>)和<a id="_idIndexMarker936"/>AWS Lambda(<a href="https://aws.amazon.com/lambda">https://aws.amazon.com/lambda</a>)以及SageMaker端点，在无服务器架构中与部署的模型进行通信。详细设置请参考<a href="https://aws.amazon.com/blogs/machine-learning/call-an-amazon-sagemaker-model-endpoint-using-amazon-api-gateway-and-aws-lambda">https://AWS . Amazon . com/blogs/machine-learning/call-an-Amazon-sage maker-model-endpoint-using-Amazon-API-gateway-and-AWS-lambda</a>。</p>
+
+			<p>接下来，我们将解释创建端点的特定于框架的方法。</p>
+
+			<h2 id="_idParaDest-191"><a id="_idTextAnchor201"/>设置张量流推理端点</h2>
+
+			<p>在本节中，我们将<a id="_idIndexMarker937"/>描述一个专门为TF设计的<code>Model</code>类——<code>TensorFlowModel</code>类。然后，我们将解释如何使用特定于TF的<code>Estimator</code>类来创建端点。本节代码片段的完整版本可以在<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter_9/sagemaker">https://github . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 9/sage maker</a>找到。</p>
+
+			<h3>使用TensorFlowModel类设置TensorFlow推理端点</h3>
+
+			<p><code>TensorFlowModel</code>级是为TF车型设计的<code>Model</code>级。如下面的代码片段<a id="_idIndexMarker938"/>所示，该类可以从<code>sagemaker.tensorflow</code>模块导入，其<a id="_idIndexMarker939"/>用法与<code>Model</code>类相同:</p>
+
+			<pre class="source-code">
+
+from sagemaker.tensorflow import TensorFlowModel
+
+# Model instance
+
+sm_model = TensorFlowModel(
+
+   model_data=model_s3_path,
+
+   framework_version=tf_framework_version,
+
+   role=role) # IAM role of the notebook
+
+# Predictor
+
+predictor = sm_model.deploy(
+
+   initial_instance_count=1,
+
+   instance_type="ml.c5.xlarge")</pre>
+
+			<p><code>TensorFlowModel</code>类的构造函数接受与<code>Model</code>类的构造函数相同的参数:上传模型的S3路径(<code>model_s3_path</code>)、TF框架版本(<code>Tf_framework_version</code>)和SageMaker的IAM角色(<code>role</code>)。此外，您可以通过提供<code>entry_point</code>来提供一个Python脚本，用于对模型推理的输入和输出进行预处理和后处理。在这种情况下，脚本需要命名为<code>inference.py</code>。更多详情请参考<a href="https://sagemaker.readthedocs.io/en/stable/frameworks/tensorflow/deploying_tensorflow_serving.html#providing-python-scripts-for-pre-post-processing">https://sage maker . readthe docs . io/en/stable/frameworks/tensor flow/deploying _ tensor flow _ serving . html # proving-python-scripts-for-pre-post-processing</a>。</p>
+
+			<p>作为<code>Model</code>的子类，<code>TensorFlowModel</code>也通过<code>deploy</code>方法提供了一个<code>Predictor</code>实例。它的用法与我们在上一节中描述的相同。</p>
+
+			<p>接下来，您将学习<a id="_idIndexMarker940"/>如何使用<code>Estimator</code>类部署您的<a id="_idIndexMarker941"/>模型，我们已经在<a href="B18522_06.xhtml#_idTextAnchor133"> <em class="italic">第6章</em> </a>、<em class="italic">高效模型训练</em>中为SageMaker上的模型训练介绍了该类。</p>
+
+			<h3>使用估计器类设置张量流推断端点</h3>
+
+			<p>如第六章<a href="B18522_06.xhtml#_idTextAnchor133"><em class="italic"/></a>、<em class="italic">高效模型训练</em>的<em class="italic">使用SageMaker </em>训练TensorFlow模型一节所介绍的，SageMaker提供了<code>Estimator</code>类，支持SageMaker上的模型训练<a id="_idIndexMarker942"/>。相同的类可用于创建和部署推理端点。在下面的<a id="_idIndexMarker943"/>代码片段中，我们利用为TF、<code>sagemaker.tensorflow.estimator.TensorFlow</code>设计的<code>Estimator</code>类来训练TF模型，并使用训练好的模型部署端点:</p>
+
+			<pre class="source-code">
+
+from sagemaker.tensorflow.estimator import TensorFlow
+
+# create an estimator
+
+estimator = TensorFlow(
+
+    entry_point="tf-train.py",
+
+    ...,
+
+    instance_count=1,    
+
+    instance_type="ml.c4.xlarge",
+
+    framework_version="2.2",
+
+    py_version="py37" )
+
+# train the model
+
+estimator.fit(inputs)
+
+# deploy the model and returns predictor instance for inference
+
+predictor = estimator.deploy(
+
+    initial_instance_count=1, 
+
+    instance_type="ml.c5.xlarge")</pre>
+
+			<p>在前面的代码片段中，<code>sagemaker.tensorflow.estimator.TensorFlow</code>类接受以下参数:<code>entry_point</code>(处理训练的脚本；即<code>"tf-train.py"</code>)、<code>instance_count</code>(要使用的实例数；即<code>1</code>)、<code>instance_type</code>(实例的类型；也就是<code>"ml.c4.xlarge"</code>)，<code>framework_version</code>(一个PyTorch版本；也就是<code>"2.2"</code>)，和<code>py_version</code>(一个Python版本；也就是<code>"py37"</code>)。<code>Estimator</code>实例的<code>fit</code>方法执行模型训练。创建和部署端点的关键<a id="_idIndexMarker944"/>方法是<code>deploy</code>方法，它根据所提供的条件为它训练的模型创建和托管<a id="_idIndexMarker945"/>一个端点:即<code>instance_type</code> ( <code>"ml.c5.xlarge"</code>)的<code>initial_instance_count</code> ( <code>1</code>)实例。与<code>Model</code>类的情况一样，<code>Estimator</code>类的<code>deploy</code>方法返回一个<code>Predictor</code>实例。</p>
+
+			<p>在本节中，我们解释了如何在SageMaker上为TF模型创建一个端点。在下一节中，我们将看看SageMaker如何支持PyTorch模型。</p>
+
+			<h2 id="_idParaDest-192"><a id="_idTextAnchor202"/>设置PyTorch推断端点</h2>
+
+			<p>本节<a id="_idIndexMarker946"/>旨在涵盖从SageMaker上的PyTorch模型创建和托管端点的不同方式。首先，我们将介绍一个为PyTorch模型设计的<code>Model</code>类:<code>PyTorchModel</code>类。然后，我们将描述PyTorch模型的一个<code>Estimator</code>类。本节代码片段的完整实现可以在<a href="https://github.com/PacktPublishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter_9/sagemaker/pytorch-inference.ipynb">https://github . com/packt publishing/Production-Ready-Applied-Deep-Learning/blob/main/Chapter _ 9/sage maker/py torch-inference . ipynb</a>找到。</p>
+
+			<h3>使用PyTorchModel类设置PyTorch推理端点</h3>
+
+			<p>类似于<code>TensorFlowModel</code>类的<a id="_idIndexMarker947"/>，还有一个<code>Model</code>类是专门为PyTorch型号<code>PyTorchModel</code>设计的。它可以被如下<a id="_idIndexMarker948"/>实例化:</p>
+
+			<pre class="source-code">
+
+from sagemaker.pytorch import PyTorchModel
+
+model = PyTorchModel(
+
+    entry_point="inference.py",
+
+    source_dir="s3://bucket/model",
+
+    role=role, # IAM role for SageMaker
+
+    model_data=pt_model_data, # model file
+
+    framework_version="1.11.0", # PyTorch version
+
+    py_version="py3", # python version
+
+)</pre>
+
+			<p>如前面的代码片段所示，构造函数接收<code>entry_point</code>，它为数据定义了定制的预处理和后处理逻辑、<code>source_dir</code>(入口点脚本的S3路径)、<code>role</code>(SageMaker的IAM角色)、<code>model_data</code>(模型的S3路径)、<code>framework_version</code>(py torch的版本)和<code>py_version</code>(Python的版本)。</p>
+
+			<p>因为<code>PyTorchModel</code>类继承了<code>Model</code>类，所以它提供了<code>deploy</code>函数，该函数创建并部署一个端点，如<em class="italic">使用模型类</em>设置PyTorch推断端点一节所述。</p>
+
+			<p>接下来，我们将介绍一个为PyTorch模型设计的<code>Estimator</code>类。</p>
+
+			<h3>使用Estimator类设置PyTorch推断端点</h3>
+
+			<p>如果一个训练过的PyTorch <a id="_idIndexMarker949"/>模型没有<a id="_idIndexMarker950"/>可用，那么<code>sagemaker.pytorch.estimator.PyTorch</code>类可以用来训练和部署一个模型。训练可以通过<code>fit</code>方法实现，如<a href="B18522_06.xhtml#_idTextAnchor133"> <em class="italic">第六章</em> </a>、<em class="italic">高效模型训练</em>中<em class="italic">使用SageMaker </em>训练PyTorch模型部分所述。作为一个<code>Estimator</code>类，<code>sagemaker.pytorch.estimator.PyTorch</code>类提供了与<code>sagemaker.tensorflow.estimator.TensorFlow</code>相同的特性，我们在<em class="italic">使用估算器类</em>设置张量流推断端点一节中已经介绍过。在下面的代码片段中，我们正在为PyTorch模型创建一个<code>Estimator</code>实例，训练<a id="_idIndexMarker951"/>模型，并创建一个<a id="_idIndexMarker952"/>端点:</p>
+
+			<pre class="source-code">
+
+from sagemaker.pytorch.estimator import PyTorch
+
+# create an estimator
+
+estimator = PyTorch(
+
+    entry_point="pytorch-train.py",
+
+    ...,
+
+    instance_count=1,
+
+    instance_type="ml.c4.xlarge",
+
+    framework_version="1.11",
+
+    py_version="py37")
+
+# train the model
+
+estimator.fit(inputs)
+
+# deploy the model and returns predictor instance for inference
+
+predictor = estimator.deploy(
+
+   initial_instance_count=1, 
+
+   instance_type="ml.c5.xlarge")</pre>
+
+			<p>如前面的代码片段所示，<code>sagemaker.pytorch.estimator.PyTorch</code>的构造函数接受与为TF设计的<code>Estimator</code>类相同的一组参数:<code>entry_point</code>(处理训练的脚本；即<code>"pytorch-train.py"</code>)、<code>instance_count</code>(要使用的实例数；即<code>1</code>)、<code>instance_type</code>(EC2实例的类型；也就是<code>"ml.c4.xlarge"</code>)、<code>framework_version</code>(py torch版；也就是<code>"1.11.0"</code>)，和<code>py_version</code>(Python版本；也就是<code>"py37"</code>)。模型训练(<code>fit</code>方法)和<a id="_idIndexMarker953"/>部署(<code>deploy</code>方法)的实现方式与<em class="italic">使用估算器类</em>部分设置张量流推断端点中的<a id="_idIndexMarker954"/>示例相同。</p>
+
+			<p>在本节中，我们介绍了如何以两种不同的方式部署PyTorch模型:使用<code>PyTorchModel</code>类和使用<code>Estimator</code>类。接下来，我们将学习如何在SageMaker上为ONNX模型创建端点。</p>
+
+			<h2 id="_idParaDest-193"><a id="_idTextAnchor203"/>从ONNX模型设置推理端点</h2>
+
+			<p>前面章节提到过，<a href="B18522_08.xhtml#_idTextAnchor175"> <em class="italic">第八章</em> </a>，<em class="italic">简化深度学习模型部署</em>，DL模型往往被转化为<strong class="bold">开放神经网络交换</strong> ( <strong class="bold"> ONNX </strong>)模型进行<a id="_idIndexMarker955"/>部署。在这一节中，我们将描述如何在SageMaker上部署ONNX模型。</p>
+
+			<p>最标准的<a id="_idIndexMarker956"/>方法是使用基类<code>Model</code>。正如在<em class="italic">使用模型类</em>设置张量流推断端点一节中提到的，<code>Model</code>类支持各种类型的DL模型。幸运的是，它还提供了对ONNX模型的内置支持:</p>
+
+			<pre class="source-code">
+
+from sagemaker.model import Model
+
+# Load an ONNX model file for endpoint creation
+
+sm_model= Model(    
+
+    model_data=model_data, # path for an ONNX .tar.gz file
+
+    entry_point="inference.py", # an inference script
+
+    role=role,
+
+    py_version="py3",
+
+    framework="onnx",
+
+    framework_version="1.4.1", # ONNX version
+
+)
+
+# deploy model
+
+predictor = sm_model.deploy(
+
+   initial_instance_count=1, # number of instances to use
+
+   instance_type=ml.c5.xlarge) # instance type for deploy</pre>
+
+			<p>在前面的例子中，我们在S3上有一个训练好的ONNX模型。<code>Model</code>实例创建中的密钥来自<code>framework="onnx"</code>。我们还需要向<code>framework_version</code>提供一个ONNX框架<a id="_idIndexMarker957"/>版本。在本例中，我们使用的是ONNX框架版本1.4.0。其他一切几乎与前面的例子相同。同样，<code>deploy</code>函数是为创建和部署端点而设计的；将返回一个<code>Predictor</code>实例用于模型预测。</p>
+
+			<p>使用<code>TensorFlowModel</code>和<code>PyTorchModel</code>类从ONNX模型创建端点也很常见。下面的代码片段演示了这样的用例:</p>
+
+			<pre class="source-code">
+
+from sagemaker.tensorflow import TensorFlowModel
+
+# Load ONNX model file as a TensorFlowModel
+
+tf_model = TensorFlowModel(    
+
+    model_data=model_data, # path to the ONNX .tar.gz file
+
+    entry_point="tf_inference.py", 
+
+    role=role,
+
+    py_version="py3", # Python version
+
+    framework_version="2.1.1", # TensorFlow version
+
+)
+
+from sagemaker.pytorch import PyTorchModel
+
+# Load ONNX model file as a PyTorchModel
+
+pytorch_model = PyTorchModel(
+
+    model_data=model_data, # path to the ONNX .tar.gz file
+
+    entry_point="pytorch_inference.py",
+
+    role=role,
+
+    py_version="py3", # Python version
+
+    framework_version="1.11.0", # PyTorch version
+
+)</pre>
+
+			<p>前面的代码片段不言自明。这两个类都接受一个ONNX模型路径(<code>model_data</code>)、一个推理脚本(<code>entry_point</code>)、一个IAM角色(<code>role</code>)、一个Python版本(<code>py_version</code>，以及每个框架的版本(<code>framework_version</code>)。就像<code>Model</code>类如何部署端点一样，<code>deploy</code>方法将从每个模型中创建并托管一个端点。</p>
+
+			<p>虽然端点允许<a id="_idIndexMarker959"/>用户在任何时间点获得动态输入数据的模型预测<a id="_idIndexMarker960"/>，但在某些情况下，您需要对存储在S3存储桶中的整个输入数据进行推断，而不是一个接一个地输入它们。因此，我们将看看如何利用批处理转换来满足这一需求。</p>
+
+			<h2 id="_idParaDest-194"><a id="_idTextAnchor204"/>使用批量转换批量处理预测请求</h2>
+
+			<p>我们可以使用SageMaker的批量转换功能(<a href="https://docs.aws.amazon.com/sagemaker/latest/dg/batch-transform.html">https://docs . AWS . Amazon . com/sage maker/latest/DG/Batch-Transform . html</a>)在一个队列中的大型<a id="_idIndexMarker961"/>数据集上运行推理。使用<code>sagemaker.transformer.Transformer</code>类，您可以<a id="_idIndexMarker962"/>在没有持久端点的情况下，对S3上的任何数据集批量执行模型预测。详细信息包含在下面的代码片段中:</p>
+
+			<pre class="source-code">
+
+from sagemaker import transformer
+
+bucket_name = "my-bucket" # S3 bucket with data
+
+# location of the input data
+
+input_location = "s3://{}/{}".format(bucket_name, "input_data")
+
+# location where the predictions will be stored
+
+batch_outpu<a id="_idTextAnchor205"/>t = "s3://{}/{}".format(bu<a id="_idTextAnchor206"/>cket_name, "batch-results")
+
+# initialize the transformer object
+
+transformer = transformer.Transformer(
+
+   base_transform_job_name="Batch-Transform", # job name
+
+   model_name=model_name, # Name of the inference endpoint
+
+   max_payload= 5, # maximum payload
+
+   instance_count=1, # instance count to start with
+
+   instance_type="ml.c4.xlarge", # ec2 instance type
+
+   output_path=batch_output # S3 for batch inference output)
+
+# triggers the prediction on the whole dataset
+
+tf_transformer = transformer.transformer(
+
+   input_location, # input S3 path for input data
+
+   content_type="text/csv", # input content type as CSV
+
+   split_type="Line" # split type for input as Line)</pre>
+
+			<p>如前面的<a id="_idIndexMarker964"/>代码所示，<code>sagemaker.transformer.Transformer</code>类接受<code>base_transformer_job_name</code>(transformer作业的作业名)、<code>model_name</code>(保存推理管道的模型名)、<code>max_payload</code>(允许的最大有效负载，以MB为单位)、<code>instance_count</code>(开始时EC2实例的数量)、<code>instance_type</code>(EC2实例的类型)和<code>output_path</code>(存储输出的S3路径)。<code>transformer</code>方法将触发对指定数据集的模型预测。它接受以下参数:<code>input_location</code>(输入数据所在的S3路径)，<code>content_type</code>(输入数据的内容；即<code>"text/csv"</code>)，和<code>split_type</code>(这控制<a id="_idIndexMarker965"/>如何拆分输入数据；<code>"Line"</code>用于将每一行数据作为单独的输入输入到模型中)。现实中也有很多公司利用SageMaker处理作业(<a href="https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_ProcessingJob.html">https://docs . AWS . Amazon . com/sage maker/latest/API reference/API _ processing job . html</a>)进行批量推理，这个我们就不细说了。</p>
+
+			<p>到目前为止，我们已经了解了<a id="_idIndexMarker966"/>sage maker如何支持托管一个推理端点来处理实时预测请求，并为S3上可用的静态数据集批量运行模型预测。在下一节中，我们将描述如何使用<strong class="bold"> AWS SageMaker Neo </strong>来进一步改善部署模型的推理延迟。</p>
+
+			<h2 id="_idParaDest-195"><a id="_idTextAnchor207"/>使用AWS SageMaker Neo提高SageMaker端点性能</h2>
+
+			<p>在本节中，我们将解释<a id="_idIndexMarker967"/>sage maker如何通过利用<a id="_idIndexMarker968"/>底层硬件资源(EC2实例或移动设备)来进一步提高应用程序的性能。想法是用<strong class="bold">AWS sage maker Neo</strong>(<a href="https://aws.amazon.com/sagemaker/neo">https://aws.amazon.com/sagemaker/neo</a>)编译训练好的DL <a id="_idIndexMarker969"/>模型。编译后，生成的Neo模型可以更好地利用底层设备，从而减少推理延迟。AWS SageMaker Neo支持不同框架(TF、PyTorch、MxNet和ONNX)的模型和各种类型的硬件(OS、芯片、架构和加速器)。支持资源的完整列表可在<a href="https://docs.aws.amazon.com/sagemaker/latest/dg/neo-supported-devices-edge-devices.html">https://docs . AWS . Amazon . com/sage maker/latest/DG/neo-supported-devices-edge-devices . html</a>找到。</p>
+
+			<p>Neo模型生成可以使用<code>Model</code>类的<code>compile</code>方法实现。<code>compile</code>方法返回一个支持端点创建的<code>Estimator</code>实例。让我们看看<a id="_idIndexMarker970"/>下面的例子，了解<a id="_idIndexMarker971"/>的详细情况:</p>
+
+			<pre class="source-code">
+
+# sm_model created from Model
+
+sm_model = Model(...)
+
+# instance type of which the model will be optimized for
+
+instance_family = "ml_c5"
+
+# DL framework
+
+framework = "tensorflow"
+
+compilation_job_name = "tf-compile"
+
+compiled_model_path = "s3:..."
+
+# shape of an input data
+
+data_shape = {"inputs":[1, data.shape[0], data.shape[1]]}
+
+estimator = sm_model.compile(
+
+   target_instance_family=instance_family,
+
+   input_shape=data_shape,
+
+   ob_name=compilation_job_name,
+
+   role=role,
+
+   framework=framework,
+
+   framework_version=tf_framework_version,
+
+   output_path=compiled_model_path)
+
+# deploy the neo model on instances of the target type
+
+predictor = estimator.deploy(
+
+   initial_instance_count=1,
+
+   instance_type=instance_family)</pre>
+
+			<p>在前面的代码中，我们从一个名为<code>sm_model</code>的<code>Model</code>实例开始。我们触发<code>compile</code>方法将<a id="_idIndexMarker972"/>加载的模型编译成Neo模型。下表描述了这些参数:</p>
+
+			<ul>
+
+				<li><code>target_instance_family</code>:模型将被优化的EC2实例类型</li>
+
+				<li><code>input_shape</code>:输入数据形状</li>
+
+				<li><code>job_name</code>:编译作业的名称</li>
+
+				<li><code>role</code>:编译后的模型输出的IAM角色</li>
+
+				<li><code>framework</code>:一个DL框架，比如TF或者PyTorch</li>
+
+				<li><code>framework_version</code>:要使用的框架版本</li>
+
+				<li><code>output_path</code>:编译后的模型将被存储的输出S3路径</li>
+
+			</ul>
+
+			<p><code>Estimator</code>实例由一个创建端点的<code>deploy</code>函数组成。输出是一个<code>Predictor</code>实例<a id="_idIndexMarker973"/>，您可以使用它来运行模型预测。在前面的例子中，我们优化了我们的模型，使其在<code>ml_c5</code>类型的实例上表现最佳。</p>
+
+			<p>接下来，我们将描述如何将EI加速器集成到运行在SageMaker上的端点中。</p>
+
+			<h2 id="_idParaDest-196"><a id="_idTextAnchor208"/>使用Amazon弹性推理提高SageMaker端点性能</h2>
+
+			<p>在<em class="italic">使用Amazon弹性推理提高EKS端点性能</em>一节中，我们<a id="_idIndexMarker974"/>描述了<a id="_idIndexMarker975"/> EI加速器如何通过利用可用的GPU设备来降低推理端点的运营成本，同时改善推理延迟。在本节中，我们将介绍SageMaker的EI加速器集成。</p>
+
+			<p>必要的改变相当简单；你只需要在触发<code>Model</code>实例的<code>deploy</code>方法时提供<code>accelerator_type</code>:</p>
+
+			<pre class="source-code">
+
+# deploying a Tensorflow/PyTorch/other model files using EI
+
+predictor = sm_model.deploy(
+
+   initial_instance_count=1, # ec2 initial count
+
+   instance_type="ml.m4.xlarge", # ec2 instance type
+
+   accelerator_type="ml.eia2.medium" # accelerator type)</pre>
+
+			<p>在前面的代码中，<code>deploy</code>方法<a id="_idIndexMarker976"/>为给定的<code>Model</code>实例创建一个端点。要将EI加速器附加到端点，您需要在默认参数(<code>initial_instance_count</code>和<code>instance_type</code>)之上指定您想要的加速器类型(<code>accelerator_type</code>)。关于对SageMaker端点使用EI的完整描述，请查看<a href="https://docs.aws.amazon.com/sagemaker/latest/dg/ei.html">https://docs.aws.amazon.com/sagemaker/latest/dg/ei.html</a>。</p>
+
+			<p>在下一节中，我们<a id="_idIndexMarker977"/>将关注SageMaker的自动伸缩特性，它允许我们更好地处理传入流量的变化。</p>
+
+			<h2 id="_idParaDest-197"><a id="_idTextAnchor209"/>使用自动缩放动态调整SageMaker端点的大小</h2>
+
+			<p>类似于EKS集群<a id="_idIndexMarker978"/>如何支持自动缩放以根据流量变化自动放大或缩小端点，SageMaker也提供自动缩放功能。配置自动缩放包括配置<a id="_idIndexMarker979"/>缩放策略，该策略定义何时进行缩放，以及在缩放时创建和销毁多少资源。SageMaker端点的伸缩策略可以从SageMaker web控制台进行配置。以下步骤描述了如何为从SageMaker记事本创建的推理端点配置自动缩放:</p>
+
+			<ol>
+
+				<li>访问SageMaker web <a id="_idIndexMarker980"/>控制台、<a href="https://console.aws.amazon.com/sagemaker/">https://console.aws.amazon.com/sagemaker/</a>，点击左侧导航面板中<strong class="bold">推理</strong>下的<strong class="bold">端点</strong>。您可能需要提供凭据才能登录。</li>
+
+				<li>接下来，您必须选择要配置的端点名称。在<strong class="bold">端点运行时间</strong>设置下，选择需要配置的型号变量。这个特性<a id="_idIndexMarker981"/>允许您在一个端点中部署一个模型的多个<a id="_idIndexMarker982"/>版本，每个版本一个容器。关于这个功能的详细信息可以在<a href="https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_runtime_InvokeEndpoint.html">https://docs . AWS . Amazon . com/sage maker/latest/API reference/API _ runtime _ invokeendpoint . html</a>找到。</li>
+
+				<li>在<strong class="bold">端点运行时</strong>设置下，选择<strong class="bold">配置自动缩放</strong>。这将带您进入<strong class="bold">配置变量自动缩放</strong>页面:</li>
+
+			</ol>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US"> </p>
+
+			<div><div><img src="img/B18522_09_01.jpg" alt="Figure 9.1 – The Configure variant automatic scaling page of the SageMaker web console&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图9.1–sage maker web控制台的配置变量自动缩放页面</p>
+
+			<ol>
+
+				<li value="4">在<strong class="bold">最小实例数</strong>字段中输入<a id="_idIndexMarker984"/>要维护的最小实例数<a id="_idIndexMarker983"/>。最小值为1。该值定义了将一直保留的最小实例数。</li>
+
+				<li>在<strong class="bold">最大实例数</strong>字段中输入要维护的扩展策略的最大实例数。该值定义了峰值流量时允许的最大实例数。</li>
+
+				<li>填写<strong class="bold">sagemakervariantinvocationspeinstance</strong>字段。每个端点可以有多个模型(或模型版本),部署在跨一个或多个EC2实例托管的单个端点中。<strong class="bold">sagemakervariantinvocationspeinstance</strong>定义了每分钟每个型号变体允许的最大调用次数。该值用于负载平衡。有关计算该字段的正确数字的详细信息，请参见<a href="https://docs.aws.amazon.com/sagemaker/latest/dg/endpoint-scaling-loadtest.html">https://docs . AWS . Amazon . com/sage maker/latest/DG/endpoint-scaling-load test . html</a>。</li>
+
+				<li>填写放大<a id="_idIndexMarker986"/>冷却时间和缩小冷却时间。这些指示SageMaker在检查另一轮缩放之前将等待多长时间。</li>
+
+				<li>选中复选框中的<strong class="bold">禁用刻度。在流量增加的过程中，作为扩展过程的一部分，会启动更多实例。但是，如果流量在增加后立即下降，这些实例可以在扩大过程中迅速删除。要避免新创建的实例在创建后立即被释放，必须选中此复选框。</strong></li>
+
+				<li>点击<strong class="bold">保存</strong>按钮应用配置。</li>
+
+			</ol>
+
+			<p>一旦点击<strong class="bold">保存</strong>按钮，缩放将应用于所选的模型变型。SageMaker将根据传入的流量增加和减少实例的数量。关于自动缩放的更多细节，请看一下<a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-instance-termination.html">https://docs . AWS . Amazon . com/auto scaling/ec2/user guide/as-instance-termination . html</a>。</p>
+
+			<p>作为基于SageMaker的端点的最后一个主题，我们将描述如何通过单个端点部署多个模型。</p>
+
+			<h2 id="_idParaDest-198"><a id="_idTextAnchor210"/>在单个SageMaker推理端点上托管多个模型</h2>
+
+			<p>SageMaker支持通过<strong class="bold">多模态端点</strong> ( <strong class="bold"> MME </strong>)在单个端点上部署多个<a id="_idIndexMarker987"/>模型。在设置MME之前，有几件事你必须<a id="_idIndexMarker988"/>记住。首先，如果你想保持低延迟，建议设置多个端点。第二，容器只能从同一个DL框架中部署模型。对于有兴趣托管不同框架模型的人，推荐阅读<a href="https://docs.amazonaws.cn/en_us/sagemaker/latest/dg/multi-container-direct.html">https://docs . amazonaws . cn/en _ us/sage maker/latest/DG/multi-container-direct . html</a>。当模型大小相似，并且预期具有相似的延迟时，MEE效果最佳。</p>
+
+			<p>以下<a id="_idIndexMarker989"/>步骤描述了如何设置MME:</p>
+
+			<ol>
+
+				<li value="1">使用您的AWS凭证访问位于https://console.aws.amazon.com/sagemaker<a href="https://console.aws.amazon.com/sagemaker">的SageMaker web控制台。</a></li>
+
+				<li>在左侧导航面板的<strong class="bold">推断</strong>部分选择<strong class="bold">型号</strong>。然后，点击右上角的<strong class="bold">创建模型</strong>按钮。</li>
+
+				<li>为<strong class="bold">型号名称</strong>字段输入一个值。这将用于在SageMaker的上下文中唯一地标识目标模型。</li>
+
+				<li>使用<strong class="bold">amazonseagemakerfullcaccess</strong>IAM策略选择一个IAM角色。</li>
+
+				<li>在<strong class="bold">容器定义</strong>部分，选择<strong class="bold">多模型</strong>选项，并提供推理代码图像的位置和模型工件的位置(参见<em class="italic">图9.2 </em>):</li>
+
+			</ol>
+
+			<div><div><img src="img/B18522_09_02.jpg" alt="Figure 9.2 – The Multi-modal endpoint configuration page of the SageMaker web console&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图9.2–sage maker web控制台的多模式端点配置页面</p>
+
+			<p>前一个字段<a id="_idIndexMarker990"/>用于部署<a id="_idIndexMarker991"/>带有自定义Docker映像的模型(<a href="https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-inference-code.html">https://docs . AWS . Amazon . com/sagemaker/latest/DG/your-algorithms-inference-code . html</a>)。在这个字段中，您应该提供图像在Amazon ECR中的注册路径。后一个字段指定了模型工件所在的S3路径。</p>
+
+			<ol>
+
+				<li value="6">另外，填写<strong class="bold">容器主机名</strong>字段。这指定了将在其中创建推理代码映像的主机的详细信息。</li>
+
+				<li>选择<a id="_idIndexMarker992"/>末端的<strong class="bold">创建模型</strong>按钮。</li>
+
+			</ol>
+
+			<p>一旦SageMaker配置了MME，我们就可以使用来自<code>boto3</code>库的<code>SageMaker.Client</code>来测试端点，如下面的代码片段所示:</p>
+
+			<pre class="source-code">
+
+import boto3
+
+# Sagemaker runtime client instance
+
+runtime_sagemaker_client = boto3.client("sagemaker-runtime")
+
+# send a request to the endpoint targeting  specific model 
+
+response = runtime_sagemaker_client.invoke_endpoint(
+
+   EndpointName="&lt;ENDPOINT_NAME&gt;",
+
+   ContentType="text/csv",
+
+   TargetModel="&lt;MODEL_FILENAME&gt;.tar.gz",
+
+   Body=body)</pre>
+
+			<p>在前面的代码中，<code>SageMaker.Client</code>实例的<code>invoke_endpoint</code>函数向<a id="_idIndexMarker993"/>创建的端点发送一个请求。<code>invoke_endpoint</code>函数接受<code>EndpointName</code>(创建的端点的名称)、<code>ContentType</code>(请求体中的数据类型)、<code>TargetModel</code>(压缩后的模型文件，格式为<code>.tar.gz</code>；这用于指定请求将调用的目标模型)，以及<code>Body</code>(在<code>ContentType</code>中的输入数据)。从调用返回的<code>response</code>变量由预测结果组成。关于与端点通信的完整描述，请查看<a href="https://docs.aws.amazon.com/sagemaker/latest/dg/invoke-multi-model-endpoint.html">https://docs . AWS . Amazon . com/sage maker/latest/DG/invoke-multi-model-endpoint . html</a>。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.SageMaker通过其内置的<code>Model</code>类和<code>Estimator</code>类支持端点创建。这些类支持用各种DL框架训练的模型，包括TF、PyTorch和ONNX。<code>Model</code>专门为TF和PyTorch框架设计的类也有:<code>TensorFlowModel</code>和<code>PyTorchModel</code>。</p>
+
+			<p class="callout">b.一旦使用AWS SageMaker Neo编译了模型，该模型就可以更好地利用底层硬件资源，展示更好的推理性能。</p>
+
+			<p class="callout">c.SageMaker可以配置为使用EI加速器，减少推理端点的操作成本，同时改善推理延迟。</p>
+
+			<p class="callout">d.SageMaker包括一个自动缩放功能，可以根据传入流量动态缩放端点。</p>
+
+			<p class="callout">e.SageMaker支持通过MME在单个端点上部署多个模型。</p>
+
+			<p>在本节中，我们已经描述了SageMaker为部署DL模型作为推理端点而提供的各种特性。</p>
+
+			<h1 id="_idParaDest-199"><a id="_idTextAnchor211"/>总结</h1>
+
+			<p>在这一章中，我们描述了两个最流行的AWS服务，它们是为部署DL模型作为推理端点而设计的:EKS和SageMaker。对于这两个选项，我们从最简单的设置开始:从TF、PyTorch或ONNX模型创建推理端点。然后，我们解释了如何使用EI加速器、AWS Neuron和AWS SageMaker Neo来提高推理端点的性能。我们还讲述了如何设置自动伸缩来更有效地处理流量的变化。最后，我们讨论了SageMaker的MME特性，它用于在一个推理端点上托管多个模型。</p>
+
+			<p>在下一章中，我们将着眼于各种模型压缩技术:网络量化、权重共享、网络修剪、知识提炼和网络架构搜索。这些技术将进一步提高推理效率。</p>
+
+		</div>
+
+		<div><div/>
+
+		</div>
+
+	
+
+
+
+</body></html>

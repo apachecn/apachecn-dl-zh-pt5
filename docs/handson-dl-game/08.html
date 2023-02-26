@@ -1,0 +1,929 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Unity ML-Agents</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">unity ML-代理</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">Unity以坚定的决心和活力拥抱了机器学习，特别是深度强化学习，目的是为游戏和模拟开发者制作一个工作的<strong> seep强化学习</strong>(<strong/>)SDK。幸运的是，由Danny Lange领导的Unity团队已经成功开发出一种强大的尖端DRL引擎，能够产生令人印象深刻的结果。这种发动机是最好的，在许多方面都比我们早先推出的DQN型强得多。Unity使用一个<strong>近似策略优化</strong> ( <strong> PPO </strong>)模型作为其DRL引擎的基础。这个模型要复杂得多，可能在某些方面有所不同，但是，幸运的是，这是更多章节的开始，我们将有足够的时间来介绍这些概念——毕竟，这是一本动手操作的书。</p>
+
+<p>在这一章中，我们介绍用于构建DRL代理来玩游戏和模拟的<strong> Unity ML-Agents </strong>工具和SDK。虽然这个工具既强大又先进，但它也很容易使用，并提供了一些工具来帮助我们学习概念。在本章中，我们将讨论以下主题:</p>
+
+<ul>
+
+<li>安装ML代理</li>
+
+<li>培训代理</li>
+
+<li>大脑里有什么？</li>
+
+<li>使用TensorBoard监控训练</li>
+
+<li>运行代理</li>
+
+</ul>
+
+<p>我们要感谢Unity的团队成员在ML-Agents上的出色工作；以下是撰写本文时的团队成员:<br/><ul>
+
+<li>丹尼·兰格(<a href="https://arxiv.org/search/cs?searchtype=author&amp;query=Lange%2C+D" target="_blank">https://arxiv.org/search/cs?searchtype=author&amp;query =兰格%2C+D </a>)</li>
+
+<li>亚瑟·朱利安尼(<a href="https://arxiv.org/search/cs?searchtype=author&amp;query=Juliani%2C+A" target="_blank">https://arxiv.org/search/cs?searchtype=author&amp;query =朱利安尼%2C+A </a>)</li>
+
+<li>文森特-皮埃尔·伯格斯(<a href="https://arxiv.org/search/cs?searchtype=author&amp;query=Berges%2C+V" target="_blank">https://arxiv.org/search/cs?searchtype=author&amp;query =伯格斯%2C+V </a>)</li>
+
+<li>esh Vckay(<a href="https://arxiv.org/search/cs?searchtype=author&amp;query=Vckay%2C+E" target="_blank">https://arxiv.org/search/cs?searchtype=author&amp;查询=Vckay%2C+E </a>)</li>
+
+<li>(<a href="https://arxiv.org/search/cs?searchtype=author&amp;query=Gao%2C+Y" target="_blank">查询=高%2C+Y </a>)</li>
+
+<li>亨特·亨利(【https://arxiv.org/search/cs?searchtype=author】T21&amp;查询=亨利%2C+H )</li>
+
+<li>马尔万·马特(<a href="https://arxiv.org/search/cs?searchtype=author&amp;query=Mattar%2C+M" target="_blank">https://arxiv.org/search/cs?searchtype=author&amp;查询=马特%2C+M </a>)</li>
+
+<li>亚当·克雷斯皮(<a href="https://arxiv.org/search/cs?searchtype=author&amp;query=Crespi%2C+A" target="_blank">https://arxiv.org/search/cs?searchtype=author&amp;查询=克雷斯皮%2C+A </a>)</li>
+
+<li>乔纳森·哈珀(<a href="https://arxiv.org/search/cs?searchtype=author&amp;query=Harper%2C+J" target="_blank">https://arxiv.org/search/cs?searchtype=author&amp;query =哈珀%2C+J </a>)</li>
+
+</ul>
+
+</p>
+
+<p>在继续本章之前，请确保您已经按照<a href="a8e699ff-c668-4601-842d-4c6e06c47a61.xhtml">第4章</a>、<em>构建深度学习游戏聊天机器人、</em>中的章节安装了Unity。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Installing ML-Agents</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">安装ML代理</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本节中，我们将概括介绍成功安装ML-Agents SDK所需的步骤。这份材料仍处于测试阶段，并且已经从一个版本到另一个版本发生了显著的变化。因此，如果你在完成这些高级步骤时遇到困难，只要回到最近的Unity文档；他们写得很好。</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p>跳上你的电脑，按照以下步骤操作；可能有许多子步骤，因此预计这需要一段时间:</p>
+
+<ol>
+
+<li>确保您的计算机上安装了Git它从命令行工作。Git是一个非常流行的源代码管理系统，关于如何在您的平台上安装和使用Git有大量的资源。安装Git后，只要通过测试克隆一个存储库，任何存储库，确保它能够工作。</li>
+
+<li>打开命令窗口或常规shell。Windows用户可以打开Anaconda窗口。</li>
+
+<li class="mce-root">切换到您想要放置新代码的工作文件夹，并输入以下命令(Windows用户可能想要使用<kbd>C:\ML-Agents</kbd>):</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px"><strong>git clone</strong> <strong>https://github.com/Unity-Technologies/ml-agents</strong></pre>
+
+<ol start="4">
+
+<li class="mce-root">这将把<kbd>ml-agents</kbd>库克隆到您的计算机上，并创建一个同名的新文件夹。您可能需要采取额外的步骤，将版本添加到文件夹名称中。Unity，以及几乎整个人工智能领域，都在不断转型，至少目前是这样。这意味着新的和不断的变化总是在发生。在写的时候，我们会克隆到一个名为<kbd>ml-agents.6</kbd>的文件夹，就像这样:</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px"><strong>git clone https://github.com/Unity-Technologies/ml-agents ml-agents.6</strong></pre>
+
+<p>这本书的作者以前写过一本关于ML-Agents的书，为了适应主要的变化，他不得不在短时间内重写了几章。事实上，这一章也不得不重写几次，以说明更多的重大变化。</p>
+
+<ol start="5">
+
+<li>为<kbd>ml-agents</kbd>创建一个新的虚拟环境，并将其设置为<kbd>3.6</kbd>，如下所示:</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px">#Windows <br/><strong>conda create -n ml-agents python=3.6</strong><br/><br/>#Mac<br/>Use the documentation for your preferred environment</pre>
+
+<ol start="6">
+
+<li>再次使用Anaconda激活环境:</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px"><strong>activate ml-agents</strong></pre>
+
+<ol start="7">
+
+<li>安装TensorFlow。有了Anaconda，我们可以通过使用以下内容来实现这一点:</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px"><strong>pip install tensorflow==1.7.1</strong></pre>
+
+<p class="mce-root"/>
+
+<ol start="8">
+
+<li>安装Python包。在Anaconda上，输入以下内容:</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px"><strong>cd ML-Agents </strong>#from root folder<br/><strong>cd ml-agents</strong> or<strong> cd ml-agents.6  </strong>#for example<br/><strong>cd ml-agents</strong><br/><strong>pip install -e .</strong> or<strong> pip3 install -e .</strong></pre>
+
+<ol start="9">
+
+<li>这将安装代理SDK所需的所有软件包，可能需要几分钟时间。请务必打开此窗口，因为我们很快就会用到它。</li>
+
+</ol>
+
+<p>这是TensorFlow的基本安装，不使用GPU。查阅Unity文档以了解如何安装GPU版本。这可能会也可能不会对你的训练表现产生巨大的影响，这取决于你的GPU的能力。</p>
+
+<p>这应该完成了用于ML代理的Unity Python SDK的设置。在下一节，我们将学习如何设置和训练Unity提供的众多示例环境中的一个。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Training an agent</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">培训代理</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本书的大部分时间里，我们都在看代码以及<strong>深度学习</strong> ( <strong> DL </strong>)和<strong>强化学习</strong> ( <strong> RL </strong>)的内在深度。有了这些知识，我们现在可以跳进去看看使用<strong>深度强化学习</strong> ( <strong> DRL </strong>)的例子。幸运的是，新代理的工具包提供了几个示例来展示该引擎的威力。打开Unity或Unity Hub，按照以下步骤操作:</p>
+
+<ol>
+
+<li>点按项目对话框顶部的“打开项目”按钮。</li>
+
+<li>找到并打开<kbd>UnitySDK</kbd>项目文件夹，如下图所示:</li>
+
+</ol>
+
+<div><img src="img/ecbdfb91-2cfb-47ef-b264-b8cfe8e45d3b.png"/></div>
+
+<p>打开UnitySDK项目</p>
+
+<ol start="3">
+
+<li>等待项目加载，然后打开编辑器底部的项目窗口。如果你被要求更新项目，一定要说是或继续。到目前为止，所有的代理代码都被设计成向后兼容的。</li>
+
+</ol>
+
+<p class="mce-root"/>
+
+<ol start="4">
+
+<li>找到并打开GridWorld场景，如下图所示:</li>
+
+</ol>
+
+<div><img src="img/3456149c-1ca2-4371-b20e-bbba7590e13f.png"/></div>
+
+<p>打开GridWorld示例场景</p>
+
+<ol start="5">
+
+<li>在“层次”窗口中选择GridAcademy对象。</li>
+
+</ol>
+
+<ol start="6">
+
+<li class="mce-root">然后将注意力转向“检查器”窗口，在大脑旁边，点按目标图标以打开大脑选择对话框:</li>
+
+</ol>
+
+<div><img src="img/3dfa4068-3490-4a17-b3fb-8f968b14433f.png" style="width:38.00em;height:48.67em;"/></div>
+
+<p>检查GridWorld示例环境</p>
+
+<ol start="7">
+
+<li>选择GridWorldPlayer大脑。这个大脑是一个<em>玩家</em>大脑，意味着一个玩家，你，可以控制游戏。我们将在下一节更深入地研究这个大脑概念。</li>
+
+<li>按下编辑器顶部的Play按钮，观察网格环境表单。由于游戏当前设置为玩家，您可以使用<strong> WASD </strong>控件来移动立方体。目标很像我们之前为DQN建造的冰冻池塘环境。也就是你要把蓝色的立方体移到绿色的+符号，避开红色的x。</li>
+
+</ol>
+
+<p>你可以尽情地玩这个游戏。请注意这个游戏只运行一定的时间，并且不是回合制的。在下一节中，我们将学习如何使用DRL代理运行这个示例。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>What's in a brain?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">大脑里有什么？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>ML-Agents平台的一个出色的方面是能够非常快速和无缝地从玩家控制切换到AI/agent控制。为了做到这一点，Unity使用了一个<strong>大脑</strong>的概念。大脑可以是玩家控制的，玩家大脑，也可以是代理控制的，学习大脑。精彩的部分是你可以构建一个游戏并测试它，因为玩家可以在RL代理上打开游戏。这有一个额外的好处，使得任何用Unity编写的游戏都可以被人工智能轻松控制。事实上，这是一个如此强大的工作流程，以至于我们将花费整个章节，<a href="323523c2-82f9-48c4-b1b5-35d417f90558.xhtml">第12章</a>，<em>用DRL </em>调试/测试一个游戏，来测试和调试你的RL游戏。</p>
+
+<p>用Unity训练RL代理的设置和运行相当简单。Unity对外使用Python构建学习大脑模型。使用Python更有意义，因为正如我们已经看到的，几个DL库是在它的基础上构建的。按照以下步骤为GridWorld环境培训一个代理:</p>
+
+<ol>
+
+<li class="mce-root">再次选择GridAcademy，并将大脑从GridWorldPlayer切换到GridWorldLearning，如下所示:</li>
+
+</ol>
+
+<div><img src="img/574c1a5c-98dd-4d89-8d2a-5eb9a81d1eb4.png" style="width:38.25em;height:38.92em;"/></div>
+
+<p>转换大脑使用网格世界学习</p>
+
+<ol start="2">
+
+<li>确保在最后点按“控制”选项。这个简单的设置告诉大脑它可以被外部控制。请务必仔细检查该选项是否已启用。</li>
+
+<li class="mce-root">在“层次”窗口中选择trueAgent对象，然后在“检查器”窗口中，将“网格代理”组件下的“大脑”属性更改为GridWorldLearning brain:</li>
+
+</ol>
+
+<div><img src="img/438357ea-b6c5-49c3-a2a2-9e6d44c7f0ee.png" style="width:30.25em;height:42.58em;"/></div>
+
+<p>将代理上的大脑设置为GridWorldLearning</p>
+
+<ol start="4">
+
+<li>对于这个示例，我们希望将我们的学院和代理交换使用同一个大脑GridWorldLearning。在我们稍后将探讨的更高级的案例中，情况并非总是如此。你当然可以让一个玩家和一个智能体大脑同时运行，或者其他配置。</li>
+
+<li>确保您打开了一个Anaconda或Python窗口，并设置为<kbd>ML-Agents/ml-agents</kbd>文件夹或您的版本化<kbd>ml-agents</kbd>文件夹。</li>
+
+<li class="mce-root">使用<kbd>ml-agents</kbd>虚拟环境在Anaconda或Python窗口中运行以下命令:</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px"><strong>mlagents-learn config/trainer_config.yaml --run-id=firstRun --train</strong></pre>
+
+<ol start="7">
+
+<li>这将启动Unity PPO训练器，并按配置运行代理示例。在某些时候，命令窗口会提示您运行Unity编辑器，并加载环境。</li>
+
+<li>在Unity编辑器中按Play运行GridWorld环境。不久之后，您应该会看到代理训练，其结果会输出到Python脚本窗口中:</li>
+
+</ol>
+
+<div><img src="img/28c402ce-1770-4986-ad61-3250d518b949.png"/></div>
+
+<p>在训练模式下运行GridWorld环境</p>
+
+<ol start="9">
+
+<li>注意<kbd>mlagents-learn</kbd>脚本是构建RL模型来运行代理的Python代码。正如您从脚本输出中看到的，有几个参数，或者我们称之为<strong>超参数</strong>，需要进行配置。这些参数中的一些可能听起来很熟悉，它们应该是熟悉的，但是有几个可能不清楚。幸运的是，在本章和本书的剩余部分，我们将详细探讨如何调整这些参数。</li>
+
+<li>让代理训练几千次迭代，注意它学习的速度有多快。这里的内部模型叫做<strong> PPO </strong>，已经被证明在多种形式的任务中是一个非常有效的学习者，并且非常适合游戏开发。根据您的硬件，代理可能会在不到一个小时的时间内学会完成此任务。</li>
+
+</ol>
+
+<p>继续代理培训，我们将在下一节中查看更多检查代理培训进度的方法。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Monitoring training with TensorBoard</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用TensorBoard监控训练</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>用RL或任何DL模型来训练一个代理虽然令人愉快，但通常不是一项简单的任务，需要注意一些细节。幸运的是，TensorFlow附带了一套名为<strong> TensorBoard </strong>的图形工具，我们可以用它来监控训练进度。按照以下步骤运行TensorBoard:</p>
+
+<ol>
+
+<li>打开一个Anaconda或Python窗口。激活<kbd>ml-agents</kbd>虚拟环境。不要关闭运行训练器的窗口；我们需要继续下去。</li>
+
+<li class="mce-root">导航到<kbd>ML-Agents/ml-agents</kbd>文件夹并运行以下命令:</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px"><strong>tensorboard --logdir=summaries</strong></pre>
+
+<ol start="3">
+
+<li>这将运行TensorBoard自带的内置web服务器。您可以使用运行前面的命令后显示的URL来加载页面。</li>
+
+<li>在窗口中输入TensorBoard的URL，或者在浏览器中使用<kbd>localhost:6006</kbd>或<kbd>machinename:6006</kbd>。大约一个小时后，您应该会看到类似下面的内容:</li>
+
+</ol>
+
+<div><img src="img/40e5492f-96ed-4f05-b12a-b74a9ddcd12c.png"/></div>
+
+<p>张量板图形窗口</p>
+
+<ol start="5">
+
+<li>在前面的屏幕截图中，您可以看到表示培训某个方面的各种图表。了解这些图表中的每一个对于了解您的代理如何训练非常重要，因此我们将分解每个部分的输出:<ul>
+
+<li>环境:此部分显示代理在环境中的整体表现。下面的屏幕截图详细展示了每个图表及其首选趋势:</li>
+
+</ul>
+
+</li>
+
+</ol>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/f404a429-9388-4c55-8bef-433bd24e2523.png"/></p>
+
+<p>仔细查看环境部分图</p>
+
+<ul>
+
+<li style="padding-left: 60px">累积奖励:这是代理人最大化的总奖励。你通常希望看到它上涨，但它下跌也是有原因的。在1比1的范围内最大化奖励总是最好的。如果您在图表上看到奖励超出了这个范围，您也需要纠正这个问题。</li>
+
+<li style="padding-left: 60px">剧集长度:如果这个值减少，通常是一个更好的迹象。毕竟，更短的剧集意味着更多的训练。然而，请记住，剧集长度可能会根据需要而增加，所以这一集可以是任意一集。</li>
+
+<li style="padding-left: 60px">课程:这表示代理所在的课程，用于课程学习。我们将在<a href="ae184eca-6c9d-456e-a72b-85274ddcc10c.xhtml">第9章</a>、<em>奖励和强化学习</em>中了解更多课程学习。</li>
+
+<li style="padding-left: 60px">损失:此部分显示了表示计算出的保单和价值的损失或成本的图表。当然，我们还没有花太多的时间来解释PPO以及它是如何使用一个策略的，所以，在这一点上，只要了解培训时的首选方向即可。接下来显示了该部分的屏幕截图，同样带有显示最佳首选项的箭头:</li>
+
+</ul>
+
+<div><img src="img/357e6132-9381-4c6b-bde8-3b66bd378e4f.png" style="width:48.42em;height:22.83em;"/></div>
+
+<p>损失和首选培训方向</p>
+
+<ul>
+
+<li style="padding-left: 60px">策略损失:这决定了策略随着时间的推移会发生多大的变化。策略是决定行动的部分，一般来说，这个图应该显示一个下降的趋势，表明策略在做决策方面变得更好。</li>
+
+<li style="padding-left: 60px">价值损失:这是<kbd>value</kbd>函数的平均损失。它本质上模拟了代理如何预测其下一个状态的值。最初，这个值应该会增加，然后在奖励稳定后，它应该会减少。</li>
+
+<li style="padding-left: 60px">政策:PPO使用政策的概念而不是模型来决定行动的质量。同样，我们将在第8章、<em xmlns:epub="http://www.idpf.org/2007/ops">了解PPO、</em>中花更多的时间，在那里我们将揭示关于PPO的更多细节。下一个屏幕截图显示了策略图表及其首选趋势:</li>
+
+</ul>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/cc002fa5-7562-415a-93ea-f4f5ab381170.png" style="color: #333333;font-size: 1em;"/></p>
+
+<p>政策图表和首选趋势</p>
+
+<ul>
+
+<li style="padding-left: 60px">熵:这表示代理探索了多少。随着代理对周围环境了解得越来越多，需要探索得越来越少，您希望该值减少。</li>
+
+<li style="padding-left: 60px">学习率:目前，该值设置为随时间线性下降。</li>
+
+<li style="padding-left: 60px">估计值:这是代理的所有状态访问的平均值。该值应该增加，以表示代理知识的增长，然后稳定下来。</li>
+
+</ul>
+
+<p>这些图形都是为了与Unity所基于的PPO方法的实现一起工作而设计的。现在还不要太担心理解这些新术语。我们将在第7章、<em xmlns:epub="http://www.idpf.org/2007/ops">代理和环境</em>中探讨PPO的基础。</p>
+
+<ol start="6">
+
+<li>让代理运行完成，并保持TensorBoard运行。</li>
+
+<li>回到训练大脑的Anaconda/Python窗口，运行以下命令:</li>
+
+</ol>
+
+<pre style="color: black;padding-left: 60px"><strong>mlagents-learn config/trainer_config.yaml --run-id=secondRun --train</strong></pre>
+
+<ol start="8">
+
+<li>将再次提示您在编辑器中按播放键；一定要这样做。让代理开始培训并运行几个会话。当你这样做时，监视TensorBoard窗口并注意<kbd>secondRun</kbd>是如何显示在图表上的。也可以让这个代理运行完成，但是如果您愿意，现在就可以停止它。</li>
+
+</ol>
+
+<p>在以前的ML-Agents版本中，您需要首先构建一个Unity可执行文件作为游戏训练环境并运行它。外部Python大脑仍然会运行相同的程序。这种方法使得调试任何代码问题或游戏问题变得非常困难。所有这些困难都用当前的方法解决了；然而，我们以后可能需要使用旧的可执行方法进行一些定制训练。</p>
+
+<p>既然我们已经看到了设置和训练一个代理是多么容易，我们将在下一节看看这个代理如何在没有外部Python大脑的情况下直接在Unity中运行。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Running an agent</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">运行代理</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>使用Python来训练效果很好，但这不是一个真正的游戏会使用的东西。理想情况下，我们希望能够建立一个张量流图，并在Unity中使用它。幸运的是，我们构建了一个名为TensorFlowSharp的库。NET来消耗张量流图。这允许我们建立离线的TF模型，然后将它们注入到我们的游戏中。不幸的是，我们只能使用经过训练的模型，而不能以这种方式训练，至少现在还不能。</p>
+
+<p>让我们通过使用我们刚刚为GridWorld环境训练的图表来看看这是如何工作的，并将其用作Unity中的内部大脑。按照下一节中的练习来设置和使用内部大脑:</p>
+
+<ol>
+
+<li>从这个链接下载TFSharp插件:<a href="https://s3.amazonaws.com/unity-ml-agents/0.5/TFSharpPlugin.unitypackage">https://S3 . amazonaws . com/unity-ml-agents/0.5/tfsharpplugin . unity package</a>。<a href="https://s3.amazonaws.com/unity-ml-agents/0.5/TFSharpPlugin.unitypackage"> <br/> </a></li>
+
+</ol>
+
+<p>如果此链接不起作用，请咨询Unity文档或资产商店获取新的链接。目前的版本是实验性的，可能会有变化。</p>
+
+<ol start="2">
+
+<li>从编辑器菜单中，选择资产|导入包|自定义包...</li>
+
+<li>找到您刚刚下载的资产包，并使用导入对话框将插件加载到项目中。如果你在这些基本的Unity任务上需要帮助，网上有很多帮助可以进一步指导你。</li>
+
+</ol>
+
+<ol start="4">
+
+<li>从菜单中，选择编辑|项目设置。这将打开设置窗口(2018.3中的新功能)</li>
+
+<li class="mce-root">在播放器选项下找到脚本定义符号，并将文本设置为<kbd>ENABLE_TENSORFLOW</kbd>并启用允许不安全代码，如该屏幕截图所示:</li>
+
+</ol>
+
+<div><img src="img/ab714c99-1b2d-4e27-89e4-eff8395c7f43.png" style="width:39.42em;height:46.50em;"/></div>
+
+<p>设置ENABLE_TENSORFLOW标志</p>
+
+<ol start="6">
+
+<li>在层次窗口中找到GridWorldAcademy对象，并确保它正在使用Brains | GridWorldLearning。在Grid Academy脚本的“Brains”部分，禁用“Control”选项。</li>
+
+<li>在<kbd>Assets/Examples/GridWorld/Brains</kbd>文件夹中找到GridWorldLearning brain，确保在检查器窗口中设置了模型参数，如下图所示:</li>
+
+</ol>
+
+<div><img src="img/321101c9-21cb-4a31-b298-dc4c3a51cc32.png" style="width:30.50em;height:43.00em;"/></div>
+
+<p>为大脑建立模型</p>
+
+<ol start="8">
+
+<li>模型应该已经设置为<strong/>GridWorldLearning<strong/>模型。在本例中，我们使用GridWorld示例附带的TFModel。您也可以轻松地使用我们在前面的示例中训练的模型，只需将其导入到项目中，然后将其设置为模型。</li>
+
+<li>按“播放”运行编辑器，观看代理控制多维数据集。</li>
+
+</ol>
+
+<p>现在，我们正在使用预先训练好的Unity brain运行环境。在下一节中，我们将看看如何使用我们在上一节中训练过的大脑。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Loading a trained brain</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">装载训练有素的大脑</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>所有的Unity样本都带有预先训练好的大脑，你可以用它来探索样本。当然，我们希望能够将我们自己的TF图加载到Unity中并运行它们。按照以下步骤加载训练图:</p>
+
+<ol>
+
+<li class="mce-root">找到<kbd>ML-Agents/ml-agents/models/firstRun-0</kbd>文件夹。在这个文件夹中，您应该会看到一个名为<kbd>GridWorldLearning.bytes</kbd>的文件。将此文件拖入Unity编辑器的<kbd>Project/Assets/ML-Agents/Examples/GridWorld/TFModels</kbd>文件夹中，如图所示:</li>
+
+</ol>
+
+<div><img src="img/a41646b7-b3df-4fdf-a9bc-2ca3f9370961.png"/></div>
+
+<p>将字节图拖入Unity</p>
+
+<ol start="2">
+
+<li>这将把图形作为资源导入到Unity项目中，并将其重命名为<kbd>GridWorldLearning 1</kbd>。这样做是因为默认模型已经有了相同的名称。</li>
+
+</ol>
+
+<ol start="3">
+
+<li>从<kbd>brains</kbd>文件夹中找到<kbd>GridWorldLearning</kbd>并在检查器窗口中选择它，然后将新的GridWorldLearning 1模型拖到Brain参数下的模型槽中:</li>
+
+</ol>
+
+<div><img src="img/21bef292-7d4d-4f6f-a20c-9243c3c4bb8e.png" style="width:34.17em;height:47.00em;"/></div>
+
+<p class="mce-root"/>
+
+<p>在大脑中加载图形模型槽</p>
+
+<ol start="4">
+
+<li>在这一点上，我们不需要改变任何其他参数，但要特别注意大脑是如何配置的。默认设置暂时有效。</li>
+
+<li>按下Unity编辑器中的Play，观看代理成功运行游戏。</li>
+
+<li>你训练代理的时间长短将决定它在游戏中的表现。如果你让它完成训练，代理应该等于已经训练好的Unity代理。</li>
+
+</ol>
+
+<p>现在，您可以自己运行和探索大量的Unity示例。你可以随意自己训练几个例子，或者按照下一节练习中所列的来训练。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Exercises</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">练习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>使用本节中的练习来提高和巩固您的学习。自己尝试至少几个这样的练习，记住这真的对你有好处:</p>
+
+<ol>
+
+<li>设置并运行3DBall示例环境来训练工作代理。这个环境使用多个游戏/代理来训练。</li>
+
+<li>以3DBall为例，让一半的游戏使用已经训练好的大脑，另一半使用训练或外部学习。</li>
+
+<li>使用外部学习培训推块环境代理。</li>
+
+<li>训练视觉推块环境。注意这个例子是如何使用一个可视摄像机来捕捉环境状态的。</li>
+
+<li>作为玩家运行走廊场景，然后使用外部学习大脑训练该场景。</li>
+
+<li>作为玩家运行VisualHallway场景，然后使用外部学习大脑训练该场景。</li>
+
+<li>运行跳墙场景，然后在训练条件下运行。这个例子使用了课程培训，我们将在<a href="ae184eca-6c9d-456e-a72b-85274ddcc10c.xhtml">第9章</a>、<em>奖励和强化学习</em>中进一步探讨。</li>
+
+<li>运行金字塔场景，然后设置它进行训练。</li>
+
+<li>运行VisualPyramids场景并为训练进行设置。</li>
+
+<li>运行保镖场景，并为训练进行设置。</li>
+
+</ol>
+
+<p>虽然您不必运行所有这些练习/示例，但熟悉它们会有所帮助。正如我们将在下一章中看到的，它们通常是创造新环境的基础。</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:027b0a9f-7d4f-44c6-963c-9f0ced4bbde0" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">摘要</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>正如您所了解的，在Unity中培训RL和DRL代理的工作流程比在OpenAI Gym中更加完整和无缝。我们不必编写一行代码来训练网格世界环境中的代理，而且视觉效果更好。对于这一章，我们从安装ML-Agents工具包开始。然后，我们加载了一个GridWorld环境，并将其设置为使用RL代理进行训练。从那里，我们看着TensorBoard监控代理培训和进展。在我们完成训练后，我们首先加载了一个Unity预训练大脑，并在GridWorld环境中运行。然后，我们使用一个我们刚刚训练过的大脑，并将其作为资产导入Unity，然后作为GridWorldLearning大脑的模型。</p>
+
+<p>在下一章，我们将探索如何构建一个新的RL环境或游戏，我们可以使用一个代理来学习和玩。这将使我们能够更深入地了解我们在本章中浏览过的各种细节。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

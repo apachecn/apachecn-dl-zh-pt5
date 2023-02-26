@@ -1,0 +1,877 @@
+<html><head/><body>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Implementing an Intelligent - Autonomous Car Driving Agent using Deep Actor-Critic Algorithm</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4G04U0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">利用深度行动者-批评家算法实现智能自主汽车驾驶智能体</h1>
+                
+            
+            
+                
+<p class="calibre2">在第6章的<a xmlns:epub="http://www.idpf.org/2007/ops" target="_blank" href="part0094.html#2PKKS0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">中，我们使用深度Q学习实现了用于最优控制的智能代理，我们使用深度Q学习实现了代理来解决离散控制任务，这些任务涉及到要做出的离散动作或决策。我们看到了如何训练他们玩视频游戏，如Atari，就像我们一样:通过看着游戏屏幕，按下游戏手柄/操纵杆上的按钮。我们可以使用这样的智能体在给定的有限选择集合中挑选最佳选择，做出决策，或者在可能的决策或行动的数量有限并且通常很少的情况下执行行动。有许多现实世界中的问题可以通过一个能够学习采取最优的离散行动的代理来解决。我们在</a><a xmlns:epub="http://www.idpf.org/2007/ops" href="part0094.html#2PKKS0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第6章</a>、<em xmlns:epub="http://www.idpf.org/2007/ops" class="calibre13">中看到了一些例子，使用深度Q学习</em>实现了一个智能代理用于 <em xmlns:epub="http://www.idpf.org/2007/ops" class="calibre13">最优离散控制。</em></p>
+<p class="calibre2">在现实世界中，还有其他类型的问题和任务需要执行较低级别的操作，这些操作是连续的值，而不是离散的。例如，智能温度控制系统或恒温器需要能够对内部控制电路进行微调，以将房间保持在指定的温度。控制动作信号可以包括连续值实数(例如<em class="calibre13"> 1.456 </em>)来控制<strong class="calibre4">加热、通风和空调</strong> ( <strong class="calibre4"> HVAC </strong>)系统。考虑另一个例子，我们想开发一个智能代理来自动驾驶汽车。人类通过换挡、踩油门或刹车踏板以及驾驶汽车来驾驶汽车。虽然当前档位将是五到六个值中的一个，这取决于汽车的传动系统，但如果智能软件代理必须执行所有这些动作，它必须能够为油门(加速器)、刹车(制动器)和转向产生连续的实数值。</p>
+<p class="calibre2">在类似这些例子的情况下，我们需要代理采取连续的有值动作，我们可以使用基于策略梯度的行动者-批评家方法来直接学习和更新代理在策略空间中的策略，而不是通过状态和/或动作值函数，就像我们在<a href="part0094.html#2PKKS0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第6章</a>、<em class="calibre13">中看到的深度Q学习代理一样，使用深度Q学习</em>实现智能代理以实现最佳离散控制。在这一章中，我们将从演员-评论家算法的基础开始，逐步构建我们的代理，同时训练它使用OpenAI Gym环境解决各种经典的控制问题。我们将使用我们在前一章中实现的自定义Gym接口，构建我们的代理，直到能够在CARLA驾驶模拟环境中驾驶汽车。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>The deep n-step advantage actor-critic algorithm</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4GULG0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">深度n步优势行动者-评论家算法</h1>
+                
+            
+            
+                
+<p class="calibre2">在我们基于深度Q学习器的智能代理实现中，我们使用深度神经网络作为函数逼近器来表示动作值函数。然后，代理使用动作-值函数来提出基于值函数的策略。特别是，我们在实现中使用了<img class="fm-editor-equation59" src="img/00158.jpeg"/>-贪婪算法。因此，我们知道，代理最终必须知道在给定观察/状态的情况下采取什么行动是好的。我们能不能不直接参数化策略，而不是参数化或近似状态/动作动作函数，然后基于该函数导出策略？是的，我们可以！这正是政策梯度方法背后的理念。</p>
+<p class="calibre2">在下面的小节中，我们将简要介绍基于策略梯度的学习方法，然后过渡到结合并利用基于价值和基于策略的学习的行动者-批评家方法。然后，我们将看看演员-评论家方法的一些扩展，已被证明可以提高学习成绩。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Policy gradients</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4HT620-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">政策梯度</h1>
+                
+            
+            
+                
+<p class="calibre2">在基于策略梯度的方法中，例如，通过使用具有参数<img class="fm-editor-equation78" src="img/00159.jpeg"/>的神经网络来表示策略，并且目标是找到参数<img class="fm-editor-equation78" src="img/00160.jpeg"/>的最佳集合。这可以直观地看作是一个优化问题，我们试图优化策略的目标，以找到性能最佳的策略。代理人政策的目标是什么？我们知道，代理人应该在长期内获得最大的回报，以完成任务或实现目标。如果我们可以用数学的方式来表达这个目标，我们就可以使用最优化技术来为代理人找到最佳的策略来完成给定的任务。</p>
+<p class="calibre2">我们知道状态价值函数<img class="fm-editor-equation79" src="img/00161.jpeg"/>告诉我们从状态<img class="fm-editor-equation25" src="img/00162.jpeg"/>开始并遵循政策<img class="fm-editor-equation80" src="img/00163.jpeg"/>直到剧集结束的预期收益。它告诉我们处于状态<img class="fm-editor-equation25" src="img/00164.jpeg"/>有多好。因此，理想情况下，一个好的策略对于环境中的起始状态将具有更高的值，因为它代表了处于该状态并根据策略<img class="fm-editor-equation81" src="img/00165.jpeg"/>采取行动直到事件结束的预期/均值/平均值。初始状态下的值越高，遵循策略的代理可以获得的总长期回报越高。因此，在一个情节环境中——环境是一个情节；也就是说，它有一个终止状态——我们可以根据起始状态的值来衡量策略的好坏。数学上，这样的目标函数可以写成如下:</p>
+<div><img class="fm-editor-equation82" src="img/00166.jpeg"/></div>
+<p class="calibre2">但是如果环境不是情节性的呢？这意味着它没有终止状态，而是继续运行。在这样的环境中，我们可以使用在遵循当前策略时被访问的状态的平均值<img class="fm-editor-equation83" src="img/00167.jpeg"/>。数学上，平均值目标函数可以写成如下形式:</p>
+<div><img class="fm-editor-equation84" src="img/00168.jpeg"/></div>
+<p class="calibre2">这里，<img class="fm-editor-equation85" src="img/00169.jpeg"/>是<img class="fm-editor-equation80" src="img/00170.jpeg"/>的马尔可夫链的平稳分布，它给出了遵循策略<img class="fm-editor-equation80" src="img/00172.jpeg"/>时访问状态<img class="fm-editor-equation67" src="img/00171.jpeg"/>的概率。</p>
+<p class="calibre2">我们还可以使用在这种环境中每个时间步长获得的平均回报，这可以使用以下等式进行数学表达:</p>
+<div><img class="fm-editor-equation86" src="img/00173.jpeg"/></div>
+<p class="calibre2">这实质上是当代理人根据政策<img class="fm-editor-equation81" src="img/00174.jpeg"/>采取行动时可以获得的预期回报值，可以写成这样的简写形式:</p>
+<div><img class="fm-editor-equation87" src="img/00175.jpeg"/></div>
+<p class="calibre2">为了使用梯度下降来优化该策略目标函数，我们将对方程求关于<img class="fm-editor-equation88" src="img/00176.jpeg"/>的导数，找到梯度，反向传播，并执行梯度下降步骤。根据前面的等式，我们可以写出以下内容:</p>
+<div><img class="fm-editor-equation89" src="img/00177.jpeg"/></div>
+<p class="mce-root1">让我们通过扩展项并进一步简化来区分前面关于<img class="fm-editor-equation90" src="img/00178.jpeg"/>的等式。按照下列等式从左到右理解得出结果所涉及的一系列步骤:</p>
+<div><img class="fm-editor-equation91" src="img/00179.jpeg"/></div>
+<p class="calibre2">为了理解这些等式以及政策梯度<img class="fm-editor-equation92" src="img/00180.jpeg"/>如何等于可能性比率<img class="fm-editor-equation93" src="img/00181.jpeg"/>，让我们后退一步，重新审视我们的目标是什么。我们的目标是为策略找到一组最优的参数<img class="fm-editor-equation94" src="img/00182.jpeg"/>，这样遵循策略的代理人将在期望中获得最大的回报(即平均)。为了实现这一目标，我们从一组参数开始，然后不断更新参数，直到达到最佳参数集。为了计算出策略参数必须在参数空间中的哪个方向被更新，我们利用由策略<img class="fm-editor-equation95" src="img/00183.jpeg"/>相对于参数<img class="fm-editor-equation88" src="img/00184.jpeg"/>的梯度所指示的方向。让我们从上一个等式中的第二项<img class="fm-editor-equation96" src="img/00185.jpeg"/>(根据定义，它是第一项<img class="fm-editor-equation97" src="img/00186.jpeg"/>的结果)开始:</p>
+<p class="calibre2"><img class="fm-editor-equation98" src="img/00187.jpeg"/>是在策略<img class="fm-editor-equation81" src="img/00188.jpeg"/>下，因在状态<img class="fm-editor-equation25" src="img/00190.jpeg"/>中采取行动<img class="fm-editor-equation39" src="img/00189.jpeg"/>而产生的阶梯奖励的期望值的梯度。根据期望值的定义，这可以写成下面的和:</p>
+<div><img class="fm-editor-equation99" src="img/00191.jpeg"/></div>
+<p class="calibre2">我们将看看似然比技巧，它在这种情况下用于将这个方程转换成使计算可行的形式。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>The likelihood ratio trick</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4IRMK0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">似然比技巧</h1>
+                
+            
+            
+                
+<p class="calibre2">由<img class="fm-editor-equation81" src="img/00192.jpeg"/>表示的策略被假定为一个可微分函数，只要它不为零，但是计算策略相对于θ的梯度<img class="fm-editor-equation100" src="img/00193.jpeg"/>可能并不简单。我们可以通过两边的策略<img class="fm-editor-equation101" src="img/00194.jpeg"/>进行乘法和除法运算，得到以下结果:</p>
+<div><img class="fm-editor-equation102" src="img/00195.jpeg"/></div>
+<p class="calibre2">从微积分中，我们知道函数对数的梯度是函数对函数本身的梯度，数学上由下式给出:</p>
+<div><img class="fm-editor-equation103" src="img/00196.jpeg"/></div>
+<p class="calibre2">因此，我们可以将策略的梯度相对于其参数写成如下形式:</p>
+<div><img class="fm-editor-equation104" src="img/00197.jpeg"/></div>
+<p class="calibre2">在机器学习中，这被称为似然比技巧，或对数导数技巧。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>The policy gradient theorem</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4JQ760-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">政策梯度定理</h1>
+                
+            
+            
+                
+<p class="calibre2">因为根据定义，策略<img class="fm-editor-equation105" src="img/00198.jpeg"/>是描述给定状态和参数<img class="fm-editor-equation88" src="img/00199.jpeg"/>的动作的概率分布的概率分布函数，所以状态和动作的双重求和项可以被表示为由奖励<img class="fm-editor-equation106" src="img/00200.jpeg"/>对分布<img class="fm-editor-equation80" src="img/00201.jpeg"/>进行缩放的得分函数的期望。这在数学上等同于以下内容:</p>
+<div><img class="fm-editor-equation107" src="img/00202.jpeg"/></div>
+<p class="calibre2">注意，在前面的等式中，<img class="fm-editor-equation106" src="img/00203.jpeg"/>是从状态<img class="fm-editor-equation25" src="img/00205.jpeg"/>开始采取行动<img class="fm-editor-equation28" src="img/00204.jpeg"/>的步进奖励。</p>
+<p class="calibre2">政策梯度定理通过用长期行动值<img class="fm-editor-equation109" src="img/00207.jpeg"/>代替瞬时步骤回报<img class="fm-editor-equation108" src="img/00206.jpeg"/>概括了这种方法，可以写成如下形式:</p>
+<div><img class="fm-editor-equation110" src="img/00208.jpeg"/></div>
+<p class="calibre2">这是一个非常有用的结果，并形成了政策梯度方法的几个变种的基础。</p>
+<p class="calibre2">有了对政策梯度的理解，我们将在接下来的几节中深入研究行动者-批评家算法及其变体。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Actor-critic algorithm</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4KONO0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">演员-评论家算法</h1>
+                
+            
+            
+                
+<p class="calibre2">让我们从演员-评论家架构的图示开始，如下图所示:</p>
+<p class="cdpaligncenter4"><img src="img/00209.jpeg" class="calibre85"/></p>
+<p class="calibre2">actor-critic算法中有两个组件，从名称和上图中可以明显看出。行动者负责在环境中行动，包括根据对环境的观察和基于代理的策略采取行动。参与者可以被认为是政策的持有者/制定者。另一方面，批评家负责估计状态-值、或状态-动作-值、或优势-值函数(取决于所使用的行动者-批评家算法的变体)。让我们考虑一个案例，批评家试图估算行动价值函数<img class="fm-editor-equation111" src="img/00210.jpeg"/>。如果我们使用一组参数<em class="calibre13"> w </em>来表示评论家的参数，评论家的估计基本上可以写成:</p>
+<div><img class="fm-editor-equation112" src="img/00211.jpeg"/></div>
+<p class="calibre2">在上一节的政策梯度定理的结果中，将真实的行动值函数替换为行动值函数的评论家近似(政策梯度定理一节中的最后一个方程),使我们得出由下式给出的近似政策梯度:</p>
+<div><img class="fm-editor-equation113" src="img/00212.jpeg"/></div>
+<p class="calibre2">在实践中，我们使用随机梯度上升(或带-ve符号的下降)来进一步逼近期望值。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Advantage actor-critic algorithm</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4LN8A0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">优势行动者-批评家算法</h1>
+                
+            
+            
+                
+<p class="calibre2">行动-价值行动者-评论家算法仍然有很高的方差。我们可以通过从政策梯度中减去基线函数<em class="calibre13"> B(s) </em>来减小方差。一个好的基线是状态值函数<img class="fm-editor-equation114" src="img/00213.jpeg"/>。以状态值函数为基线，我们可以将策略梯度定理的结果改写如下:</p>
+<div><img class="fm-editor-equation115" src="img/00214.jpeg"/></div>
+<p class="calibre2">我们可以将优势函数<img class="fm-editor-equation116" src="img/00215.jpeg"/>定义如下:</p>
+<div><img class="fm-editor-equation117" src="img/00216.jpeg"/></div>
+<p class="calibre2">当在之前的政策梯度方程中使用基线时，这为我们提供了行动者-批评者政策梯度的优势:</p>
+<div><img class="fm-editor-equation118" src="img/00217.jpeg"/></div>
+<p class="calibre2">回想一下前面的章节，值函数<img class="fm-editor-equation119" src="img/00218.jpeg"/>的1步时差(TD)误差由下式给出:</p>
+<div><img class="fm-editor-equation120" src="img/00219.jpeg"/></div>
+<p class="calibre2">如果我们计算这个TD误差的期望值，我们将得到一个类似于我们在<a href="part0033.html#VF2I0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第2章</a>、<em class="calibre13">强化学习和深度强化学习</em>中看到的动作值函数定义的方程。从该结果中，我们可以观察到TD误差实际上是优势函数的无偏估计，如在该等式中从左到右导出的:</p>
+<div><img class="fm-editor-equation121" src="img/00220.jpeg"/></div>
+<p class="calibre2">有了这个结果和本章前面的方程组，我们就有足够的理论背景来开始实现我们的代理了！在我们进入代码之前，让我们理解算法的流程，以便在我们的脑海中有一个好的图像。</p>
+<p class="calibre2">最简单(一般/普通)形式的优势行动者-批评家算法包括以下步骤:</p>
+<ol class="calibre14">
+<li value="1" class="calibre11">初始化(随机)策略和价值函数估计。</li>
+<li value="2" class="calibre11">对于给定的观察/状态<img class="fm-editor-equation122" src="img/00221.jpeg"/>，执行由当前策略<img class="fm-editor-equation124" src="img/00223.jpeg"/>规定的动作<img class="fm-editor-equation123" src="img/00222.jpeg"/>。</li>
+<li value="3" class="calibre11">使用一步TD学习方程:<div> <img class="fm-editor-equation126" src="img/00226.jpeg"/> </div>根据得到的状态<img class="fm-editor-equation125" src="img/00224.jpeg"/>和奖励<img class="fm-editor-equation123" src="img/00225.jpeg"/>计算TD误差</li>
+<li value="4" class="calibre11">通过基于TD误差调整状态<img class="fm-editor-equation123" src="img/00227.jpeg"/>的动作概率来更新参与者:<ul class="calibre68">
+<li class="calibre11">如果<img class="fm-editor-equation127" src="img/00228.jpeg"/> &gt;为0，增加采取行动<img class="fm-editor-equation128" src="img/00229.jpeg"/>的可能性，因为<img class="fm-editor-equation129" src="img/00230.jpeg"/>是一个好的决定，而且效果非常好</li>
+<li class="calibre11">如果<img class="fm-editor-equation127" src="img/00231.jpeg"/> &lt;为0，降低采取行动<img class="fm-editor-equation123" src="img/00232.jpeg"/>的概率，因为<img class="fm-editor-equation123" src="img/00233.jpeg"/>导致代理表现不佳</li>
+</ul>
+</li>
+<li value="5" class="calibre11">通过使用TD误差调整<img class="fm-editor-equation130" src="img/00234.jpeg"/>的估计值来更新critic:<ul class="calibre68">
+<li class="calibre11"><img class="fm-editor-equation131" src="img/00235.jpeg"/>，其中<img class="fm-editor-equation132" src="img/00236.jpeg"/>为评论家的学习率</li>
+</ul>
+</li>
+<li value="6" class="calibre11">将下一个状态<img class="fm-editor-equation133" src="img/00237.jpeg"/>设置为当前状态<img class="fm-editor-equation123" src="img/00238.jpeg"/>并重复步骤2。</li>
+</ol>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>n-step advantage actor-critic algorithm</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4MLOS0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">n步优势行动者-批评家算法</h1>
+                
+            
+            
+                
+<p class="calibre2">在优势行动者-批评家算法部分，我们看了实现算法所涉及的步骤。在第3步中，我们注意到我们必须根据1步回报(TD目标)计算TD误差。这就像让代理人在环境中采取一个步骤，然后根据结果，计算评论家估计的误差，并更新代理人的政策。这听起来简单明了，对吗？但是，有没有更好的方法来学习和更新政策呢？正如您可能已经从本节的标题中猜到的那样，其思想是使用n步回归，与基于1步回归的TD学习相比，它使用更多的信息来学习和更新策略。n步TD学习可以被视为一般化的版本，并且如前一部分所讨论的，在actor-critic算法中使用的1步TD学习是n=1的n步TD学习算法的特例。让我们看一个简单的例子来理解n步回报的计算，然后实现一个Python方法来计算n步回报，我们将在代理实现中使用这个方法。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>n-step returns</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4NK9E0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">n步返回</h1>
+                
+            
+            
+                
+<p class="calibre2">n步返回是一个简单但非常有用的概念，已知它可以为几种强化学习算法产生更好的性能，而不仅仅是基于advantage actor-critic的算法。例如，在Atari套件的57款游戏中，迄今为止表现最好的算法使用了n步回报，其表现明显优于第二好的算法。我们将在<a href="part0173.html#54VHA0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第10章</a>、<em class="calibre13">探索学习环境景观:Roboschool、Gym-Retro、StarCraft-II、DMLab </em>中实际讨论那个名为Rainbow的代理算法。</p>
+<p class="calibre2">我们先来直观的了解一下n步退货流程。让我们用下图来说明环境中的一个步骤。假设代理在时间t=1时处于状态<img class="fm-editor-equation134" src="img/00239.jpeg"/>，并决定采取行动<img class="fm-editor-equation135" src="img/00240.jpeg"/>，这导致环境在时间t=t+1= 1+1 = 2时转换到状态<img class="fm-editor-equation134" src="img/00241.jpeg"/>，代理接收到奖励<img class="fm-editor-equation134" src="img/00242.jpeg"/>:</p>
+<p class="cdpaligncenter4"><img src="img/00243.jpeg" class="calibre86"/></p>
+<p class="calibre2">我们可以使用以下公式计算1步TD回报:</p>
+<div><img class="fm-editor-equation136" src="img/00244.jpeg"/></div>
+<p class="calibre2">这里，<img class="fm-editor-equation137" src="img/00245.jpeg"/>是根据价值函数(critic)对状态<img class="fm-editor-equation138" src="img/00246.jpeg"/>的价值估计。实质上，代理采取一个步骤，并使用收到的回报和代理对下一个/结果状态的估计值的贴现值来计算回报。</p>
+<p class="calibre2">如果我们让智能体继续与环境进行多几步的交互，智能体的轨迹可以用下图简单地表示出来:</p>
+<div><img src="img/00247.jpeg" class="calibre87"/></div>
+<p class="calibre2">该图显示了代理和环境之间的5步交互。按照上一段中计算1步回报的类似方法，我们可以使用以下公式计算5步回报:</p>
+<div><img class="fm-editor-equation139" src="img/00248.jpeg"/></div>
+<p class="calibre2">然后，我们可以在优势行动者-批评家算法的步骤3中将其用作TD目标，以提高代理的性能。</p>
+<p>通过在任何健身房环境中运行<kbd class="calibre28">parameters.json</kbd>文件中的<kbd class="calibre28">learning_step_thresh</kbd>参数设置为1(对于1步返回)和5或10(对于n步返回)的<kbd class="calibre28">ch8/a2c_agent.py</kbd>脚本，您可以看到具有1步返回的advantage演员-评论家代理的性能与具有n步返回的性能相比如何。<br class="calibre42"/>例如，您可以使用<kbd class="calibre28">learning_step_thresh=1</kbd>运行<br class="calibre42"/> <kbd class="calibre28">(rl_gym_book) praveen@ubuntu:~/HOIAWOG/ch8$python a2c_agent.py --env Pendulum-v0</kbd>，使用命令<br class="calibre42"/> <kbd class="calibre28">(rl_gym_book) praveen@ubuntu:~/HOIAWOG/ch8/logs$tensorboard --logdir=.</kbd>使用Tensorboard监控其性能，然后在大约一百万步之后，您可以比较使用<kbd class="calibre28">learning_step_thresh=10</kbd>训练的代理的性能。请注意，经过训练的代理模型将在<kbd class="calibre28">~/HOIAWOG/ch8/trained_models/A2_Pendulum-v0.ptm</kbd>保存。您可以在开始第二次运行之前将其重命名或移动到不同的目录，以便从头开始培训！</p>
+<p class="calibre2">为了使这个概念更加明确，让我们讨论一下我们将如何在步骤3和advantage actor-critic算法中使用它。我们将首先使用n步回报作为TD目标，并使用以下公式计算TD误差(算法的第3步):</p>
+<div><img class="fm-editor-equation140" src="img/00249.jpeg"/></div>
+<p class="calibre2">然后，我们将遵循上一小节中讨论的算法的步骤4，并更新critic。然后，在步骤5中，我们将使用以下更新规则更新评论家:</p>
+<div><img class="fm-editor-equation141" src="img/00250.jpeg"/></div>
+<p class="calibre2">然后，我们将移动到算法的步骤6，继续下一个状态<img class="fm-editor-equation138" src="img/00251.jpeg"/>，使用从<img class="fm-editor-equation81" src="img/00252.jpeg"/>到<img class="fm-editor-equation142" src="img/00253.jpeg"/>的5步转换，并计算5步返回，然后重复更新<img class="fm-editor-equation143" src="img/00254.jpeg"/>的过程。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Implementing the n-step return calculation</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4OIQ00-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">实施n步回报计算</h1>
+                
+            
+            
+                
+<p class="calibre2">如果我们暂停片刻，分析正在发生的事情，你可能会发现我们可能没有充分利用5步长轨迹。通过访问从状态<img class="fm-editor-equation138" src="img/00255.jpeg"/>开始的代理的5步长轨迹的信息，我们最终只学到了一条新的信息，这是关于<img class="fm-editor-equation138" src="img/00256.jpeg"/>更新演员和评论家(<img class="fm-editor-equation144" src="img/00257.jpeg"/>)。我们实际上可以通过使用相同的5步轨迹来计算轨迹中存在的每个状态值的更新，使学习过程更有效，其中它们各自的<em class="calibre13"> n </em>值基于轨迹的终点。例如，在简化的轨迹表示中，如果我们考虑状态<img class="fm-editor-equation19" src="img/00258.jpeg"/>，轨迹的前视图包含在气泡内，如下图所示:</p>
+<div><img src="img/00259.jpeg" class="calibre88"/></div>
+<p class="calibre2">我们可以使用气泡内的信息来提取状态<img class="fm-editor-equation19" src="img/00260.jpeg"/>的TD学习目标。在这种情况下，由于从<img class="fm-editor-equation138" src="img/00261.jpeg"/>只能获得一步信息，我们将计算一步回报，如下式所示:</p>
+<div><img class="fm-editor-equation145" src="img/00262.jpeg"/></div>
+<p class="calibre2">正如我们之前讨论的，我们可以使用这个值作为等式中的TD目标来获得另一个TD误差值，并使用第二个值来更新actor和<img class="fm-editor-equation146" src="img/00263.jpeg"/>，此外还有以前的更新(<img class="fm-editor-equation137" src="img/00264.jpeg"/>)。现在，我们又多了一条供代理学习的信息！</p>
+<p class="calibre2">如果我们应用同样的直觉并考虑状态<img class="fm-editor-equation81" src="img/00265.jpeg"/>，轨迹的前视被包含在气泡中，如下图所示:</p>
+<div><img src="img/00266.jpeg" class="calibre89"/></div>
+<p class="calibre2">我们可以使用气泡内的信息来提取<img class="fm-editor-equation138" src="img/00267.jpeg"/>的TD学习目标。在这种情况下，有两种类型的信息可以从<img class="fm-editor-equation81" src="img/00268.jpeg"/>获得；因此，我们将使用以下等式计算两步回报率:</p>
+<div><img class="fm-editor-equation147" src="img/00269.jpeg"/></div>
+<p class="calibre2">如果我们看看这个等式和前面的等式，我们可以观察到<img class="fm-editor-equation148" src="img/00270.jpeg"/>和<img class="fm-editor-equation149" src="img/00271.jpeg"/>之间有一个关系，由下面的等式给出:</p>
+<div><img class="fm-editor-equation150" src="img/00272.jpeg"/></div>
+<p class="calibre2">这为代理提供了另一个可以学习的信息。同样，我们可以从这个代理的轨迹中提取更多的信息。将相同的概念延伸到<img class="fm-editor-equation151" src="img/00273.jpeg"/>和<img class="fm-editor-equation152" src="img/00274.jpeg"/>，我们可以得出以下关系:</p>
+<div><img class="fm-editor-equation153" src="img/00275.jpeg"/></div>
+<p class="calibre2">同样，简而言之，我们可以观察到以下情况:</p>
+<div><img class="fm-editor-equation154" src="img/00276.jpeg"/> </div>
+<p class="calibre2">最后，我们还可以观察到以下情况:</p>
+<div><img class="fm-editor-equation154" src="img/00277.jpeg"/></div>
+<p class="calibre2">简单来说，我们可以从轨迹中的最后一步开始，计算n步收益，直到轨迹的终点，然后移回到上一步，使用之前计算的值来计算收益。</p>
+<p class="calibre2">实现简单明了，建议您自己尝试实现。现提供如下，供您参考:</p>
+<pre class="calibre17">def calculate_n_step_return(self, n_step_rewards, final_state, done, gamma):<br class="title-page-name"/>        """<br class="title-page-name"/>        Calculates the n-step return for each state in the input-trajectory/n_step_transitions<br class="title-page-name"/>        :param n_step_rewards: List of rewards for each step<br class="title-page-name"/>        :param final_state: Final state in this n_step_transition/trajectory<br class="title-page-name"/>        :param done: True rf the final state is a terminal state if not, False<br class="title-page-name"/>        :return: The n-step return for each state in the n_step_transitions<br class="title-page-name"/>        """<br class="title-page-name"/>        g_t_n_s = list()<br class="title-page-name"/>        with torch.no_grad():<br class="title-page-name"/>            g_t_n = torch.tensor([[0]]).float() if done else self.critic(self.preproc_obs(final_state)).cpu()<br class="title-page-name"/>            for r_t in n_step_rewards[::-1]: # Reverse order; From r_tpn to r_t<br class="title-page-name"/>                g_t_n = torch.tensor(r_t).float() + self.gamma * g_t_n<br class="title-page-name"/>                g_t_n_s.insert(0, g_t_n) # n-step returns inserted to the left to maintain correct index order<br class="title-page-name"/>            return g_t_n_s</pre>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Deep n-step advantage actor-critic algorithm</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4PHAI0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">深度n步优势行动者-批评家算法</h1>
+                
+            
+            
+                
+<p class="calibre2">我们观察到actor-critic算法结合了基于价值的方法和基于策略的方法。批评家估计价值函数，参与者遵循政策，我们研究了如何更新参与者和批评家。从我们之前在<a href="part0094.html#2PKKS0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第6章</a>、<em class="calibre13">中使用深度Q学习</em>实现最优离散控制的智能代理的经验中，我们很自然地想到了使用神经网络来逼近价值函数，从而逼近评论家。我们还可以使用神经网络来表示策略<img class="fm-editor-equation155" src="img/00278.jpeg"/>，在这种情况下，参数<img class="fm-editor-equation156" src="img/00279.jpeg"/>是神经网络的权重。使用深度神经网络来逼近演员和评论家正是深度演员-评论家算法背后的想法。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Implementing a deep n-step advantage actor critic agent</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4QFR40-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">实现深度n步优势演员评论家代理</h1>
+                
+            
+            
+                
+<p class="calibre2">我们已经准备好了实现深度n步优势演员-评论家(A2C)代理所需的所有背景信息。让我们看一下代理实施过程的概述，然后直接进入动手实施。</p>
+<p class="calibre2">以下是我们A2C代理的高层流程:</p>
+<ol class="calibre14">
+<li value="1" class="calibre11">初始化演员和评论家的网络。</li>
+<li value="2" class="calibre11">使用参与者的当前策略从环境中收集n步经验，并计算n步回报。</li>
+</ol>
+<ol start="3" class="calibre14">
+<li value="3" class="calibre11">计算演员和评论家的损失。</li>
+<li value="4" class="calibre11">执行随机梯度下降优化步骤来更新演员和评论家参数。</li>
+<li value="5" class="calibre11">从步骤2开始重复。</li>
+</ol>
+<p class="calibre2">我们将在名为<kbd class="calibre12">DeepActorCriticAgent</kbd>的Python类中实现代理。你会在本书第八章的代码库中找到完整的实现:<kbd class="calibre12">ch8/a2c_agent.py</kbd>。我们将使这个实现更加灵活，这样我们就可以轻松地为批量版本进一步扩展它，并制作n步advantage actor-critic agent的异步版本。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Initializing the actor and critic networks</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4REBM0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">初始化演员和评论家网络</h1>
+                
+            
+            
+                
+<p class="calibre2"><kbd class="calibre12">DeepActorCriticAgent</kbd>类的初始化很简单。我们将快速浏览一下，然后看看我们实际上是如何定义和初始化演员和评论家网络的。</p>
+<p class="calibre2">代理的初始化功能如下所示:</p>
+<pre class="calibre17">class DeepActorCriticAgent(mp.Process):<br class="title-page-name"/>    def __init__(self, id, env_name, agent_params):<br class="title-page-name"/>        """<br class="title-page-name"/>        An Advantage Actor-Critic Agent that uses a Deep Neural Network to represent it's Policy and the Value function<br class="title-page-name"/>        :param id: An integer ID to identify the agent in case there are multiple agent instances<br class="title-page-name"/>        :param env_name: Name/ID of the environment<br class="title-page-name"/>        :param agent_params: Parameters to be used by the agent<br class="title-page-name"/>        """<br class="title-page-name"/>        super(DeepActorCriticAgent, self).__init__()<br class="title-page-name"/>        self.id = id<br class="title-page-name"/>        self.actor_name = "actor" + str(self.id)<br class="title-page-name"/>        self.env_name = env_name<br class="title-page-name"/>        self.params = agent_params<br class="title-page-name"/>        self.policy = self.multi_variate_gaussian_policy<br class="title-page-name"/>        self.gamma = self.params['gamma']<br class="title-page-name"/>        self.trajectory = [] # Contains the trajectory of the agent as a sequence of Transitions<br class="title-page-name"/>        self.rewards = [] # Contains the rewards obtained from the env at every step<br class="title-page-name"/>        self.global_step_num = 0<br class="title-page-name"/>        self.best_mean_reward = - float("inf") # Agent's personal best mean episode reward<br class="title-page-name"/>        self.best_reward = - float("inf")<br class="title-page-name"/>        self.saved_params = False # Whether or not the params have been saved along with the model to model_dir<br class="title-page-name"/>        self.continuous_action_space = True #Assumption by default unless env.action_space is Discrete</pre>
+<p class="calibre2">你可能想知道为什么<kbd class="calibre12">agent</kbd>类继承了<kbd class="calibre12">multiprocessing.Process</kbd>类。虽然对于我们的第一个代理实现，我们将在一个过程中运行一个代理，但是我们可以使用这个灵活的界面来并行运行多个代理，以加快学习过程。</p>
+<p class="calibre2">让我们继续使用用PyTorch操作定义的神经网络来实现演员和评论家。遵循与我们在<a href="part0094.html#2PKKS0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第6章</a>、<em class="calibre13">中使用的deep Q-learning agent类似的代码结构，使用Deep Q Learning </em>实现用于最优离散控制的智能agent，在代码库中，您将看到我们正在使用名为<kbd class="calibre12">function_approximator</kbd>的模块来包含我们基于神经网络的函数逼近器实现。你可以在这本书的代码库中的<kbd class="calibre12">ch8/function_approximator</kbd>文件夹下找到完整的实现。</p>
+<p class="calibre2">由于一些环境具有小且离散的状态空间，例如<kbd class="calibre12">Pendulum-v0</kbd>、<kbd class="calibre12">MountainCar-v0</kbd>或<kbd class="calibre12">CartPole-v0</kbd>环境，我们也将实现神经网络的浅版本以及深版本，以便我们可以根据代理被训练/测试的环境动态地选择合适的神经网络。当您查看演员的神经网络的示例实现时，您会注意到在<kbd class="calibre12">shallow</kbd>和<kbd class="calibre12">deep</kbd>函数逼近器模块中，都有一个名为<kbd class="calibre12">Actor</kbd>的类和一个名为<kbd class="calibre12">DiscreteActor</kbd>的不同类。这也是出于一般性的目的，以便我们可以让代理根据环境的动作空间是连续的还是离散的，动态地挑选和使用最适合代表行动者的神经网络。对于我们的代理实现的完整性和通用性，还有一个变化需要注意:我们实现中的<kbd class="calibre12">shallow</kbd>和<kbd class="calibre12">deep</kbd>函数逼近器模块都有一个<kbd class="calibre12">ActorCritic</kbd>类，它是一个单一的神经网络架构，代表参与者和批评家。这样，特征提取层在演员和评论家之间共享，同一神经网络中的不同头部(最终层)用于表示演员和评论家。</p>
+<p class="calibre2">有时，实现的不同部分可能会令人困惑。为了避免混淆，以下是我们基于神经网络的演员-评论家实现中各种选项的总结:</p>
+<table border="1" class="calibre41">
+<tbody class="calibre36">
+<tr class="calibre37">
+<td class="calibre90">
+<p class="cdpaligncenter4"><strong class="calibre4">模块/类别</strong></p>
+</td>
+<td class="calibre91">
+<p class="cdpaligncenter4"><strong class="calibre4">描述</strong></p>
+</td>
+<td class="calibre92">
+<p class="cdpaligncenter4"><strong class="calibre4">目的/使用案例</strong></p>
+</td>
+<td class="calibre93"/>
+</tr>
+<tr class="calibre37">
+<td class="calibre90">
+<p class="calibre2">1.<kbd class="calibre12">function_approximator.shallow</kbd></p>
+</td>
+<td class="calibre91">
+<p class="cdpaligncenter4">演员-评论家表达的浅层神经网络实现。</p>
+</td>
+<td class="calibre92">
+<p class="cdpaligncenter4">具有低维状态/观察空间的环境。</p>
+</td>
+<td class="calibre93"/>
+</tr>
+<tr class="calibre37">
+<td class="calibre90">
+<p class="calibre2">1.1 <kbd class="calibre12">function_approximator.shallow.Actor</kbd></p>
+</td>
+<td class="calibre91">
+<p class="cdpaligncenter4">前馈神经网络实现，它为基于高斯分布的策略表示生成两个连续值:mu(平均值)和sigma。</p>
+</td>
+<td class="calibre92">
+<p class="cdpaligncenter4">低维状态/观察空间和连续动作空间。</p>
+</td>
+<td class="calibre93"/>
+</tr>
+<tr class="calibre37">
+<td class="calibre90">
+<p class="calibre2">1.2 <kbd class="calibre12">function_approximator.shallow.DiscreteActor</kbd></p>
+</td>
+<td class="calibre91">
+<p class="cdpaligncenter4">前馈神经网络，为动作空间中的每个动作生成一个logit。</p>
+</td>
+<td class="calibre92">
+<p class="cdpaligncenter4">低维状态/观察空间和离散动作空间。</p>
+</td>
+<td class="calibre93"/>
+</tr>
+<tr class="calibre37">
+<td class="calibre90">
+<p class="calibre2">1.3 <kbd class="calibre12">function_approximator.shallow.Critic</kbd></p>
+</td>
+<td class="calibre91">
+<p class="cdpaligncenter4">产生连续值的前馈神经网络。</p>
+</td>
+<td class="calibre92">
+<p class="cdpaligncenter4">用于表示具有低维状态/观察空间的环境的批判/价值函数</p>
+</td>
+<td class="calibre93"/>
+</tr>
+<tr class="calibre37">
+<td class="calibre90">
+<p class="calibre2">1.4 <kbd class="calibre12">function_approximator.shallow.ActorCritic</kbd></p>
+</td>
+<td class="calibre91">
+<p class="cdpaligncenter4">产生μ(平均值)、高斯分布的sigma和连续值的前馈神经网络。</p>
+</td>
+<td class="calibre92">
+<p class="cdpaligncenter4">对于具有低维状态/观察空间的环境，用于在同一网络中表示演员和评论家。可以将其修改为一个离散的演员-评论家网络。</p>
+</td>
+<td class="calibre93"/>
+</tr>
+<tr class="calibre37">
+<td class="calibre90">
+<p class="calibre2">2.<kbd class="calibre12">function_approximator.deep</kbd></p>
+</td>
+<td class="calibre91">
+<p class="cdpaligncenter4">演员、评论家表现的深度神经网络实现。</p>
+</td>
+<td class="calibre92">
+<p class="cdpaligncenter4">具有高维状态/观察空间的环境。</p>
+</td>
+<td class="calibre93"/>
+</tr>
+<tr class="calibre37">
+<td class="calibre90">
+<p class="calibre2">2.1 <kbd class="calibre12">function_approximator.deep.Actor</kbd></p>
+</td>
+<td class="calibre91">
+<p class="cdpaligncenter4">深度卷积神经网络，为基于高斯分布的策略表示生成mu(均值)和sigma。</p>
+</td>
+<td class="calibre92">
+<p class="cdpaligncenter4">高维状态/观察空间和连续动作空间。</p>
+</td>
+<td class="calibre93"/>
+</tr>
+<tr class="calibre37">
+<td class="calibre90">
+<p class="calibre2">2.2 <kbd class="calibre12">function_approximator.deep.DiscreteActor</kbd></p>
+</td>
+<td class="calibre91">
+<p class="cdpaligncenter4">深度卷积神经网络，为动作空间中的每个动作生成一个logit。</p>
+</td>
+<td class="calibre92">
+<p class="cdpaligncenter4">高维状态/观察空间和离散动作空间。</p>
+</td>
+<td class="calibre93"/>
+</tr>
+<tr class="calibre37">
+<td class="calibre90">
+<p class="calibre2">2.3 <kbd class="calibre12">function_approximator.deep.Critic</kbd></p>
+</td>
+<td class="calibre91">
+<p class="cdpaligncenter4">产生连续值的深度卷积神经网络。</p>
+</td>
+<td class="calibre92">
+<p class="cdpaligncenter4">用于表示具有高维状态/观察空间的环境的批评家/价值函数。</p>
+</td>
+<td class="calibre93"/>
+</tr>
+<tr class="calibre37">
+<td class="calibre90">
+<p class="calibre2">2.4 <kbd class="calibre12">function_approximator.deep.ActorCritic</kbd></p>
+</td>
+<td class="calibre91">
+<p class="cdpaligncenter4">深度卷积神经网络，产生高斯分布的μ(均值)、sigma以及连续值。</p>
+</td>
+<td class="calibre92">
+<p class="cdpaligncenter4">用于在具有高维状态/观察空间的环境中，在同一网络中表示演员和评论家。可以将其修改为一个离散的演员-评论家网络。</p>
+</td>
+<td class="calibre93">现在让我们看一下<kbd class="calibre12">run()</kbd>方法的第一部分，其中我们根据环境的状态和动作空间的类型，以及根据状态空间是低维还是高维(基于上表)来初始化actor和critic网络:</td>
+</tr>
+</tbody>
+</table>
+<p class="calibre2">使用当前策略收集n步经验</p>
+<p class="calibre2">下一步是使用代理的当前策略执行所谓的<em class="calibre13">推出</em>，以收集<kbd class="calibre12">n</kbd>个转换。这个过程基本上是让代理与环境交互，并根据状态转换生成新的体验，通常表示为一个包含状态、动作、获得的奖励和下一个状态的元组，或简称为<kbd class="calibre12">(<img class="fm-editor-equation123" src="img/00280.jpeg"/>, <img class="fm-editor-equation122" src="img/00281.jpeg"/>, <img class="fm-editor-equation123" src="img/00282.jpeg"/>, <img class="fm-editor-equation157" src="img/00283.jpeg"/>)</kbd>，如下图所示:</p>
+<pre class="calibre17">from function_approximator.shallow import Actor as ShallowActor<br class="title-page-name"/>from function_approximator.shallow import DiscreteActor as ShallowDiscreteActor<br class="title-page-name"/>from function_approximator.shallow import Critic as ShallowCritic<br class="title-page-name"/>from function_approximator.deep import Actor as DeepActor<br class="title-page-name"/>from function_approximator.deep import DiscreteActor as DeepDiscreteActor<br class="title-page-name"/>from function_approximator.deep import Critic as DeepCritic<br class="title-page-name"/><br class="title-page-name"/>def run(self):<br class="title-page-name"/>        self.env = gym.make(self.env_name)<br class="title-page-name"/>        self.state_shape = self.env.observation_space.shape<br class="title-page-name"/>        if isinstance(self.env.action_space.sample(), int): # Discrete action space<br class="title-page-name"/>            self.action_shape = self.env.action_space.n<br class="title-page-name"/>            self.policy = self.discrete_policy<br class="title-page-name"/>            self.continuous_action_space = False<br class="title-page-name"/><br class="title-page-name"/>        else: # Continuous action space<br class="title-page-name"/>            self.action_shape = self.env.action_space.shape[0]<br class="title-page-name"/>            self.policy = self.multi_variate_gaussian_policy<br class="title-page-name"/>        self.critic_shape = 1<br class="title-page-name"/>        if len(self.state_shape) == 3: # Screen image is the input to the agent<br class="title-page-name"/>            if self.continuous_action_space:<br class="title-page-name"/>                self.actor= DeepActor(self.state_shape, self.action_shape, device).to(device)<br class="title-page-name"/>            else: # Discrete action space<br class="title-page-name"/>                self.actor = DeepDiscreteActor(self.state_shape, self.action_shape, device).to(device)<br class="title-page-name"/>            self.critic = DeepCritic(self.state_shape, self.critic_shape, device).to(device)<br class="title-page-name"/>        else: # Input is a (single dimensional) vector<br class="title-page-name"/>            if self.continuous_action_space:<br class="title-page-name"/>                #self.actor_critic = ShallowActorCritic(self.state_shape, self.action_shape, 1, self.params).to(device)<br class="title-page-name"/>                self.actor = ShallowActor(self.state_shape, self.action_shape, device).to(device)<br class="title-page-name"/>            else: # Discrete action space<br class="title-page-name"/>                self.actor = ShallowDiscreteActor(self.state_shape, self.action_shape, device).to(device)<br class="title-page-name"/>            self.critic = ShallowCritic(self.state_shape, self.critic_shape, device).to(device)<br class="title-page-name"/>        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.params["learning_rate"])<br class="title-page-name"/>        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.params["learning_rate"])</pre>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Gathering n-step experiences using the current policy</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4SCS80-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0"><img src="img/00284.jpeg" class="calibre94"/></h1>
+                
+            
+            
+                
+<p class="calibre2">在上图所示的例子中，代理将在它的<kbd class="calibre12">self.trajectory</kbd>中填充五个转换的列表，如下所示:<kbd class="calibre12">[T1, T2, T3, T4, T5]</kbd>。</p>
+<p class="cdpaligncenter4">在我们的实现中，我们将使用稍微修改的转换表示来减少冗余计算。我们将使用以下定义来表示转换:</p>
+<p class="calibre2"><kbd class="calibre12">Transition = namedtuple("Transition", ["s", "value_s", "a", "log_prob_a"])</kbd> <br class="calibre6"/>这里，<kbd class="calibre12">s</kbd>是状态，<kbd class="calibre12">value_s</kbd>是评论家对状态<kbd class="calibre12">s</kbd>的值的预测，<kbd class="calibre12">a</kbd>是采取的行动，<kbd class="calibre12">log_prob_a</kbd>是根据行动者/代理人当前政策采取行动的概率的对数<kbd class="calibre12">a</kbd>。</p>
+<p class="calibre2">我们将使用之前实现的<kbd class="calibre12">calculate_n_step_return(self, n_step_rewards, final_state, done, gamma)</kbd>方法，根据包含轨迹中每一步获得的标量奖励值的<kbd class="calibre12">n_step_rewards</kbd>列表和用于计算轨迹中最后/最后状态的评论家估计值的<kbd class="calibre12">final_state</kbd>来计算n步回报，正如我们之前在n步回报计算一节中讨论的。</p>
+<p class="calibre2">计算演员和评论家的损失</p>
+<p class="calibre2">根据我们之前对n步深度行动者-批评家算法的描述，您可能记得用神经网络表示的批评家，正试图解决一个类似于我们在<a href="part0094.html#2PKKS0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第6章</a>、<em class="calibre13">中看到的问题，该问题使用深度Q学习</em>实现一个用于最佳离散控制的智能代理，它表示价值函数(类似于我们在本章中使用的动作-价值函数，但更简单一点)。我们可以使用标准的<strong class="calibre4">均方误差</strong> ( <strong class="calibre4"> MSE </strong>)损失或更平滑的L1损失/休伯损失，根据评论家的预测值和上一步计算的n步回报(TD目标)进行计算。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Calculating the actor's and critic's losses</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4TBCQ0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">对于行动者，我们将使用通过策略梯度定理获得的结果，特别是优势行动者-批评家版本，其中优势值函数用于指导行动者策略的梯度更新。我们将使用TD_error，它是优势值函数的无偏估计。</h1>
+                
+            
+            
+                
+<p class="calibre2">综上，影评人和演员的损失如下:</p>
+<p class="calibre2"><em class="calibre25"> critic_loss = MSE( <img src="img/00285.jpeg" class="calibre95"/>，critic_prediction) </em></p>
+<p class="calibre2"><em class="calibre25">actor _ loss = log(<img src="img/00286.jpeg" class="calibre96"/>)* TD _ error</em></p>
+<ul class="calibre10">
+<li class="calibre11">捕捉到主要的损失计算公式后，我们可以使用<kbd class="calibre12">calculate_loss(self, trajectory, td_targets)</kbd>方法在代码中实现它们，如下面的代码片段所示:</li>
+<li class="calibre11">更新演员-评论家模型</li>
+</ul>
+<p class="calibre2">计算出演员和评论家的损失后，学习过程的下一步也是最后一步是根据他们的损失更新演员和评论家的参数。由于我们使用awesome PyTorch库，该库自动处理偏导数、误差反向传播和梯度计算，因此使用前面步骤的结果实现起来简单明了，如以下代码示例所示:</p>
+<pre class="calibre17">def calculate_loss(self, trajectory, td_targets):<br class="title-page-name"/>        """<br class="title-page-name"/>        Calculates the critic and actor losses using the td_targets and self.trajectory<br class="title-page-name"/>        :param td_targets:<br class="title-page-name"/>        :return:<br class="title-page-name"/>        """<br class="title-page-name"/>        n_step_trajectory = Transition(*zip(*trajectory))<br class="title-page-name"/>        v_s_batch = n_step_trajectory.value_s<br class="title-page-name"/>        log_prob_a_batch = n_step_trajectory.log_prob_a<br class="title-page-name"/>        actor_losses, critic_losses = [], []<br class="title-page-name"/>        for td_target, critic_prediction, log_p_a in zip(td_targets, v_s_batch, log_prob_a_batch):<br class="title-page-name"/>            td_err = td_target - critic_prediction<br class="title-page-name"/>            actor_losses.append(- log_p_a * td_err) # td_err is an unbiased estimated of Advantage<br class="title-page-name"/>            critic_losses.append(F.smooth_l1_loss(critic_prediction, td_target))<br class="title-page-name"/>            #critic_loss.append(F.mse_loss(critic_pred, td_target))<br class="title-page-name"/>        if self.params["use_entropy_bonus"]:<br class="title-page-name"/>            actor_loss = torch.stack(actor_losses).mean() - self.action_distribution.entropy().mean()<br class="title-page-name"/>        else:<br class="title-page-name"/>            actor_loss = torch.stack(actor_losses).mean()<br class="title-page-name"/>        critic_loss = torch.stack(critic_losses).mean()<br class="title-page-name"/><br class="title-page-name"/>        writer.add_scalar(self.actor_name + "/critic_loss", critic_loss, self.global_step_num)<br class="title-page-name"/>        writer.add_scalar(self.actor_name + "/actor_loss", actor_loss, self.global_step_num)<br class="title-page-name"/><br class="title-page-name"/>        return actor_loss, critic_loss</pre>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Updating the actor-critic model</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4U9TC0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">用于保存/加载、记录、可视化和监控的工具</h1>
+                
+            
+            
+                
+<p class="calibre2">在前面的章节中，我们介绍了代理学习算法实现的核心部分。除了这些核心部分之外，还有一些实用函数，我们将使用它们在不同的学习环境中训练和测试代理。我们将重用我们已经在<a href="part0094.html#2PKKS0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第6章</a>、<em class="calibre13">中开发的组件，使用深度Q学习</em>实现智能代理进行最优离散控制，例如<kbd class="calibre12">utils.params_manager</kbd>，以及<kbd class="calibre12">save()</kbd>和<kbd class="calibre12">load()</kbd>方法，它们分别保存和加载代理的训练过的大脑或模型。我们还将利用日志记录实用程序，以Tensorboard可使用的格式记录代理的进度，以实现美观、快速的可视化，并进行调试和监控，以查看代理的培训过程是否有问题。</p>
+<pre class="calibre17">def learn(self, n_th_observation, done):<br class="title-page-name"/>        td_targets = self.calculate_n_step_return(self.rewards, n_th_observation, done, self.gamma)<br class="title-page-name"/>        actor_loss, critic_loss = self.calculate_loss(self.trajectory, td_targets)<br class="title-page-name"/><br class="title-page-name"/>        self.actor_optimizer.zero_grad()<br class="title-page-name"/>        actor_loss.backward(retain_graph=True)<br class="title-page-name"/>        self.actor_optimizer.step()<br class="title-page-name"/><br class="title-page-name"/>        self.critic_optimizer.zero_grad()<br class="title-page-name"/>        critic_loss.backward()<br class="title-page-name"/>        self.critic_optimizer.step()<br class="title-page-name"/><br class="title-page-name"/>        self.trajectory.clear()<br class="title-page-name"/>        self.rewards.clear()</pre>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Tools to save/load, log, visualize, and monitor</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="4V8DU0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">这样，我们就可以完成n步优势演员-评论家代理的实现了！您可以在<kbd class="calibre12">ch8/a2c_agent.py</kbd>文件中找到完整的实现。在我们了解如何训练代理之前，在下一节中，我们将快速了解我们可以应用于deep n-step advantage代理的一个扩展，以使它在多核计算机上的性能更好。</h1>
+                
+            
+            
+                
+<p class="calibre2">一个扩展异步深度n步优势行动者-批评家</p>
+<p class="calibre2">我们可以对我们的代理实现进行的一个简单的扩展是启动我们的代理的几个实例，每个实例都有自己的学习环境实例，并以异步的方式发送回他们所学习的内容的更新，也就是说，只要它们可用，就不需要任何时间同步。这种算法通常被称为A3C算法，是异步优势行动者-批评家的缩写。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>An extension - asynchronous deep n-step advantage actor-critic </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="506UG0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">这一扩展背后的动机之一源于我们在第6章<a href="part0094.html#2PKKS0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">、</a>、<em class="calibre13">中了解到的，通过使用深度Q学习</em>和经验回放记忆，实现一个智能代理以实现最佳离散控制。我们的深度Q学习代理能够通过添加经验重放记忆来学习得更好，这实质上有助于解除顺序决策问题中的相关性，并让代理从其过去的经验中提取更多的果汁/信息。类似地，使用并行运行的多个行动者-学习者实例背后的思想被发现有助于打破转换之间的相关性，并且也有助于探索环境中状态空间的不同部分，因为每个行动者-学习者过程有其自己的一组策略参数和环境实例要探索。一旦并行运行的代理实例有一些更新要发回，它们就将这些更新发送到一个共享的全局代理实例，然后该实例充当其他代理实例要同步的新参数源。</h1>
+                
+            
+            
+                
+<p class="calibre2">我们可以使用Python的PyTorch多处理库来实现这个扩展。是啊！你猜对了。这就是我们实现中的<kbd class="calibre12">DeepActorCritic</kbd>代理从一开始就子类化<kbd class="calibre12">torch.multiprocessing.Process</kbd>的原因，这样我们就可以向它添加这个扩展，而不需要任何重大的代码重构。如果你感兴趣的话，你可以查看本书代码库中的<kbd class="calibre12">ch8/README.md</kbd>文件，获得更多关于探索这种架构的资源。</p>
+<p class="calibre2">我们可以很容易地扩展我们在<kbd class="calibre12">a2c_agent.py</kbd>中的n步优势行动者-批评家代理实现，以实现同步深度n步优势行动者-批评家代理。你可以在<kbd class="calibre12">ch8/async_a2c_agent.py</kbd>中找到异步实现。</p>
+<p class="calibre2">训练智能和自动驾驶智能体</p>
+<p class="calibre2">我们现在已经拥有了完成本章目标所需的所有部件，即组装一个智能的自动驾驶智能体，然后训练它在照片般逼真的卡拉驾驶环境中自动驾驶汽车，这是我们在前一章中使用健身房界面开发的学习环境。代理培训过程可能需要一段时间。根据您要培训代理的机器的硬件，这可能需要几个小时的时间(对于较简单的环境，如<kbd class="calibre12">Pendulum-v0</kbd>、<kbd class="calibre12">CartPole-v0</kbd>和一些Atari游戏)到几天的时间(对于复杂的环境，如CARLA驾驶环境)。为了首先很好地理解培训过程以及如何在代理人培训时监控进度，我们将从几个简单的示例开始，来浏览培训和测试代理人的整个过程。然后，我们将看看如何轻松地将它转移到CARLA驾驶环境中，以进一步训练它。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Training an intelligent and autonomous driving agent</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="515F20-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">训练和测试深层n步优势演员-评论家代理</h1>
+                
+            
+            
+                
+<p class="calibre2">因为我们的代理的实现是通用的(如前一节步骤1中使用的表格所讨论的)，我们可以使用任何具有健身房兼容界面的学习环境来训练/测试代理。您可以在本书前几章讨论的各种环境中试验和训练代理，我们还将在下一章讨论一些更有趣的学习环境。别忘了我们定制的卡拉汽车驾驶环境！</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Training and testing the deep n-step advantage actor-critic agent</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="523VK0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">我们将挑选一些环境作为示例，并介绍如何启动培训和测试流程，让您开始自己进行试验。首先，更新你的书的代码库和<kbd class="calibre12">cd</kbd>到<kbd class="calibre12">ch8</kbd>文件夹，这一章的代码驻留在那里。像往常一样，确保激活我们为这本书创建的conda环境。之后，您可以使用<kbd class="calibre12">a2c_agent.py</kbd>脚本启动n步优势演员评论家代理的培训流程，如下所示:</h1>
+                
+            
+            
+                
+<p class="calibre2">您可以将<kbd class="calibre28">Pendulum-v0</kbd>替换为您机器上设置的任何与健身房兼容的学习环境名称。</p>
+<p class="calibre2">这将启动代理的训练脚本，该脚本将使用在<kbd class="calibre12">~/HOIAWOG/ch8/parameters.json</kbd>文件中指定的默认参数(您可以更改该参数进行实验)。它还将从<kbd class="calibre12">~/HOIAWOG/ch8/trained_models</kbd>目录中为指定的环境加载经过训练的代理的大脑/模型，如果可用的话，并继续训练。对于高维状态空间环境，如Atari游戏，或其他状态/观察是场景图像或屏幕像素的环境，将使用我们在前面一节中讨论的深度卷积神经网络，它将利用您机器上的GPU(如果可用)来加速计算(如果需要，您可以通过在<kbd class="calibre12">parameters.json</kbd>文件中设置<kbd class="calibre12">use_cuda = False</kbd>来禁用它)。如果您的机器上有多个GPU，并且想要在不同的GPU上训练不同的代理，您可以使用<kbd class="calibre12">--gpu-id</kbd>标志将GPU设备ID指定为<kbd class="calibre12">a2c_agent.py</kbd>脚本的命令行参数，以要求脚本使用特定的GPU进行训练/测试。</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~/HOIAWOG/ch8$ python a2c_agent --env Pendulum-v0</strong></pre>
+<p>一旦训练过程开始，您可以通过从<kbd class="calibre12">logs</kbd>目录中使用以下命令启动<kbd class="calibre12">tensorboard</kbd>来监控代理的过程:</p>
+<p class="calibre2">在使用前面的命令启动<kbd class="calibre12">tensorboard</kbd>之后，您可以访问位于<kbd class="calibre12">http://localhost:6006</kbd>的网页来监控代理的进度。此处提供示例截图供您参考；这些来自n步优势行动者-批评家代理的两次训练运行，使用<kbd class="calibre12">parameters.json</kbd>文件中的<kbd class="calibre12">learning_step_threshold</kbd>参数，对<em class="calibre13"> n </em>步使用不同的值:</p>
+<p class="calibre2">演员-评论家(使用单独的演员和评论家网络):</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~/HOIAWOG/ch8/logs$ tensorboard --logdir .</strong></pre>
+<p class="calibre2">-<kbd class="calibre12">Pendulum-v0</kbd>；n步(学习步骤阈值= 100)</p>
+<p class="calibre2"><img src="img/00287.jpeg" class="calibre97"/></p>
+<ol class="calibre14">
+<li value="1" class="calibre11">2.-<kbd class="calibre12">Pendulum-v0</kbd>；n步(学习步骤阈值= 5)</li>
+</ol>
+<p class="cdpaligncenter4"><img src="img/00288.jpeg" class="calibre98"/></p>
+<p class="cdpaligncenter4">比较1(绿色100步交流)和2(灰色5步交流)在<kbd class="calibre12">Pendulum-v0</kbd>上的1000万步:</p>
+<p class="cdpaligncenter4"><img src="img/00289.jpeg" class="calibre99"/></p>
+<ul class="calibre10">
+<li class="calibre11">训练脚本还会将训练过程的摘要输出到控制台。如果您想要可视化环境，以查看代理正在做什么或者它是如何学习的，您可以在启动训练脚本时将<kbd class="calibre12">--render</kbd>标志添加到命令中，如下行所示:</li>
+</ul>
+<p class="cdpaligncenter4">如您所见，我们已经到了这样一个地步，您只需一个命令就可以训练、记录和可视化代理的性能！到目前为止，我们已经取得了很大的进展。</p>
+<p class="calibre2">您可以在相同的环境或不同的环境中，使用不同的代理参数集运行几个实验。选择前面的例子是为了在一个更简单的环境中演示它的性能，以便您可以轻松地运行完整长度的实验并再现和比较结果，而不管您可能拥有的硬件资源如何。作为本书代码库的一部分，为一些环境提供了训练有素的代理大脑/模型，以便您可以在测试模式下快速启动和运行脚本，以查看训练有素的代理如何执行任务。它们可以在你的书的存储库的fork中的<kbd class="calibre12">ch8/trianed_models</kbd>文件夹中获得，或者在这里的上游源:<a href="https://github.com/PacktPublishing/Hands-On-Intelligent-Agents-with-OpenAI-Gym/tree/master/ch8/trained_models" class="calibre9">https://github . com/packt publishing/Hands-On-Intelligent-Agents-with-open ai-Gym/tree/master/ch8/trained _ models</a>。您还可以在本书的代码库中找到其他资源，如其他环境中学习曲线的插图和代理在各种环境中执行的视频剪辑，供您参考。</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~/HOIAWOG/ch8$ python a2c_agent --env CartPole-v0 --render</strong></pre>
+<p class="calibre2">一旦您准备好测试代理，无论是使用您自己训练过的代理大脑模型还是使用预先训练过的代理大脑，您都可以使用<kbd class="calibre12">--test</kbd>标志来表示您想要禁用学习并在测试模式下运行代理。例如，要在打开学习环境渲染的情况下在<kbd class="calibre12">LunarLander-v2</kbd>环境中测试代理，您可以使用以下命令:</p>
+<p class="calibre2">我们可以互换使用我们讨论过的异步代理作为基本代理的扩展。由于两个代理实现遵循相同的结构和配置，我们可以通过使用<kbd class="calibre12">async_a2c_agent.py</kbd>脚本代替<kbd class="calibre12">a2c_agent.py</kbd>轻松切换到异步代理训练脚本。他们甚至支持相同的命令行参数来简化我们的工作。当使用<kbd class="calibre12">asyn_a2c_agent.py</kbd>脚本时，您应该确保在<kbd class="calibre12">parameters.json</kbd>文件中设置<kbd class="calibre12">num_agents</kbd>参数，基于您希望代理用于训练的进程或并行实例的数量。例如，我们可以使用以下命令在<kbd class="calibre12">BipedalWalker-v2</kbd>环境中训练代理的异步版本:</p>
+<p class="calibre2">您可能已经意识到，我们的代理实现能够在各种不同的环境中学习行动，每个环境都有自己要完成的一组任务，以及自己的状态、观察和行动空间。正是这种多功能性使得基于深度强化学习的代理受到欢迎，并适用于解决各种问题。现在我们已经熟悉了培训过程，我们终于可以继续培训代理驾驶汽车，并按照CARLA驾驶模拟器中的车道行驶。</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~/HOIAWOG/ch8$ python a2c_agent --env LunarLander-v2 --test --render</strong></pre>
+<p class="calibre2">在卡拉驾驶模拟器中训练代理驾驶汽车</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~/HOIAWOG/ch8$ python async_a2c_agent --env BipedalWalker-v2 </strong></pre>
+<p class="calibre2">让我们开始在卡拉驾驶环境中训练一个代理人吧！首先，确保你的GitHub fork与上游的master保持一致，这样你就可以从书的库中获得最新的代码。由于我们在上一章中创建的CARLA环境与OpenAI健身房接口兼容，因此使用CARLA环境进行训练实际上很容易，就像任何其他健身房环境一样。您可以使用以下命令训练n步优势行动者-批评家代理:</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Training the agent to drive a car in the CARLA driving simulator</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="532G60-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">这将启动代理的培训过程，就像我们之前看到的那样，进度摘要将被打印到控制台窗口，同时日志被写入<kbd class="calibre12">logs</kbd>文件夹，可以使用<kbd class="calibre12">tensorboard</kbd>查看。</h1>
+                
+            
+            
+                
+<p class="calibre2">在培训过程的初始阶段，您会注意到代理正在疯狂地驾驶汽车！</p>
+<pre class="calibre17"><strong class="calibre1">(rl_gym_book) praveen@ubuntu:~/HOIAWOG/ch8$ python a2c_agent --env Carla-v0</strong></pre>
+<p class="calibre2">经过几个小时的训练，你会看到代理人学会控制汽车，并成功地沿着道路行驶，同时保持在车道上，避免撞上其他车辆。在<kbd class="calibre12">ch8/trained_models</kbd>文件夹中有一个经过培训的自动驾驶代理模型，您可以快速地对代理进行测试！您还可以在本书的代码库中找到更多的资源和实验结果，以帮助您的学习和实验。快乐实验！</p>
+<p class="calibre2">摘要</p>
+<p class="calibre2">在这一章中，我们从基础开始，实际操作了一个基于演员-评论家架构的深度强化学习代理。我们从介绍基于策略梯度的方法开始，逐步介绍了表示策略梯度优化的目标函数、理解似然比技巧以及最终推导策略梯度定理的过程。然后，我们看了actor-critic体系结构如何利用策略梯度定理，并根据体系结构的实现，使用actor组件来表示代理的策略，使用critic组件来表示状态/动作/优势值函数。有了对演员-评论家体系结构的直观理解，我们继续讨论A2C算法，并讨论了其中涉及的六个步骤。然后，我们使用图表讨论了n步回报计算，并看到了在Python中实现n步回报计算方法是多么容易。然后，我们继续深入n步优势演员-评论家代理的一步一步的实现。</p>
+
+
+            
+
+            
+        
+    </body></html>
+
+
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+  <head>
+    <title>Summary</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="5410O0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre">
+        
+
+                            
+                    <h1 class="header-title" id="calibre_pb_0">我们还讨论了如何使实现灵活和通用，以适应各种环境，这些环境可能具有不同的状态、观察和操作空间维度，也可能是连续的或离散的。然后，我们研究了如何在不同的进程上并行运行代理的多个实例，以提高学习性能。在上一节中，我们介绍了培训代理过程中涉及的步骤，以及一旦他们接受了培训，我们如何使用<kbd xmlns:epub="http://www.idpf.org/2007/ops" class="calibre12">--test</kbd>和<kbd xmlns:epub="http://www.idpf.org/2007/ops" class="calibre12">--render</kbd>标志来测试代理的表现。我们从更简单的环境开始，以适应训练和监控过程，然后最终继续完成本章的目标，即在CARLA驾驶模拟器中训练智能代理自动驾驶汽车！我希望你通过这相对较长的一章学到了很多东西。至此，您已经从本章和<a xmlns:epub="http://www.idpf.org/2007/ops" href="part0094.html#2PKKS0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">第6章</a>、<em xmlns:epub="http://www.idpf.org/2007/ops" class="calibre13">中了解并实现了两大类高性能学习代理算法，使用深度Q学习</em>实现了一个智能代理用于 <em xmlns:epub="http://www.idpf.org/2007/ops" class="calibre13">最优离散控制。在下一章中，我们将探索新的和有前途的学习环境，在那里你可以训练你的自定义代理，并开始向下一个级别前进。</em></h1>
+                
+            
+            
+                
+<p class="calibre2">In this chapter, we got hands-on with an actor-critic architecture-based deep reinforcement learning agent, starting from the basics. We started with the introduction to policy gradient-based methods and walked through the step-by-step process of representing the objective function for the policy gradient optimization, understanding the likelihood ratio trick, and finally deriving the policy gradient theorem. We then looked at how the actor-critic architecture makes use of the policy gradient theorem and uses an actor component to represent the policy of the agent, and a critic component to represent the state/action/advantage value function, depending on the implementation of the architecture. With an intuitive understanding of the actor-critic architecture, we moved on to the A2C algorithm and discussed the six steps involved in it. We then discussed the n-step return calculation using a diagram, and saw how easy it is to implement the n-step return calculation method in Python. We then moved on to the step-by-step implementation of the deep n-step advantage actor-critic agent.</p>
+<p class="calibre2">We also discussed how we could make the implementation flexible and generic to accommodate a variety of environments, which may have different state, observation and action space dimensions, and also may be continuous or discrete. We then looked at how we can run multiple instances of the agent in parallel on separate processes to improve the learning performance. In the last section, we walked through the steps involved in the process of training the agents, and once they are trained, how we can use the <kbd class="calibre12">--test</kbd> and <kbd class="calibre12">--render</kbd> flags to test the agent's performance. We started with simpler environments to get accustomed to the training and monitoring process, and then finally moved on to accomplishing the goal of this chapter, which was to train an intelligent agent to drive a car autonomously in the CARLA driving simulator! I hope you learned a lot going through this relatively long chapter. At this point, you have experience understanding and implementing two broad classes of high-performance learning agent algorithms from this chapter and <a href="part0094.html#2PKKS0-22c7fc7f93b64d07be225c00ead6ce12" class="calibre9">Chapter 6</a>, <em class="calibre13">Implementing an Intelligent Agent for</em> <em class="calibre13">Optimal Discrete Control using Deep Q-Learning</em>. In the next chapter, we will explore the landscape of new and promising learning environments, where you can train your custom agents and start making progress towards the next level.</p>
+
+
+            
+
+            
+        
+    </body></html>
+</body></html>

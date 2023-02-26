@@ -1,0 +1,256 @@
+<html><head/><body>
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><div><h1 id="_idParaDest-70"><em class="italic"> <a id="_idTextAnchor069"/>第六章</em>:按比例运行超参数调谐</h1>
+			<p><strong class="bold">超参数调整</strong>或<strong class="bold">超参数优化</strong> ( <strong class="bold"> HPO </strong>)是在合理的计算资源限制和时间框架内，找到最佳可能的深度神经网络结构、预训练模型类型和模型训练过程的过程。在这里，超参数是指在ML训练过程中不能改变或学习的参数，如深度神经网络内部的层数，预训练语言模型的选择，或训练过程的学习速率，批量大小和优化器。在本章中，我们将使用HPO作为超参数调整和优化过程的简称。HPO是生产高性能ML/DL模型的关键步骤。鉴于超参数的搜索空间非常大，有效地大规模运行HPO是一个重大挑战。与经典的ML模型相比，评估DL模型的复杂性和高成本进一步增加了挑战。因此，我们需要学习最先进的HPO方法和实施框架，实施日益复杂和可扩展的HPO方法，并使用MLflow对其进行跟踪，以确保可再现的调整过程。学习完本章后，您将能够熟练地为DL模型管道实现可伸缩的HPO。</p>
+			<p>在这一章中，首先，我们将给出一个不同的自动HPO框架和DL模型调优应用的概述。此外，我们将了解优化什么以及何时选择使用什么框架。我们将比较三个流行的HPO框架:<strong class="bold"> HyperOpt </strong>、<strong class="bold"> Optuna </strong>和<strong class="bold"> Ray Tune </strong>。我们将展示哪一个是大规模运行HPO的最佳选择。然后，我们将重点学习如何创建可以使用Ray Tune和MLflow的HPO就绪DL模型代码。接下来，我们将以Optuna为主要示例，展示如何轻松切换到使用不同的HPO算法。</p>
+			<p>在本章中，我们将讨论以下主题:</p>
+			<ul>
+				<li>了解DL管线的自动HPO</li>
+				<li>使用光线调节和MLflow创建HPO就绪的DL模型</li>
+				<li>使用MLflow运行第一个射线调节HPO实验</li>
+				<li>使用Optuna和HyperBand运行Ray Tune HPO</li>
+			</ul>
+			<h1 id="_idParaDest-71"><a id="_idTextAnchor070"/>技术要求</h1>
+			<p>要理解本章中的示例，需要以下关键技术要求:</p>
+			<ul>
+				<li>Ray Tune 1.9.2:这是一个灵活而强大的超参数调优框架(<a href="https://docs.ray.io/en/latest/tune/index.html">https://docs.ray.io/en/latest/tune/index.html</a>)。</li>
+				<li>Optuna 2.10.0:这是一个命令式的由运行定义的超参数调优Python包(<a href="https://optuna.org/">https://optuna.org/</a>)。</li>
+				<li>本章的代码可以在下面的GitHub URL中找到，其中还包含了包含前面的密钥包和其他依赖项的<code>requirements.txt</code>文件:<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow/tree/main/chapter06">https://GitHub . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow/tree/main/chapter 06</a>。</li>
+			</ul>
+			<h1 id="_idParaDest-72"><a id="_idTextAnchor071"/>了解DL管线的自动HPO</h1>
+			<p>自从1995年第一篇关于该主题的已知论文发表以来，自动HPO已经被研究了二十多年(<a href="https://www.sciencedirect.com/science/article/pii/B9781558603776500451">https://www . science direct . com/science/article/pii/b 9781558603776500451</a>)。众所周知，调整ML模型的<a id="_idIndexMarker349"/>超参数可以提高模型的性能——有时，效果非常显著。近年来，DL模型的兴起引发了新一轮的创新和新框架的开发，以解决DL管道的HPO问题。这是因为DL模型流水线强加了许多新的和大规模的优化挑战，这些挑战不能由先前的HPO方法容易地解决。注意，与可以在模型训练过程中学习的模型参数相反，必须在训练之前设置一组超参数。</p>
+			<p class="callout-heading">HPO与迁移学习微调的区别</p>
+			<p class="callout">在本书中，我们一直专注于一种成功的DL方法，称为<strong class="bold">迁移学习</strong>(请参考<a href="B18120_01_ePub.xhtml#_idTextAnchor015"> <em class="italic">第1章</em> </a>、<em class="italic">深度学习生命周期和MLOps挑战</em>，以获得完整的讨论)。迁移学习过程的关键步骤是用一些特定于任务和领域的标记数据来微调预训练的模型，以获得良好的特定于任务的DL模型。然而，微调步骤只是一种特殊的模型训练步骤，也有许多超参数需要优化。这就是HPO发挥作用的地方。</p>
+			<h2 id="_idParaDest-73"><a id="_idTextAnchor072"/>超参数的类型及其挑战</h2>
+			<p>有几种类型的超参数可用于DL管道:</p>
+			<ul>
+				<li><strong class="bold"> DL模型类型和架构</strong>:在迁移学习的情况下，选择使用哪些预训练模型<a id="_idIndexMarker350"/>是一个可能的超参数。例如，<strong class="bold">抱脸</strong>模型库(<a href="https://huggingface.co/models">https://huggingface.co/models</a>)中有超过27000个经过预训练的<a id="_idIndexMarker351"/>模型，包括<strong class="bold">伯特</strong>、<strong class="bold">罗伯塔</strong>等等。对于一个特定的预测任务，我们可能想要尝试其中的一些来决定哪一个是最好的。</li>
+				<li><strong class="bold">学习和训练相关参数</strong>:包括不同类型的优化器<a id="_idIndexMarker352"/>，如<strong class="bold">随机梯度下降</strong> ( <strong class="bold"> SGD </strong>)和<strong class="bold"> Adam </strong>(您可以在<a href="https://machinelearningknowledge.ai/pytorch-optimizers-complete-guide-for-beginner/">https://machine Learning knowledge . ai/PyTorch-optimizer-complete-guide-for-初学者/ </a>查看py torch优化器列表<a id="_idIndexMarker353"/>)。它还包括相关的参数，如学习率和批量大小。建议在适用的情况下，首先按照神经网络模型的重要性顺序调整以下参数:学习速率、动量、小批量、隐藏层数、学习速率衰减和正则化(<a href="https://arxiv.org/abs/2003.05689">https://arxiv.org/abs/2003.05689</a>)。</li>
+				<li><strong class="bold">数据和管道配置</strong>:DL管道<a id="_idIndexMarker355"/>可以包括可能影响模型训练的数据处理和转换步骤。例如，如果我们想要比较具有或不具有签名文本主体的电子邮件消息的分类模型的性能，则需要用于是否包括电子邮件签名的超参数。另一个例子是当我们没有足够的数据或数据的变化时；我们可以尝试使用各种数据扩充技术，这将为模型训练带来不同的输入集(<a href="https://neptune.ai/blog/data-augmentation-nlp">https://neptune.ai/blog/data-augmentation-nlp</a>)。</li>
+			</ul>
+			<p>提醒一下，并不是所有的超参数都是可调的或者需要调整。例如，不需要调整DL模型中的<strong class="bold">历元数</strong>。这是因为当精度指标停止提高或没有任何希望比其他超参数配置做得更好时，训练应该停止。这被称为早期停止或修剪，是支撑最近一些最先进的HPO算法的关键技术之一(有关早期停止的更多讨论，请参考<a href="https://databricks.com/blog/2019/08/15/how-not-to-scale-deep-learning-in-6-easy-steps.html">https://databricks . com/blog/2019/08/15/how-not-to-scale-deep-learning-in-6-easy-steps . html</a>)。</p>
+			<p>注意这三类超参数都可以混合搭配，整个超参数空间的配置可以非常大。例如，如果我们想要选择我们想要用作超参数的预训练模型的类型(例如，选择可以是<strong class="bold"> BERT </strong>或<strong class="bold"> RoBERTa </strong>)，两个学习相关的参数(例如学习速率和批量大小)，以及两个用于NLP文本的不同数据扩充技术(例如随机插入和同义词替换)，那么我们有五个超参数要优化。请注意，每个超参数可以有相当多不同的候选值可供选择，如果每个超参数有5个不同的值，那么我们将有总共55 = 3125个超参数组合可供尝试。在实践中，有几十个超参数可供尝试是很常见的，每个超参数可能有几十个选择或分布可供采样。这很快就导致了维数灾难问题(<a href="https://insaid.medium.com/automated-hyperparameter-tuning-988b5aeb7f2a">https://insaid . medium . com/automated-hyperparameter-tuning-988 b5 aeb 7 F2 a</a>)。DL模型昂贵的训练和评估成本加剧了这种高维搜索空间的挑战；我们知道，即使是一个微小的BERT的1个历元，我们在前面的章节中尝试过，使用一个微小的训练和验证数据集也需要1-2分钟。现在想象一个带有HPO的现实生产级DL模型，如果执行效率不高，可能需要几个小时、几天甚至几周的时间。总体而言，以下列出了需要大规模应用高性能HPO的主要挑战:</p>
+			<ul>
+				<li>超参数的高维搜索空间</li>
+				<li>越来越大的DL模型的模型训练和评估时间的高成本</li>
+				<li>Time-to-production and deployment for DL models used in production<p class="callout-heading">同时进行模型训练和HPO</p><p class="callout">在训练过程中可以动态地改变超参数。这是一种同时进行模型训练和HPO的混合方法，例如<strong class="bold">基于群体的训练</strong>(<strong class="bold">PBT</strong>；<a href="https://deepmind.com/blog/article/population-based-training-neural-networks">https://deep mind . com/blog/article/population-based-training-neural-networks</a>)。然而，这并不能改变这样一个事实，即当开始一个新的训练时期时，需要预定义一组<a id="_idIndexMarker356"/>超参数。这种PBT是试图降低搜索高维超参数空间的成本和DL模型的训练成本的创新之一。感兴趣的读者应该查阅<em class="italic">延伸阅读</em>部分来深入了解这个主题。</p></li>
+			</ul>
+			<p>既然我们已经了解了要优化的超参数的一般挑战和类别，那么让我们看看HPO是如何工作的，以及如何为我们的使用选择一个框架。</p>
+			<h2 id="_idParaDest-74">HPO是如何运作的，选择哪一个</h2>
+			<p>有不同的方式来理解HPO是如何运作的。经典的HPO方法包括网格搜索和随机搜索，其中用一系列候选值选择一组超参数。每一个都独立运行直到完成，然后我们从我们运行的一组试验中选择最佳的超参数配置，给出我们发现的最佳模型性能度量。虽然这种类型的搜索易于实现，甚至可能不需要复杂的框架来支持它，但它本质上是低效的，并且由于HPO的非凸性质，甚至可能找不到超参数的最佳配置。术语非凸意味着存在多个局部最小或最大点，并且优化方法可能无法找到全局最优(即，最小或最大)。简而言之，现代HPO需要做两件事:</p>
+			<ul>
+				<li>超参数的自适应采样(也称为<strong class="bold">配置选择</strong>或<strong class="bold"> CS </strong>):这意味着它需要利用先验知识找到要尝试的超参数集。这主要是关于使用贝叶斯优化的不同变体，以一种<a id="_idIndexMarker358"/>顺序的方式基于先前的试验来自适应地识别新的配置。这已被证明优于传统的网格搜索和随机搜索方法。</li>
+				<li>对一组超参数的性能进行自适应评估(也称为<strong class="bold">配置评估</strong>或<strong class="bold"> CE </strong>):这些方法侧重于自适应地为有前途的超参数配置分配更多资源，同时快速修剪较差的配置。资源可以是不同的形式，例如训练数据集的大小(例如，仅使用训练数据集的一小部分)或迭代次数(例如，仅使用几次迭代来决定终止哪些迭代而不运行到收敛)。有一个<a id="_idIndexMarker359"/>方法家族叫做多臂bandit算法，比如<strong class="bold">异步连续减半算法</strong> ( <strong class="bold"> ASHA </strong>)。在这里，所有的试验都从最初的预算开始，然后去掉最差的一半，为剩下的部分调整预算，如此重复，直到只剩下一个试验。</li>
+			</ul>
+			<p>在实践中，我们希望使用以下五个标准选择一个<a id="_idIndexMarker360"/>合适的HPO框架:</p>
+			<ul>
+				<li>与MLflow的回调集成</li>
+				<li>GPU集群的可扩展性和支持</li>
+				<li>易用性和灵活的API</li>
+				<li>与先进的HPO算法(<strong class="bold"> CS </strong>和<strong class="bold"> CE </strong>)集成</li>
+				<li>DL框架的支持</li>
+			</ul>
+			<p>在本书中，对三个框架进行了比较，结果总结在<em class="italic">图6.1 </em>中:</p>
+			<div><div><img src="img/B18120_06_01.jpg" alt="Figure 6.1: Comparison of Ray Tune, Optuna, and HyperOpt&#13;&#10;" width="1532" height="1352"/>
+				</div>
+			</div>
+			<p class="figure-caption">图6.1:光线调节、Optuna和远视的比较</p>
+			<p>从<em class="italic">图6.1 </em>中可以看出，与<strong class="bold">Optuna</strong>(<a href="https://optuna.org/">https://optuna.org/</a>)和<strong class="bold">远视</strong>(<a href="https://hyperopt.github.io/hyperopt/">https://hyperopt.github.io/hyperopt/</a>)相比，胜出者是<strong class="bold">雷调</strong>(<a href="https://docs.ray.io/en/latest/tune/index.html">https://docs.ray.io/en/latest/tune/index.html</a>)。让我们解释一下这五个标准，如下所示:</p>
+			<ul>
+				<li><strong class="bold">与MLflow的回调集成</strong> : Optuna对MLflow回调的支持仍然是一个实验性的特性，而<a id="_idIndexMarker361"/> HyperOpt根本不支持回调，这给用户留下了额外的工作来管理每次试运行的MLflow跟踪。</li>
+			</ul>
+			<p>只有Ray Tune支持Python mixin装饰器和与MLflow的回调集成。Python mixin是一种模式，允许在任何需要的时候混合独立的函数。在这种情况下，MLflow功能在模型训练期间通过<code>mlflow_mixin</code>装饰器自动混合。这可以将任何训练功能转换为射线调节可训练功能，自动配置MLflow并在每次调节试验的相同过程中创建运行。然后，您可以在训练函数中使用MLflow API，它会自动报告正确的运行。此外，它支持MLflow的自动记录，这意味着所有MLflow跟踪信息将被记录到正确的试验中。例如，下面的代码片段显示了我们之前的DL微调函数可以变成一个<code>mlflow_mixin</code>光线调整函数，如下所示:</p>
+			<pre>@mlflow_mixin
+def train_dl_model():
+    mlflow.pytorch.autolog()
+    trainer = flash.Trainer(
+        max_epochs=num_epochs,
+        callbacks=[TuneReportCallback(
+            metrics, on='validation_end')])
+    trainer.finetune()</pre>
+			<p>请注意，当我们定义训练器时，我们可以添加<code>TuneReportCallback</code>作为一个回调函数，它会将指标传递回给Ray Tune，而MLflow自动日志记录会同时记录所有跟踪结果。在下一节中，我们<a id="_idIndexMarker362"/>将向您展示如何将前一章的微调DL模型的示例变成可训练的光线调整。</p>
+			<ul>
+				<li><strong class="bold">GPU集群的可扩展性和支持</strong>:虽然Optuna和HyperOpt支持并行化，但是它们<a id="_idIndexMarker363"/>都依赖于一些外部数据库(关系数据库或MongoDB)或SparkTrials。只有Ray Tune通过Ray distributed框架原生支持并行和分布式HPO，也是这三个框架中唯一支持在GPU集群上运行的。</li>
+				<li><strong class="bold">API的易用性和灵活性</strong>:在所有三个框架中，只有Optuna支持<strong class="bold">define-by-run</strong>API，允许你以Pythonic式的编程风格动态定义超参数，包括循环和分支(<a href="https://optuna.readthedocs.io/en/stable/tutorial/10_key_features/002_configurations.html">https://Optuna . readthedocs . io/en/stable/tutorial/10 _ key _ features/002 _ configurations . html</a>)。这与Ray Tune和HyperOpt都支持的<strong class="bold">定义并运行</strong>API形成对比，后者在评估目标函数之前由预定义的字典定义搜索空间。这两个术语，<strong class="bold">定义-运行</strong>和<strong class="bold">定义-运行</strong>，实际上是由DL框架的开发社区创造的。在早期，TensorFlow 1.0最初发布的时候，需要先定义一个神经网络，然后在后面懒洋洋地执行，这就是所谓的定义-运行。这两个阶段，1)构建神经网络阶段和2)评估阶段，是顺序执行的，并且在构建阶段之后不能改变神经网络结构。较新的DL框架，如TensorFlow 2.0(或TensorFlow的快速执行版本)和PyTorch，支持<strong class="bold">运行定义</strong>神经网络计算。构建和评估神经网络没有两个独立的阶段。用户可以在进行计算时直接操纵神经网络。虽然Optuna提供的<strong class="bold"> define-by-run </strong> API可以用来直接动态定义超参数搜索空间，但是它确实有一些缺点。主要问题是直到运行时才知道参数并发，这会使优化方法的实现变得复杂。这是因为许多采样方法都支持预先知道参数并发。因此，在本书中，我们更喜欢使用<strong class="bold">定义并运行</strong>API。另外，请注意，Ray Tune可以通过与Optuna的集成来支持<strong class="bold"> define-by-run </strong> API(您可以在Ray Tune的GitHub资源库中的<a href="https://github.com/ray-project/ray/blob/master/python/ray/tune/examples/optuna_define_by_run_example.py#L35">https://GitHub . com/Ray-project/Ray/blob/master/python/Ray/Tune/examples/Optuna _ define _ by _ run _ example . py # L35</a>中看到一个示例)。</li>
+				<li><strong class="bold">与前沿HPO算法的集成</strong> ( <strong class="bold"> CS和CE </strong>):在<strong class="bold"> CS </strong>方面，在这三个<a id="_idIndexMarker365"/>框架中，HyperOpt支持或集成最新前沿HPO采样和搜索<a id="_idIndexMarker366"/>方法的开发最少。它的主要搜索方法是<strong class="bold">树形结构Parzen估计器</strong> ( <strong class="bold"> TPE </strong>)，这是一种贝叶斯优化变体，对混合分类和条件超参数搜索空间特别有效。同样，Optuna的主要取样方法是TPE。相反，Ray Tune支持所有先进的搜索方法，包括:<ul><li>DragonFly(<a href="https://dragonfly-opt.readthedocs.io/en/master/">https://dragonfly-opt.readthedocs.io/en/master/</a>)，这是一个高度可扩展的贝叶斯优化框架</li><li>微软研究院的blend search(<a href="https://microsoft.github.io/FLAML/docs/Use-Cases/Tune-User-Defined-Function/#hyperparameter-optimization-algorithm">https://Microsoft . github . io/FLAML/docs/Use-Cases/Tune-User-Defined-Function/# hyperparameter-optimization-algorithm</a></li></ul></li>
+			</ul>
+			<p>此外，Ray Tune还通过与Optuna和HyperOpt的集成支持TPE。</p>
+			<p>在<strong class="bold"> CE </strong>端，HyperOpt不支持任何修剪或调度程序来停止非承诺的超参数配置。Optuna和Ray Tune都支持相当多的修剪程序(在Optuna中)或调度程序(在Ray Tune中)。但是，只有光线调节支持PBT。鉴于Ray tune开发的活跃的开发社区和灵活的API，Ray Tune有可能继续及时地集成和支持任何新兴的调度程序或修剪程序。</p>
+			<ul>
+				<li><strong class="bold">对DL框架的支持</strong> : HyperOpt不是专门设计的，也不与任何DL <a id="_idIndexMarker367"/>框架集成。这并不意味着您不能使用HyperOpt来调优DL模型。然而，HyperOpt不提供任何修剪或调度程序支持来为不看好的超参数配置执行早期停止，这是HyperOpt用于DL模型调优的一个主要缺点。Ray Tune和Optuna都集成了流行的DL框架，如PyTorch Lightning和TensorFlow/Keras。</li>
+			</ul>
+			<p>除了我们刚刚讨论的主要标准之外，Ray Tune还拥有最好的文档、丰富的代码示例和充满活力的开源开发人员社区，这就是为什么我们在本章的学习中更喜欢使用Ray Tune。在下面的章节中，我们将学习如何使用Ray Tune和MLflow创建HPO就绪的DL模型。</p>
+			<h1 id="_idParaDest-75"><a id="_idTextAnchor074"/>使用Ray Tune和MLflow创建HPO就绪的DL模型</h1>
+			<p>为了将射线调整<a id="_idIndexMarker368"/>与HPO的MLflow一起使用，让我们使用第5章 、<em class="italic">在不同环境中运行DL管道</em>中的DL管道示例中的微调步骤<a id="_idIndexMarker369"/>，来查看需要设置什么以及需要进行哪些代码更改。在我们开始之前，首先让我们回顾一些与我们使用射线调节特别相关的关键概念:</p>
+			<ul>
+				<li><strong class="bold">目标函数</strong>:目标函数可以是最小化或最大化给定超参数配置的一些度量值。例如，在DL模型训练和微调场景中，我们希望最大化NLP文本分类器准确度的F1值。这个目标函数需要<a id="_idIndexMarker370"/>包装成一个可训练的函数，其中<a id="_idIndexMarker371"/>射线调谐可以做HPO。在下一节中，我们将说明如何包装我们的NLP文本情感模型。</li>
+				<li><code>tune.report</code>用于报告模型指标(<a href="https://docs.ray.io/en/latest/tune/api_docs/trainable.html#function-api">https://docs . ray . io/en/latest/tune/API _ docs/trainiable . html # function-API</a>)。一个基于类的API需要模型训练函数(可训练的)是<code>tune.Trainable </code>(<a href="https://docs.ray.io/en/latest/tune/api_docs/trainable.html#trainable-class-api">https://docs . ray . io/en/latest/tune/API _ docs/trainiable . html # trainiable-class-API</a>)的子类。基于类的API提供了对光线调节如何控制模型训练处理的更多控制。如果您开始为神经网络模型编写一个新的架构，这可能会非常有帮助。然而，当使用预训练的基础模型进行微调时，使用基于函数的API要容易得多，因为我们可以利用PyTorch Lightning Flash等包来进行HPO。</li>
+				<li><code>tune.run</code>，雷调将在那里编排HPO进程。</li>
+				<li><code>tune.loguniform</code>)或者来自一些范畴变量(例如，<code>tune.choice(['a', 'b' ,'c'])</code>可以让你统一选择这三个选项)。通常，这个搜索<a id="_idIndexMarker375"/>空间被定义为一个名为<code>config</code>的Python字典变量。</li>
+				<li><code>tune.suggest</code>API(<a href="https://docs.ray.io/en/latest/tune/api_docs/suggestion.html#tune-search-alg">https://docs . ray . io/en/latest/tune/API _ docs/suggestion . html # tune-search-alg</a>)。</li>
+				<li><code>tune.suggest</code> API <a id="_idIndexMarker377"/>提供了搜索的优化算法，它不提供早期停止或修剪功能来<a id="_idIndexMarker378"/>在几次迭代后停止明显没有希望的试验。由于早期停止或修剪可以显著加快HPO进程，强烈建议您将<a id="_idIndexMarker379"/>调度程序与搜索器结合使用。Ray Tune通过它的调度器API ( <code>tune.schedulers</code>)提供了很多流行的调度器，比如ASHA、HyperBand等等。(请访问<a href="https://docs.ray.io/en/latest/tune/api_docs/schedulers.html#trial-schedulers-tune-schedulers">https://docs . ray . io/en/latest/tune/API _ docs/schedulers . html # trial-schedulers-tune-schedulers</a>。)</li>
+			</ul>
+			<p>回顾了射线调节的基本概念和API之后，在下一节中，我们将设置射线调节和MLflow来运行HPO实验。</p>
+			<h2 id="_idParaDest-76"><a id="_idTextAnchor075"/>设置射线调节和MLflow</h2>
+			<p>现在我们已经了解了基本的<a id="_idIndexMarker380"/>概念和Ray Tune的API，让我们看看如何设置Ray Tune来为我们之前的NLP情感分类器的微调步骤执行HPO。你可能想下载这一章的代码(<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow/blob/main/chapter06/">https://github . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow/blob/main/chapter 06/</a>)来跟随这些指令:</p>
+			<ol>
+				<li>通过在您的conda虚拟环境中键入以下命令来安装Ray Tune，<code>dl_model_hpo</code> : <pre><strong class="bold">pip install ray[tune]==1.9.2</strong></pre></li>
+				<li>这将在虚拟环境中安装Ray Tune，您将在虚拟环境中启动HPO运行，以便对DL模型进行微调。请注意，我们还在本章的GitHub存储库中提供了完整的<code>requirements.txt</code>文件(<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow/blob/main/chapter06/requirements.txt">https://GitHub . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow/blob/main/chapter 06/requirements . txt</a>)，在这里您应该能够运行以下安装命令:<pre><strong class="bold">pip install -r requirements.txt</strong></pre></li>
+				<li>如果你需要知道如何设置一个合适的虚拟环境，位于同一文件夹中的<code>README.md</code>文件中的完整说明会给你更多的指导。</li>
+				<li>对于MLflow设置，假设<a id="_idIndexMarker381"/>您已经设置了一个完整的MLflow跟踪服务器，您唯一需要注意的是确保您已经正确设置了访问MLflow跟踪服务器的环境变量。在您的shell中运行以下命令来设置它们。或者，您可以通过在Python代码中调用<code>os.environ["environmental_name"]=value</code>来覆盖您的环境变量。提醒一下，我们已经展示了可以在每个终端会话的命令行中设置的以下环境变量:<pre><strong class="bold">export MLFLOW_TRACKING_URI=http://localhost</strong> <strong class="bold">export MLFLOW_S3_ENDPOINT_URL=http://localhost:9000</strong> <strong class="bold">export AWS_ACCESS_KEY_ID="minio"</strong> <strong class="bold">export AWS_SECRET_ACCESS_KEY="minio123"</strong></pre></li>
+				<li>运行<code>download_data</code>步骤，将原始数据下载到本地<code>chapter06</code>父文件夹下的文件夹:<pre><strong class="bold">mlflow run . -P pipeline_steps='download_data' --experiment-name dl_model_chapter06</strong></pre></li>
+			</ol>
+			<p>当前面的执行完成后，您应该能够在<strong class="bold"> chapter06/data/ </strong>文件夹下找到IMDB数据。</p>
+			<p>现在我们准备创建一个<a id="_idIndexMarker382"/> HPO步骤来微调我们之前构建的NLP情绪模型。</p>
+			<h2 id="_idParaDest-77"><a id="_idTextAnchor076"/>为DL模型创建可训练的光线调节</h2>
+			<p>我们需要做多处改变来让光线调整到运行HPO来微调我们在前面章节中开发的DL模型。让我们按照如下步骤进行操作:</p>
+			<ol>
+				<li value="1">首先，让我们在前面的微调代码中确定可能的超参数(可调和不可调)列表。回想一下，我们的微调代码看起来与下面类似(这里只显示了代码的关键行；完整的代码可以在GitHub资源库的<code>chapter05</code>中找到，该资源库位于<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow/blob/main/chapter05/pipeline/fine_tuning_model.py#L19">https://GitHub . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow/blob/main/chapter 05/pipeline/fine _ tuning _ model . py # L19</a>:<pre>datamodule = TextClassificationData.from_csv(     input_fields="review",     target_fields="sentiment",     train_file=f"{data_path}/imdb/train.csv",     val_file=f"{data_path}/imdb/valid.csv",     test_file=f"{data_path}/imdb/test.csv") classifier_model = TextClassifier(     backbone= "prajjwal1/bert-tiny",     num_classes=datamodule.num_classes,      metrics=torchmetrics.F1(datamodule.num_classes)) trainer = flash.Trainer(max_epochs=3) trainer.finetune(classifier_model,      datamodule=datamodule, strategy="freeze") </pre></li>
+			</ol>
+			<p>前面的代码有四个主要部分:</p>
+			<ul>
+				<li><code>datamodule</code>变量:它定义了训练、验证和测试的数据源。有一个默认值为<code>1</code>的<code>batch_size</code>参数，这里没有显示，但它是需要优化的最重要的超参数之一。<a id="_idIndexMarker385"/>更多详情请参见<code>lightning-flash</code>代码文档中的解释(<a href="https://github.com/PyTorchLightning/lightning-flash/blob/450902d713980e0edefcfd2d2a2a35eb875072d7/flash/core/data/data_module.py#L64">https://github . com/PyTorchLightning/lightning-flash/blob/450902d 713980 e 0 edefcfd 2d 2 a 35 EB 875072d 7/flash/core/data/data _ module . py # L64</a>)。</li>
+				<li><code>classifier_model</code>:通过<code>lightning-flash</code>的<code>TextClassifier</code> API定义了一个暴露参数的分类器。输入参数中有多个可以优化的超参数，包括<code>learning_rate</code>、<code>backbone</code>基础模型、<code>optimizer</code>等等。你可以在<code>TextClassifier</code> API的<code>lightning-flash</code>代码文档中看到输入参数的完整列表(<a href="https://github.com/PyTorchLightning/lightning-flash/blob/450902d713980e0edefcfd2d2a2a35eb875072d7/flash/text/classification/model.py#L44">https://github . com/PyTorchLightning/lightning-flash/blob/450902d 713980 e 0 edefcfd 2d 2 a 35 EB 875072d 7/flash/text/classification/model . py # L44</a>)。</li>
+				<li><code>trainer</code>:这定义了一个可用于微调的训练器<a id="_idIndexMarker386"/>变量。这里有几个超参数需要设置，但不一定要调优，比如前面讨论过的<code>num_epochs</code>。</li>
+				<li><code>trainer.finetune</code>:这是实际的微调(迁移学习)。请注意，还有一个可能的超参数<strong class="bold">策略</strong>可以调整。</li>
+			</ul>
+			<p>出于学习的目的，我们将选择<code>learning_rate</code>和<code>batch_size</code>作为两个要优化的超参数，因为这两个是要为DL模型优化的最重要的超参数。一旦你完成了这一章，你应该能够很容易地添加额外的超参数到优化的候选列表中。</p>
+			<ol>
+				<li value="2">光线调节需要将一个可训练的<a id="_idIndexMarker387"/>函数传递给<code>tune.run</code>。这意味着我们需要创建一个可训练的函数。默认情况下，一个可训练函数只接受一个必需的输入参数<code>config</code>，它包含一个超参数的键值对字典和其他用于标识执行环境(如MLflow跟踪URL)的参数。然而，Ray Tune提供了一个名为<code>tune.with_parameters</code>的包装函数，它允许您传递附加的任意参数和对象(<a href="https://docs.ray.io/en/latest/tune/tutorials/overview.html#how-can-i-pass-further-parameter-values-to-my-trainable">https://docs . Ray . io/en/latest/Tune/tutorials/overview . html # how-can-I-pass-further-parameter-values-to-my-training able</a>)。首先，让我们使用<a id="_idIndexMarker388"/>一个<code>mlflow_mixin</code>装饰器，创建一个名为<code>finetuning_dl_model</code>的函数来封装我们刚刚检查过的关于微调步骤的逻辑。这允许在调用此函数时自动初始化ml flow:<pre>@mlflow_mixin def finetuning_dl_model(config, data_dir=None,                         num_epochs=3, num_gpus=0):</pre></li>
+			</ol>
+			<p>该函数将一个<code>config</code>字典作为输入，其中可以传递一个超参数列表和MLflow配置。此外，我们向函数签名添加了三个额外的参数:<code>data_dir</code>表示目录的位置，<code>num_epochs</code>表示每个试验运行的最大时期数，<code>num_gpus</code>表示每个试验使用的GPU数量(如果有的话)。</p>
+			<ol>
+				<li value="3">在这个<code>mlflow_mixin</code>修饰函数中，如果有必要，我们可以使用所有的MLflow跟踪API，但是从MLflow版本1.22.0开始，由于MLflow的自动日志支持不再是一个实验性的特性，而是一个成熟的生产质量特性(<a href="https://github.com/mlflow/mlflow/releases/tag/v1.22.0">https://github.com/mlflow/mlflow/releases/tag/v1.22.0</a>)，我们应该在我们的代码中使用自动日志，如下:<pre>mlflow.pytorch.autolog()</pre></li>
+			</ol>
+			<p>这是有效的，并且不需要<a id="_idIndexMarker389"/>改变。然而，<code>batch_size</code>超参数不会被自动记录自动捕获，因此我们需要在微调完成后再添加一条记录语句，如下所示:</p>
+			<pre>mlflow.log_param('batch_size',config['batch_size'])</pre>
+			<ol>
+				<li value="4">在<code>finetuning_dl_model </code>函数的其余实现体中，<a id="_idIndexMarker390"/>代码的大部分与之前相同。有一些变化。在<code>datamodule</code>变量赋值语句中，我们添加了<code>batch_size=config['batch_size']</code>以允许训练数据的小批量可调，如下所示:<pre>datamodule = TextClassificationData.from_csv(     input_fields="review",     target_fields="sentiment",     train_file=f"{data_dir}/imdb/train.csv",     val_file=f"{data_dir}/imdb/valid.csv",     test_file=f"{data_dir}/imdb/test.csv",     <strong class="bold">batch_size=config['batch_size']</strong>)</pre></li>
+				<li>当定义<code>classifier_model</code>变量时，不使用超参数集的默认值，现在我们需要传入<code>config</code>字典来分配这些值:<pre>classifier_model = TextClassifier(     backbone=<strong class="bold">config</strong>['foundation_model'],     learning_rate=<strong class="bold">config</strong>['lr'],     optimizer=<strong class="bold">config</strong>['optimizer_type'],     num_classes=datamodule.num_classes,     metrics=torchmetrics.F1(datamodule.num_classes))</pre></li>
+				<li>Next, we need to modify the trainer assignment code. Here, we need to do two things: first, we need to define <a id="_idIndexMarker391"/>a metrics key-value dictionary to pass from PyTorch Lightning to Ray Tune. The key in this metrics dictionary is the name to be referenced in the Ray Tune<a id="_idIndexMarker392"/> trial run, while the value of the key in this dictionary is the corresponding metric name reported by PyTorch Lightning.<p class="callout-heading">PyTorch Lightning验证步骤中的度量名称</p><p class="callout">将指标传递给Ray Tune时，首先，我们需要知道PyTorch Lightning在验证步骤中使用的指标名称，因为HPO只使用验证数据进行评估，而不使用保留测试数据集。事实证明PyTorch Lightning有一个硬编码的约定，用相应的培训、验证和测试步骤名称和下划线作为所有指标的前缀。名为<code>f1</code>的指标将在PyTorch Lightning中报告为:在训练步骤中为<code>train_f1</code>，在验证步骤中为<code>val_f1</code>，在测试步骤中为<code>test_f1</code>。(可以在<a href="https://github.com/PyTorchLightning/lightning-flash/blob/8b244d785c5569e9aa7d2b878a5f94af976d3f55/flash/core/model.py#L462">https://github . com/PyTorchLightning/Lightning-flash/blob/8b 244d 785 c 5569 e 9 aa 7 D2 b 878 a5f 94 af 976d 3 f 55/flash/core/model . py # L462</a>查看PyTorch Lightning代码逻辑)。在我们的示例中，我们可以在验证步骤中选择<code>cross_entropy</code>和<code>f1</code>作为度量，它们被命名为<code>val_cross_entropy</code>和<code>val_f1</code>，分别作为<code>loss</code>和<code>f1</code>传递回Ray Tune。这意味着，在Ray Tune的试运行中，我们将这两个指标简单地称为<code>loss</code>和<code>f1</code>。</p></li>
+			</ol>
+			<p>因此，我们在这里定义了两个指标，我们希望从PyTorch Lightning验证步骤<code>val_cross_entropy</code>和<code>val_f1</code>传递到Ray Tune，分别为<code>loss</code>和<code>f1</code>:</p>
+			<pre>metrics = {"loss":"val_cross_entropy", "f1":"val_f1"}</pre>
+			<p>现在，我们可以将这个指标字典传递给培训师任务，如下所示:</p>
+			<pre>trainer = flash.Trainer(max_epochs=num_epochs,
+    gpus=num_gpus,
+    progress_bar_refresh_rate=0,
+    callbacks=[TuneReportCallback(metrics, 
+        on='validation_end')])</pre>
+			<p>注意，当<code>validation_end</code>事件发生时，度量字典通过<code>TuneReportCallBack</code>传递。这意味着当PyTorch Lightning中的验证步骤完成时，它将自动触发Ray Tune报告功能，以<a id="_idIndexMarker393"/>将指标列表报告回Ray Tune进行评估。供<code>TuneReportCallback</code>使用的<a id="_idIndexMarker394"/>有效事件的支持列表可以在Ray Tune与PyTorch Lightning源代码的集成中找到(<a href="https://github.com/ray-project/ray/blob/fb0d6e6b0b48b0a681719433691405b96fbea104/python/ray/tune/integration/pytorch_lightning.py#L170">https://github . com/Ray-project/Ray/blob/FB 0 D6 e 6 b 0 b 48 b 0 a 68171943691405 b 96 fbea 104/python/Ray/Tune/integration/py torch _ Lightning . py # L170</a>)。</p>
+			<ol>
+				<li value="7">最后，我们可以调用<code>trainer.finetune</code>来执行微调步骤。这里，我们可以将<code>finetuning_strategies</code>作为可调超参数之一传递给参数列表:<pre>trainer.finetune(classifier_model,     datamodule=datamodule,     strategy=config['finetuning_strategies'])</pre></li>
+				<li>这就完成了对微调DL模型的原始功能的更改。现在我们有了一个新的<code>finetuning_dl_model</code>函数，它准备好被包装在<code>tune.with_parameters</code>中，成为一个光线调节可训练函数。应该这样叫:<pre>trainable = tune.with_parameters(finetuning_dl_model, data_dir, num_epochs, num_gpus)</pre></li>
+				<li>注意，不需要传递<code>config</code>参数，因为它隐含地假设它是<code>finetuning_dl_model</code>的第一个参数。其他三个参数需要传递给<code>tune.with_parameters</code>包装器。此外，确保创建光线调节可训练对象的语句位于<code>finetuning_dl_model</code>函数的<a id="_idIndexMarker395"/>之外。</li>
+			</ol>
+			<p>在下一节中，它将被<a id="_idIndexMarker396"/>放置在Ray Tune的名为<code>run_hpo_dl_model</code>的HPO运行函数中。</p>
+			<h2 id="_idParaDest-78"><a id="_idTextAnchor077"/>创建射线调HPO运行功能</h2>
+			<p>现在，让我们创建一个雷调HPO运行<a id="_idIndexMarker397"/>函数来做以下五件事:</p>
+			<ul>
+				<li>定义MLflow运行时配置参数，包括跟踪URI和实验名称。</li>
+				<li>使用Ray Tune的随机分布API(<a href="https://docs.ray.io/en/latest/tune/api_docs/search_space.html#random-distributions-api">https://docs . Ray . io/en/latest/Tune/API _ docs/search _ space . html # random-distributions-API</a>)定义超参数搜索空间，以对我们之前确定的超参数列表进行采样。</li>
+				<li>使用<code>tune.with_parameters</code>定义一个光线调节可训练对象，如前一小节末尾所示。</li>
+				<li>调用<code>tune.run</code>。这将执行HPO运行，并在完成后返回Ray Tune的实验分析对象。</li>
+				<li>当整个HPO运行完成时，记录最佳配置参数。</li>
+			</ul>
+			<p>让我们浏览一下实现，看看这个函数是如何实现的:</p>
+			<ol>
+				<li value="1">首先，让我们定义超参数的<code>config</code>字典，如下:<pre>mlflow.set_tracking_uri(tracking_uri) mlflow.set_experiment(experiment_name)</pre></li>
+			</ol>
+			<p>这将把MLflow的<code>tracking_uri</code>和<code>experiment_name</code>作为输入参数，并正确设置它们<a id="_idIndexMarker398"/>。如果这是你第一次运行这个，MLflow也会创建这个实验。</p>
+			<ol>
+				<li value="2">然后，我们可以定义<code>config</code>字典，它可以包括可调参数和不可调参数，以及MLflow配置参数。正如上一节所讨论的，我们将调优<code>learning_rate</code>和<code>batch_size</code>，但也将包括其他超参数，用于簿记和未来的调优目的:<pre>config = {         "lr": tune.loguniform(1e-4, 1e-1),         "batch_size": tune.choice([32, 64, 128]),         "foundation_model": "prajjwal1/bert-tiny",         "finetuning_strategies": "freeze",         "optimizer_type": "Adam",         "mlflow": {             "experiment_name": experiment_name,             "tracking_uri": mlflow.get_tracking_uri()         },     }</pre></li>
+			</ol>
+			<p>正如您在<code>config</code>字典中看到的，我们调用<code>tune.loguniform</code>对<code>1e-4</code>和<code>1e-1</code>之间的对数均匀分布进行采样，以选择学习率。对于批量大小，我们调用<code>tune.choice</code>从三个不同的值中统一选择一个。对于其余的<a id="_idIndexMarker399"/>键-值对，它们是不可调的，因为它们不使用任何采样方法，但却是运行试验所必需的。</p>
+			<ol>
+				<li value="3">使用<code>tune.with_parameters</code>和除<code>config</code>参数之外的所有额外参数定义可训练对象:<pre>trainable = tune.with_parameters(     finetuning_dl_model,     data_dir=data_dir,     num_epochs=num_epochs,     num_gpus=gpus_per_trial)</pre></li>
+			</ol>
+			<p>在下一条语句中，这将被称为<code>tune.run</code>函数。</p>
+			<ol>
+				<li value="4">现在我们准备通过调用<code>tune.run</code>来运行HPO，如下:<pre>analysis = tune.run(     trainable,     resources_per_trial={         "cpu": 1,         "gpu": gpus_per_trial     },     metric="f1",     mode="max",     config=config,     num_samples=num_samples,     name="hpo_tuning_dl_model")</pre></li>
+			</ol>
+			<p>这里，目标是找到在所有试验中最大化F1分数的一组超参数，因此模式是<code>max</code>并且度量是<code>f1</code>。请注意，这个度量名称<code>f1</code>来自我们在前面的<code>finetuning_dl_model</code>函数中定义的<code>metrics</code>字典，在这里我们将PyTorch Lightning的<code>val_f1</code>映射到<code>f1</code>。此<code>f1</code>值为<a id="_idIndexMarker400"/>，然后在每个试验的验证步骤结束时传递给Ray Tune。<code>trainable</code>对象作为第一个参数传递给<code>tune.run</code>，在<code>num_samples</code>的参数允许的情况下会执行多次。接下来，<code>resources_per_trial</code>定义了要使用的CPU和GPU。注意，在前面的例子中，我们没有指定任何搜索算法。这意味着它将默认使用<code>tune.suggest.basic_variant</code>，这是一种网格搜索算法。也没有定义调度器，因此，默认情况下，没有提前停止，所有试验都将与执行机器上允许的最大数量的CPU并行运行。当运行结束时，返回一个<code>analysis</code>变量，它包含找到的最佳超参数，以及<a id="_idIndexMarker401"/>和其他信息。</p>
+			<ol>
+				<li value="5">记录找到的最佳超参数配置。这可以通过使用从<code>tune.run</code>返回的<code>analysis</code>变量来完成，如下:<pre>logger.info("Best hyperparameters found were: %s", analysis.best_config)</pre></li>
+			</ol>
+			<p>就是这样。现在我们可以试一试了。如果你从本章的GitHub库下载了完整的代码，你应该可以在<code>pipeline</code>文件夹下找到<code>hpo_finetuning_model.py</code>文件。</p>
+			<p>有了前面的更改，现在我们准备运行我们的第一个HPO实验。</p>
+			<h1 id="_idParaDest-79"><a id="_idTextAnchor078"/>用MLflow运行首个射线调HPO实验</h1>
+			<p>既然我们已经设置了<a id="_idIndexMarker402"/>射线调优、MLflow，并创建了HPO <a id="_idIndexMarker403"/>运行函数，我们可以尝试运行我们的第一个射线调优HPO实验，如下所示:</p>
+			<pre>python pipeline/hpo_finetuning_model.py</pre>
+			<p>几秒钟后，您将看到以下屏幕，<em class="italic">图6.2 </em>，显示所有10个试验(即我们为<code>num_samples</code>设置的值)同时运行:</p>
+			<div><div><img src="img/B18120_06_02.jpg" alt="Figure 6.2 – Ray Tune running 10 trials in parallel on a local multi-core laptop&#13;&#10;" width="760" height="404"/>
+				</div>
+			</div>
+			<p class="figure-caption">图6.2–在本地多核笔记本电脑上并行运行10次试验的Ray Tune</p>
+			<p>大约12-14分钟后，您<a id="_idIndexMarker404"/>将看到所有试验都已完成，最佳超参数将打印在屏幕上，如下图所示<a id="_idIndexMarker405"/>(由于随机性、样本数量有限以及使用网格搜索，您的结果可能会有所不同，但网格搜索并不能保证全局最优):</p>
+			<pre>Best hyperparameters found were: {'lr': 0.025639008922511797, 'batch_size': 64, 'foundation_model': 'prajjwal1/bert-tiny', 'finetuning_strategies': 'freeze', 'optimizer_type': 'Adam', 'mlflow': {'experiment_name': 'hpo-tuning-chapter06', 'tracking_uri': 'http://localhost'}}</pre>
+			<p>您可以在结果日志目录下找到每次试验的结果，默认情况下，该目录位于当前用户的<code>ray_results</code>文件夹中。从<em class="italic">图6.2 </em>中，我们可以看到结果在<code>/Users/yongliu/ray_results/hpo_tuning_dl_model</code>中。</p>
+			<p>您将在屏幕上看到最佳超参数的最终输出，这意味着您已经完成了第一次HPO实验！您可以看到所有10次试验都记录在MLflow跟踪服务器中，并且您可以使用MLflow跟踪服务器提供的平行坐标图来可视化和比较所有10次运行。您可以通过转到MLflow实验页面并选择您刚刚完成的10个试验，然后单击页面顶部附近的<strong class="bold">比较</strong>按钮来生成这样的图(参见<em class="italic">图6.3 </em>)。这将<a id="_idIndexMarker406"/>带您进入并排比较页面，绘图选项显示在页面底部:</p>
+			<div><div><img src="img/B18120_06_03.jpg" alt="Figure 6.3 – Clicking Compare to compare all 10 trial runs on the MLflow experiment page&#13;&#10;" width="1193" height="453"/>
+				</div>
+			</div>
+			<p class="figure-caption">图6.3–单击“比较”来比较MLflow实验页面上的所有10次试运行</p>
+			<p>您可以<a id="_idIndexMarker407"/>点击<strong class="bold">平行坐标绘图</strong>菜单项，这允许您选择要绘图的参数和度量。这里，我们选择<strong class="bold"> lr </strong>和<strong class="bold"> batch_size </strong>作为参数，选择<strong class="bold"> val_f1 </strong>和<strong class="bold"> val_cross_entropy </strong>作为度量。该图见<em class="italic">图6.4 </em>:</p>
+			<div><div><img src="img/B18120_06_04.jpg" alt="Figure 6.4 –Parallel Coordinates Plot for comparing the HPO trial results&#13;&#10;" width="1153" height="511"/>
+				</div>
+			</div>
+			<p class="figure-caption">图6.4-比较HPO试验结果的平行坐标图</p>
+			<p>在<em class="italic">图6.4 </em>中可以看到，很容易看出128的<strong class="bold"> batch_size </strong>和0.02874的<strong class="bold"> lr </strong>产生了最好的<strong class="bold"> val_f1 </strong>得分0.6544和<strong class="bold"> val_cross_entropy </strong>(损失值)0.62222。如前所述，这次HPO运行没有使用任何高级搜索算法和调度程序，所以<a id="_idIndexMarker408"/>让我们看看是否可以通过使用早期停止和修剪的更多实验在下面的部分做得更好。</p>
+			<h1 id="_idParaDest-80"><a id="_idTextAnchor079"/>使用Optuna和HyperBand运行带有光线调节的HPO</h1>
+			<p>现在，让我们用<a id="_idIndexMarker410"/>不同的搜索算法和调度程序做一些实验。考虑到Optuna是一个非常棒的基于TPE的搜索算法，而ASHA是一个<a id="_idIndexMarker411"/>优秀的调度器，可以进行异步并行试验，并提前终止那些没有希望的试验，那么<a id="_idIndexMarker412"/>看看我们需要做多少改变<a id="_idIndexMarker413"/>才能完成这项工作将会非常有趣。</p>
+			<p>事实证明，根据我们在上一节中所做的工作，变化非常小。在这里，我们将说明四个主要变化:</p>
+			<ol>
+				<li value="1">安装<strong class="bold"> Optuna </strong>组件。这可以通过运行以下命令来完成:<pre><strong class="bold">pip install optuna==2.10.0</strong></pre></li>
+			</ol>
+			<p>这将在我们之前拥有的相同虚拟环境中安装Optuna。如果您已经运行了<code>pip install -r requirements.text</code>，那么Optuna已经安装好了，您可以跳过这一步。</p>
+			<ol>
+				<li value="2">导入与Optuna和ASHA调度器集成的相关<a id="_idIndexMarker414"/>光线调整模块(这里我们使用ASHA的HyperBand实现<a id="_idIndexMarker415"/>)如下:<pre>from ray.tune.suggest import ConcurrencyLimiter from ray.tune.schedulers import AsyncHyperBandScheduler from ray.tune.suggest.optuna import OptunaSearch</pre></li>
+				<li>现在我们准备好<a id="_idIndexMarker416"/>添加搜索算法变量<a id="_idIndexMarker417"/>和调度程序变量到HPO执行函数<code>run_hpo_dl_model</code>，如下:<pre>searcher = OptunaSearch() searcher = ConcurrencyLimiter(searcher, max_concurrent=4) scheduler = AsyncHyperBandScheduler()</pre></li>
+			</ol>
+			<p>请注意，<code>searcher</code>变量现在正在使用Optuna，我们将这个<code>searcher</code>变量的最大并发运行次数设置为<code>4</code>，以便在HPO搜索过程中的任何给定时间进行尝试。使用HyperBand调度程序初始化调度程序。</p>
+			<ol>
+				<li value="4">将搜索器和调度器分配给<code>tune.run</code>调用的相应参数，如下所示:<pre>analysis = tune.run(     trainable,     resources_per_trial={         "cpu": 1,         "gpu": gpus_per_trial     },     metric="f1",     mode="max",     config=config,     num_samples=num_samples,     <strong class="bold">search_alg=searcher</strong>,     <strong class="bold">scheduler=scheduler</strong>,     name="hpo_tuning_dl_model")</pre></li>
+			</ol>
+			<p>注意<code>searcher</code>被分配给<code>search_alg</code>参数，<code>scheduler</code>被分配给<code>scheduler</code>参数。就是这样。现在，我们已经准备好在统一的Ray Tune框架下使用Optuna <a id="_idIndexMarker418"/>运行HPO，并集成了Ray Tune已经提供的所有MLflow。</p>
+			<p>我们已经在<code>pipeline</code>文件夹下的<code>hpo_finetuning_model_optuna.py</code>文件中提供了完整的<a id="_idIndexMarker419"/> Python代码。让我们按照下面的<a id="_idIndexMarker421"/>来运行这个HPO <a id="_idIndexMarker420"/>实验:</p>
+			<pre>python pipeline/hpo_finetuning_model_optuna.py</pre>
+			<p>您将立即在控制台输出中注意到以下内容:</p>
+			<pre>[I 2022-02-06 21:01:27,609] A new study created in memory with name: optuna</pre>
+			<p>这意味着我们现在使用Optuna作为搜索算法。此外，您会注意到屏幕上显示的状态输出中有四个并发试验。随着时间的推移，一些试验会在完成前经过一两次迭代(epochs)后终止。这意味着ASHA在工作，他已经取消了那些没有希望的尝试，以节省计算资源和加快搜索过程。<em class="italic">图6.5 </em>显示了运行期间的一个输出<a id="_idIndexMarker423"/>，其中三次试验仅用一次迭代就终止了。你可以在状态输出中找到<code>num_stopped=3</code>(图6.5 中<em class="italic">的第三行)，那里写着<code>Using AsynHyerBand: num_stopped=3</code>。这意味着<code>AsyncHyperBand</code>在这三项审判完成之前就终止了它们:</em></p>
+			<div><div><img src="img/B18120_06_05.jpg" alt="Figure 6.5 – Running HPO with Ray Tune using Optuna and AsyncHyperBand &#13;&#10;" width="1263" height="541"/>
+				</div>
+			</div>
+			<p class="figure-caption">图6.5–使用Optuna和异步带运行带有Ray Tune的HPO</p>
+			<p>运行结束时，您将<a id="_idIndexMarker424"/>看到以下结果:</p>
+			<pre>2022-02-06 21:11:59,695    INFO tune.py:626 -- Total run time: 632.10 seconds (631.91 seconds for the tuning loop).
+2022-02-06 21:11:59,728 Best hyperparameters found were: {'lr': 0.0009599443695046438, 'batch_size': 128, 'foundation_model': 'prajjwal1/bert-tiny', 'finetuning_strategies': 'freeze', 'optimizer_type': 'Adam', 'mlflow': {'experiment_name': 'hpo-tuning-chapter06', 'tracking_uri': 'http://localhost'}}</pre>
+			<p>请注意，总运行时间只有10分钟。与之前使用网格搜索而没有<a id="_idIndexMarker425"/>提前停止的部分相比，这节省了2-4分钟。现在，这可能看起来很简短，但请记住，我们在这里只使用了一个只有3个时期的微型BERT模型。在生产HPO运行中，使用具有20个历元的大型预训练基础模型并不少见，并且使用与调度程序(如异步<a id="_idIndexMarker427"/> HyperBand调度程序)相结合的<a id="_idIndexMarker426"/>良好搜索算法，搜索速度将会非常显著。Ray Tune提供的MLflow集成是免费的，因为我们现在可以在单个框架下切换到不同的搜索算法和/或调度程序。</p>
+			<p>虽然本节只向您展示了如何在Ray Tune和MLflow框架中使用Optuna，但是用HyperOpt替换Optuna只是一个简单的插入式更改。不用<code>OptunaSearch</code>初始化一个搜索器，我们可以用<code>HyperOptSearch</code>(可以在<a href="https://github.com/ray-project/ray/blob/d6b0b9a209e3f693afa6441eb284e48c02b10a80/python/ray/tune/examples/hyperopt_conditional_search_space_example.py#L80">https://github . com/ray-project/ray/blob/d 6 b 0 B9 a 209 E3 f 693 AFA 6441 EB 284 e 48 c 02 b 10a 80/python/ray/tune/examples/hyperopt _ conditional _ search _ space _ example . py # L80</a>看到一个例子)，其余的代码都是一样的。我们把这个作为一个练习留给你去探索。</p>
+			<p class="callout-heading">使用不同的搜索算法和调度器进行光线调节</p>
+			<p class="callout">请注意，不是所有的搜索算法都可以与任何调度程序一起工作。选择什么样的搜索算法和调度器取决于模型复杂度和评估成本。对于DL模型，由于运行一个历元的成本通常很高，因此非常需要使用现代搜索算法，如TPE、蜻蜓和BlendSearch，以及ASHA类型的调度程序，如我们使用的HyperBand调度程序。有关使用哪些搜索算法和调度程序的更多详细指导，请参考Ray Tune网站上的以下文档:<a href="https://docs.ray.io/en/latest/tune/tutorials/overview.html#which-search-algorithm-scheduler-should-i-choose">https://docs . Ray . io/en/latest/Tune/tutorials/overview . html # which-search-algorithm-scheduler-should-I-choose</a>。</p>
+			<p>现在，我们已经了解了如何使用Ray Tune和MLflow对DL模型进行高度并行和高效的HPO，这为我们在未来进行更高级的大规模HPO实验奠定了基础。</p>
+			<h1 id="_idParaDest-81"><a id="_idTextAnchor080"/>总结</h1>
+			<p>在本章中，我们介绍了HPO的基础和挑战，为什么它对DL模型管道如此重要，以及现代HPO框架应该支持什么。我们比较了三种流行的框架——Ray Tune、Optuna和HyperOpt——并选择Ray Tune作为大规模运行最先进的HPO的赢家。我们看到了如何使用Ray Tune和MLflow创建HPO就绪的DL模型代码，并使用Ray Tune和MLflow运行了我们的第一个HPO实验。此外，我们以Optuna和HyperBand调度器为例，介绍了一旦建立了HPO代码框架，如何切换到其他搜索和调度算法。本章的学习将帮助您在现实生产环境中胜任地进行大规模HPO实验，从而以经济高效的方式生产出高性能的DL模型。我们还在本章末尾的<em class="italic">进一步阅读</em>部分提供了许多参考资料，以鼓励你进一步学习。</p>
+			<p>在我们的下一章中，我们将继续学习如何使用MLflow为模型推理管道构建预处理和后处理步骤，这是一个真实生产环境中的典型场景，在此之前，已经为生产准备好了HPO调优的DL模型。</p>
+			<h1 id="_idParaDest-82"><a id="_idTextAnchor081"/>进一步阅读</h1>
+			<ul>
+				<li><em class="italic">模型调优和超参数优化的最佳工具</em>:<a href="https://neptune.ai/blog/best-tools-for-model-tuning-and-hyperparameter-optimization%20">https://Neptune . ai/blog/Best-Tools-for-Model-Tuning-and-Hyperparameter-Optimization</a></li>
+				<li>Optuna和远视的对比:<a href="https://neptune.ai/blog/optuna-vs-hyperopt">https://neptune.ai/blog/optuna-vs-hyperopt</a></li>
+				<li><em class="italic">如何(不)用Hyperopt调优你的模型</em>:<a href="https://databricks.com/blog/2021/04/15/how-not-to-tune-your-model-with-hyperopt.html%20">https://data bricks . com/blog/2021/04/15/How-Not-to-Tune-Your-Model-with-Hyperopt . html</a></li>
+				<li><em class="italic">为什么超参数调整对您的模型很重要？</em>:<a href="https://medium.com/analytics-vidhya/why-hyper-parameter-tuning-is-important-for-your-model-1ff4c8f145d3">https://medium . com/analytics-vid hya/why-hyper-parameter-tuning-is-important-for-your-model-1 ff 4c 8 f 145d 3</a></li>
+				<li><em class="italic">深度神经网络超参数整定的艺术举例</em>:<a href="https://towardsdatascience.com/the-art-of-hyperparameter-tuning-in-deep-neural-nets-by-example-685cb5429a38">https://towardsdatascience . com/The-Art-of-Hyperparameter-Tuning-in-Deep-Neural-Nets-by-Example-685 CB 5429 a38</a></li>
+				<li><em class="italic">自动超参数调谐</em>:<a href="https://insaid.medium.com/automated-hyperparameter-tuning-988b5aeb7f2a">https://in said . medium . com/Automated-Hyperparameter-tuning-988 b5 aeb 7 F2 a</a></li>
+				<li><em class="italic">更好地利用闪电和光线调整构建PyTorch模型</em>:<a href="https://towardsdatascience.com/get-better-at-building-pytorch-models-with-lightning-and-ray-tune-9fc39b84e602">https://towardsdatascience . com/Get-better-at-building-py torch-models-with-Lightning and-Ray-Tune-9fc 39 b 84 e 602</a></li>
+				<li><em class="italic"> Ray &amp; MLflow:将分布式机器学习应用用于生产</em>:<a href="https://medium.com/distributed-computing-with-ray/ray-mlflow-taking-distributed-machine-learning-applications-to-production-103f5505cb88">https://medium . com/Distributed-computing-with Ray/Ray-ml flow-Taking Distributed-Machine-Learning-Applications-to-Production-103 f 5505 cb88</a></li>
+				<li><em class="italic">大规模超参数优化新手指南</em>:<a href="https://wood-b.github.io/post/a-novices-guide-to-hyperparameter-optimization-at-scale/">https://wood-b . github . io/post/A-novices-Guide-to-Hyperparameter-Optimization-at-Scale/</a></li>
+				<li>在Databricks集群上运行Ray Tune和MLflow的Databricks笔记本:<a href="https://databricks-prod-cloudfront.cloud.databricks.com/public/4027ec902e239c93eaaa8714f173bcfc/6762389964551879/1089858099311442/7376217192554178/latest.html">https://data bricks-prod-cloudfront . cloud . data bricks . com/public/4027 EC 902 e 239 c 93 eaaa 8714 f 173 bcfc/6762389964551879/1089858099311442/7376217192554178/latest . html</a></li>
+				<li><em class="italic">光线分布对象简介，光线调优，与Parsl的小对比</em>:<a href="https://cloud4scieng.org/2021/04/08/a-brief-introduction-to-ray-distributed-objects-ray-tune-and-a-small-comparison-to-parsl/">https://cloud 4 scieng . org/2021/04/08/A-Brief-Introduction-to-Ray-Distributed-Objects-Ray-Tune-and-A-Small-Comparison-to-Parsl/</a></li>
+			</ul>
+		</div>
+	</div>
+</body></html>

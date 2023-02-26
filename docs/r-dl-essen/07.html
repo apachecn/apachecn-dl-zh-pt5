@@ -1,0 +1,1867 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Natural Language Processing Using Deep Learning</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用深度学习的自然语言处理</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">本章将演示如何使用深度学习进行<strong>自然语言处理</strong> ( <strong> NLP </strong>)。NLP是对人类语言文本的处理。NLP是一个宽泛的术语，指涉及文本数据的许多不同任务，包括(但不限于)以下内容:</p>
+
+<ul>
+
+<li class="mce-root"><strong>文档分类</strong>:根据主题将文档分类</li>
+
+<li class="mce-root"><strong>命名实体识别</strong>:从文档中提取关键信息，例如，人、组织和位置</li>
+
+<li class="mce-root"><strong>情绪分析</strong>:将评论、推文或评论分类为正面或负面情绪</li>
+
+<li class="mce-root"><strong>语言翻译</strong>:将文本数据从一种语言翻译成另一种语言</li>
+
+<li class="mce-root"><strong>词性标注</strong>:为文档中的每个单词分配类型，通常与另一项任务结合使用</li>
+
+</ul>
+
+<p class="mce-root">在这一章中，我们将看看文档分类，这可能是最常见的自然语言处理技术。本章遵循与前几章不同的结构，因为我们将着眼于单个用例(文本分类)，但对其应用多种方法。本章将涵盖:</p>
+
+<ul>
+
+<li>如何使用传统的机器学习技术进行文本分类</li>
+
+<li>词向量</li>
+
+<li>传统文本分类与深度学习的比较</li>
+
+<li>高级深度学习文本分类，包括1D卷积、RNNs、LSTMs和GRUs</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Document classification</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">文件分类</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>本章将研究使用Keras的文本分类。我们将使用的数据集包含在Keras库中。正如我们在前面章节中所做的那样，在应用深度学习算法之前，我们将使用传统的机器学习技术来创建一个基准。这样做的原因是为了展示深度学习模型相对于其他技术的表现。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>The Reuters dataset</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">路透社的数据集</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们将使用Reuters数据集，可以通过Keras库中的函数访问该数据集。该数据集包含46个类别的11，228条记录。若要查看有关此数据集的更多信息，请运行以下代码:</p>
+
+<pre>library(keras)<br/>?dataset_reuters</pre>
+
+<p>虽然可以从Keras访问路透社数据集，但它不是一种可以被其他机器学习算法使用的格式。文本数据不是实际的单词，而是单词索引的列表。我们将编写一个简短的脚本(<kbd>Chapter7/create_reuters_data.R</kbd>)来下载数据和查找索引文件，并创建一个包含<kbd>y</kbd>变量和文本字符串的数据框。然后，我们将把训练和测试数据保存到两个单独的文件中。下面是用训练数据创建文件的代码的第一部分:</p>
+
+<pre>library(keras)<br/><br/># the reuters dataset is in Keras<br/>c(c(x_train, y_train), c(x_test, y_test)) %&lt;-% dataset_reuters()<br/>word_index &lt;- dataset_reuters_word_index()<br/><br/># convert the word index into a dataframe<br/>idx&lt;-unlist(word_index)<br/>dfWords&lt;-as.data.frame(idx)<br/>dfWords$word &lt;- row.names(dfWords)<br/>row.names(dfWords)&lt;-NULL<br/>dfWords &lt;- dfWords[order(dfWords$idx),]<br/><br/># create a dataframe for the train data<br/># for each row in the train data, we have a list of index values<br/># for words in the dfWords dataframe<br/>dfTrain &lt;- data.frame(y_train)<br/>dfTrain$sentence &lt;- ""<br/>colnames(dfTrain)[1] &lt;- "y"<br/>for (r in 1:length(x_train))<br/>{<br/>  row &lt;- x_train[r]<br/>  line &lt;- ""<br/>  for (i in 1:length(row[[1]]))<br/>  {<br/>     index &lt;- row[[1]][i]<br/>     if (index &gt;= 3)<br/>       line &lt;- paste(line,dfWords[index-3,]$word)<br/>  }<br/>  dfTrain[r,]$sentence &lt;- line<br/>  if ((r %% 100) == 0)<br/>    print (r)<br/>}<br/>write.table(dfTrain,"../data/reuters.train.tab",sep="\t",row.names = FALSE)<br/><br/></pre>
+
+<p>代码的第二部分是相似的，它创建了包含测试数据的文件:</p>
+
+<pre># create a dataframe for the test data<br/># for each row in the train data, we have a list of index values<br/># for words in the dfWords dataframe<br/>dfTest &lt;- data.frame(y_test)<br/>dfTest$sentence &lt;- ""<br/>colnames(dfTest)[1] &lt;- "y"<br/>for (r in 1:length(x_test))<br/>{<br/>  row &lt;- x_test[r]<br/>  line &lt;- ""<br/>  for (i in 1:length(row[[1]]))<br/>  {<br/>    index &lt;- row[[1]][i]<br/>    if (index &gt;= 3)<br/>      line &lt;- paste(line,dfWords[index-3,]$word)<br/>  }<br/>  dfTest[r,]$sentence &lt;- line<br/>  if ((r %% 100) == 0)<br/>    print (r)<br/>}<br/>write.table(dfTest,"../data/reuters.test.tab",sep="\t",row.names = FALSE)</pre>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p>这创建了两个名为<kbd>../data/reuters.train.tab</kbd>和<kbd>../data/reuters.test.tab</kbd>的文件。如果我们打开第一个文件，这是第一个数据行。这句话是正常的英语句子:</p>
+
+<table border="1" style="border-collapse: collapse;width: 100%">
+
+<tbody>
+
+<tr>
+
+<td style="width: 10%">
+
+<p><strong> y </strong></p>
+
+</td>
+
+<td style="width: 88%">
+
+<p><strong>句子</strong></p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 10%">
+
+<p>3</p>
+
+</td>
+
+<td style="width: 88%">
+
+<p>麦格拉思·伦特公司说，由于去年12月收购了太空公司，预计1987年每股收益将从1986年的70美分上升到1 15到1 30美分该公司说，税前净利润将从1986年的600万美元上升到900万到1000万美元，出租业务收入将从12 50万美元上升到1900万到2200万美元该公司说，今年每股现金流量将为250到3美元</p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p> </p>
+
+<p>现在我们有了表格格式的数据，我们可以使用传统的NLP机器学习方法来创建一个分类模型。当我们合并训练集和测试集并查看<em> y </em>变量的分布时，我们可以看到有46个类，但是每个类中的实例数量并不相同:</p>
+
+<pre>&gt; table(y_train)<br/><strong>   0   1   2    3    4   5   6   7   8   9  10  11  12  13  14  15  16  17 </strong><br/>  67 537  94 3972 2423  22  62  19 177 126 154 473  62 209  28  29 543  51 <br/><br/><strong>  18   19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35 </strong><br/>  86  682 339 127  22  53  81 123  32  19  58  23  57  52  42  16  57  16 <br/><br/><strong>  36  37  38  39  40  41  42  43  44  45 </strong><br/>  60  21  22  29  46  38  16  27  17  19 </pre>
+
+<p>对于我们的测试集，我们将创建一个二元分类问题。我们的任务是从所有其他记录中识别出分类为3的新闻片段。当我们更改标签时，我们的<em> y </em>分布更改如下:</p>
+
+<pre>y_train[y_train!=3] &lt;- 0<br/>y_train[y_train==3] &lt;- 1<br/>table(y_train)<br/><strong>   0    1</strong> <br/>7256 3972 </pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Traditional text classification</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">传统文本分类</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们的第一个NLP模型将使用传统的NLP技术，即不是深度学习。对于本章的其余部分，当我们使用术语传统NLP时，我们指的是不使用深度学习的方法。传统自然语言处理分类中最常用的自然语言处理方法是使用<em>单词袋</em>方法。</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p>我们还将使用一组超参数和机器学习算法来最大限度地提高准确性:</p>
+
+<ul>
+
+<li><strong>特征生成</strong>:特征可以是词频、tf-idf或二进制标志</li>
+
+<li><strong>预处理</strong>:我们通过词干化来预处理文本数据</li>
+
+<li><strong>移除停用词</strong>:我们将特征创建、停用词和词干选项视为超参数</li>
+
+<li><strong>机器学习算法</strong>:该脚本对数据应用三种机器学习算法(朴素贝叶斯、SVM、神经网络和随机森林)</li>
+
+</ul>
+
+<p>我们总共在数据上训练48个机器学习算法，评估哪个模型最好。这段代码的脚本在<kbd>Chapter7/classify_text.R</kbd>文件夹中。该代码不包含任何深度学习模型，因此如果您愿意，可以随意跳过它。首先，我们加载必要的库并创建一个函数，该函数为多个机器学习算法上的超参数组合创建一组文本分类模型:</p>
+
+<pre>library(tm)<br/>require(nnet)<br/>require(kernlab)<br/>library(randomForest)<br/>library(e1071)<br/>options(digits=4)<br/><br/>TextClassification &lt;-function (w,stem=0,stop=0,verbose=1)<br/>{<br/>  df &lt;- read.csv("../data/reuters.train.tab", sep="\t", stringsAsFactors = FALSE)<br/>  df2 &lt;- read.csv("../data/reuters.test.tab", sep="\t", stringsAsFactors = FALSE)<br/>  df &lt;- rbind(df,df2)<br/><br/>  # df &lt;- df[df$y %in% c(3,4),]<br/>  # df$y &lt;- df$y-3<br/>  df[df$y!=3,]$y&lt;-0<br/>  df[df$y==3,]$y&lt;-1<br/>  rm(df2)<br/><br/>  corpus &lt;- Corpus(DataframeSource(data.frame(df[, 2])))<br/>  corpus &lt;- tm_map(corpus, content_transformer(tolower))<br/>  <br/>  # hyperparameters<br/>  if (stop==1)<br/>    corpus &lt;- tm_map(corpus, function(x) removeWords(x, stopwords("english")))<br/>  if (stem==1)<br/>    corpus &lt;- tm_map(corpus, stemDocument)<br/>  if (w=="tfidf")<br/>    dtm &lt;- DocumentTermMatrix(corpus,control=list(weighting=weightTfIdf))<br/>  else if (w=="tf")<br/>    dtm &lt;- DocumentTermMatrix(corpus,control=list(weighting=weightTf))<br/>  else if (w=="binary")<br/>    dtm &lt;- DocumentTermMatrix(corpus,control=list(weighting=weightBin))<br/>  <br/>  # keep terms that cover 95% of the data<br/>  dtm2&lt;-removeSparseTerms(dtm, 0.95)<br/>  m &lt;- as.matrix(dtm2)<br/>  remove(dtm,dtm2,corpus)<br/>  <br/>  data&lt;-data.frame(m)<br/>  data&lt;-cbind(df[, 1],data)<br/>  colnames(data)[1]="y"<br/>  <br/>  # create train, test sets for machine learning<br/>  seed &lt;- 42 <br/>  set.seed(seed) <br/>  nobs &lt;- nrow(data)<br/>  sample &lt;- train &lt;- sample(nrow(data), 0.8*nobs)<br/>  validate &lt;- NULL<br/>  test &lt;- setdiff(setdiff(seq_len(nrow(data)), train), validate)</pre>
+
+<p>现在我们已经创建了一个稀疏数据框架，我们将对数据使用4种不同的机器学习算法:朴素贝叶斯、SVM、神经网络模型和随机森林模型。我们使用4种机器学习算法，因为正如您在下面看到的，与前一节中创建数据所需的代码和NLP所需的代码相比，调用机器学习算法的代码很少。如果可能的话，运行多种机器学习算法几乎总是一个好主意，因为没有机器学习算法始终是最好的。</p>
+
+<pre>  <br/>  # create Naive Bayes model<br/>  nb &lt;- naiveBayes(as.factor(y) ~., data=data[sample,])<br/>  pr &lt;- predict(nb, newdata=data[test, ])<br/>  # Generate the confusion matrix showing counts.<br/>  tab&lt;-table(na.omit(data[test, ])$y, pr,<br/>             dnn=c("Actual", "Predicted"))<br/>  if (verbose) print (tab)<br/>  nb_acc &lt;- 100*sum(diag(tab))/length(test)<br/>  if (verbose) print(sprintf("Naive Bayes accuracy = %1.2f%%",nb_acc))<br/>  <br/>  # create SVM model<br/>  if (verbose) print ("SVM")<br/>  if (verbose) print (Sys.time())<br/>  ksvm &lt;- ksvm(as.factor(y) ~ .,<br/>               data=data[sample,],<br/>               kernel="rbfdot",<br/>               prob.model=TRUE)<br/>  if (verbose) print (Sys.time())<br/>  pr &lt;- predict(ksvm, newdata=na.omit(data[test, ]))<br/>  # Generate the confusion matrix showing counts.<br/>  tab&lt;-table(na.omit(data[test, ])$y, pr,<br/>             dnn=c("Actual", "Predicted"))<br/>  if (verbose) print (tab)<br/>  svm_acc &lt;- 100*sum(diag(tab))/length(test)<br/>  if (verbose) print(sprintf("SVM accuracy = %1.2f%%",svm_acc))<br/>  <br/>  # create Neural Network model<br/>  rm(pr,tab)<br/>  set.seed(199)<br/>  if (verbose) print ("Neural Network")<br/>  if (verbose) print (Sys.time())<br/>  nnet &lt;- nnet(as.factor(y) ~ .,<br/>               data=data[sample,],<br/>               size=10, skip=TRUE, MaxNWts=10000, trace=FALSE, maxit=100)<br/>  if (verbose) print (Sys.time())<br/>  pr &lt;- predict(nnet, newdata=data[test, ], type="class")<br/>  # Generate the confusion matrix showing counts.<br/>  tab&lt;-table(data[test, ]$y, pr,<br/>             dnn=c("Actual", "Predicted"))<br/>  if (verbose) print (tab)<br/>  nn_acc &lt;- 100*sum(diag(tab))/length(test)<br/>  if (verbose) print(sprintf("Neural Network accuracy = %1.2f%%",nn_acc))<br/>  <br/>  # create Random Forest model<br/>  rm(pr,tab)<br/>  if (verbose) print ("Random Forest")<br/>  if (verbose) print (Sys.time())<br/>  rf_model&lt;-randomForest(as.factor(y) ~., data=data[sample,])<br/>  if (verbose) print (Sys.time())<br/>  pr &lt;- predict(rf_model, newdata=data[test, ], type="class")<br/>  # Generate the confusion matrix showing counts.<br/>  tab&lt;-table(data[test, ]$y, pr,<br/>             dnn=c("Actual", "Predicted"))<br/>  if (verbose) print (tab)<br/>  rf_acc &lt;- 100*sum(diag(tab))/length(test)<br/>  if (verbose) print(sprintf("Random Forest accuracy = %1.2f%%",rf_acc))<br/>  <br/>  dfParams &lt;- data.frame(w,stem,stop)<br/>  dfParams$nb_acc &lt;- nb_acc<br/>  dfParams$svm_acc &lt;- svm_acc<br/>  dfParams$nn_acc &lt;- nn_acc<br/>  dfParams$rf_acc &lt;- rf_acc<br/>  <br/>  return(dfParams)<br/>}</pre>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p>我们现在在下面的代码中调用具有不同超参数的函数:</p>
+
+<pre>dfResults &lt;- TextClassification("tfidf",verbose=1) # tf-idf, no stemming<br/>dfResults&lt;-rbind(dfResults,TextClassification("tf",verbose=1)) # tf, no stemming<br/>dfResults&lt;-rbind(dfResults,TextClassification("binary",verbose=1)) # binary, no stemming<br/><br/>dfResults&lt;-rbind(dfResults,TextClassification("tfidf",1,verbose=1)) # tf-idf, stemming<br/>dfResults&lt;-rbind(dfResults,TextClassification("tf",1,verbose=1)) # tf, stemming<br/>dfResults&lt;-rbind(dfResults,TextClassification("binary",1,verbose=1)) # binary, stemming<br/><br/>dfResults&lt;-rbind(dfResults,TextClassification("tfidf",0,1,verbose=1)) # tf-idf, no stemming, remove stopwords<br/>dfResults&lt;-rbind(dfResults,TextClassification("tf",0,1,verbose=1)) # tf, no stemming, remove stopwords<br/>dfResults&lt;-rbind(dfResults,TextClassification("binary",0,1,verbose=1)) # binary, no stemming, remove stopwords<br/><br/>dfResults&lt;-rbind(dfResults,TextClassification("tfidf",1,1,verbose=1)) # tf-idf, stemming, remove stopwords<br/>dfResults&lt;-rbind(dfResults,TextClassification("tf",1,1,verbose=1)) # tf, stemming, remove stopwords<br/>dfResults&lt;-rbind(dfResults,TextClassification("binary",1,1,verbose=1)) # binary, stemming, remove stopwords<br/><br/>dfResults[, "best_acc"] &lt;- apply(dfResults[, c("nb_acc","svm_acc","nn_acc","rf_acc")], 1, max)<br/>dfResults &lt;- dfResults[order(-dfResults$best_acc),]<br/>dfResults<br/><br/>strResult &lt;- sprintf("Best accuracy score was %1.2f%%. Hyper-parameters: ",dfResults[1,"best_acc"])<br/>strResult &lt;- paste(strResult,dfResults[1,"w"],",",sep="")<br/>strResult &lt;- paste(strResult,<br/>                   ifelse(dfResults[1,"stem"] == 0,"no stemming,","stemming,"))<br/>strResult &lt;- paste(strResult,<br/>                   ifelse(dfResults[1,"stop"] == 0,"no stop word processing,","removed stop words,"))<br/>if (dfResults[1,"best_acc"] == dfResults[1,"nb_acc"]){<br/>  strResult &lt;- paste(strResult,"Naive Bayes model")<br/>} else if (dfResults[1,"best_acc"] == dfResults[1,"svm_acc"]){<br/>  strResult &lt;- paste(strResult,"SVM model")<br/>} else if (dfResults[1,"best_acc"] == dfResults[1,"nn_acc"]){<br/>  strResult &lt;- paste(strResult,"Neural Network model")<br/>}else if (dfResults[1,"best_acc"] == dfResults[1,"rf_acc"]){<br/>  strResult &lt;- paste(strResult,"Random Forest model")<br/>}<br/><br/>print (strResult)</pre>
+
+<p>对于超参数的每个组合，脚本将四个机器学习算法的最佳分数保存在<kbd>best_acc</kbd>字段中。培训完成后，我们可以看看结果:</p>
+
+<pre>&gt; dfResults<br/> w stem stop nb_acc svm_acc nn_acc rf_acc best_acc<br/><strong>12 binary    1    1   86.06   95.24   90.52   94.26     95.24</strong><br/>9  binary    0    1   87.71   95.15   90.52   93.72     95.15<br/>10 tfidf     1    1   91.99   95.15   91.05   94.17     95.15<br/>3  binary    0    0   85.98   95.01   90.29   93.99     95.01<br/>6  binary    1    0   84.59   95.01   90.34   93.63     95.01<br/>7  tfidf     0    1   91.27   94.43   94.79   93.54     94.79<br/>11 tf        1    1   77.47   94.61   92.30   94.08     94.61<br/>4  tfidf     1    0   92.25   94.57   90.96   93.99     94.57<br/>5  tf        1    0   75.11   94.52   93.46   93.90     94.52<br/>1  tfidf     0    0   91.54   94.26   91.59   93.23     94.26<br/>2  tf        0    0   75.82   94.03   91.54   93.59     94.03<br/>8  tf        0    1   78.14   94.03   91.63   93.68     94.03<br/><br/>&gt; print (strResult)<br/>[1] "Best accuracy score was 95.24%. Hyper-parameters: binary, stemming, removed stop words, SVM model"</pre>
+
+<p>这些结果是按最佳结果排序的，所以在这里我们可以看到我们的总体最佳准确度是<kbd>95.24%</kbd>。训练这么多模型的原因是没有适合大多数情况的传统NLP任务的正确公式，所以你应该尝试预处理和不同算法的多种组合，就像我们在这里所做的那样。例如，如果您在网上搜索一个关于文本分类的示例，您可以找到一个建议使用tf-idf和朴素贝叶斯的示例。在这里，我们可以看到它是表现最差的之一。</p>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Deep learning text classification</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">深度学习文本分类</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>前面的代码对多个不同超参数的数据运行了48个传统的机器学习算法。现在，是时候看看我们是否能找到一个胜过他们的深度学习模型了。第一个深度学习模型在<kbd>Chapter7/classify_keras1.R</kbd>。代码的第一部分加载数据。路透社数据集中的记号按照它们出现的频率(在训练集中)进行排序，并且<kbd>max_features</kbd>参数控制将在模型中使用多少不同的记号。我们将使用所有的标记，将它设置为单词索引中的条目数。maxlen参数控制模型输入序列的长度，它们的长度必须相同。如果序列比maxlen变量长，它们将被截断，如果序列比maxlen变量短，则添加填充以使长度=maxlen。我们将其设置为250，这意味着我们的深度学习模型期望每个实例有250个令牌作为输入:</p>
+
+<pre>library(keras)<br/><br/>set.seed(42)<br/>word_index &lt;- dataset_reuters_word_index()<br/>max_features &lt;- length(word_index)<br/>maxlen &lt;- 250<br/>skip_top = 0<br/><br/>reuters &lt;- dataset_reuters(num_words = max_features,skip_top = skip_top)<br/>c(c(x_train, y_train), c(x_test, y_test)) %&lt;-% reuters<br/>x_train &lt;- pad_sequences(x_train, maxlen = maxlen)<br/>x_test &lt;- pad_sequences(x_test, maxlen = maxlen)<br/>x_train &lt;- rbind(x_train,x_test)<br/>y_train &lt;- c(y_train,y_test)<br/>table(y_train)<br/><br/>y_train[y_train!=3] &lt;- 0<br/>y_train[y_train==3] &lt;- 1<br/>table(y_train)</pre>
+
+<p>下一部分代码构建模型:</p>
+
+<pre>model &lt;- keras_model_sequential() %&gt;%<br/>  layer_embedding(input_dim = max_features, output_dim = 16,input_length = maxlen) %&gt;%<br/>  layer_flatten() %&gt;%<br/>  layer_dropout(rate = 0.25) %&gt;% <br/>  layer_dense(units = 16, activation = 'relu') %&gt;%<br/>  layer_dropout(rate = 0.5) %&gt;% <br/>  layer_dense(units = 16, activation = 'relu') %&gt;%<br/>  layer_dropout(rate = 0.5) %&gt;% <br/>  layer_dense(units = 1, activation = "sigmoid")<br/><br/>model %&gt;% compile(<br/>  optimizer = "rmsprop",<br/>  loss = "binary_crossentropy",<br/>  metrics = c("acc")<br/>)<br/>summary(model)<br/>history &lt;- model %&gt;% fit(<br/>  x_train, y_train,<br/>  epochs = 5,<br/>  batch_size = 32,<br/>  validation_split = 0.2<br/>)</pre>
+
+<p>在这段代码中，我们唯一没有见过的是<kbd>layer_embedding</kbd>。它接受输入并创建一个嵌入层，这是每个输入令牌的数字向量。我们将在下一节更详细地描述词向量。另一件要注意的事情是，我们不预处理文本或创建任何特征——我们只是输入单词索引，让深度学习算法理解它。下面是模型训练时脚本的输出:</p>
+
+<pre>Train on 8982 samples, validate on 2246 samples<br/>Epoch 1/5<br/>8982/8982 [==============================] - 3s 325us/step - loss: 0.4953 - acc: 0.7674 - val_loss: 0.2332 - val_acc: 0.9274<br/>Epoch 2/5<br/>8982/8982 [==============================] - 3s 294us/step - loss: 0.2771 - acc: 0.9235 - val_loss: 0.1990 - val_acc: 0.9394<br/>Epoch 3/5<br/>8982/8982 [==============================] - 3s 297us/step - loss: 0.2150 - acc: 0.9414 - val_loss: 0.1975 - val_acc: 0.9497<br/>Epoch 4/5<br/>8982/8982 [==============================] - 3s 282us/step - loss: 0.1912 - acc: 0.9515 - val_loss: 0.2118 - val_acc: 0.9461<br/>Epoch 5/5<br/>8982/8982 [==============================] - 3s 280us/step - loss: 0.1703 - acc: 0.9584 - val_loss: 0.2490 - val_acc: 0.9466</pre>
+
+<p>尽管代码很简单，但我们在三个时期后就获得了94.97%的验证集准确率，仅比最佳的传统NLP方法低0.27%。现在，是时候更详细地讨论单词向量了。</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Word vectors</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">词向量</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">深度学习不是将我们的文本数据表示为一袋单词，而是将它们表示为单词向量或嵌入。向量/嵌入只不过是代表一个单词的一系列数字。你可能已经听说过Word2Vec、GloVe等流行的词向量。Word2vec模型是Google ( <em> Mikolov，Tomas等人发明的向量空间中单词表示的高效估计。arXiv预印本arXiv:1301.3781 (2013) </em>。在他们的论文中，他们举例说明了这些单词向量是如何具有神秘和神奇的属性的。如果取单词“<em>王</em>的向量，减去单词“<em>男</em>的向量，加上单词“<em>男</em>的向量，那么得到一个接近单词“<em>后</em>的向量的值。还存在其他相似之处，例如:</p>
+
+<ul>
+
+<li class="mce-root"><em>向量('国王')-向量('男人')+向量('女人')=向量('女王')</em></li>
+
+<li class="mce-root"><em> vector('巴黎')- vector('法国')+ vector('意大利')= vector('罗马')</em></li>
+
+</ul>
+
+<p class="mce-root">如果这是你第一次看到Word2Vec，那么你可能会对此感到有些惊讶。我知道我是！这些例子暗示了词向量<em>理解</em>语言，那么我们解决自然语言处理了吗？答案是否定的——我们离这个目标还很远。向量是从文本文档集合中学习的。事实上，我们深度学习模型的第一层是一个嵌入层，它为单词创建了一个向量空间。让我们再来看看<kbd>Chapter7/classify_keras.R</kbd>中的一些代码:</p>
+
+<pre>library(keras)<br/><br/>word_index &lt;- dataset_reuters_word_index()<br/>max_features &lt;- length(word_index)<br/>max_features<br/>[1] 30979<br/>.......<br/><br/>model &lt;- keras_model_sequential() %&gt;%<br/> layer_embedding(input_dim = max_features, output_dim = 16,input_length = maxlen) %&gt;%<br/>.......<br/><br/>summary(model)<br/>_______________________________________________________________________________________<br/>Layer (type)                Output Shape         Param # <br/>=======================================================================================<br/>embedding_1 (Embedding)     (None, 150, 16)      495664<br/>.......</pre>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mceNonEditable"/>
+
+<p class="mceNonEditable"/>
+
+<p><kbd>max_features</kbd>的值是<kbd>30979</kbd>，也就是说，我们拥有<kbd>30979</kbd>独有的特性。这些特征是<strong>记号</strong>或单词。在传统的文本分类中，我们有几乎相同数量的唯一标记(<kbd>30538</kbd>)。这两个数字之间的差别并不重要；这是由于两种方法之间使用了不同的标记化过程，也就是说，文档是如何被分割成标记的。嵌入层有<kbd>495664</kbd>个参数，为<em> 30，979 x 16 </em>，即每个唯一特征/令牌用一个<kbd>16</kbd>个数字的向量表示。由深度学习算法学习的单词向量或嵌入将具有前面描述的一些特征，例如:</p>
+
+<ul>
+
+<li>同义词(两个意思相同的单词)将有非常相似的单词向量</li>
+
+<li>来自相同语义集合的单词将被聚类(例如，颜色、星期几、汽车品牌等等)</li>
+
+<li>相关单词之间的向量空间可以表示这些单词之间的关系(例如，w(国王)-w(王后)的性别)</li>
+
+</ul>
+
+<p>嵌入层基于单词及其周围的单词创建单词向量/嵌入。单词vectors最终具有这些特征是因为一个简单的事实，这个事实可以用1957年英国语言学家John Firth的一句话来概括:</p>
+
+<p>"从一个人交的朋友，你就可以知道这个人说的话."</p>
+
+<p>深度学习算法通过查看周围的单词来学习每个单词的向量，从而学习一些上下文。当它看到<em>王</em>这个词的时候，这个词附近的一些词可能表示性别，比如<em>王</em>拿起了<em>他的</em>剑。另一句话可能是<em>女王</em>看着<em>她的</em>镜子。<em>国王</em>和<em>王后</em>的词向量有一个潜在的性别成分，它是从数据中围绕<em>国王</em>和<em>王后</em>的词中得知的。但重要的是要认识到，深度学习算法没有什么性别的概念，也没有它适用于什么类型的实体。即便如此，单词向量是对单词包方法的巨大改进，单词包方法无法识别不同标记之间的关系。使用单词向量也意味着我们不必丢弃稀疏术语。最后，随着唯一标记数量的增加，它们的处理效率要比单词袋方法高得多。</p>
+
+<p>当我们在自动编码器中使用它们时，我们将在第9章、<em xmlns:epub="http://www.idpf.org/2007/ops">异常检测和推荐系统</em>中再次查看嵌入。现在我们已经看到了一些传统的机器学习和深度学习方法来解决这个问题，是时候更详细地比较它们了。</p>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Comparing traditional text classification and deep learning</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">传统文本分类与深度学习的比较</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>传统的文本分类执行许多预处理步骤，包括词干提取、停用词处理和特征生成(tf-idf、tf或binary)。深度学习文本分类不需要这种预处理。您以前可能听说过各种原因:</p>
+
+<ul>
+
+<li>深度学习可以自动学习特征，所以不需要创建特征</li>
+
+<li>用于NLP任务的深度学习算法比传统的文本分类需要更少的预处理</li>
+
+</ul>
+
+<p>这是有一定道理的，但是这并没有回答为什么我们在传统的文本分类中需要复杂的特征生成。传统文本分类中需要预处理的一个重要原因是为了克服一个基本问题。</p>
+
+<p>对于一些传统的自然语言处理方法(例如，分类)，文本预处理不仅仅是创建更好的特征。这也是必要的，因为单词袋表示创建了一个稀疏的高维数据集。大多数机器学习算法对这样的数据集都有问题，这意味着我们必须在应用机器学习算法之前降低维度。对文本进行适当的预处理是确保相关数据不会被丢弃的重要部分。</p>
+
+<p>对于传统的文本分类，我们使用了一种叫做<strong>单词袋</strong>的方法。这实质上就是一键编码每个<em> <strong>令牌</strong> </em>(字)。每列代表一个令牌，每个单元格的值为以下值之一:</p>
+
+<ul>
+
+<li>该令牌的一个<strong> tf-idf </strong> ( <strong>术语频率，逆文档频率</strong>)</li>
+
+<li>术语频率，即该令牌在该文档/实例中出现的次数</li>
+
+<li>二进制标志，即，如果令牌在该文档/实例中，则为1；否则，它是零</li>
+
+</ul>
+
+<p>你可能之前没听说过<em> tf-idf </em>。它通过计算单词在文档中的词频(<em> tf </em>)(比如它在文档中出现的次数)除以它在整个语料库中出现的次数的日志(<em> idf </em>)来衡量单词的重要性。<strong>文集</strong>是文档的全部集合。<em> tf </em>部分测量令牌在单个文档中的重要性，而<em> idf </em>测量令牌在所有文档中的独特性。如果标记在文档中出现多次，而且在其他文档中也出现多次，那么它不太可能对文档分类有用。如果令牌只出现在少数文档中，那么它对于分类任务来说是一个潜在的有价值的特征。</p>
+
+<p class="mce-root"/>
+
+<p>我们传统的文本分类方法也使用<em>词干</em>和处理<em>停用词</em>。事实上，我们在传统文本分类中最好的结果是使用了这两种方法。词干分析试图将单词缩减为词干或词根形式，从而减少词汇量。这也意味着具有相同含义但具有不同动词时态或名词形式的单词被标准化为相同的标记。这里有一个词干的例子。注意，6/7的输入字具有相同的输出值:</p>
+
+<pre>library(corpus)<br/>text &lt;- "love loving lovingly loved lover lovely love"<br/>text_tokens(text, stemmer = "en") # english stemmer<br/>[[1]]<br/>[1] "love" "love" "love" "love" "lover" "love" "love" </pre>
+
+<p>停用词是在大多数语言文档中出现的常用词。它们在大多数文档中出现得如此频繁，以至于几乎从未对机器学习有用。以下示例显示了英语的停用词列表:</p>
+
+<pre>library(tm)<br/>&gt; stopwords()<br/> [1] "i" "me" "my" "myself" "we" "our" <br/> [7] "ours" "ourselves" "you" "your" "yours" "yourself" <br/> [13] "yourselves" "he" "him" "his" "himself" "she"<br/> [19] "her" "hers" "herself" "it" "its" "itself" <br/> [25] "they" "them" "their" "theirs" "themselves" "what" <br/>.........</pre>
+
+<p>我们想在传统自然语言处理中涉及的最后一部分是它如何处理稀疏术语。回想一下前面的内容，传统的NLP使用单词包方法，其中每个惟一的标记都有一个单独的列。对于大量的文档集合，将有数千个唯一的标记，并且由于大多数标记不会出现在单个文档中，这是非常稀疏的表示，也就是说，大多数单元是空的。我们可以通过查看来自<kbd>classify_text.R</kbd>的一些代码，稍微修改它，并查看<kbd>dtm</kbd>和<kbd>dtm2</kbd>变量来检查这一点:</p>
+
+<pre>library(tm)<br/>df &lt;- read.csv("../data/reuters.train.tab", sep="\t", stringsAsFactors = FALSE)<br/>df2 &lt;- read.csv("../data/reuters.test.tab", sep="\t", stringsAsFactors = FALSE)<br/>df &lt;- rbind(df,df2)<br/><br/>df[df$y!=3,]$y&lt;-0<br/>df[df$y==3,]$y&lt;-1<br/>rm(df2)<br/><br/>corpus &lt;- Corpus(DataframeSource(data.frame(df[, 2])))<br/>corpus &lt;- tm_map(corpus, content_transformer(tolower))<br/><br/>dtm &lt;- DocumentTermMatrix(corpus,control=list(weighting=weightBin))<br/><br/># keep terms that cover 95% of the data<br/>dtm2&lt;-removeSparseTerms(dtm, 0.95)<br/><br/>dtm<br/><strong>&lt;&lt;DocumentTermMatrix (documents: 11228, terms: 30538)&gt;&gt;</strong><br/><strong>Non-/sparse entries: 768265/342112399</strong><br/><strong>Sparsity : 100%</strong><br/><strong>Maximal term length: 24</strong><br/><strong>Weighting : binary (bin)</strong><br/><br/>dtm2<br/><strong>&lt;&lt;DocumentTermMatrix (documents: 11228, terms: 230)&gt;&gt;</strong><br/><strong>Non-/sparse entries: 310275/2272165</strong><br/><strong>Sparsity : 88%</strong><br/><strong>Maximal term length: 13</strong><br/><strong>Weighting : binary (bin)</strong></pre>
+
+<p>我们可以看到，我们的第一个文档术语矩阵(dtm)有11，228个文档和30，538个唯一标记。在这个文档术语矩阵中，只有768，265 (0.22%)个单元格有值。大多数机器学习算法都难以处理如此高维的稀疏数据帧。如果你尝试在一个30，538维的数据框架上使用这些机器学习算法(例如，SVM、随机森林、朴素贝叶斯)，它们将无法在R中运行(我尝试过！).这是传统NLP中的一个已知问题，因此NLP库中有一个函数(<kbd>removeSparseTerms</kbd>)可以从文档-术语矩阵中删除稀疏术语。这将删除空单元格最多的列。我们可以看到这样的效果，因为第二个文档术语矩阵只有230个唯一的标记，310，275 (12%)个单元格有值。这个数据集仍然相对稀疏，但它是机器学习的可用格式。</p>
+
+<p>这凸显了传统NLP方法的问题:<em>单词袋</em>方法创建了一个非常稀疏的高维数据集，机器学习算法无法使用。因此，您需要删除一些维度，在我们的示例中，这会导致许多单元格的值从768，265到310，275。在应用任何机器学习之前，我们扔掉了几乎60%的数据！这也解释了为什么在传统的自然语言处理中使用文本预处理，如词干提取和停用词去除。词干有助于通过将许多单词的变体组合成一种形式来减少词汇量和标准化术语。</p>
+
+<p class="mce-root">通过组合变异，这意味着它们更有可能在数据筛选中幸存下来。我们处理停用词是出于相反的原因:如果我们不删除停用词，这些词可能会在删除稀疏词后被保留。<kbd>tm</kbd>包中的<kbd>stopwords()</kbd>函数有174项。如果缩减的数据集有许多这样的术语，那么由于它们在整个文档中的通用性，它们作为预测变量可能是没有用的。</p>
+
+<p>同样值得注意的是，就NLP而言，这是一个非常小的数据集。我们只有11，228个文档和30，538个唯一令牌。一个更大的<em> <strong>语料库</strong> </em>(文本文档的集合)可能有50万个唯一令牌。为了将令牌的数量减少到可以在R中处理的数量，我们将不得不丢弃更多的数据。</p>
+
+<p>当我们使用深度学习方法进行NLP时，我们将数据表示为词向量/嵌入，而不是使用传统NLP中的词袋方法。这要高效得多，因此在应用深度学习算法之前，不必预处理数据来删除常用单词，将单词简化为更简单的形式，或者减少术语的数量。我们唯一要做的事情是为我们为每个实例处理的令牌数选择嵌入大小和最大长度大小。这是需要的，因为深度学习算法不能使用可变长度序列作为层的输入。当实例的令牌数超过最大长度时，它们会被截断；当实例的令牌数小于最大长度时，它们会被填充。</p>
+
+<p>经过这一切，你可能会奇怪，如果传统的NLP方法丢弃了60%的数据，为什么深度学习算法没有明显优于传统的NLP方法。这有几个原因:</p>
+
+<p>数据集很小。如果我们有更多的数据，深度学习方法将比传统的NLP方法以更快的速度改进。</p>
+
+<ul>
+
+<li>某些NLP任务，如文档分类和情感分析，依赖于一个非常小的术语集。例如，为了区分体育新闻和金融新闻，也许50个选择的术语就足以获得超过90%的准确率。回想一下传统文本分类方法中移除稀疏术语的功能——这是可行的，因为它(正确地)假设非稀疏术语将是机器学习算法的有用特征。</li>
+
+<li>我们运行了48种机器学习算法，只有一种深度学习方法，相对简单！我们将很快遇到击败传统NLP方法的方法。</li>
+
+<li>这本书实际上只触及了传统NLP方法的表面。关于这个主题的书已经写完了。观察这些方法的目的是为了展示这些方法有多脆弱。深度学习方法更容易理解，设置也更少。它不涉及文本预处理或基于权重(如tf-idf)创建特征。即便如此，我们的第一个深度学习方法距离传统文本分类的48个模型中的最佳模型并不是很远。</li>
+
+</ul>
+
+<p>高级深度学习文本分类</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Advanced deep learning text classification</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">我们的基本深度学习模型比传统的机器学习方法简单得多，但其性能却不太好。本节着眼于深度学习中文本分类的一些高级技术。接下来的部分解释了许多不同的方法，并把重点放在代码示例上，而不是深入的解释。如果你对更多细节感兴趣，那么看看古德费勒、本吉奥和库维尔(<em>古德费勒、伊恩等人的《深度学习》一书<em>深度学习</em>。第一卷。剑桥:麻省理工学院出版社，2016年。</em>)。另一个涵盖深度学习中NLP的好参考是Yoav Goldberg ( <em> Goldberg，Yoav。自然语言处理的神经网络方法</em>。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">1D卷积神经网络模型</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>1D convolutional neural network model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">我们已经看到，传统NLP方法中的单词袋方法忽略了句子结构。考虑对下表中的四个电影评论应用情感分析任务:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root"><strong> Id </strong></p>
+
+<table border="1" style="border-collapse: collapse;width: 100%">
+
+<tbody>
+
+<tr>
+
+<td style="width: 12%">
+
+<p><strong>句子</strong></p>
+
+</td>
+
+<td style="width: 44.4327%">
+
+<p><strong>评级(1 =推荐，0 =不推荐)</strong></p>
+
+</td>
+
+<td style="width: 88.5673%">
+
+<p>一</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 12%">
+
+<p>这部电影非常好</p>
+
+</td>
+
+<td style="width: 44.4327%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 88.5673%">
+
+<p>2</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 12%">
+
+<p>这部电影不好</p>
+
+</td>
+
+<td style="width: 44.4327%">
+
+<p>0</p>
+
+</td>
+
+<td style="width: 88.5673%">
+
+<p>3</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 12%">
+
+<p>这部电影不太好</p>
+
+</td>
+
+<td style="width: 44.4327%">
+
+<p>0</p>
+
+</td>
+
+<td style="width: 88.5673%">
+
+<p>四</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 12%">
+
+<p>这部电影还不错</p>
+
+</td>
+
+<td style="width: 44.4327%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 88.5673%">
+
+<p>1</p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p>如果我们将此表示为一个包含词频的单词包，我们将得到以下输出:</p>
+
+<p><strong> Id </strong></p>
+
+<table border="1" style="border-collapse: collapse;width: 100%">
+
+<tbody>
+
+<tr>
+
+<td style="width: 10%">
+
+<p><strong>不良</strong></p>
+
+</td>
+
+<td style="width: 10%">
+
+<p><strong>好的</strong></p>
+
+</td>
+
+<td style="width: 10%">
+
+<p><strong>是</strong></p>
+
+</td>
+
+<td style="width: 10%">
+
+<p><strong>电影</strong></p>
+
+</td>
+
+<td style="width: 10%">
+
+<p><strong>不是</strong></p>
+
+</td>
+
+<td style="width: 10%">
+
+<p><strong>这个</strong></p>
+
+</td>
+
+<td style="width: 10%">
+
+<p><strong>非常</strong></p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 10%">
+
+<p>0</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>0</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>2</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 10%">
+
+<p>0</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>0</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>3</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 10%">
+
+<p>0</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>四</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>0</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>一</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>0</p>
+
+</td>
+
+<td style="width: 10%">
+
+<p>在这个简单的例子中，我们可以看到单词袋方法的一些问题，我们失去了否定(<strong xmlns:epub="http://www.idpf.org/2007/ops">而不是</strong>)和形容词(<strong xmlns:epub="http://www.idpf.org/2007/ops">好</strong>、<strong xmlns:epub="http://www.idpf.org/2007/ops">坏</strong>)之间的关系。为了解决这个问题，传统的NLP可以使用二元模型，所以不使用单个单词作为标记，而是使用两个单词作为标记。现在，对于第二个例子，<strong xmlns:epub="http://www.idpf.org/2007/ops">不好</strong>是单个令牌，这使得机器学习算法更有可能拾取它。然而，我们仍然有第三个例子的问题(<strong xmlns:epub="http://www.idpf.org/2007/ops">不太好</strong>，这里我们将有不太好和非常好的令牌。这些仍然是模糊的，因为<strong xmlns:epub="http://www.idpf.org/2007/ops">不太</strong>暗示消极情绪，而<strong xmlns:epub="http://www.idpf.org/2007/ops">非常好</strong>暗示积极情绪。我们可以尝试更高阶的n-gram，但这进一步加剧了我们在上一节中看到的稀疏问题。</p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p>词向量或嵌入也有同样的问题。我们需要某种方法来处理单词序列。幸运的是，深度学习算法中有一些类型的层可以处理顺序数据。我们已经在<a href="1c0b9897-b0cc-4a8f-9ce8-e6409c347f4f.xhtml">第五章</a>、<em>中看到过卷积神经网络，使用卷积神经网络进行图像分类</em>。回想一下，这些是2D补片，它们在图像上移动以识别图案，如对角线或边缘。以类似的方式，我们可以在单词向量上应用1D卷积神经网络。这是一个使用1D卷积神经网络层解决相同文本分类问题的例子。代码在<kbd>Chapter7/classify_keras2.R</kbd>里。我们只展示了模型架构的代码，因为这是与<kbd>Chapter7/classify_keras1.R</kbd>中代码的唯一变化:</p>
+
+<p>我们可以看到，这与我们在图像数据中看到的模式相同；我们有一个卷积层，后跟一个最大池层。有64个卷积层有一个<kbd>length=5</kbd>，所以这些<em>学习数据中的</em>局部模式。这是模型训练的输出结果:</p>
+
+<p>这个模型是对我们之前深度学习模型的改进；它在第四个历元上获得95.73%的准确度。这比传统的NLP方法提高了0.49%，这是一个显著的改进。让我们转到其他也寻找匹配序列的方法。我们将从<strong>递归神经网络</strong> ( <strong> RNNs </strong>)开始。</p>
+
+<pre>model &lt;- keras_model_sequential() %&gt;%<br/>  layer_embedding(input_dim = max_features, output_dim = 16,input_length = maxlen) %&gt;%<br/>  layer_dropout(rate = 0.25) %&gt;%<br/>  layer_conv_1d(64,5, activation = "relu") %&gt;%<br/>  layer_dropout(rate = 0.25) %&gt;%<br/>  layer_max_pooling_1d() %&gt;%<br/>  layer_flatten() %&gt;%<br/>  layer_dense(units = 50, activation = 'relu') %&gt;%<br/>  layer_dropout(rate = 0.6) %&gt;%<br/>  layer_dense(units = 1, activation = "sigmoid")</pre>
+
+<p>递归神经网络模型</p>
+
+<pre>Train on 8982 samples, validate on 2246 samples<br/>Epoch 1/5<br/>8982/8982 [==============================] - 13s 1ms/step - loss: 0.3020 - acc: 0.8965 - val_loss: 0.1909 - val_acc: 0.9470<br/>Epoch 2/5<br/>8982/8982 [==============================] - 13s 1ms/step - loss: 0.1980 - acc: 0.9498 - val_loss: 0.1816 - val_acc: 0.9537<br/>Epoch 3/5<br/>8982/8982 [==============================] - 12s 1ms/step - loss: 0.1674 - acc: 0.9575 - val_loss: 0.2233 - val_acc: 0.9368<br/>Epoch 4/5<br/>8982/8982 [==============================] - 12s 1ms/step - loss: 0.1587 - acc: 0.9606 - val_loss: 0.1787 - val_acc: 0.9573<br/>Epoch 5/5<br/>8982/8982 [==============================] - 12s 1ms/step - loss: 0.1513 - acc: 0.9628 - val_loss: 0.2186 - val_acc: 0.9408</pre>
+
+<p>我们目前看到的深度学习网络，没有记忆的概念。每一条新信息都被视为原子信息，与已经发生的事情无关。但是，序列在时间序列和文本分类中非常重要，尤其是在情感分析中。在上一节中，我们看到了单词结构和顺序的重要性，我们使用CNN来解决这个问题。虽然这种方法有效，但它并没有完全解决问题，因为我们仍然必须选择一个过滤器的大小，这限制了层的范围。递归神经网络是用来解决这个问题的深度学习层。它们是带有反馈回路的网络，允许信息流动，因此能够<em>记住</em>重要特征:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Recurrent neural network model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title"><img class="alignnone size-full wp-image-603 image-border" src="img/50985a6f-072d-41b1-ad78-6a456fa9d8f1.png" style="width:26.92em;height:16.00em;"/></h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">图7.1:一个递归神经网络</p>
+
+<p class="CDPAlignCenter CDPAlign">在上图中，我们可以看到一个递归神经网络的示例。每条信息(X <sub> o </sub>，X <sub> 1 </sub>，X <sub> 2 </sub>)被送入一个预测<em> y </em>变量的节点。预测值也作为输入传递给下一个节点，从而保留一些序列信息。</p>
+
+<p>我们的第一个RNN模型在<kbd>Chapter7/classify_keras3.R</kbd>。我们必须改变模型的一些参数:我们必须将使用的特征数量减少到4，000，将最大长度减少到100，并删除最常见的100个标记。我们还必须将嵌入层的大小增加到32，并运行10个时期:</p>
+
+<p>这是模型训练的输出结果:</p>
+
+<p class="mce-root">最好的验证精度是在epoch 7之后，我们得到了93.90%的精度，这还不如CNN模型。简单RNN模型的一个问题是，随着不同信息片段之间差距的增大，很难维护上下文。让我们转向一个更复杂的模型，即LSTM模型。</p>
+
+<pre>word_index &lt;- dataset_reuters_word_index()<br/>max_features &lt;- length(word_index)<br/>max_features &lt;- 4000<br/>maxlen &lt;- 100<br/>skip_top = 100<br/><br/>........<br/><br/>model &lt;- keras_model_sequential() %&gt;%<br/>  layer_embedding(input_dim = max_features, output_dim = 32,input_length = maxlen) %&gt;%<br/>  layer_spatial_dropout_1d(rate = 0.25) %&gt;%<br/>  layer_simple_rnn(64,activation = "relu", dropout=0.2) %&gt;%<br/>  layer_dense(units = 1, activation = "sigmoid")<br/><br/>........<br/><br/>history &lt;- model %&gt;% fit(<br/>  x_train, y_train,<br/>  epochs = 10,<br/>  batch_size = 32,<br/>  validation_split = 0.2<br/>)<br/><br/></pre>
+
+<p>长短期记忆模型</p>
+
+<pre>Train on 8982 samples, validate on 2246 samples<br/>Epoch 1/10<br/>8982/8982 [==============================] - 4s 409us/step - loss: 0.5289 - acc: 0.7848 - val_loss: 0.3162 - val_acc: 0.9078<br/>Epoch 2/10<br/>8982/8982 [==============================] - 4s 391us/step - loss: 0.2875 - acc: 0.9098 - val_loss: 0.2962 - val_acc: 0.9305<br/>Epoch 3/10<br/>8982/8982 [==============================] - 3s 386us/step - loss: 0.2496 - acc: 0.9267 - val_loss: 0.2487 - val_acc: 0.9234<br/>Epoch 4/10<br/>8982/8982 [==============================] - 3s 386us/step - loss: 0.2395 - acc: 0.9312 - val_loss: 0.2709 - val_acc: 0.9332<br/>Epoch 5/10<br/>8982/8982 [==============================] - 3s 381us/step - loss: 0.2259 - acc: 0.9336 - val_loss: 0.2360 - val_acc: 0.9270<br/>Epoch 6/10<br/>8982/8982 [==============================] - 3s 381us/step - loss: 0.2182 - acc: 0.9348 - val_loss: 0.2298 - val_acc: 0.9341<br/>Epoch 7/10<br/>8982/8982 [==============================] - 3s 383us/step - loss: 0.2129 - acc: 0.9380 - val_loss: 0.2114 - val_acc: 0.9390<br/>Epoch 8/10<br/>8982/8982 [==============================] - 3s 382us/step - loss: 0.2128 - acc: 0.9341 - val_loss: 0.2306 - val_acc: 0.9359<br/>Epoch 9/10<br/>8982/8982 [==============================] - 3s 378us/step - loss: 0.2053 - acc: 0.9382 - val_loss: 0.2267 - val_acc: 0.9368<br/>Epoch 10/10<br/>8982/8982 [==============================] - 3s 385us/step - loss: 0.2031 - acc: 0.9389 - val_loss: 0.2204 - val_acc: 0.9368</pre>
+
+<p>LSTMs旨在学习长期依赖性。与rnn类似，它们是链式的，并且具有四个内部神经网络层。他们将状态拆分为两部分，一部分管理短期状态，另一部分添加长期状态。LSTMs有<em>门</em>，控制如何存储<em>存储器</em>。输入门控制输入的哪一部分应该被添加到长期记忆中。遗忘门控制着长时记忆中应该被遗忘的部分。最后一个门，输出门，控制长期记忆的哪一部分应该在输出中。这是对LSTMs的简要描述——更详细的参考资料是<a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/">http://colah.github.io/posts/2015-08-Understanding-LSTMs/</a>。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Long short term memory model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">我们的LSTM模型的代码在<kbd>Chapter7/classify_keras4.R</kbd>中。模型的参数是最大长度=150，嵌入层的大小=32，模型被训练10个时期:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>这是模型训练的输出结果:</p>
+
+<p>最好的验证准确性是在第5纪元之后，当时我们获得了95.37%的准确性，这是对简单RNN模型的一个很大的改进，尽管仍然不如CNN模型。接下来，我们将讨论GRU细胞，这是一个与LSTM类似的概念。</p>
+
+<pre>word_index &lt;- dataset_reuters_word_index()<br/>max_features &lt;- length(word_index)<br/>maxlen &lt;- 150<br/>skip_top = 0<br/><br/>.........<br/><br/>model &lt;- keras_model_sequential() %&gt;%<br/>  layer_embedding(input_dim = max_features, output_dim = 32,input_length = maxlen) %&gt;%<br/>  layer_dropout(rate = 0.25) %&gt;%<br/>  layer_lstm(128,dropout=0.2) %&gt;%<br/>  layer_dense(units = 1, activation = "sigmoid")<br/><br/>.........<br/><br/>history &lt;- model %&gt;% fit(<br/>  x_train, y_train,<br/>  epochs = 10,<br/>  batch_size = 32,<br/>  validation_split = 0.2<br/>)</pre>
+
+<p>门控循环单位模型</p>
+
+<pre>Train on 8982 samples, validate on 2246 samples<br/>Epoch 1/10<br/>8982/8982 [==============================] - 25s 3ms/step - loss: 0.3238 - acc: 0.8917 - val_loss: 0.2135 - val_acc: 0.9394<br/>Epoch 2/10<br/>8982/8982 [==============================] - 26s 3ms/step - loss: 0.2465 - acc: 0.9206 - val_loss: 0.1875 - val_acc: 0.9470<br/>Epoch 3/10<br/>8982/8982 [==============================] - 26s 3ms/step - loss: 0.1815 - acc: 0.9493 - val_loss: 0.2577 - val_acc: 0.9408<br/>Epoch 4/10<br/>8982/8982 [==============================] - 26s 3ms/step - loss: 0.1691 - acc: 0.9521 - val_loss: 0.1956 - val_acc: 0.9501<br/>Epoch 5/10<br/>8982/8982 [==============================] - 25s 3ms/step - loss: 0.1658 - acc: 0.9507 - val_loss: 0.1850 - val_acc: 0.9537<br/>Epoch 6/10<br/>8982/8982 [==============================] - 25s 3ms/step - loss: 0.1658 - acc: 0.9508 - val_loss: 0.1764 - val_acc: 0.9510<br/>Epoch 7/10<br/>8982/8982 [==============================] - 26s 3ms/step - loss: 0.1659 - acc: 0.9522 - val_loss: 0.1884 - val_acc: 0.9466<br/>Epoch 8/10<br/>8982/8982 [==============================] - 26s 3ms/step - loss: 0.1548 - acc: 0.9556 - val_loss: 0.1900 - val_acc: 0.9479<br/>Epoch 9/10<br/>8982/8982 [==============================] - 26s 3ms/step - loss: 0.1562 - acc: 0.9548 - val_loss: 0.2035 - val_acc: 0.9461<br/>Epoch 10/10<br/>8982/8982 [==============================] - 26s 3ms/step - loss: 0.1508 - acc: 0.9567 - val_loss: 0.2052 - val_acc: 0.9470</pre>
+
+<p><strong>门控循环单位(GRUs) </strong>类似于LSTM细胞，但更简单。他们有一个门，结合了LSTM的遗忘门和输入门，没有输出门。虽然gru比lstm更简单，因此训练更快，但它们是否比lstm更好仍是一个争论的问题，因为该研究不是决定性的。因此，建议两者都尝试，因为任务的结果可能会有所不同。我们的GRU模型的代码在<kbd>Chapter7/classify_keras5.R</kbd>中。模型的参数是最大长度=150，嵌入层的大小=32，模型被训练10个时期:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Gated Recurrent Units model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">Gated Recurrent Units model</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p><strong>Gated recurrent units (GRUs)</strong> are similar to LSTM cells but simpler. They have one gate that combines the forget and input gates in LSTM, and there is no output gate. While GRUs are simpler than LSTMs and therefore quicker to train, it is a matter of debate on whether they are better than LSTMs, as the research is inconclusive. Therefore, it is recommended to try both, as the results of your task may vary. The code for our GRU model is in <kbd>Chapter7/classify_keras5.R</kbd>. The parameters for the model are max length=150, the size of the embedding layer=32, and the model was trained for 10 epochs:</p>
+
+<pre>word_index &lt;- dataset_reuters_word_index()<br/>max_features &lt;- length(word_index)<br/>maxlen &lt;- 250<br/>skip_top = 0<br/><br/>...........<br/><br/>model &lt;- keras_model_sequential() %&gt;%<br/>  layer_embedding(input_dim = max_features, output_dim = 32,input_length = maxlen) %&gt;%<br/>  layer_dropout(rate = 0.25) %&gt;%<br/>  layer_gru(128,dropout=0.2) %&gt;%<br/>  layer_dense(units = 1, activation = "sigmoid")<br/><br/>...........<br/>  <br/>history &lt;- model %&gt;% fit(<br/>  x_train, y_train,<br/>  epochs = 10,<br/>  batch_size = 32,<br/>  validation_split = 0.2<br/>)</pre>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mceNonEditable">这是模型训练的输出结果:</p>
+
+<p class="mceNonEditable">最好的验证准确性是在纪元5之后，当时我们获得了95.90%的准确性，这比我们在LSTM获得的95.37%有所提高。其实这是目前为止我们看到的最好的结果。在下一节中，我们将研究双向架构。</p>
+
+<p>Here is the output from the model's training:</p>
+
+<pre>Train on 8982 samples, validate on 2246 samples<br/>Epoch 1/10<br/>8982/8982 [==============================] - 35s 4ms/step - loss: 0.3231 - acc: 0.8867 - val_loss: 0.2068 - val_acc: 0.9372<br/>Epoch 2/10<br/>8982/8982 [==============================] - 35s 4ms/step - loss: 0.2084 - acc: 0.9381 - val_loss: 0.2065 - val_acc: 0.9421<br/>Epoch 3/10<br/>8982/8982 [==============================] - 35s 4ms/step - loss: 0.1824 - acc: 0.9454 - val_loss: 0.1711 - val_acc: 0.9501<br/>Epoch 4/10<br/>8982/8982 [==============================] - 35s 4ms/step - loss: 0.1656 - acc: 0.9515 - val_loss: 0.1719 - val_acc: 0.9550<br/>Epoch 5/10<br/>8982/8982 [==============================] - 35s 4ms/step - loss: 0.1569 - acc: 0.9551 - val_loss: 0.1668 - val_acc: 0.9541<br/>Epoch 6/10<br/>8982/8982 [==============================] - 35s 4ms/step - loss: 0.1477 - acc: 0.9570 - val_loss: 0.1667 - val_acc: 0.9555<br/>Epoch 7/10<br/>8982/8982 [==============================] - 35s 4ms/step - loss: 0.1441 - acc: 0.9605 - val_loss: 0.1612 - val_acc: 0.9581<br/>Epoch 8/10<br/>8982/8982 [==============================] - 36s 4ms/step - loss: 0.1361 - acc: 0.9611 - val_loss: 0.1593 - val_acc: 0.9590<br/>Epoch 9/10<br/>8982/8982 [==============================] - 35s 4ms/step - loss: 0.1361 - acc: 0.9620 - val_loss: 0.1646 - val_acc: 0.9568<br/>Epoch 10/10<br/>8982/8982 [==============================] - 35s 4ms/step - loss: 0.1306 - acc: 0.9634 - val_loss: 0.1660 - val_acc: 0.9559</pre>
+
+<p>The best validation accuracy was after epoch 5, when we got 95.90% accuracy, which is an improvement on the 95.37% we got with LSTM. In fact, this is the best result we have seen so far. In the next section, we will look at bidirectional architectures.</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mceNonEditable"/>
+
+<p class="mceNonEditable"/>
+
+<p class="mceNonEditable"/>
+
+<p class="mceNonEditable"/>
+
+<p class="mceNonEditable"/>
+
+<p class="mceNonEditable">双向LSTM模型</p>
+
+<p class="mceNonEditable">我们在<em>图7.1 </em>中看到，rnn(以及LSTMs和gru)是有用的，因为它们可以向前传递信息。但是在NLP任务中，向后看也是有用的。例如，以下两个字符串具有相同的含义:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Bidirectional LSTM model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">我春天去了柏林</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>春天我去了柏林</p>
+
+<ul>
+
+<li>双向LSTMs可以向前和向后传递信息。我们的双向LSTM模型的代码在<kbd>Chapter7/classify_keras6.R</kbd>中。模型的参数是最大长度=150，嵌入层的大小=32，模型被训练10个时期:</li>
+
+<li>这是模型训练的输出结果:</li>
+
+</ul>
+
+<p>最好的验证准确度是在纪元4之后，当时我们获得了95.77%的准确度。</p>
+
+<pre>word_index &lt;- dataset_reuters_word_index()<br/>max_features &lt;- length(word_index)<br/>maxlen &lt;- 250<br/>skip_top = 0<br/><br/>..................<br/><br/>model &lt;- keras_model_sequential() %&gt;%<br/>  layer_embedding(input_dim = max_features, output_dim = 32,input_length = maxlen) %&gt;%<br/>  layer_dropout(rate = 0.25) %&gt;%<br/>  bidirectional(layer_lstm(units=128,dropout=0.2)) %&gt;%<br/>  layer_dense(units = 1, activation = "sigmoid")<br/><br/>..................<br/>  <br/>history &lt;- model %&gt;% fit(<br/>  x_train, y_train,<br/>  epochs = 10,<br/>  batch_size = 32,<br/>  validation_split = 0.2<br/>)</pre>
+
+<p>堆叠双向模型</p>
+
+<pre>Train on 8982 samples, validate on 2246 samples<br/>Epoch 1/10<br/>8982/8982 [==============================] - 82s 9ms/step - loss: 0.3312 - acc: 0.8834 - val_loss: 0.2166 - val_acc: 0.9377<br/>Epoch 2/10<br/>8982/8982 [==============================] - 87s 10ms/step - loss: 0.2487 - acc: 0.9243 - val_loss: 0.1889 - val_acc: 0.9457<br/>Epoch 3/10<br/>8982/8982 [==============================] - 86s 10ms/step - loss: 0.1873 - acc: 0.9464 - val_loss: 0.1708 - val_acc: 0.9519<br/>Epoch 4/10<br/>8982/8982 [==============================] - 82s 9ms/step - loss: 0.1685 - acc: 0.9537 - val_loss: 0.1786 - val_acc: 0.9577<br/>Epoch 5/10<br/>8982/8982 [==============================] - 83s 9ms/step - loss: 0.1634 - acc: 0.9531 - val_loss: 0.2094 - val_acc: 0.9310<br/>Epoch 6/10<br/>8982/8982 [==============================] - 82s 9ms/step - loss: 0.1567 - acc: 0.9571 - val_loss: 0.1809 - val_acc: 0.9475<br/>Epoch 7/10<br/>8982/8982 [==============================] - 83s 9ms/step - loss: 0.1499 - acc: 0.9575 - val_loss: 0.1652 - val_acc: 0.9555<br/>Epoch 8/10<br/>8982/8982 [==============================] - 83s 9ms/step - loss: 0.1488 - acc: 0.9586 - val_loss: 0.1795 - val_acc: 0.9510<br/>Epoch 9/10<br/>8982/8982 [==============================] - 83s 9ms/step - loss: 0.1513 - acc: 0.9567 - val_loss: 0.1758 - val_acc: 0.9555<br/>Epoch 10/10<br/>8982/8982 [==============================] - 83s 9ms/step - loss: 0.1463 - acc: 0.9571 - val_loss: 0.1731 - val_acc: 0.9550</pre>
+
+<p>双向模型善于从未来状态中提取信息，这些信息会影响当前状态。堆叠双向模型允许我们以类似于在计算机视觉任务中堆叠多个卷积层的方式堆叠多个LSTM/GRU层。我们的双向LSTM模型的代码在<kbd>Chapter7/classify_keras7.R</kbd>中。模型的参数是最大长度=150，嵌入层的大小=32，模型被训练10个时期:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Stacked bidirectional model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">这是模型训练的输出结果:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>最好的验证精度是在纪元4之后，当时我们获得了95.59%的精度，这比我们的双向模型差，双向模型获得了95.77%的精度。</p>
+
+<pre>word_index &lt;- dataset_reuters_word_index()<br/>max_features &lt;- length(word_index)<br/>maxlen &lt;- 250<br/>skip_top = 0<br/><br/>..................<br/><br/>model &lt;- keras_model_sequential() %&gt;%<br/>  layer_embedding(input_dim = max_features, output_dim = 32,input_length = maxlen) %&gt;%<br/>  layer_dropout(rate = 0.25) %&gt;%<br/>  bidirectional(layer_lstm(units=32,dropout=0.2,return_sequences = TRUE)) %&gt;%<br/>  bidirectional(layer_lstm(units=32,dropout=0.2)) %&gt;%<br/>  layer_dense(units = 1, activation = "sigmoid")<br/><br/>..................<br/>  <br/>history &lt;- model %&gt;% fit(<br/>  x_train, y_train,<br/>  epochs = 10,<br/>  batch_size = 32,<br/>  validation_split = 0.2<br/>)</pre>
+
+<p>双向1D卷积神经网络模型</p>
+
+<pre>Train on 8982 samples, validate on 2246 samples<br/>Epoch 1/10<br/>8982/8982 [==============================] - 70s 8ms/step - loss: 0.2854 - acc: 0.9006 - val_loss: 0.1945 - val_acc: 0.9372<br/>Epoch 2/10<br/>8982/8982 [==============================] - 66s 7ms/step - loss: 0.1795 - acc: 0.9511 - val_loss: 0.1791 - val_acc: 0.9484<br/>Epoch 3/10<br/>8982/8982 [==============================] - 69s 8ms/step - loss: 0.1586 - acc: 0.9557 - val_loss: 0.1756 - val_acc: 0.9492<br/>Epoch 4/10<br/>8982/8982 [==============================] - 70s 8ms/step - loss: 0.1467 - acc: 0.9607 - val_loss: 0.1664 - val_acc: 0.9559<br/>Epoch 5/10<br/>8982/8982 [==============================] - 70s 8ms/step - loss: 0.1394 - acc: 0.9614 - val_loss: 0.1775 - val_acc: 0.9533<br/>Epoch 6/10<br/>8982/8982 [==============================] - 70s 8ms/step - loss: 0.1347 - acc: 0.9636 - val_loss: 0.1667 - val_acc: 0.9519<br/>Epoch 7/10<br/>8982/8982 [==============================] - 70s 8ms/step - loss: 0.1344 - acc: 0.9618 - val_loss: 0.2101 - val_acc: 0.9332<br/>Epoch 8/10<br/>8982/8982 [==============================] - 70s 8ms/step - loss: 0.1306 - acc: 0.9647 - val_loss: 0.1893 - val_acc: 0.9479<br/>Epoch 9/10<br/>8982/8982 [==============================] - 70s 8ms/step - loss: 0.1286 - acc: 0.9646 - val_loss: 0.1663 - val_acc: 0.9550<br/>Epoch 10/10<br/>8982/8982 [==============================] - 70s 8ms/step - loss: 0.1254 - acc: 0.9669 - val_loss: 0.1687 - val_acc: 0.9492</pre>
+
+<p>到目前为止，我们看到的最好的方法是1D卷积神经网络模型，其准确率为95.73%，以及门控递归单元模型，其准确率为95.90%。下面的代码结合了它们！我们的双向1D卷积神经网络模型的代码在<kbd>Chapter7/classify_keras8.R</kbd>中。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Bidirectional with 1D convolutional neural network model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">模型的参数是最大长度=150，嵌入层的大小=32，模型被训练10个时期:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>这是模型训练的输出结果:</p>
+
+<p>最好的验证准确性是在epoch 6之后，当时我们获得了96.04%的准确性，这超过了以前的所有模型。</p>
+
+<pre>word_index &lt;- dataset_reuters_word_index()<br/>max_features &lt;- length(word_index)<br/>maxlen &lt;- 250<br/>skip_top = 0<br/><br/>..................<br/><br/>model &lt;- keras_model_sequential() %&gt;%<br/>  layer_embedding(input_dim = max_features, output_dim = 32,input_length = maxlen) %&gt;%<br/>  layer_spatial_dropout_1d(rate = 0.25) %&gt;%<br/>  layer_conv_1d(64,3, activation = "relu") %&gt;%<br/>  layer_max_pooling_1d() %&gt;%<br/>  bidirectional(layer_gru(units=64,dropout=0.2)) %&gt;%<br/>  layer_dense(units = 1, activation = "sigmoid")<br/><br/>..................<br/>  <br/>history &lt;- model %&gt;% fit(<br/>  x_train, y_train,<br/>  epochs = 10,<br/>  batch_size = 32,<br/>  validation_split = 0.2<br/>)</pre>
+
+<p>比较深度学习NLP架构</p>
+
+<pre>Train on 8982 samples, validate on 2246 samples<br/>Epoch 1/10<br/>8982/8982 [==============================] - 26s 3ms/step - loss: 0.2891 - acc: 0.8952 - val_loss: 0.2226 - val_acc: 0.9319<br/>Epoch 2/10<br/>8982/8982 [==============================] - 25s 3ms/step - loss: 0.1712 - acc: 0.9505 - val_loss: 0.1601 - val_acc: 0.9586<br/>Epoch 3/10<br/>8982/8982 [==============================] - 26s 3ms/step - loss: 0.1651 - acc: 0.9548 - val_loss: 0.1639 - val_acc: 0.9541<br/>Epoch 4/10<br/>8982/8982 [==============================] - 26s 3ms/step - loss: 0.1466 - acc: 0.9582 - val_loss: 0.1699 - val_acc: 0.9550<br/>Epoch 5/10<br/>8982/8982 [==============================] - 26s 3ms/step - loss: 0.1391 - acc: 0.9606 - val_loss: 0.1520 - val_acc: 0.9586<br/>Epoch 6/10<br/>8982/8982 [==============================] - 26s 3ms/step - loss: 0.1347 - acc: 0.9626 - val_loss: 0.1626 - val_acc: 0.9550<br/>Epoch 7/10<br/>8982/8982 [==============================] - 27s 3ms/step - loss: 0.1332 - acc: 0.9638 - val_loss: 0.1572 - val_acc: 0.9604<br/>Epoch 8/10<br/>8982/8982 [==============================] - 26s 3ms/step - loss: 0.1317 - acc: 0.9629 - val_loss: 0.1693 - val_acc: 0.9470<br/>Epoch 9/10<br/>8982/8982 [==============================] - 26s 3ms/step - loss: 0.1259 - acc: 0.9654 - val_loss: 0.1531 - val_acc: 0.9599<br/>Epoch 10/10<br/>8982/8982 [==============================] - 28s 3ms/step - loss: 0.1233 - acc: 0.9665 - val_loss: 0.1653 - val_acc: 0.9573</pre>
+
+<p>以下是本章中所有模型的摘要，按照它们在本章中的顺序排列。我们可以看到，最好的传统机器学习方法获得了95.24%，被许多深度学习方法击败。虽然从最佳传统机器学习到最佳深度学习模型的增量变化可能看起来很小，只有0.80%，但它将我们的错误分类示例减少了17%，这是一个显著的相对变化:</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Comparing the deep learning NLP architectures</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title"><strong>型号</strong></h1>
+
+                
+
+            
+
+            
+
+                
+
+<p><strong>精度</strong></p>
+
+<table border="1" style="border-collapse: collapse;width: 100%">
+
+<tbody>
+
+<tr>
+
+<td style="width: 56.4032%">
+
+<p>最佳传统机器学习方法</p>
+
+</td>
+
+<td style="width: 10.5968%">
+
+<p>95.24%</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 56.4032%">
+
+<p>简单的深度学习方法</p>
+
+</td>
+
+<td style="width: 10.5968%">
+
+<p>94.97%</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 56.4032%">
+
+<p>1D卷积神经网络模型</p>
+
+</td>
+
+<td style="width: 10.5968%">
+
+<p>95.73%</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 56.4032%">
+
+<p>递归神经网络模型</p>
+
+</td>
+
+<td style="width: 10.5968%">
+
+<p>93.90%</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 56.4032%">
+
+<p>长短期记忆模型</p>
+
+</td>
+
+<td style="width: 10.5968%">
+
+<p>95.37%</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 56.4032%">
+
+<p>门控循环单位模型</p>
+
+</td>
+
+<td style="width: 10.5968%">
+
+<p>95.90%</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 56.4032%">
+
+<p>双向LSTM模型</p>
+
+</td>
+
+<td style="width: 10.5968%">
+
+<p>95.77%</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 56.4032%">
+
+<p>堆叠双向模型</p>
+
+</td>
+
+<td style="width: 10.5968%">
+
+<p>95.59%</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 56.4032%">
+
+<p>双向1D卷积神经网络</p>
+
+</td>
+
+<td style="width: 10.5968%">
+
+<p>96.04%</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="width: 56.4032%">
+
+<p>摘要</p>
+
+</td>
+
+<td style="width: 10.5968%">
+
+<p>这一章我们真的讲了很多！我们建立了一个相当复杂的传统NLP例子，它有许多超参数，并在几个机器学习算法上训练它。取得了95.24%的准确率的好成绩。然而，当我们更详细地研究传统的NLP时，我们发现它有一些主要的问题:它需要重要的特征工程，它创建稀疏的高维数据帧，并且它可能需要在机器学习之前丢弃大量的数据。</p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:cca44226-1c5a-464a-9475-7d718df98881" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">相比之下，深度学习方法使用词向量或嵌入，这要高效得多，并且不需要预处理。我们运行了许多深度学习方法，包括1D卷积层、递归神经网络、GRUs和LSTM。我们最终在最终模型中将之前的两种最佳方法合并为一种方法，获得了96.08%的准确率，相比之下，使用传统的NLP获得了95.24%的准确率。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">在下一章，我们将使用TensorFlow开发模型。我们将看看TensorBoard，它允许我们可视化和调试复杂的深度学习模型。我们还将研究使用张量流估值器，这是使用张量流的另一种选择。然后，我们还将了解TensorFlow运行，它可以自动执行许多超参数调整步骤。最后，我们将看看部署深度学习模型的选项。</p>
+
+<p class="mce-root">In comparison, the deep learning approach uses word vectors or embeddings, which are much more efficient and do not require preprocessing. We ran through a number of deep learning approaches, including 1D convolutional layers, Recurrent Neural Networks, GRUs, and LSTM. We finally combined the two best previous approaches into one approach in our final model to get 96.08% accuracy, compared to 95.24% by using traditional NLP.</p>
+
+<p>In the next chapter, we will develop models using TensorFlow. We will look at TensorBoard, which allows us to visualize and debug complex deep learning models. We will also look at using TensorFlow estimators, an alternative option for using TensorFlow. Then, we will also look at TensorFlow Runs, which automates a lot of the steps for hyperparameter tuning. Finally, we will look at options for deploying deep learning models.</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

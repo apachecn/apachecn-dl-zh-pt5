@@ -1,0 +1,1226 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Use Cases of Neural Networks – Advanced Topics</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">神经网络的用例——高级主题</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>借助<strong>人工神经网络</strong> ( <strong> ANN </strong>)，让我们尝试模拟典型的大脑活动，比如图像感知、模式识别、语言理解、感觉-运动协调等等。ANN模型由节点系统组成，相当于人脑的神经元，这些节点通过加权链接相互连接，相当于神经元之间的突触。从链路权重到收敛，网络的输出被迭代地修改。</p>
+
+<p>这最后一章介绍了不同用例的人工神经网络应用，以及神经网络如何在人工智能世界中使用。我们将在r中看到一些用例及其实现。您可以将相同的一组程序用于其他真实的工作场景。</p>
+
+<p>将涵盖以下主题:</p>
+
+<ul>
+
+<li>带R的张量流积分</li>
+
+<li>Keras与R集成</li>
+
+<li>使用带有<kbd>H2O</kbd>的<kbd>MNIST</kbd>数据集进行手写数字识别</li>
+
+<li>用mxnet构建LSTM</li>
+
+<li>使用带有<kbd>H2O</kbd>的自动编码器对数据进行聚类</li>
+
+<li><strong>主成分分析</strong> ( <strong> PCA </strong>)使用<kbd>H2O</kbd></li>
+
+<li>使用<kbd>darch</kbd>包进行乳腺癌检测</li>
+
+</ul>
+
+<p>到本章结束时，你将理解学习过程的高级概念以及它们在R环境中的实现。我们将应用不同类型的算法来实现神经网络。我们将回顾如何训练、测试和部署模型。我们将再次研究如何执行正确的估价程序。我们还将在我们的用例中涵盖更多深度学习，因为深度学习是基于高级神经网络的最新事物。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>TensorFlow integration with R</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">带R的张量流积分</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>TensorFlow是Google为机器智能提供的开源数值计算库。它隐藏了构建深度学习模型所需的所有编程，并为开发人员提供了编程的黑盒界面。TensorFlow的Keras API为神经网络提供了一个高级接口。</p>
+
+<p class="mce-root">Python是深度学习事实上的编程语言，但R正在迎头赶上。深度学习库现在可以与R一起使用，开发人员可以很容易地下载TensorFlow或Keras，类似于其他R库并使用它们。</p>
+
+<p class="mce-root">在TensorFlow中，图中的节点表示数学运算，而图边表示它们之间通信的多维数据数组(tensors)。TensorFlow最初是由谷歌机器智能研究内部的谷歌大脑团队开发的，用于机器学习和深度神经网络研究，但它现在可以在公共领域使用。适当配置后，TensorFlow会利用GPU处理。</p>
+
+<p>TensorFlow的一般用例如下:</p>
+
+<ul>
+
+<li class="mce-root">图像识别</li>
+
+<li class="mce-root">计算机视觉</li>
+
+<li class="mce-root">语音/声音识别</li>
+
+<li class="mce-root">时间序列分析</li>
+
+<li class="mce-root">语言检测</li>
+
+<li class="mce-root">语言翻译</li>
+
+<li class="mce-root">基于文本的处理</li>
+
+<li><strong>手写识别</strong> ( <strong> HWR </strong>)</li>
+
+<li>许多其他人</li>
+
+</ul>
+
+<p>在本节中，我们将了解如何将TensorFlow库引入r。这将为在r中使用TensorFlow进行深度学习提供大量可能性。为了使用TensorFlow，我们必须首先安装Python。如果您的机器上没有安装Python，那么是时候安装了。</p>
+
+<p>Python是一种动态的<strong>面向对象编程</strong> ( <strong> OOP </strong>)语言，可用于多种类型的软件开发。它为与其他语言和程序的集成提供了强大的支持，提供了一个大型标准库，并且可以在几天内学会。许多Python程序员可以证实生产率的大幅提高，并认为这鼓励了更高质量代码和可维护性的开发。Python可以在Windows、Linux/Unix、macOS X、OS/2、Amiga、掌上电脑和诺基亚手机上运行。它也适用于Java和。NET虚拟机。Python是在OSI批准的开源许可证下授权的；它的使用是免费的，包括商业产品。</p>
+
+<p>Python是由吉多·范·罗苏姆在20世纪90年代早期在荷兰的Stichting Mathematisch Centrum创建的，作为一种叫做ABC的语言的继承者。Guido仍然是Python的主要作者，尽管它包含了其他人的许多贡献。</p>
+
+<p>如果您不知道使用哪个版本，有一个(英文)文档可以帮助您选择。原则上，如果你必须从头开始，我们建议选择Python 3，如果你需要使用可能与Python 3不兼容的第三方软件包，我们建议使用Python 2.7。关于可用版本以及如何安装Python的所有信息都在<a href="https://www.python.org/">https://www.python.org/</a>给出。</p>
+
+<p>在正确安装了我们机器的Python版本后，我们还要担心安装TensorFlow的问题。我们可以通过以下链接检索所有库信息和操作系统的可用版本:【https://www.tensorflow.org/】T4。</p>
+
+<p>此外，在安装部分，我们可以找到一系列指南，解释如何安装允许我们用Python编写应用程序的TensorFlow版本。指南适用于以下操作系统:</p>
+
+<ul>
+
+<li>在Ubuntu上安装TensorFlow</li>
+
+<li>在macOS X上安装TensorFlow</li>
+
+<li>在Windows上安装TensorFlow</li>
+
+<li>从源安装张量流</li>
+
+</ul>
+
+<p>例如，要在Windows上安装Tensorflow，我们必须选择以下类型之一:</p>
+
+<ul>
+
+<li>仅支持CPU的TensorFlow</li>
+
+<li>支持GPU的TensorFlow</li>
+
+</ul>
+
+<p class="mce-root">要安装TensorFlow，请以管理员权限启动终端。然后在该终端中发出适当的<kbd>pip3</kbd> install命令。要安装纯CPU版本，请输入以下命令:</p>
+
+<pre><strong>C:\&gt; pip3 install --upgrade tensorflow</strong></pre>
+
+<p>一系列代码行将显示在视频上，以便我们了解安装过程的执行情况，如下图所示:</p>
+
+<div><img class="image-border" src="img/d247dbd0-dd0f-4435-8b01-16710c19ab08.png"/></div>
+
+<p>此时，我们可以回到自己喜欢的环境；我指的是R开发环境。我们需要安装TensorFlow的接口。TensorFlow的R接口允许您使用高级Keras和Estimator APIs高效地工作，当您需要更多控制时，它提供对核心TensorFlow API的完全访问。要将R接口安装到TensorFlow，我们将使用以下步骤。</p>
+
+<p>首先，从起重机上安装<kbd>tensorflow</kbd> R组件，如下所示:</p>
+
+<pre class="mce-root"><strong>install.packages("tensorflow")</strong></pre>
+
+<p class="mce-root">然后，使用<strong> install_tensorflow() </strong>函数安装tensorflow(正确的安装步骤，您必须具有管理员权限):</p>
+
+<pre class="mce-root"><strong>library(tensorflow)</strong><br/><strong>install_tensorflow()</strong></pre>
+
+<p class="mce-root">我们可以确认安装成功:</p>
+
+<pre class="mce-root"><strong>sess = tf$Session()</strong><br/><strong>hello &lt;- tf$constant('Hello, TensorFlow!')</strong><br/><strong>sess$run(hello)</strong></pre>
+
+<p class="mce-root">这将为您提供适用于<kbd>tensorflow</kbd> R包的TensorFlow默认安装。如果您想了解其他安装选项，请继续阅读，包括如果您安装了正确的CUDA库，安装一个利用NVIDIA GPUs的TensorFlow版本。在下面的代码中，我们可以检查安装是否成功:</p>
+
+<pre><strong>&gt; library(tensorflow)</strong><br/><strong>&gt; sess = tf$Session()</strong><br/><strong>&gt; hello &lt;- tf$constant('Hello, TensorFlow!')</strong><br/><strong>&gt; sess$run(hello)</strong><br/><strong>b'Hello, TensorFlow!'</strong></pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Keras integration with R</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">Keras与R集成</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>Keras是一组用Python编码的开源神经网络库。它能够在MxNet、TensorFlow或Theano上运行。在RStudio中安装Keras的步骤非常简单。下面的代码片段给出了安装步骤，我们可以通过检查<kbd>MNIST</kbd>数据集的负载来检查Keras是否在工作。</p>
+
+<p>默认情况下，RStudio加载TensorFlow的CPU版本。一旦加载了Keras，我们就有了一套强大的深度学习库，R程序员可以利用它们来执行神经网络和深度学习。要安装Keras for R，请使用以下代码:</p>
+
+<pre><strong>install.packages("devtools")</strong><br/><strong>devtools::install_github("rstudio/keras")</strong></pre>
+
+<p>此时，我们加载<kbd>keras</kbd>库:</p>
+
+<pre><strong>library(keras)</strong></pre>
+
+<p>最后，我们通过加载<kbd>MNIST</kbd>数据集来检查keras是否安装正确:</p>
+
+<pre><strong>&gt; data=dataset_mnist()</strong></pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>MNIST HWR using R</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">MNIST·HWR使用R</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>手写识别(HWR)是现代技术中非常常用的程序。可以通过光学扫描(<strong>光学字符识别</strong> ( <strong> OCR </strong>))或智能文字识别从一张纸上离线检测书写文本的图像。或者，可以在线检测笔尖移动(例如，从笔-计算机表面，这是一项通常更容易的任务，因为有更多的线索可用)。从技术上来说，手写识别是计算机接收和解释来自纸质文档、照片、触摸屏和其他设备等来源的手写可理解输入的能力。</p>
+
+<p class="mce-root">HWR是通过通常需要OCR的各种技术来执行的。然而，一个完整的文字识别系统还管理格式，执行正确的字符分割，并找到最合理的单词。</p>
+
+<p class="mce-root"><strong>修改后的国家标准与技术研究院</strong> ( <strong> MNIST </strong>)是一个手写数字的大型数据库。它有一组70，000个数据示例。这是NIST更大数据集的一个子集。数字具有28×28像素的分辨率，并且存储在70，000行和785列的矩阵中；784列形成来自28×28矩阵的每个像素值，并且一个值是实际数字。数字已经过大小标准化，并在固定大小的图像中居中。</p>
+
+<p>MNIST集合中的数字图像最初是由Chris Burges和Corinna Cortes使用包围盒归一化和居中来选择和实验的。Yann LeCun的版本在一个更大的窗口中使用质心居中。这些数据可以在Yann LeCun位于http://yann.lecun.com/exdb/mnist/的网站上找到。</p>
+
+<p>每个图像都创建为28x28。以下是来自MNIST数据集的<em> 0-8 </em>的图像示例:</p>
+
+<div><img class="image-border" height="479" src="img/ca488589-3072-4082-a39a-233b10b50fb6.png" width="654"/></div>
+
+<p>MNIST有几个手写数字的样本。这个数据集可以作为我们的训练输入到R程序中，我们的代码可以识别任何新的手写数字，作为预测数据。这是一个神经网络架构作为人工智能应用的计算机视觉系统的例子。</p>
+
+<p>下表显示了LeCun网站上提供的<kbd>MNIST</kbd>数据集的分布情况:</p>
+
+<table style="width: 293px;height: 380px">
+
+<tbody>
+
+<tr>
+
+<td><strong>数字</strong></td>
+
+<td><strong>计数</strong></td>
+
+</tr>
+
+<tr>
+
+<td><em> 0 </em></td>
+
+<td><em> 5923 </em></td>
+
+</tr>
+
+<tr>
+
+<td><em> 1 </em></td>
+
+<td><em> 6742 </em></td>
+
+</tr>
+
+<tr>
+
+<td><em> 2 </em></td>
+
+<td><em> 5958 </em></td>
+
+</tr>
+
+<tr>
+
+<td><em> 3 </em></td>
+
+<td><em> 6131 </em></td>
+
+</tr>
+
+<tr>
+
+<td><em> 4 </em></td>
+
+<td><em> 5842 </em></td>
+
+</tr>
+
+<tr>
+
+<td><em> 5 </em></td>
+
+<td><em> 5421 </em></td>
+
+</tr>
+
+<tr>
+
+<td><em> 6 </em></td>
+
+<td><em> 5918 </em></td>
+
+</tr>
+
+<tr>
+
+<td><em> 7 </em></td>
+
+<td><em> 6265 </em></td>
+
+</tr>
+
+<tr>
+
+<td><em> 8 </em></td>
+
+<td><em> 5851 </em></td>
+
+</tr>
+
+<tr>
+
+<td><em> 9 </em></td>
+
+<td><em> 5949 </em></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p> </p>
+
+<p>我们不会使用深度学习的<kbd>h2o</kbd>包来训练和测试<kbd>MNIST</kbd>数据集。我们将把70，000行的数据集分成60，000个训练行和10，000个测试行。然后，我们会发现模型的准确性。然后，该模型可以用于预测任何包含0到9之间的数字的28x28像素手写数字的传入数据集。最后，我们将文件大小减少到100行，用于在两个名为<kbd>mnist_train_100.csv</kbd>和<kbd>mnist_test_10.csv</kbd>的<kbd>.csv</kbd>格式的数据集上进行演示训练处理。</p>
+
+<p>对于我们的示例R代码，我们使用一个100行的训练数据集和一个10行的测试数据集。这里给出了R代码:</p>
+
+<pre><strong>#################################################################</strong><br/><strong>### Chapter 7 - Neural Networks with R - Use cases      #########</strong><br/><strong>### Handwritten digit recognition through MNIST dataset #########</strong><br/><strong>#################################################################</strong><br/><br/><strong>library("h2o")</strong><br/><br/><strong>h2o.init(nthreads=-1,max_mem_size="3G")</strong><br/><br/><strong>setwd ("c://R")</strong><br/><br/><strong>train_mnist=read.csv("mnist_train_100.csv", header=FALSE)</strong><br/><strong>attach(train_mnist)</strong><br/><strong>names(train_mnist)</strong><br/><br/><strong>test_mnist=read.csv("mnist_test_10.csv", header=FALSE)</strong><br/><strong>attach(test_mnist)</strong><br/><strong>names(test_mnist)</strong><br/><br/><strong>m = matrix(unlist(train_mnist[10,-1]), </strong><br/><strong>           nrow = 28, </strong><br/><strong>           byrow = TRUE)</strong><br/><br/><strong>image(m,col=grey.colors(255))</strong><br/><br/><strong>rotate = function(x) t(apply(x, 2, rev)) </strong><br/><br/><strong>image(rotate(m),col=grey.colors(255))</strong><br/><br/><strong>par(mfrow=c(2,3))</strong><br/><strong>lapply(1:6, </strong><br/><strong>       function(x) image(</strong><br/><strong>         rotate(matrix(unlist(train_mnist[x,-1]),</strong><br/><strong>                       nrow = 28, </strong><br/><strong>                       byrow = TRUE)),</strong><br/><strong>         col=grey.colors(255),</strong><br/><strong>         xlab=train_mnist[x,1]</strong><br/><strong>       )</strong><br/><strong>)</strong><br/><br/><strong>par(mfrow=c(1,1))</strong><br/><br/><strong>str(train_mnist)</strong><br/><br/><strong>x=2:785</strong><br/><strong>y=1</strong><br/><br/><strong>table(train_mnist[,y])</strong><br/><br/><strong>model=h2o.deeplearning(x,</strong><br/><strong>                       y,</strong><br/><strong>                       as.h2o(train_mnist),</strong><br/><strong>                       model_id="MNIST_deeplearning",</strong><br/><strong>                       seed=405,</strong><br/><strong>                       activation="RectifierWithDropout",</strong><br/><strong>                       l1=0.00001,</strong><br/><strong>                       input_dropout_ratio=0.2,</strong><br/><strong>                       classification_stop = -1,</strong><br/><strong>                       epochs=2000</strong><br/><strong>                       )</strong><br/><br/><strong>summary(model)</strong><br/><br/><strong>h2o.scoreHistory(model)</strong><br/><br/><strong>preds=h2o.performance(model, </strong><br/><strong>                      as.h2o(test_mnist))</strong><br/><br/><strong>newdata = h2o.predict(model, </strong><br/><strong>                   as.h2o(test_mnist))</strong><br/><br/><strong>predictions = cbind(as.data.frame(seq(1,10)),</strong><br/><strong>                    test_mnist[,1],</strong><br/><strong>                    as.data.frame(newdata[,1]))</strong><br/><br/><strong>names(predictions) = c("Number","Actual","Predicted")</strong><br/><br/><strong>as.matrix(predictions)</strong><br/><strong>#################################################################</strong></pre>
+
+<p>现在，让我们浏览代码，学习如何应用<kbd>h2o</kbd>包来解决HWR问题。我们已经在<a href="b5f75068-f1e3-465e-969d-a8f1ad48378d.xhtml">第3章</a>、<em>使用多层神经网络的深度学习</em>中恰当地介绍了<kbd>h2o</kbd>包。通过以下代码包含并启动<kbd>h2o</kbd>:</p>
+
+<pre><strong>library("h2o")</strong><br/><strong>h2o.init(nthreads=-1,max_mem_size="3G")</strong></pre>
+
+<p class="mce-root">以下结果显示在R提示符下:</p>
+
+<pre class="mce-root"><strong>&gt; h2o.init(nthreads=-1,max_mem_size="3G")</strong><br/><strong>H2O is not running yet, starting it now...</strong><br/><strong>Note: In case of errors look at the following log files:</strong><br/><strong> C:\Users\lavoro\AppData\Local\Temp\Rtmpiit6zE/h2o_lavoro_started_from_r.out</strong><br/><strong> C:\Users\lavoro\AppData\Local\Temp\Rtmpiit6zE/h2o_lavoro_started_from_r.err</strong><br/><strong>java version "1.7.0_40"</strong><br/><strong>Java(TM) SE Runtime Environment (build 1.7.0_40-b43)</strong><br/><strong>Java HotSpot(TM) 64-Bit Server VM (build 24.0-b56, mixed mode)</strong><br/><strong>Starting H2O JVM and connecting: ..... Connection successful!</strong><br/><strong>R is connected to the H2O cluster: </strong><br/><strong> H2O cluster uptime: 15 seconds 229 milliseconds </strong><br/><strong> H2O cluster version: 3.10.5.3 </strong><br/><strong> H2O cluster version age: 2 months and 18 days </strong><br/><strong> H2O cluster name: H2O_started_from_R_lavoro_huu267 </strong><br/><strong> H2O cluster total nodes: 1 </strong><br/><strong> H2O cluster total memory: 2.67 GB </strong><br/><strong> H2O cluster total cores: 4 </strong><br/><strong> H2O cluster allowed cores: 4 </strong><br/><strong> H2O cluster healthy: TRUE </strong><br/><strong> H2O Connection ip: localhost </strong><br/><strong> H2O Connection port: 54321 </strong><br/><strong> H2O Connection proxy: NA </strong><br/><strong> H2O Internal Security: FALSE </strong><br/><strong> R Version: R version 3.4.1 (2017-06-30)</strong></pre>
+
+<p>使用句柄打开训练文件。为了简化演示工作，它被设置为100行。完整的数据集可以从之前建议的URL下载。</p>
+
+<pre class="mce-root"><strong>setwd("C://R")</strong></pre>
+
+<p class="mce-root">该命令设置工作目录，我们将在该目录中插入数据集以供下一次读取。</p>
+
+<pre class="mce-root"><strong>train_mnist=read.csv("mnist_train_100.csv", header=FALSE)</strong><br/><strong>attach(train_mnist)</strong><br/><strong>names(train_mnist)</strong></pre>
+
+<p>这段代码首先加载<kbd>MNIST</kbd>的训练数据集，将文件大小减少到100行，用于演示训练处理。然后我们使用<kbd>attach()</kbd>函数将数据库附加到R搜索路径上。这意味着在计算一个变量时，R会搜索数据库，因此只需给出对象的名称就可以访问数据库中的对象。最后，我们使用<kbd>names()</kbd>函数来设置数据集的名称。我们将对测试阶段使用的数据集做同样的事情:</p>
+
+<pre class="mce-root"><strong>test_mnist=read.csv("mnist_test_10.csv", header=FALSE)</strong><br/><strong>attach(test_mnist)</strong><br/><strong>names(test_mnist)</strong></pre>
+
+<p>此时，我们通过获取数据集的第十行(包含数字零)来创建一个具有像素颜色值的28x28矩阵:</p>
+
+<pre class="mce-root"><strong>m = matrix(unlist(train_mnist[10,-1]),</strong><br/><strong>            + nrow = 28,</strong><br/><strong>            + byrow = TRUE)</strong></pre>
+
+<p>让我们通过绘制一个对象<kbd>image</kbd>来看看我们得到了什么:</p>
+
+<pre><strong>image(m,col=grey.colors(255))</strong></pre>
+
+<p>下面显示了手写数字的图像:</p>
+
+<div><img class="image-border" src="img/971a25e9-4bdb-4810-a25c-de862e80a904.png"/></div>
+
+<p>现在让我们创建手写数字的镜像:</p>
+
+<pre class="mce-root"><strong>&gt; rotate = function(x) t(apply(x, 2, rev))</strong></pre>
+
+<p>然后，查看图像以验证刚刚进行的操作:</p>
+
+<pre class="mce-root"><strong>&gt; image(rotate(m),col=grey.colors(255))</strong></pre>
+
+<p class="mce-root">下图显示了镜像:</p>
+
+<div><img class="image-border" src="img/8082e22a-c82e-46c1-bcf8-a8a7ca899308.png"/></div>
+
+<p>现在，让我们对数据集中的前六行进行同样的操作:</p>
+
+<pre><strong>par(mfrow=c(2,3))</strong><br/><strong>lapply(1:6,</strong><br/><strong>       function(x) image(</strong><br/><strong>         rotate(matrix(unlist(train_mnist[x,-1]),</strong><br/><strong>                       nrow = 28,</strong><br/><strong>                       byrow = TRUE)),</strong><br/><strong>         col=grey.colors(255),</strong><br/><strong>         xlab=train_mnist[x,1]</strong><br/><strong>       )</strong><br/><strong>)</strong></pre>
+
+<p>这些是数据集前六行中包含的手写数字的图像:</p>
+
+<div><img class="image-border" src="img/977bb551-3faf-4117-bf46-e0d2260e2ef2.png"/></div>
+
+<p class="mce-root CDPAlignLeft CDPAlign">将绘图选项重置为默认值:</p>
+
+<pre class="mce-root"><strong> par(mfrow=c(1,1))</strong> </pre>
+
+<p>下一个命令让我们对训练数据进行一些解释性分析:</p>
+
+<pre class="mce-root"><strong>str(train_mnist)</strong><br/><strong>x=2:785</strong><br/><strong>y=1</strong> </pre>
+
+<p>该命令查找训练矩阵中每个数字的计数:</p>
+
+<pre class="mce-root"><strong>table(train_mnist[,y])</strong> </pre>
+
+<p>结果如下所示:</p>
+
+<pre><strong>&gt; table(train_mnist[,y])</strong><br/><strong> 0  1  2  3  4  5  6  7  8  9</strong><br/><strong>13 14  6 11 11  5 11 10  8 11</strong></pre>
+
+<p>上面显示了数据集中每个数字出现的次数。是时候构建和训练模型了:</p>
+
+<pre><strong>model=h2o.deeplearning(x,</strong><br/><strong>                       y,</strong><br/><strong>                       as.h2o(train_mnist),</strong><br/><strong>                       model_id="MNIST_deeplearning",</strong><br/><strong>                       seed=405,</strong><br/><strong>                       activation="RectifierWithDropout",</strong><br/><strong>                       l1=0.00001,</strong><br/><strong>                       input_dropout_ratio=0.2,</strong><br/><strong>                       classification_stop = -1,</strong><br/><strong>                       epochs=2000</strong><br/><strong>)</strong></pre>
+
+<p class="mce-root">现在，为了生成<kbd>model</kbd>拟合函数的结果汇总，我们将使用<kbd>summary()</kbd>函数:</p>
+
+<pre><strong>summary(model)</strong></pre>
+
+<p class="mce-root">下图显示了获得的一些结果:</p>
+
+<div><img class="image-border" src="img/2ac2ac65-8e46-439b-9b3e-881736304a95.png"/></div>
+
+<p>通过检查训练模型的性能，我们可以了解所用算法的演变:</p>
+
+<pre><strong>preds=h2o.performance(model,</strong><br/><strong>                      as.h2o(test_mnist))</strong></pre>
+
+<p>此时，我们有了一个经过适当训练的<kbd>model</kbd>，所以我们可以用它来进行预测。在我们的例子中，我们将使用它来识别手写数字:</p>
+
+<pre><strong>newdata = h2o.predict(model,</strong><br/><strong>                      as.h2o(test_mnist))</strong></pre>
+
+<p>现在我们已经使用了<kbd>model</kbd>，我们需要格式化实际和预期的矩阵来验证准确性:</p>
+
+<pre><strong>predictions = cbind(as.data.frame(seq(1,10)),</strong><br/><strong>                    test_mnist[,1],</strong><br/><strong>                    as.data.frame(newdata[,1]))</strong></pre>
+
+<p>输入插入矩阵的变量名称:</p>
+
+<pre class="CodePACKT"><strong>names(predictions) = c("Number","Actual","Predicted")</strong></pre>
+
+<p>最后，检查输出:</p>
+
+<pre><strong>as.matrix(predictions)</strong></pre>
+
+<p>结果如下所示:</p>
+
+<pre><strong>&gt; as.matrix(predictions)</strong><br/><strong>      Number Actual   Predicted</strong><br/><strong> [1,]      1      7  6.90180840</strong><br/><strong> [2,]      2      3  3.62368445</strong><br/><strong> [3,]      3      1  0.53782891</strong><br/><strong> [4,]      4      0 -0.03092147</strong><br/><strong> [5,]      5      6  5.21024129</strong><br/><strong> [6,]      6      1  0.30850593</strong><br/><strong> [7,]      7      6  6.44916207</strong><br/><strong> [8,]      8      9  3.59962551</strong><br/><strong> [9,]      9      5  3.17590073</strong><br/><strong>[10,]     10      9  7.35213625</strong></pre>
+
+<p>从对刚刚提出的表格的分析中可以看出，对于测试数据，该模型的预测正确率为60%(十分之六)。这种准确性仅适用于小的训练数据集。可以通过以下方式进一步改进该模型:</p>
+
+<ul>
+
+<li>增加训练数据集计数</li>
+
+<li>调整<kbd>h20.deeplearning</kbd>功能的参数</li>
+
+<li>给<kbd>h2o</kbd> JVM分配更多的内存</li>
+
+<li>扩展测试数据集</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>LSTM using the iris dataset</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用虹膜数据集的LSTM</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>继续在第6章、<em xmlns:epub="http://www.idpf.org/2007/ops">递归和卷积神经网络</em>中介绍的RNN LSTM架构，我们展示使用<kbd xmlns:epub="http://www.idpf.org/2007/ops">mxnet</kbd> LSTM函数的<kbd xmlns:epub="http://www.idpf.org/2007/ops">iris</kbd>数据集处理。该函数期望所有输入和输出都是数字。它对于处理文本序列特别有用，但这里我们将在<kbd xmlns:epub="http://www.idpf.org/2007/ops">iris</kbd>数据集上训练一个LSTM模型。输入值为<kbd xmlns:epub="http://www.idpf.org/2007/ops">petal.length</kbd>、<kbd xmlns:epub="http://www.idpf.org/2007/ops">petal.width</kbd>、<kbd xmlns:epub="http://www.idpf.org/2007/ops">sepal.length</kbd>和<kbd xmlns:epub="http://www.idpf.org/2007/ops">sepal.width</kbd>。输出变量是<kbd xmlns:epub="http://www.idpf.org/2007/ops">Species</kbd>，转换成1到3之间的数值。<kbd xmlns:epub="http://www.idpf.org/2007/ops">iris</kbd>数据集已在<a xmlns:epub="http://www.idpf.org/2007/ops" href="0eca6488-d9c4-4e88-99ea-5650a3f3a998.xhtml">第4章</a>、<em xmlns:epub="http://www.idpf.org/2007/ops">感知器神经网络建模-基本模型</em>中详述:</p>
+
+<pre><strong>#################################################################</strong><br/><strong>### Chapter 7 - Neural Networks with R - Use cases      #########</strong><br/><strong>### Prediction using LSTM on IRIS dataset               #########</strong><br/><strong>#################################################################</strong><br/><br/><strong>##Required one time</strong><br/><strong>library("mxnet")</strong><br/><br/><strong>data(iris)</strong><br/><br/><strong>x = iris[1:5!=5,-5]</strong><br/><strong>y = as.integer(iris$Species)[1:5!=5]</strong><br/><br/><strong>train.x = data.matrix(x)</strong><br/><strong>train.y = y</strong><br/><br/><strong>test.x = data.matrix(iris[1:5==5,-5])</strong><br/><strong>test.y = as.integer(iris$Species)[1:5==5]</strong><br/><br/><strong>model &lt;- mx.mlp(train.x, train.y, hidden_node=10, out_node=3, out_activation="softmax",</strong><br/><strong>                num.round=20, array.batch.size=15, learning.rate=0.07, momentum=0.9,</strong><br/><strong>                eval.metric=mx.metric.accuracy)</strong><br/><br/><strong>preds = predict(model, test.x)</strong><br/><strong>pred.label = max.col(t(preds))</strong><br/><br/><strong>test.y</strong><br/><strong>pred.label</strong><br/><strong>#################################################################</strong></pre>
+
+<p>程序需要<kbd>mxnet</kbd>，需要安装。<kbd>mxnet</kbd> for R可用于CPU和GPU以及以下操作系统:Linux、macOS和Windows。</p>
+
+<p>我们将只指出Windows机器和CPU版本的安装过程。有关其他架构的安装程序信息，请参考以下URL:<a href="https://mxnet.incubator.apache.org/get_started/install.html">https://mxnet.incubator.apache.org/get_started/install.html</a>。</p>
+
+<p>为了在带有CPU处理器的计算机上安装<kbd>mxnet</kbd>，我们使用预构建的二进制包。我们可以通过下面的代码在R控制台上直接安装包:</p>
+
+<pre><strong>cran &lt;- getOption("repos")</strong><br/><strong>cran["dmlc"] &lt;- "https://s3-us-west-2.amazonaws.com/apache-mxnet/R/CRAN/"</strong><br/><strong>options(repos = cran)</strong><br/><strong>install.packages("mxnet")</strong></pre>
+
+<p>安装了以下软件包:</p>
+
+<pre><strong>package ‘bindr’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘brew’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘assertthat’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘bindrcpp’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘glue’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘pkgconfig’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘BH’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘plogr’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘yaml’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘irlba’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘hms’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘XML’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘Rook’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘tidyselect’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘gridExtra’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘dplyr’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘downloader’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘htmltools’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘htmlwidgets’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘igraph’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘influenceR’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘purrr’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘readr’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘rstudioapi’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘rgexf’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘tidyr’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘viridis’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘DiagrammeR’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘visNetwork’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘data.table’ successfully unpacked and MD5 sums checked</strong><br/><strong>package ‘mxnet’ successfully unpacked and MD5 sums checked</strong></pre>
+
+<p>正如你所看到的<kbd>mxnet</kbd>包的安装，安装除了几个包。所以，我们已经有了我们需要的一切。这个<kbd>mxnet</kbd>库包含了我们将要使用的<kbd>mx.lstm</kbd>函数:</p>
+
+<pre><strong>library("mxnet")</strong></pre>
+
+<p>在下面的代码中，加载了内部数据集<kbd>iris</kbd>，并且分别用独立变量和目标变量设置了<kbd>x</kbd>和<kbd>y</kbd>变量。物种变量被转换为1到3之间的数字:</p>
+
+<pre><strong>data(iris)</strong><br/><strong>x = iris[1:5!=5,-5]</strong><br/><strong>y = as.integer(iris$Species)[1:5!=5]</strong></pre>
+
+<p>只是一个解释，代码如下:</p>
+
+<pre><strong>x = iris[1:5!=5,-5]</strong></pre>
+
+<p>我们让R从由150行和5列组成的<kbd>iris</kbd>数据集中进行选择，只选择第一到第四行，忽略第五行。这个过程也将对5的倍数执行，所以最后，我们将从我们的选择中忽略每一个5的倍数行。我们也将省略第五列。最后，我们将得到120行和4列。</p>
+
+<p>我们现在设置输入和输出:</p>
+
+<pre><strong>train.x = data.matrix(x)</strong><br/><strong>train.y = y</strong></pre>
+
+<p>然后，我们设置将用于测试的数据帧，只选择我们之前忽略的行:</p>
+
+<pre><strong>test.x = data.matrix(iris[1:5==5,-5])</strong><br/><strong>test.y = as.integer(iris$Species)[1:5==5]</strong></pre>
+
+<p>使用输入和输出值调用<kbd>mx.lstm</kbd>函数，以便使用RNN上的LSTM和数据集对模型进行训练:</p>
+
+<pre><strong>model &lt;- mx.mlp(train.x, train.y, hidden_node=10, out_node=3, out_activation="softmax",</strong><br/><strong>                num.round=20, array.batch.size=15, learning.rate=0.07, momentum=0.9,</strong><br/><strong>                eval.metric=mx.metric.accuracy)</strong></pre>
+
+<p>现在我们可以预测:</p>
+
+<pre><strong>preds = predict(model, test.x)</strong><br/><strong>pred.label = max.col(t(preds))</strong></pre>
+
+<p>最后，我们打印结果来比较模型性能:</p>
+
+<pre><strong>test.y</strong><br/><strong>pred.label</strong></pre>
+
+<p>结果如下:</p>
+
+<pre><strong>&gt; test.y</strong><br/><strong> [1] 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3 3</strong><br/><strong>&gt; pred.label</strong><br/><strong> [1] 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3</strong></pre>
+
+<p>从测试数据和从预报中获得的数据之间的比较中，可以注意到对于杂色物种获得了最好的结果。从获得的结果来看，很明显，该模型需要改进，因为它能够执行的预测与我们在前面的示例中获得的模型中获得的预测不在一个水平上。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Working with autoencoders</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用自动编码器</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们已经在深度学习章节中看到了用于无监督学习的自动编码器。自动编码器利用神经网络来执行非线性降维。它们通过使用通用函数逼近器寻找数据中的潜在特征，以更好的方式表示数据。自动编码器试图以不同的方式组合或压缩输入数据。</p>
+
+<p>使用MLP的示例表示如下所示:</p>
+
+<div><img class="image-border" src="img/9d608ca9-763f-492a-99ca-e3ae25f82ec1.jpg"/></div>
+
+<p> </p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>PCA using H2O</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用H2O的PCA</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>多元统计分析中遇到的最大困难之一是显示具有许多变量的数据集的问题。幸运的是，在包含许多变量的数据集中，一些数据片段通常彼此密切相关。这是因为它们实际上包含相同的信息，因为它们测量的是控制系统行为的相同量。因此，这些都是多余的变量，对我们想要建立的模型没有任何帮助。然后，我们可以通过用包含信息内容的新变量替换一组变量来简化问题。</p>
+
+<p>主成分分析产生一组新的变量，它们之间不相关，称为主成分；每个主成分都是原始变量的线性组合。所有的主成分都是相互正交的，所以没有冗余信息。主成分作为一个整体构成了数据空间的正交基。PCA的目标是用最少数量的主成分解释最大数量的方差。这是多维标度的一种形式。它是变量到低维空间的线性变换，保留了关于变量的最大量的信息。因此，主成分是线性变换后原始变量的组合。</p>
+
+<p>在下面的例子中，我们使用<kbd>h2o</kbd>来实现PCA。<kbd>prcomp()</kbd>函数用于查找一组输入特征的主成分。这是无监督学习:</p>
+
+<pre><strong>library(h2o)</strong><br/><strong>h2o.init()</strong><br/><br/><strong>ausPath = system.file("extdata", "australia.csv", package="h2o")</strong><br/><strong>australia.hex = h2o.uploadFile(path = ausPath)</strong><br/><strong>summary(australia.hex)</strong><br/><br/><strong>pca_model=h2o.prcomp(training_frame = australia.hex, </strong><br/><strong>                     k = 8, </strong><br/><strong>                     transform = "STANDARDIZE")</strong><br/><br/><strong>summary(pca_model)</strong><br/><strong>barplot(as.numeric(pca_model@model$importance[2,]),</strong><br/><strong>        main="Pca model", </strong><br/><strong>        xlab="Pca component",</strong><br/><strong>        ylab="Proportion of Variance")</strong></pre>
+
+<p>现在，让我们通过代码来了解如何应用<kbd>h2o</kbd>包来应用PCA。</p>
+
+<p>我们可以继续加载库:</p>
+
+<pre><strong>library(h2o)</strong></pre>
+
+<p>这个命令将库加载到R环境中。以下函数启动最大内存大小为<kbd>2</kbd> GB的<kbd>h2o</kbd>引擎和两个并行内核:</p>
+
+<pre><strong>h2o.init()</strong></pre>
+
+<p>将返回以下消息:</p>
+
+<pre><strong>&gt; h2o.init()</strong><br/><strong> Connection successful!</strong><br/><br/><strong>R is connected to the H2O cluster: </strong><br/><strong>    H2O cluster uptime: 5 hours 40 minutes </strong><br/><strong>    H2O cluster version: 3.10.5.3 </strong><br/><strong>    H2O cluster version age: 2 months and 18 days </strong><br/><strong>    H2O cluster name: H2O_started_from_R_lavoro_huu267 </strong><br/><strong>    H2O cluster total nodes: 1 </strong><br/><strong>    H2O cluster total memory: 2.63 GB </strong><br/><strong>    H2O cluster total cores: 4 </strong><br/><strong>    H2O cluster allowed cores: 4 </strong><br/><strong>    H2O cluster healthy: TRUE </strong><br/><strong>    H2O Connection ip: localhost </strong><br/><strong>    H2O Connection port: 54321 </strong><br/><strong>    H2O Connection proxy: NA </strong><br/><strong>    H2O Internal Security: FALSE </strong><br/><strong>    R Version: R version 3.4.1 (2017-06-30)</strong> </pre>
+
+<p>我们按照R提示符上的指示:</p>
+
+<pre><strong>c1=h2o.init(max_mem_size = "2G", </strong><br/><strong>      nthreads = 2, </strong><br/><strong>      ip = "localhost", </strong><br/><strong>      port = 54321)</strong></pre>
+
+<p><kbd>h20.init</kbd>函数启动<kbd>h2o</kbd>引擎，最大内存大小为<kbd>2</kbd> GB，有两个并行内核。以下命令将数据加载到R环境中:</p>
+
+<pre><strong>ausPath = system.file("extdata", "australia.csv", package="h2o")</strong><br/><strong>australia.hex = h2o.uploadFile(path = ausPath)</strong></pre>
+
+<p>第一条指令生成包含要上传的文件的路径。要将一个文件上传到您的<kbd>h2o</kbd>实例的本地目录中，使用<kbd>h2o.uploadFile()</kbd>，除了您的R会话之外，它还可以将本地数据上传到您的<kbd>h2o</kbd>实例。在括号中，指定R中的<kbd>h2o</kbd>引用对象和文件的完整URL或规范化文件路径。让我们看看它在里面:</p>
+
+<pre><strong>summary(australia.hex)</strong></pre>
+
+<p>现在，让我们打印数据集的简短摘要:</p>
+
+<div><img class="image-border" src="img/e6a57ab8-931b-4d38-aa22-dcf15c914430.png"/></div>
+
+<p>为了对给定的数据集执行PCA，我们将使用<kbd>prcomp()</kbd>函数:</p>
+
+<pre><strong>pca_model=h2o.prcomp(training_frame = australia.hex, </strong><br/><strong>                     k = 8, </strong><br/><strong>                     transform = "STANDARDIZE")</strong></pre>
+
+<p>现在让我们打印一份模型的简介<kbd>summary</kbd>:</p>
+
+<pre><strong>summary(pca_model)</strong></pre>
+
+<p>在下图中，我们看到了PCA模型的摘要:</p>
+
+<div><img class="image-border" src="img/4e259c20-0a61-4d96-b56d-88f3855267f4.png"/></div>
+
+<p>为了更好地理解结果，我们可以做一个由每个主成分解释的百分比可变性的scree图。解释的可变性百分比包含在PCA模型的模型重要性变量中。</p>
+
+<p>下图显示了由每个主成分解释的可变性百分比的scree图:</p>
+
+<div><img class="image-border" src="img/58f491c7-e542-41a2-bc3d-dbd9b82dec21.png"/></div>
+
+<p>条形图显示了每个主成分的方差比例；正如你所看到的，前两个部分有大约70%的方差。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Autoencoders using H2O</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用H2O的自动编码器</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>自动编码器是在没有有效编码控制的情况下用于学习的ANN。自动编码器的目的是学习一组数据的编码，通常是为了减少维数。<br/>在架构上，最简单形式的自动编码器是一种非常类似于MLP的高级非递归神经网络，具有输入层、输出层以及连接它们的一个或多个隐藏层，但是层输出具有相同数量的输入层节点，用于重建它们的输入。</p>
+
+<p>下面提出了一个在<kbd>movie</kbd>数据集上使用<kbd>h2o</kbd>的自动编码器的例子。</p>
+
+<p>本例中使用的数据集是取自<a href="https://grouplens.org/datasets/movielens">https://grouplens.org/datasets/movielens</a>的一组电影和流派。</p>
+
+<p>我们使用movies.csv文件，它有三列:</p>
+
+<ul>
+
+<li><kbd>movieId</kbd></li>
+
+<li><kbd>title</kbd></li>
+
+<li><kbd>genres</kbd></li>
+
+</ul>
+
+<p>有164，979行数据用于聚类。我们将使用<kbd>h2o.deeplearning</kbd>让<kbd>autoencoder</kbd>参数修复集群。这个练习的目的是根据类型对电影进行聚类，然后可以用它向用户推荐相似的电影或相同类型的电影。程序使用<kbd>h20.deeplearning</kbd>，将<kbd>autoencoder</kbd>参数设置为<kbd>T</kbd>:</p>
+
+<pre><strong>#################################################################</strong><br/><strong>### Chapter 7 - Neural Networks with R - Use cases      #########</strong><br/><strong>### Autoencoder using H2O on a movie dataset            #########</strong><br/><strong>#################################################################</strong><br/><br/><strong>library("h2o")</strong><br/><br/><strong>setwd ("c://R")</strong><br/><strong>#Load the training dataset of movies</strong><br/><strong>movies=read.csv ( "movies.csv", header=TRUE)</strong><br/><strong>head(movies)</strong><br/><br/><strong>model=h2o.deeplearning(2:3, </strong><br/><strong>                       training_frame=as.h2o(movies),</strong><br/><strong>                       hidden=c(2), </strong><br/><strong>                       autoencoder = T, </strong><br/><strong>                       activation="Tanh")</strong><br/><br/><strong>summary(model)</strong><br/><br/><strong>features=h2o.deepfeatures(model,</strong><br/><strong>                         as.h2o(movies),</strong><br/><strong>                         layer=1)</strong><br/><br/><strong>d=as.matrix(features[1:10,])</strong><br/><strong>labels=as.vector(movies[1:10,2])</strong><br/><strong>plot(d,pch=17)</strong><br/><strong>text(d,labels,pos=3)</strong></pre>
+
+<p>现在，让我们看一下代码:</p>
+
+<pre><strong>library("h2o")</strong><br/><strong>setwd ("c://R")</strong></pre>
+
+<p>这些命令将库加载到R环境中，并设置工作目录，我们将在该目录中插入数据集以供下一次读取。然后我们加载数据:</p>
+
+<pre><strong>movies=read.csv( "movies.csv", header=TRUE)</strong></pre>
+
+<p>为了直观显示数据集中包含的数据类型，我们分析这些变量之一的预览:</p>
+
+<pre><strong>head(movies)</strong></pre>
+
+<p>下图显示了<kbd>movie</kbd>数据集的前<kbd>20</kbd>行:</p>
+
+<div><img class="image-border" src="img/ae35eb3b-29b5-46cd-920b-e74aee171fb2.png"/></div>
+
+<p>现在我们建立和训练<kbd>model</kbd>:</p>
+
+<pre><strong>model=h2o.deeplearning(2:3, </strong><br/><strong>                       training_frame=as.h2o(movies),</strong><br/><strong>                       hidden=c(2), </strong><br/><strong>                       autoencoder = T, </strong><br/><strong>                       activation="Tanh")</strong></pre>
+
+<p>让我们分析一下<kbd>model</kbd>中包含的一些信息:</p>
+
+<pre><strong>summary(model)</strong></pre>
+
+<p>这是从<kbd>summary()</kbd>函数的结果中摘录的:</p>
+
+<div><img class="image-border" src="img/9b5a8ca0-019c-43e3-b753-8761c2d392ba.png"/></div>
+
+<p>在下一个命令中，我们使用H2O深度学习模型，使用<kbd>h2o.deepfeatures()</kbd>函数从<kbd>h2o</kbd>数据集中提取非线性特征:</p>
+
+<pre><strong>features=h2o.deepfeatures(model,</strong><br/><strong>                         as.h2o(movies),</strong><br/><strong>                         layer=1)</strong></pre>
+
+<p>在以下代码中，显示了从模型中提取的前六行要素:</p>
+
+<pre><strong>&gt; features</strong><br/><strong> DF.L1.C1 DF.L1.C2</strong><br/><strong>1 0.2569208 -0.2837829</strong><br/><strong>2 0.3437048 -0.2670669</strong><br/><strong>3 0.2969089 -0.4235294</strong><br/><strong>4 0.3214868 -0.3093819</strong><br/><strong>5 0.5586608 0.5829145</strong><br/><strong>6 0.2479671 -0.2757966</strong><br/><strong>[9125 rows x 2 columns]</strong></pre>
+
+<p>最后，我们绘制了一个图表，从中我们可以看到模型是如何根据分析结果对电影进行分组的:</p>
+
+<pre><strong>d=as.matrix(features[1:10,])</strong><br/><strong>labels=as.vector(movies[1:10,2])</strong><br/><strong>plot(d,pch=17)</strong><br/><strong>text(d,labels,pos=3)</strong></pre>
+
+<p class="mce-root CDPAlignLeft CDPAlign">一旦聚类完成，接下来显示电影的情节。由于空间问题，我们只设计了100部电影。我们可以看到一些电影被放置得很近，这意味着它们属于同一类型。标题基于它们之间的距离、基于流派而被聚类。</p>
+
+<div><img class="image-border" src="img/8c76f179-2c08-421d-b66b-13c9f3600f69.png"/></div>
+
+<p>给定大量的标题，无法区分电影名称，但是看起来很清楚的是，模型已经将电影分成了三个不同的组。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Breast cancer detection using darch</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用darch的乳腺癌检测</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本节中，我们将使用<kbd>darch</kbd>包，它用于深度架构和<strong>受限玻尔兹曼机</strong> ( <strong> RBM </strong>)。<kbd>darch</kbd>包是在G. E .辛顿和R. R .萨拉胡特迪诺夫的代码基础上构建的(可在<strong>深度信念网</strong> ( <strong> DBN </strong>)的MATLAB代码下获得)。这个软件包用于生成多层(深层结构)神经网络，并用作者介绍的方法训练它们。<br/>该方法包括使用对比散度方法进行预训练，以及使用公知的训练算法(如反向传播或共轭梯度)进行微调。此外，监督式微调可以通过maxout和dropout来增强，这两种最近开发的技术用于改善深度学习的微调。</p>
+
+<p>该示例的基础是基于一组输入的分类。为此，我们将使用名为BreastCancer.csv的数据集中包含的数据，我们刚刚在<a href="d3905bda-321c-4496-99dc-391f612240f3.xhtml">第5章</a>、<em>中使用该数据在R </em>中训练和可视化神经网络。这些数据来自UCI机器学习知识库。一旦沃尔伯格博士报告了他的临床病例，数据集就会定期更新。该数据是基于一组十个独立变量的良性或恶性肿瘤分类的乳腺癌患者的数据。</p>
+
+<p>为了获得数据，我们利用了位于http://archive.ics.uci.edu/ml<a xmlns:epub="http://www.idpf.org/2007/ops" href="http://archive.ics.uci.edu/ml">的UCI机器学习知识库中的大量可用数据。</a></p>
+
+<p>数据详情如下:</p>
+
+<ul>
+
+<li>实例数量:699(截至1992年7月15日)</li>
+
+<li><strong>属性数量</strong> : 10加上类属性</li>
+
+<li><strong>属性信息</strong>:类别属性被移动到最后一列</li>
+
+</ul>
+
+<p>属性的描述如下所示:</p>
+
+<pre><strong>   #  Attribute                     Domain
+
+   -- -----------------------------------------
+
+   1. Sample code number            id number
+
+   2. Clump Thickness               1 - 10
+
+   3. Uniformity of Cell Size       1 - 10
+
+   4. Uniformity of Cell Shape      1 - 10
+
+   5. Marginal Adhesion             1 - 10
+
+   6. Single Epithelial Cell Size   1 - 10
+
+   7. Bare Nuclei                   1 - 10
+
+   8. Bland Chromatin               1 - 10
+
+   9. Normal Nucleoli               1 - 10
+
+  10. Mitoses                       1 - 10
+
+  11. Class:                        (2 for benign, 4 for malignant)</strong><br/><br/></pre>
+
+<p>为了理解<kbd>darch</kbd>函数，我们首先设置一个异或门，然后用它进行训练和验证。<kbd>darch</kbd>函数使用输出数据和输入属性来构建模型，这个模型可以由<kbd>darch</kbd>自己进行内部测试。在这种情况下，我们实现了0%的误差和100%的准确性。</p>
+
+<p>接下来，我们使用乳腺癌数据构建<kbd>darch</kbd>模型，然后检查其准确性:</p>
+
+<pre><strong>#####################################################################</strong><br/><strong>####Chapter 7 - Neural Networks with R #########</strong><br/><strong>####Breast Cancer Detection using darch package #########</strong><br/><strong>#####################################################################</strong><br/><strong>library("mlbench")</strong><br/><strong>library("darch")</strong><br/><br/><strong>data(BreastCancer)</strong><br/><strong>summary(BreastCancer)</strong><br/><br/><strong>data_cleaned &lt;- na.omit(BreastCancer) </strong><br/><strong>summary(data_cleaned)</strong><br/><br/><strong>model &lt;- darch(Class ~ ., data_cleaned,layers = c(10, 10, 1),</strong><br/><strong>        darch.numEpochs = 50, darch.stopClassErr = 0, retainData = T)</strong><br/><br/><strong>plot(model)</strong><br/><br/><strong>predictions &lt;- predict(model, newdata = data_cleaned, type = "class")</strong><br/><strong>cat(paste("Incorrect classifications:", sum(predictions != data_cleaned[,11])))</strong><br/><strong>table(predictions,data_cleaned[,11])</strong><br/><br/><strong>library(gmodels)</strong><br/><strong>CrossTable(x = data_cleaned$Class, y = predictions,</strong><br/><strong>           prop.chisq=FALSE)</strong></pre>
+
+<p>我们开始逐行分析代码，详细解释用于捕获结果的所有特性:</p>
+
+<pre class="mce-root"><strong>library("mlbench")</strong><br/><strong>library("darch")</strong></pre>
+
+<p class="mce-root">初始代码的前两行用于加载运行分析所需的库。</p>
+
+<p>记住，要安装R初始发行版中没有的库，必须使用<kbd>install.package</kbd>函数。这是安装包的主要功能。它接受一个名称向量和一个目的库，从存储库中下载包并安装它们。这个函数应该只使用一次，而不是每次运行代码时都使用。</p>
+
+<p><kbd>mlbench</kbd>库包含一系列人工和现实世界的机器学习基准问题，例如，包括来自UCI知识库的几个数据集。</p>
+
+<p><kbd>darch</kbd>库是一个用于深度架构和RBM的包:</p>
+
+<pre><strong>data(BreastCancer)</strong></pre>
+
+<p>使用这个命令，我们在<kbd>mlbench</kbd>库中上传名为<kbd>BreastCancer</kbd>的数据集。让我们看看它在里面:</p>
+
+<pre><strong>summary(BreastCancer)</strong></pre>
+
+<p>使用这个命令，我们可以通过使用<kbd>summary()</kbd>功能看到一个简短的摘要。</p>
+
+<p>请记住，<kbd>summary()</kbd>函数是一个通用函数，用于生成各种模型拟合函数的结果汇总。该函数调用依赖于第一个参数的类的特定方法。</p>
+
+<p>在这种情况下，函数已应用于数据帧，结果如下图所示:</p>
+
+<div><img class="image-border" src="img/58598d7b-9531-4797-97c9-2100dbe3ce51.png"/></div>
+
+<p><kbd>summary()</kbd>函数返回每个变量的一组统计数据。特别是，突出显示为<kbd>Class</kbd>变量提供的结果是有用的，该变量包含对癌块的诊断。在这种情况下，检测到了<kbd>benign</kbd>类的<kbd>458</kbd>病例和<kbd>malignant</kbd>类的<kbd>241</kbd>病例。另一个需要强调的特性是<kbd>Bare.nuclei</kbd>变量。对于此变量，<kbd>16</kbd>检测到缺失值的情况。</p>
+
+<p>要删除丢失的值，我们可以使用<kbd>na.omit()</kbd>功能:</p>
+
+<pre><strong>data_cleaned &lt;- na.omit(BreastCancer)</strong> </pre>
+
+<p>现在我们构建并训练模型:</p>
+
+<pre><strong>model &lt;- darch(Class ~ ., data_cleaned,layers = c(10, 10, 1),</strong><br/><strong>        darch.numEpochs = 50, darch.stopClassErr = 0, retainData = T)</strong></pre>
+
+<p>为了评估<kbd>model</kbd>性能，我们可以绘制原始网络误差:</p>
+
+<pre><strong>plot(model)</strong></pre>
+
+<p>误差与历元的关系曲线如下图所示:</p>
+
+<div><img class="image-border" src="img/cd11ea73-1e6c-4230-bda5-6e400b160a5b.png"/></div>
+
+<p>我们在34个时期得到最小误差。</p>
+
+<p>我们终于训练好了网络，可以使用了；现在我们可以用它来做预测:</p>
+
+<pre><strong>predictions &lt;- predict(model, newdata = data_cleaned, type = "class")</strong></pre>
+
+<p>我们利用我们所掌握的全部数据，通过这个模型进行预测。我们所要做的就是将获得的结果与模型预测和数据集中可用的数据进行比较:</p>
+
+<pre><strong>cat(paste("Incorrect classifications:", sum(predictions != data_cleaned[,11])))</strong></pre>
+
+<p>结果如下所示:</p>
+
+<pre><strong>&gt; cat(paste("Incorrect classifications:", sum(predictions != data_cleaned[,11])))</strong><br/><strong>Incorrect classifications: 2</strong></pre>
+
+<p>成绩真的很好！只有两个错误的分类！我会说，我们可以满足于他们从<kbd>683</kbd>观察开始的事实。为了更好地理解错误是什么，我们构建了一个混淆矩阵:</p>
+
+<pre><strong>table(predictions,data_cleaned[,11])</strong></pre>
+
+<p>结果如下所示:</p>
+
+<pre><strong>&gt; table(predictions,data_cleaned[,11])</strong><br/><br/><strong>predictions benign malignant</strong><br/><strong>  benign       443         1</strong><br/><strong>  malignant      1       238</strong></pre>
+
+<p>虽然以一种简单的方式，矩阵告诉我们，我们只做了两个错误，平均分布在类的两个值之间。关于混淆矩阵的更多信息，我们可以使用<kbd>gmodels</kbd>包中的<kbd>CrossTable()</kbd>函数。像往常一样，在加载图书之前，您需要安装它:</p>
+
+<pre><strong>library(gmodels)</strong><br/><strong>CrossTable(x = data_cleaned$Class, y = predictions,</strong><br/><strong>           prop.chisq=FALSE)</strong></pre>
+
+<p>使用<kbd>CrossTable()</kbd>函数得到的混淆矩阵如下图所示:</p>
+
+<div><img class="image-border" src="img/248e9bee-0da2-45c6-bf7e-991db383aeca.png"/></div>
+
+<p>正如我们在分类中所预期的，我们的模型只有两个错误:<em> FP </em>和<em> FN </em>。然后计算精度；如<a href="9318274a-72ac-4475-a140-7aaf92253400.xhtml">第二章</a>、<em>神经网络</em>中的学习过程所示，由以下公式给出:</p>
+
+<div><img height="36" src="img/97056215-94aa-40d8-816e-cfa1001202b0.jpg" width="220"/></div>
+
+<p>让我们计算一下R环境下的精度:</p>
+
+<pre><strong>&gt; Accuracy = (443+238)/683</strong><br/><strong>&gt; Accuracy</strong><br/><strong>[1] 0.9970717</strong></pre>
+
+<p>如前所述，该分类器取得了很好的效果。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:4a8cbe4a-e61d-4c74-886d-1da985c44432" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">摘要</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">在这最后一章中，我们看到了神经网络和深度学习的一些用例。这应该成为你未来神经网络工作的基础。这种用法在大多数情况下都很常见，在训练和测试过程中，模型所涉及的数据集会发生变化。</p>
+
+<p>我们在本章中看到了以下例子:</p>
+
+<ul>
+
+<li>将TensorFlow和Keras与R集成在一起，这开放了大量使用R构建的用例集</li>
+
+<li>利用H2O通过分类建立数字识别器</li>
+
+<li>用MxNet理解LSTM函数</li>
+
+<li>使用H2O的PCA</li>
+
+<li>使用H2O构建自动编码器</li>
+
+<li>分类问题使用<kbd>darch</kbd></li>
+
+</ul>
+
+<p>对于全世界的数据科学家来说，r是一种非常灵活的主要统计编程语言。掌握R神经网络将有助于社区进一步发展，并增加R在深度学习和更新用例中的使用。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

@@ -1,0 +1,655 @@
+<html><head/><body>
+
+
+    
+        <title>Cats and Dogs</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">价值低的股票</h1>
+                
+            
+            
+                
+<p>回到<a href="0197f632-3ce2-4032-9abd-83b3720c7127.xhtml" target="_blank">第二章</a> <a href="0197f632-3ce2-4032-9abd-83b3720c7127.xhtml"/>，<em>你的第一个分类器</em>，我们为我们的字符识别工作构建了一个简单的神经网络。我们以80%的正确率结束了这一章。良好的开端，但我们可以做得更好！</p>
+<p>在这一章中，我们将用更强大的网络架构来改进我们早期的分类器。然后，我们将深入研究一个更加困难的问题——处理来自CIFAR-10数据集的彩色图像。图像将变得更加困难(猫、狗、飞机等等)，因此我们将带来更强大的工具——特别是卷积神经网络。我们开始吧。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Revisiting notMNIST</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">重温notMNIST</h1>
+                
+            
+            
+                
+<p>让我们通过尝试对我们在<a href="0197f632-3ce2-4032-9abd-83b3720c7127.xhtml">第2章</a>、<em>您的第一个分类器</em>中使用的<kbd>notMNIST</kbd>数据集进行技术更改来开始我们的努力。您可以在阅读本章的过程中编写代码，也可以在该书的知识库中工作，网址为:</p>
+<p><a href="https://github.com/mlwithtf/mlwithtf/blob/master/chapter_02/training.py">https://github . com/mlwithtf/mlwithtf/blob/master/chapter _ 02/training . py</a>。</p>
+<p>我们将从以下导入开始:</p>
+<pre>    import sys, os 
+    import tensorflow as tf 
+    sys.path.append(os.path.realpath('../..')) 
+    from data_utils import * 
+    from logmanager import * 
+    import math</pre>
+<p>这里没有太多实质性的变化。真正的马力已经和<kbd>tensorflow</kbd>套装一起进口了。你会注意到我们重用了以前的<kbd>data_utils</kbd>作品。然而，我们需要一些改变。</p>
+<p>与之前唯一不同的是<kbd>math</kbd>包，我们将用它来实现辅助<kbd>math</kbd>功能，比如<kbd>ceiling</kbd>。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Program configurations</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">程序配置</h1>
+                
+            
+            
+                
+<p>现在，让我们看看我们的旧程序配置，如下所示:</p>
+<pre>    batch_size = 128 
+    num_steps = 10000 
+    learning_rate = 0.3 
+    data_showing_step = 500 </pre>
+<p>这次我们需要更多的配置。下面是我们现在要用的:</p>
+<pre style="padding-left: 60px"> batch_size = 32 
+ num_steps = 30000 
+ learning_rate = 0.1 
+ data_showing_step = 500 
+ model_saving_step = 2000 
+ log_location = '/tmp/alex_nn_log' 
+ 
+ SEED = 11215 
+ 
+ patch_size = 5 
+ depth_inc = 4 
+ num_hidden_inc = 32 
+ dropout_prob = 0.8 
+ conv_layers = 3 
+ stddev = 0.1 </pre>
+<p>前四种配置很常见:</p>
+<ul>
+<li>我们仍然会训练一定数量的步数(<kbd>num_steps</kbd>)，就像我们之前做的那样。但是，你会注意到步数增加了。它们会变得更高，因为我们的数据集会更复杂，需要更多的训练。</li>
+<li>稍后，我们将重新审视学习率(<kbd>learning_rate</kbd>)的微妙之处，但首先，您已经对它很熟悉了。</li>
+<li>我们将每500步检查一次结果，这由<kbd>data_showing_step</kbd>变量控制。</li>
+<li>最后，<kbd>log_location</kbd>控制我们的TensorBoard日志被倾倒在哪里。这一点我们从<a href="a6bb2a79-d492-4620-a28b-72ec62523593.xhtml" target="_blank">第3章</a>、<em>tensor flow工具箱</em>中已经相当熟悉了。我们将在本章中再次使用它，但这次没有解释。</li>
+</ul>
+<p>下一个配置——随机种子变量<strong>(<kbd>SEED</kbd>)会有所帮助。这可以不设置，TensorFlow将在每次运行时随机化数字。然而，设置一个<kbd>seed</kbd>变量，并在运行中保持不变，将允许我们在调试系统时保持运行的一致性。如果你真的使用它，你可以把它设置成任何你想要的数字:你的生日，周年纪念日，第一个电话号码，或者幸运数字。我用我喜欢的街区的邮政编码。享受小事情。</strong></p>
+<p>最后，我们将遇到七个新变量— <kbd>batch_size</kbd>、<kbd>patch_size</kbd>、<kbd>depth_inc</kbd>、<kbd>num_hidden_inc</kbd>、<kbd>conv_layers</kbd>、<kbd>stddev</kbd>和<kbd>dropout_prob</kbd>。这些是我们更新、更先进的<strong>卷积神经网络</strong>(<strong>CNN</strong>)如何工作的核心，并将在我们探索我们正在使用的网络时在上下文中介绍。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Understanding convolutional networks</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">了解卷积网络</h1>
+                
+            
+            
+                
+<p>CNN是更高级的神经网络，专门用于图像的机器学习。与我们之前使用的隐藏层不同，CNN有一些层没有完全连接。这些卷积层除了宽度和高度之外，还有深度。一般原理是逐块分析图像。我们可以看到图像中的7x7补丁程序，如下所示:</p>
+<div><img height="222" width="221" class=" image-border" src="img/83aa17bb-6c42-4643-b9b5-81c484187653.png"/></div>
+<p>这反映了一个32x32灰度图像，一个7x7补丁。从左向右滑动补片的示例如下:</p>
+<div><img height="259" width="305" class=" image-border" src="img/bdaa4b88-36da-4346-8a89-59584f189dcd.png"/></div>
+<div><img height="250" width="300" class=" image-border" src="img/461f4a5e-855a-41cc-8dc8-fae26ab4656c.png"/></div>
+<p>如果这是一个彩色图像，我们将同时在三个相同的层上滑动我们的补丁。</p>
+<p>你可能已经注意到我们把补丁移动了一个像素。这也是一种配置；我们可以滑动更多，也许每次滑动两个甚至三个像素。这是步幅配置。正如您所猜测的，步幅越大，我们最终覆盖的面片就越少，因此输出层就越小。</p>
+<p>矩阵数学(我们不会在这里深入讨论)的执行是为了将面片(由通道数量驱动的完整深度)减少到输出深度列中。输出只是一个单一的高度和宽度，但许多像素深。当我们将补丁反复滑动时，深度列的序列形成具有新的长度、宽度和高度的块。</p>
+<p>这里还有另一种配置——图像边缘的填充。可以想象，填充越多，补丁滑动和偏离图像边缘的空间就越大。这允许更大的步幅，因此输出体积具有更大的长度和宽度。您将在后面的代码中看到这一点，称为<kbd>padding='SAME'</kbd>或<kbd>padding='VALID'</kbd>。</p>
+<p>让我们看看这些是怎么加起来的。我们将首先选择一个补丁:</p>
+<div><img height="145" width="383" src="img/8cfad793-1383-4f9d-9b06-f7f4b4c88927.png"/></div>
+<p>然而，补丁不仅仅是正方形，而是整个深度(对于彩色图像):</p>
+<div><img height="147" width="385" src="img/73820b82-074d-41dc-ae5c-53cd8b6981b5.png"/></div>
+<p>然后，我们将卷积成一个1x1的体积，但有深度，如下图所示。最终体积的深度是可配置的，我们将在程序中使用<kbd>inct_depth</kbd>进行配置:</p>
+<div><img height="209" width="365" src="img/05389cd9-d779-4c51-b334-0d7609676e19.png"/></div>
+<p>最后，当我们在原始映像中一遍又一遍地滑动修补程序时，我们将生成许多这样的1x1xN卷，这本身就创建了一个卷:</p>
+<div><img height="218" width="380" src="img/8c88a030-d437-434d-907f-c037089ade35.png"/></div>
+<p>然后我们将它卷积成一个1x1的体积。</p>
+<p>最后，我们将使用一个<kbd>POOL</kbd>操作来挤压生成的体积的每一层。有许多类型，但简单的<strong>最大池</strong>是典型的:</p>
+<div><img height="279" width="446" class=" image-border" src="img/01223d35-9aa6-4dbb-ba9c-3df61cadfa9f.png"/></div>
+<p>与我们之前使用的滑动补丁非常相似，将有一个补丁(除了这次，我们将使用最大数量的补丁)和一个步幅(这次，我们将需要更大的步幅来挤压图像)。我们实质上是在缩小规模。这里，我们将使用步幅为2的3x3面片。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Revisiting configurations</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">重新审视配置</h1>
+                
+            
+            
+                
+<p>现在我们已经介绍了卷积神经网络，让我们重温一下我们之前遇到的配置:<kbd>batch_size</kbd>、<kbd>patch_size</kbd>、<kbd>depth_inc</kbd>、<kbd>num_hidden_inc</kbd>、<kbd>conv_layers</kbd>、<kbd>stddev</kbd>和<kbd>dropout_prob</kbd>:</p>
+<ul>
+<li>批量大小(<kbd>batch_size</kbd>)</li>
+<li>补丁大小(<kbd>patch_size</kbd>)</li>
+<li>深度增量(<kbd>depth_inc</kbd>)</li>
+<li>数字隐藏增量(<kbd>num_hidden_inc</kbd>)</li>
+<li>卷积层(<kbd>conv_layers</kbd>)</li>
+<li>标准偏差(<kbd>stddev</kbd>)</li>
+<li>退出概率(<kbd>dropout_prob</kbd></li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Constructing the convolutional network</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">构建卷积网络</h1>
+                
+            
+            
+                
+<p>我们将跳过对两个效用函数的解释，重新格式化和精确度，因为我们已经在第二章、<em>你的第一个分类器</em>中遇到过。相反，我们将直接跳到神经网络配置。为了比较，下图显示了我们的模型来自<a href="0197f632-3ce2-4032-9abd-83b3720c7127.xhtml" target="_blank">第2章</a>、<em>您的第一个分类器</em>，下图显示了我们的新模型。我们将在相同的<kbd>notMNIST</kbd>数据集上运行新模型，以查看我们将获得的准确性提升(提示:好消息！):</p>
+<div><img height="112" width="436" class=" image-border" src="img/1ab3311b-ae1f-46ce-96c4-b3f095eae98b.png"/></div>
+<p>下图是我们的新模型:</p>
+<div><img class=" image-border" src="img/365f9caf-dc2c-4ac9-bfd2-1df7927d6cbf.png"/></div>
+<p>首先，我们将遇到一个<kbd>helper</kbd>函数，如下所示:</p>
+<pre>    def fc_first_layer_dimen(image_size, layers): 
+       output = image_size 
+       for x in range(layers): 
+        output = math.ceil(output/2.0) 
+       return int(output) </pre>
+<p>然后，我们稍后将调用它，如下所示:</p>
+<pre>    fc_first_layer_dimen(image_size, conv_layers) </pre>
+<p><kbd>fc_first_layer_dimen</kbd>功能计算第一个完全连接层的尺寸。回想一下CNN通常是如何使用一系列的层，一层又一层的小窗口。这里，我们决定将我们使用的每个卷积层的维度减少一半。这也说明了为什么输入图像可以被2的幂高度整除，从而使事情变得美好而干净。</p>
+<p>现在让我们来解析实际的网络。这是使用<kbd>nn_model</kbd>方法生成的，稍后在训练模型时调用，并在针对验证和测试集进行测试时再次调用。</p>
+<p>回想一下CNN通常由以下几层组成:</p>
+<ul>
+<li>卷积层</li>
+<li>校正的线性单位层</li>
+<li>池层</li>
+<li>完全连接的层</li>
+</ul>
+<p>卷积层通常与RELU层成对出现并重复。这就是我们所做的——我们有三个几乎相同的<strong> CONV-RELU </strong>层堆叠在彼此之上。</p>
+<p>每个成对的层显示如下:</p>
+<pre>    with tf.name_scope('Layer_1') as scope: 
+        conv = tf.nn.conv2d(data, weights['conv1'], strides=[1, 1, <br/>         1, 1], padding='SAME', name='conv1')        <br/>        bias_add = tf.nn.bias_add(conv, biases['conv1'], <br/>         name='bias_add_1') 
+        relu = tf.nn.relu(bias_add, name='relu_1') 
+        max_pool = tf.nn.max_pool(relu, ksize=[1, 2, 2, 1], <br/>         strides=[1, 2, 2, 1], padding='SAME', name=scope)</pre>
+<p>三个几乎相同的层(<kbd>Layer_1</kbd>、<kbd>Layer_2</kbd>和<kbd>Layer_3</kbd>)之间的主要区别在于一个层的输出如何提供给系列中的下一个层。因此，第一层从接收数据(图像数据)开始，但第二层从接收第一层输出的池层开始，如下所示:</p>
+<pre>    conv = tf.nn.conv2d(max_pool, weights['conv2'], strides=[1, 1, 1, <br/>     1], padding='SAME', name='conv2')</pre>
+<p>类似地，第三层从第二层的池层输出开始，如下所示:</p>
+<pre>    conv = tf.nn.conv2d(max_pool, weights['conv3'], strides=[1, 1, 1, <br/>     1], padding='SAME', name='conv3')</pre>
+<p>三个<kbd>CONV</kbd> - <kbd>RELU</kbd>层之间还有另一个主要区别，即各层受到挤压。在使用如下几个<kbd>print</kbd>语句声明每个层之后，查看一下<kbd>conv</kbd>变量可能会有所帮助:</p>
+<pre>    print "Layer 1 CONV", conv.get_shape() 
+    print "Layer 2 CONV", conv.get_shape() 
+    print "Layer 3 CONV", conv.get_shape() </pre>
+<p>这将揭示以下结构:</p>
+<pre style="padding-left: 30px"><strong>Layer 1 CONV (32, 28, 28, 4) 
+Layer 2 CONV (32, 14, 14, 4) 
+Layer 3 CONV (32, 7, 7, 4) 
+Layer 1 CONV (10000, 28, 28, 4) 
+Layer 2 CONV (10000, 14, 14, 4) 
+Layer 3 CONV (10000, 7, 7, 4) 
+Layer 1 CONV (10000, 28, 28, 4) 
+Layer 2 CONV (10000, 14, 14, 4) 
+Layer 3 CONV (10000, 7, 7, 4)</strong> </pre>
+<p>我们用<kbd>notMNIST</kbd>数据集运行这个，所以我们会看到28x28的原始输入大小，这并不奇怪。更有趣的是连续层的大小——14x 14和7x7。注意连续卷积层的滤波器是如何被压缩的。</p>
+<p>让我们让事情变得更有趣，检查整个堆栈。添加以下<kbd>print</kbd>语句来查看<kbd>CONV</kbd>、<kbd>RELU</kbd>和<kbd>POOL</kbd>层:</p>
+<pre style="padding-left: 60px"> print "Layer 1 CONV", conv.get_shape() 
+ print "Layer 1 RELU", relu.get_shape() 
+ print "Layer 1 POOL", max_pool.get_shape() </pre>
+<p>在另外两个<kbd>CONV</kbd> - <kbd>RELU</kbd> - <kbd>POOL</kbd>堆栈后添加类似的语句，您会发现以下输出:</p>
+<pre style="padding-left: 30px"><strong>Layer 1 CONV (32, 28, 28, 4) 
+Layer 1 RELU (32, 28, 28, 4) 
+Layer 1 POOL (32, 14, 14, 4) 
+Layer 2 CONV (32, 14, 14, 4) 
+Layer 2 RELU (32, 14, 14, 4) 
+Layer 2 POOL (32, 7, 7, 4) 
+Layer 3 CONV (32, 7, 7, 4) 
+Layer 3 RELU (32, 7, 7, 4) 
+Layer 3 POOL (32, 4, 4, 4) 
+...</strong> </pre>
+<p>我们将忽略来自验证和测试实例的输出(它们是相同的，除了高度为10000而不是<kbd>32</kbd>，因为我们处理的是验证和测试集而不是小批量)。</p>
+<p>我们将从输出中看到尺寸如何在<kbd>POOL</kbd>层(<kbd>28</kbd>到<kbd>14</kbd>)被挤压，以及该挤压如何被带到下一个<kbd>CONV</kbd>层。在第三层也是最后一层<kbd>POOL</kbd>，我们将以4x4的尺寸结束。</p>
+<p>在最终的<kbd>CONV</kbd>堆栈上还有另一个特性——我们将在训练时使用的<kbd>dropout</kbd>层，如下所示:</p>
+<pre style="padding-left: 60px"> max_pool = tf.nn.dropout(max_pool, dropout_prob, seed=SEED, <br/>  name='dropout')</pre>
+<p>这一层利用了我们之前设置的<kbd>dropout_prob = 0.8</kbd>配置。它随机丢弃该层上的神经元，通过禁止节点与具有丢弃的相邻节点协同适应来防止过拟合；它们永远不会依赖于某个特定节点的存在。</p>
+<p>让我们继续通过我们的网络。我们将找到一个完全连接的层，后跟一个<kbd>RELU</kbd>:</p>
+<pre>    with tf.name_scope('FC_Layer_1') as scope: 
+        matmul = tf.matmul(reshape, weights['fc1'], <br/>         name='fc1_matmul')       <br/>         bias_add = tf.nn.bias_add(matmul, biases['fc1'], <br/>         name='fc1_bias_add') 
+        relu = tf.nn.relu(bias_add, name=scope) </pre>
+<p>最后，我们将以完全连接的层结束，如下所示:</p>
+<pre>    with tf.name_scope('FC_Layer_2') as scope: 
+        matmul = tf.matmul(relu, weights['fc2'], <br/>         name='fc2_matmul')       <br/>        layer_fc2 = tf.nn.bias_add(matmul, biases['fc2'], <br/>         name=scope)</pre>
+<p>这是典型的卷积网络。通常，我们将最终得到一个完全连接的层，最后是一个保存每个类分数的完全连接的层。</p>
+<p>我们跳过了一些细节。我们的大多数层都是用另外三个值初始化的— <kbd>weights</kbd>、<kbd>biases</kbd>和<kbd>strides</kbd>:</p>
+<div><img height="247" width="698" class=" image-border" src="img/1a019ee4-889d-4cec-a30c-b3ca3bce9577.png"/></div>
+<p><kbd>weights</kbd>和<kbd>biases</kbd>本身由其他变量初始化。我没说这很容易。</p>
+<p>这里最重要的变量是<kbd>patch_size</kbd>，它表示我们在图像上滑动的过滤器的大小。回想一下，我们之前将其设置为5，因此我们将使用5x5的补丁。我们还将再次介绍我们之前设置的<kbd>stddev</kbd>和<kbd>depth_inc</kbd>配置。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Fulfilment</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">实现</h1>
+                
+            
+            
+                
+<p>现在，您可能有很多疑问——为什么是三层卷积层而不是两层或四层？为什么一步一个？为什么补丁大小为5？为什么以完全连接的层结束而不是从它们开始？</p>
+<p>这里有一些疯狂的方法。核心上，CNN是围绕图像处理建立的，补丁是围绕所寻找的特征建立的。为什么有些配置工作得很好，而有些却不太好，这还不完全清楚，尽管一般规则确实遵循直觉。确切的网络架构是通过成千上万次的试验和许多错误发现、磨练和逐渐完善的。这仍然是一项研究级的任务。</p>
+<p>从业者的一般方法通常是找到一个运行良好的现有架构(例如，AlexNet、GoogLeNet、ResNet ),并调整它们以用于特定的数据集。这就是我们所做的；我们从AlexNet开始，并对其进行了调整。也许，这并不令人满意，但这是有效的，并保持了2016年的实践状态。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Training day</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">训练日</h1>
+                
+            
+            
+                
+<p>然而，更令人满意的是看到我们的训练在进行，以及我们将如何改进我们之前所做的。</p>
+<p>我们将准备如下的训练数据集和标签:</p>
+<pre>    tf_train_dataset = tf.placeholder(tf.float32, 
+    shape=(batch_size, image_size, image_size,   <br/>    num_channels), <br/>    name='TRAIN_DATASET')    <br/>    tf_train_labels = tf.placeholder(tf.float32, <br/>    shape=(batch_size, num_of_classes), <br/>    name='TRAIN_LABEL') 
+    tf_valid_dataset = tf.constant(dataset.valid_dataset,   <br/>    name='VALID_DATASET') 
+    tf_test_dataset = tf.constant(dataset.test_dataset,  <br/>    name='TEST_DATASET') </pre>
+<p>然后，我们将运行训练器，如下所示:</p>
+<pre>    # Training computation. 
+    logits = nn_model(tf_train_dataset, weights, biases,  <br/>    True) 
+    loss = tf.reduce_mean( 
+        tf.nn.softmax_cross_entropy_with_logits(logits, <br/>         tf_train_labels)) 
+    # L2 regularization for the fully connected  <br/>    parameters. 
+    regularizers = (tf.nn.l2_loss(weights['fc1']) + <br/>     tf.nn.l2_loss(biases['fc1']) + 
+     tf.nn.l2_loss(weights['fc2']) + <br/><br/>    tf.nn.l2_loss(biases['fc2'])) 
+    # Add the regularization term to the loss. 
+    loss += 5e-4 * regularizers 
+    tf.summary.scalar("loss", loss) </pre>
+<p>这与我们在<a href="0197f632-3ce2-4032-9abd-83b3720c7127.xhtml" target="_blank">第二章</a>、<em>你的第一个分类器</em>中所做的非常相似。我们实例化了网络，传入了一组初始的权重和偏差，并使用训练标签定义了一个<kbd>loss</kbd>函数。然后，我们的优化器被定义为最小化该<kbd>loss</kbd>，如下所示:</p>
+<pre>    optimizer = tf.train.GradientDescentOptimizer<br/>     (learning_rate).minimize(loss)</pre>
+<p>然后，我们将使用<kbd>weights</kbd>和<kbd>biases</kbd>来预测验证标签，并最终预测训练集标签:</p>
+<pre class="mce-root">    train_prediction = tf.nn.softmax(nn_model(tf_train_dataset,  <br/>    weights, biases, TRAIN=False)) 
+    valid_prediction = tf.nn.softmax(nn_model(tf_valid_dataset, <br/>     weights, biases))    test_prediction =  <br/>     tf.nn.softmax(nn_model(tf_test_dataset, <br/>     weights, biases))</pre>
+<p class="mce-root">培训会话的完整代码如下:</p>
+<div><img height="352" width="689" class=" image-border" src="img/511d8afb-d417-4be7-b0da-a6d71bf75963.png"/></div>
+<p>最后，我们将运行会话。我们将使用之前设置的<kbd>num_steps</kbd>变量，并分块运行训练数据(<kbd>batch_size</kbd>)。)我们将加载小块的训练数据和相关联的标签，并如下运行会话:</p>
+<pre>    batch_data = dataset.train_dataset[offset:(offset + <br/>     batch_size), :]   <br/>    batch_labels = dataset.train_labels[offset: <br/>     (offset + <br/>     batch_size), :]</pre>
+<p>我们将得到迷你批次的预测，我们将与实际标签进行比较，以获得迷你批次的准确性。</p>
+<p>我们将使用之前声明的以下<kbd>valid_prediction</kbd>:</p>
+<pre>    valid_prediction =   <br/>    tf.nn.softmax(nn_model(tf_valid_dataset, <br/>     weights, biases))</pre>
+<p>然后，我们将根据已知的实际标签评估验证集预测，如下所示:</p>
+<pre>    accuracy(valid_prediction.eval(), <br/>    dataset.valid_labels) </pre>
+<p>在我们完成所有步骤后，我们将在测试集中做同样的事情:</p>
+<pre>    accuracy(test_prediction.eval(), dataset.test_labels)</pre>
+<p>正如您所看到的，培训、验证和测试的实际执行与以前没有什么不同。和以前不一样的是精度。请注意，在测试集准确性方面，我们已经从80年代突破到90年代:</p>
+<div><img class=" image-border" src="img/1c25f2c5-ac0d-46c3-a118-6171a8660e77.png"/></div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Actual cats and dogs</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">真正的猫和狗</h1>
+                
+            
+            
+                
+<p>我们已经在<kbd>notMNIST</kbd>数据集上展示了我们的新工具，这很有帮助，因为它提供了与我们早期更简单的网络设置的比较。现在，让我们进展到一个更困难的问题——真正的猫和狗。</p>
+<p>我们将利用CIFAR-10数据集。不仅仅是猫和狗，还有10个种类——飞机、汽车、鸟、猫、鹿、狗、青蛙、马、船和卡车。与<kbd>notMNIST</kbd>集合不同，有两个主要的复杂性，如下所示:</p>
+<ul>
+<li>照片中有更多的异质性，包括背景场景</li>
+<li>这些照片是彩色的</li>
+</ul>
+<p>我们以前没有处理过彩色数据集。幸运的是，它与通常的黑白数据集没有太大的不同——我们只是增加了一个维度。回想一下，我们之前的28x28图像是平面矩阵。现在，我们将有32×32×3矩阵——额外的维度代表每个红色、绿色和蓝色通道的一层。这确实增加了可视化数据集的难度，因为叠加图像会进入第四维空间。因此，我们的训练/验证/测试集的维度现在将是32x32x3xSET_SIZE。我们只需要习惯拥有在我们熟悉的3D空间中无法可视化的矩阵。</p>
+<p>但是颜色维度的机制是相同的。就像我们之前用浮点数表示灰色阴影一样，我们现在用浮点数表示红色、绿色和蓝色阴影。</p>
+<p>回想一下我们是如何加载<kbd>notMNIST</kbd>数据集的:</p>
+<pre>    dataset, image_size, num_of_classes, num_channels = <br/>     prepare_not_mnist_dataset() </pre>
+<p><kbd>num_channels</kbd>变量规定了颜色通道。直到现在只有一个。</p>
+<p>我们将以类似的方式加载CIFAR-10集合，只是这次我们将返回三个通道，如下所示:</p>
+<pre>    dataset, image_size, num_of_classes, num_channels = <br/>     prepare_cifar_10_dataset()</pre>
+<p>不是重新发明轮子。</p>
+<p>还记得我们如何在<a href="0197f632-3ce2-4032-9abd-83b3720c7127.xhtml" target="_blank">第2章</a>、<em>您的第一个分类器</em>中自动抓取、提取和准备我们的<kbd>notMNIST</kbd>数据集吗？我们将这些管道函数放入<kbd>data_utils.py</kbd>文件中，以将我们的管道代码与我们实际的机器学习代码分开。有了这种清晰的分离并保持清晰、通用的功能，我们可以在当前的项目中重用这些功能。</p>
+<p>特别是，我们将重用其中的九个函数，如下所示:</p>
+<ul>
+<li><kbd>download_hook_function</kbd></li>
+<li><kbd>download_file</kbd></li>
+<li><kbd>extract_file</kbd></li>
+<li><kbd>load_class</kbd></li>
+<li><kbd>make_pickles</kbd></li>
+<li><kbd>randomize</kbd></li>
+<li><kbd>make_arrays</kbd></li>
+<li><kbd>merge_datasets</kbd></li>
+<li><kbd>pickle_whole</kbd></li>
+</ul>
+<p>回想一下我们如何在一个支配性的函数<kbd>prepare_not_mnist_dataset</kbd>中使用这些函数，它为我们运行整个管道。我们只是在前面重用了这个函数，为自己节省了相当多的时间。</p>
+<p>让我们为CIFAR-10集合创建一个类似的函数。一般来说，您应该保存自己的管道函数，尝试将其一般化，将它们隔离到单个模块中，并在项目间重用它们。当你做自己的项目时，这将帮助你专注于关键的机器学习工作，而不是花时间重建管道。</p>
+<p>注意<kbd>data_utils.py</kbd>的修订版；我们有一个名为<kbd>prepare_cifar_10_dataset</kbd>的总体函数，它为这个新数据集隔离数据集细节和管道，如下所示:</p>
+<pre style="padding-left: 60px">  def prepare_cifar_10_dataset(): 
+    print('Started preparing CIFAR-10 dataset') 
+    image_size = 32 
+    image_depth = 255 
+    cifar_dataset_url = 'https://www.cs.toronto.edu/~kriz/cifar-<br/>     10-python.tar.gz' 
+    dataset_size = 170498071 
+    train_size = 45000 
+    valid_size = 5000 
+    test_size = 10000 
+    num_of_classes = 10 
+    num_of_channels = 3 
+    pickle_batch_size = 10000 </pre>
+<p>下面是对前面代码的快速概述:</p>
+<ul>
+<li>我们将使用<kbd>cifar_dataset_url = 'https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'</kbd>从多伦多大学的Alex Krizhevsky的站点获取数据集</li>
+<li>我们将使用<kbd>dataset_size = 170498071</kbd>来验证我们是否已经成功接收到文件，而不是一些被截断的半下载</li>
+<li class="packt_nosymbol">我们还将根据我们对数据集的了解来声明一些细节</li>
+<li>我们将把我们的60，000幅图像分割成分别为<kbd>45000</kbd>、<kbd>5000</kbd>和<kbd>10000</kbd>图像的训练、验证和测试集</li>
+<li>有十类图像，所以我们有<kbd>num_of_classes = 10</kbd></li>
+<li>这些是带有红色、绿色和蓝色通道的彩色图像，所以我们有<kbd>num_of_channels = 3</kbd></li>
+<li>我们知道图像是32x32像素，所以我们有<kbd>image_size = 32</kbd>用于宽度和高度</li>
+<li>最后，我们将知道每个通道上的图像是8位的，所以我们有<kbd>image_depth = 255</kbd></li>
+<li>数据将在<kbd>/datasets/CIFAR-10/</kbd>结束</li>
+</ul>
+<p>就像我们对<kbd>notMNIST</kbd>数据集所做的一样，只有当我们还没有数据集时，我们才会下载它。我们将对数据集进行解归档，进行必要的转换，并使用<kbd>pickle_cifar_10</kbd>将预处理后的矩阵保存为pickles。如果我们找到了<kbd>pickle</kbd>文件，我们可以使用<kbd>load_cifar_10_from_pickles</kbd>方法重新加载中间数据。</p>
+<p>下面是三个助手方法，我们将使用它们来保持主方法的复杂性易于管理:</p>
+<ul>
+<li><kbd>pickle_cifar_10</kbd></li>
+<li><kbd>load_cifar_10_from_pickles</kbd></li>
+<li><kbd>load_cifar_10_pickle</kbd></li>
+</ul>
+<p>这些功能定义如下:</p>
+<div><img class=" image-border" src="img/4169bb8d-f6cc-4ac9-968a-1895971a4c1c.png"/></div>
+<p><kbd>load_cifar_10_pickle</kbd>方法分配numpy数组来训练和测试数据和标签，并将现有的pickle文件加载到这些数组中。因为我们需要将所有事情做两次，所以我们将隔离<kbd>load_cifar_10_pickle</kbd>方法，它实际上加载数据并对其进行归零:</p>
+<div><img class=" image-border" src="img/9f4b7d1d-507d-481a-b64d-87b48fbcea69.png"/></div>
+<p>就像前面一样，我们将检查<kbd>pickle</kbd>文件是否已经存在，如果存在，加载它们。只有当它们不存在时(<kbd>else</kbd>子句)，我们实际上用我们准备好的数据保存<kbd>pickle</kbd>文件。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Saving the model for ongoing use</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">保存模型以供持续使用</h1>
+                
+            
+            
+                
+<p>要保存张量流会话中的变量以备将来使用，您可以使用<kbd>Saver()</kbd>功能。让我们从在<kbd>writer</kbd>变量之后创建一个<kbd>saver</kbd>变量开始:</p>
+<pre>    writer = tf.summary.FileWriter(log_location, session.graph)<br/>    saver = tf.train.Saver(max_to_keep=5)</pre>
+<p>然后，在训练循环中，我们将在每个<kbd>model_saving_step</kbd>之后添加以下代码来保存模型:</p>
+<pre style="padding-left: 60px"> if step % model_saving_step == 0 or step == num_steps + 1: 
+   path = saver.save(session, os.path.join(log_location,  <br/> "model.ckpt"), global_step=step) 
+   logmanager.logger.info('Model saved in file: %s' % path) </pre>
+<p>此后，每当我们想要使用<kbd>saved</kbd>模型恢复模型时，我们可以很容易地创建一个新的<kbd>Saver()</kbd>实例并使用<kbd>restore</kbd>函数，如下所示:</p>
+<pre style="padding-left: 60px"> checkpoint_path = tf.train.latest_checkpoint(log_location) 
+ restorer = tf.train.Saver() 
+ with tf.Session() as sess: 
+    sess.run(tf.global_variables_initializer()) 
+    restorer.restore(sess, checkpoint_path) </pre>
+<p>在前面的代码中，我们使用了<kbd>tf.train.latest_checkpoint</kbd>，以便TensorFlow将自动选择最新的模型检查点。然后，我们创建一个名为restore的新<kbd>Saver</kbd>实例。最后，我们可以使用<kbd>restore</kbd>函数将<kbd>saved</kbd>模型加载到会话图中:</p>
+<pre>    restorer.restore(sess, checkpoint_path) </pre>
+<p>您应该注意到，我们必须在运行<kbd>tf.global_variables_initializer</kbd>之后进行恢复。否则，加载的变量将被初始化器覆盖。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Using the classifier</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">使用分类器</h1>
+                
+            
+            
+                
+<p>既然我们已经增强了分类器来加载随机图像，我们将从选择这些与我们的训练/测试图像的大小和形状完全相同的随机图像开始。我们需要为这些用户提供的图像添加占位符，因此我们将在适当的位置添加以下行:</p>
+<pre style="padding-left: 60px"> tf_random_dataset = tf.placeholder(tf.float32, shape=(1, <br/>  image_size, image_size, num_channels),  <br/> name='RANDOM_DATA')random_prediction =  <br/> tf.nn.softmax(nn_model(tf_random_dataset, <br/>  weights, biases))</pre>
+<p>接下来，我们将通过以下命令行参数获取用户提供的图像，并在图像上运行我们的会话:</p>
+<div><img height="189" width="623" class=" image-border" src="img/c5f0d571-ec3a-4f81-846e-5d210979b15d.png"/></div>
+<p>我们将遵循几乎与前面完全相同的顺序。使用<kbd>-e</kbd>开关通过脚本运行<kbd>test</kbd>文件将产生额外的输出，如下所示:</p>
+<pre>    The prediction is: 2 </pre>
+<p>瞧啊。我们刚刚分类了一张任意的图片。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Skills learned</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">学到的技能</h1>
+                
+            
+            
+                
+<p>您应该已经在本章中学到了这些技能:</p>
+<ul>
+<li>准备更高级的色彩训练和测试数据</li>
+<li>建立卷积神经网络图</li>
+<li>与CNN相关的参数和配置</li>
+<li>创建一个完整的系统，包括用于TensorBoard的挂钩</li>
+<li>真实世界数据的管道</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Summary</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">摘要</h1>
+                
+            
+            
+                
+<p>太棒了。我们刚刚构建了一个更高级的分类器，交换了进出模型，甚至开始将我们的分类器应用于任意模型。名副其实，我们也训练我们的系统来区分猫和狗。</p>
+<p>在下一章，我们将开始使用序列到序列模型，并用TensorFlow编写一个英语到法语的翻译器。</p>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>

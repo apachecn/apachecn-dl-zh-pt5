@@ -1,0 +1,940 @@
+<html><head/><body>
+
+
+    
+        <title>Implementing Autoencoders with Keras</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">用Keras实现自动编码器</h1>
+                
+            
+            
+                
+<p>自动编码器是一种特殊的前馈神经网络，能够学习输入数据的有效编码。这些编码可以比输入的维数更低或更高。Autoencoder是一种无监督的深度学习技术，它学习将输入数据表示到潜在的特征空间中。自动编码器可用于多种应用，如降维、图像压缩、图像去噪、图像生成和特征提取。</p>
+<p>在本章中，我们将介绍以下配方:</p>
+<ul>
+<li>实现普通自动编码器</li>
+<li>使用自动编码器降维</li>
+<li>降噪自动编码器</li>
+<li>将黑白转换为彩色</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Implementing vanilla autoencoders</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">实现普通自动编码器</h1>
+                
+            
+            
+                
+<p>自动编码器由以下两个网络组成:</p>
+<ul>
+<li class="CDPAlignLeft CDPAlign"><strong>编码器</strong>:编码器将其输入<img class="fm-editor-equation" src="img/5310cbee-50e9-404f-be1c-067bd4776da9.png" style="width:1.25em;height:1.00em;"/>编码成隐藏表示<img class="fm-editor-equation" src="img/813be3be-3ebc-4a93-9ed3-8a301204d5d3.png" style="width:0.67em;height:1.08em;"/>。编码器单元的输出如下:</li>
+</ul>
+<p class="CDPAlignCenter CDPAlign"><em> h = g(Wx <sub> i </sub> +b) </em></p>
+<p class="CDPAlignCenter CDPAlign">其中，<em>x<sub>I</sub>T13】∈<em>R<sup>n</sup>T17】，<em>W</em>∈<em>R<sup>d x n</sup>T23】，<em> b </em> ∈ <em> R <sup> d </sup>。</em></em></em></em></p>
+<ul>
+<li><strong>解码器</strong>:解码器从隐藏表示中重构输入，<em> h </em>。解码器单元的输出如下:<br/></li>
+</ul>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/53cc3d7b-8b0a-47e9-991b-b3f1c725ce91.png" style="width:8.92em;height:1.42em;"/></p>
+<p class="CDPAlignCenter CDPAlign">其中，W* ∈ R <sup> n x d </sup>，h ∈ R <sup> d </sup>，c ∈ R <sup> n </sup>。</p>
+<p>自动编码器神经网络试图从<img style="font-size: 1em;color: #333333;width:0.67em;height:1.08em;" class="fm-editor-equation" src="img/df528e0f-7550-4858-8704-343953f62e49.png"/>维度的编码表示<img style="font-size: 1em;color: #333333;width:0.75em;height:1.17em;" class="fm-editor-equation" src="img/835c1b51-a10b-4d46-b533-16892b298f06.png"/>中重构原始输入<img style="font-size: 1em;color: #333333;width:1.08em;height:0.92em;" class="fm-editor-equation" src="img/aed2e09d-1e26-40e4-b72f-5bff2500ede6.png"/>，以产生输出<img style="font-size: 1em;color: #333333;width:1.17em;height:1.17em;" class="fm-editor-equation" src="img/a58490a8-0c6d-4b9c-a0c4-767a852cca20.png"/>，使得<img style="font-size: 1em;color: #333333;width:1.25em;height:1.42em;" class="fm-editor-equation" src="img/1dcb3ae6-1e01-4cc3-9705-7883ec81c9c8.png"/>近似于<img style="font-size: 1em;color: #333333;width:1.17em;height:1.00em;" class="fm-editor-equation" src="img/bed34eac-9f8f-433c-a0cc-894a1a015fec.png"/>。训练网络以最小化重建误差(损失函数)。它是原始输入和预测输出之间差异的度量，可以表示为<img style="font-size: 1em;color: #333333;width:4.83em;height:1.58em;" class="fm-editor-equation" src="img/8dbca2be-f5fb-4f8e-9c07-cdb16145a384.png"/>。编码表示维数小于输入维数的自动编码器称为欠完全自动编码器，而编码表示维数大于输入维数的自动编码器称为过完全自动编码器。</p>
+<p>下图显示了欠完整和过完整自动编码器的示例:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1122 image-border" src="img/da46fe7d-4570-430a-82b4-4b758f21b577.png" style="width:28.42em;height:19.17em;"/></p>
+<p class="CDPAlignLeft CDPAlign">在下一节中，我们将实现一个不完整的自动编码器。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Getting ready</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">做好准备</h1>
+                
+            
+            
+                
+<p>在这个食谱中，我们将使用MNIST手写数字数据集。它有60，000个样本的训练集和10，000个样本的测试集。</p>
+<p>我们从导入所需的库开始:</p>
+<pre>library(keras)<br/>library(abind)<br/>library(grid)</pre>
+<p>让我们导入数据的训练和测试分区:</p>
+<pre>data = dataset_mnist()<br/>x_train = data$train$x<br/>x_test = data$test$x<br/>cat("Train data dimnsions",dim(x_train),"\n")<br/>cat("Test data dimnsions",dim(x_test))</pre>
+<p>在下面的截图中，我们可以看到MNIST数据有60，000个训练和10，000个大小为28x28的测试图像:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1123 image-border" src="img/934e3747-c997-468a-904d-511d4f07ee48.png" style="width:15.75em;height:2.33em;"/></p>
+<div><div><div><p>我们来看看第一张图的数据:</p>
+<pre>x_train[1,,]</pre>
+<p>在下面的屏幕截图中，您可以看到图像数据是多维数组的形式:</p>
+</div>
+</div>
+</div>
+<div><img class="aligncenter size-full wp-image-1124 image-border" src="img/434108bc-4518-4be3-ad17-efbd55210d13.png" style="width:32.00em;height:36.00em;"/></div>
+<p>我们将我们的训练和测试数据集的值标准化为0和1，并将大小为28X28的每个图像展平为784个元素的一维数组:</p>
+<pre>x_train = x_train/ 255<br/>x_test = x_test / 255<br/><br/>x_train &lt;- array_reshape(x_train, c(nrow(x_train), 784))<br/>x_test &lt;- array_reshape(x_test, c(nrow(x_test), 784))</pre>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p>现在我们已经看到了数据的样子，让我们转到模型构建。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How to do it...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">怎么做...</h1>
+                
+            
+            
+                
+<p>现在，我们继续构建我们的模型:</p>
+<ol>
+<li>我们首先定义一个变量，它的值等于输入的压缩编码表示的维数。然后，我们设置模型的输入层:</li>
+</ol>
+<pre style="padding-left: 60px">encoding_dim = 32 <br/>input_img = layer_input(shape=c(784),name = "input")</pre>
+<ol start="2">
+<li>让我们构建一个编码器和解码器，并将它们结合起来构建一个自动编码器:</li>
+</ol>
+<pre style="padding-left: 60px">encoded = input_img %&gt;% layer_dense(units = encoding_dim, activation='relu',name = "encoder")<br/>decoded = encoded %&gt;% layer_dense(units = c(784), activation='sigmoid',name = "decoder")<br/><br/># this model maps an input to its reconstruction<br/>autoencoder = keras_model(input_img, decoded)</pre>
+<p style="padding-left: 60px">现在，我们设想一下自动编码器模型的概要:</p>
+<pre style="padding-left: 60px">summary(autoencoder)</pre>
+<p style="padding-left: 60px">模式总结如下:<br/></p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1139 image-border" src="img/820633da-4041-46cc-96f1-4158677671e1.png" style="width:41.92em;height:11.83em;"/></p>
+<ol start="3">
+<li>然后，我们编译并训练我们的模型:</li>
+</ol>
+<pre style="padding-left: 60px"># compiling the model<br/>autoencoder %&gt;% compile(optimizer='adadelta', loss='binary_crossentropy')<br/>       <br/># training the model<br/>autoencoder %&gt;% fit(x_train, x_train,<br/> epochs=50,<br/> batch_size=256,<br/> shuffle=TRUE,<br/> validation_data=list(x_test, x_test))</pre>
+<ol start="4">
+<li>现在，我们在测试集上预测模型的输出，并打印出测试和预测图像的样本:</li>
+</ol>
+<pre style="padding-left: 60px"># predict<br/>predicted &lt;- autoencoder %&gt;% predict(x_test)<br/><br/># Original images from test data<br/>grid = array_reshape(x_test[20,],dim = c(28,28))<br/>for(i in seq(1,5)){<br/> grid = abind(grid,array_reshape(x_test[i,],dim = c(28,28)),along = 2)<br/>}<br/>grid.raster(grid,interpolate=FALSE)<br/><br/># Reconstructed images<br/>grid1 = array_reshape(predicted[20,],dim = c(28,28))<br/>for(i in seq(1,5)){<br/>    grid1 = abind(grid1,array_reshape(predicted[i,],dim = c(28,28)),along = 2)<br/>}<br/>grid.raster(grid1, interpolate=FALSE)</pre>
+<p style="padding-left: 60px">以下是测试数据中的一些示例图像:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1125 image-border" src="img/7a4c788c-8f87-4cb6-9ac3-0407d4dda190.png" style="width:11.42em;height:2.25em;"/></p>
+<p style="padding-left: 60px" class="CDPAlignLeft CDPAlign">以下屏幕截图显示了之前显示的样本测试图像的预测图像:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1126 image-border" src="img/74492345-ffd2-4dce-94a5-119f19d8f26d.png" style="width:11.17em;height:2.08em;"/></p>
+<p>我们可以看到所有的图像都被我们的模型精确地重建了。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How it works...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">它是如何工作的...</h1>
+                
+            
+            
+                
+<p>在<em>步骤1 </em>中，我们初始化了一个变量<kbd>encoded_dim</kbd>，以设置输入的编码表示的维度。由于我们实现了一个不完全自动编码器，它将输入特征空间压缩到一个较低的维度，<kbd>encoded_dim</kbd>小于输入维度。接下来，我们定义了自动编码器的输入层，它接受一个大小为784的数组作为输入。</p>
+<p class="mce-root"/>
+<p>在下一步中，我们构建了一个自动编码器模型。我们首先定义了一个编码器和一个解码器网络，然后将它们结合起来创建一个自动编码器。注意，编码器层中的单元数量等于<kbd>encoded_dim</kbd>，因为我们想要将784维的输入特征空间压缩到32维。解码器层中的单元数量与输入维度相同，因为解码器试图重建输入。在构建了自动编码器之后，我们可视化了模型的概要。在<em>步骤</em> <em> 3 </em>中，我们使用<strong> Adadelta </strong>优化器配置我们的模型以最小化<strong>二进制交叉熵</strong>损失，然后训练该模型。我们将输入和目标值设置为<kbd>x_train</kbd>。</p>
+<p>在最后一步中，我们可视化了来自测试数据集的几个样本图像的预测图像。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>There's more...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">还有更多...</h1>
+                
+            
+            
+                
+<p>在简单的自动编码器中，解码器和编码器网络具有完全连接的密集层。卷积自动编码器通过用卷积层替换其密集层来扩展这种底层自动编码器架构。与简单的自动编码器一样，卷积自动编码器中输入层的大小与输出层的大小相同。该自动编码器的编码器网络具有卷积层，而解码器网络具有转置卷积层或与卷积层耦合的上采样层。</p>
+<p>在下面的代码块中，我们实现了一个卷积自动编码器，其中解码器网络由一个上采样层和一个卷积层组成。这种方法放大输入，然后应用卷积运算。在<em>去噪auto encode</em><em>ers</em>配方中，我们实现了一个带有转置卷积层的自动编码器。</p>
+<p class="mce-root"/>
+<p>以下代码显示了卷积自动编码器的实现:</p>
+<pre>x_train = x_train/ 255<br/>x_test = x_test / 255<br/><br/>x_train = array_reshape(x_train, c(nrow(x_train), 28,28,1))<br/>x_test = array_reshape(x_test, c(nrow(x_test), 28,28,1))<br/><br/>input_img = layer_input(shape=c(28, 28, 1))<br/><br/>x = input_img %&gt;% layer_conv_2d(32, c(3, 3), activation='relu', padding='same')<br/>x = x %&gt;% layer_max_pooling_2d(c(2, 2), padding='same')<br/>x = x %&gt;% layer_conv_2d(18, c(3, 3), activation='relu', padding='same')<br/>x = x %&gt;%layer_max_pooling_2d(c(2, 2), padding='same')<br/>x = x %&gt;% layer_conv_2d(8, c(3, 3), activation='relu', padding='same')<br/>encoded = x %&gt;% layer_max_pooling_2d(c(2, 2), padding='same')<br/><br/><br/>x = encoded %&gt;% layer_conv_2d(8, c(3, 3), activation='relu', padding='same')<br/>x = x %&gt;% layer_upsampling_2d(c(2, 2))<br/>x = x %&gt;% layer_conv_2d(8, c(3, 3), activation='relu', padding='same')<br/>x = x %&gt;% layer_upsampling_2d(c(2, 2))<br/>x = x %&gt;% layer_conv_2d(16, c(3, 3), activation='relu')<br/>x = x %&gt;% layer_upsampling_2d(c(2, 2))<br/>decoded = x %&gt;% layer_conv_2d(1, c(3, 3), activation='sigmoid', padding='same')<br/><br/>autoencoder = keras_model(input_img, decoded)<br/>summary(autoencoder)<br/><br/>autoencoder %&gt;% compile(optimizer='adadelta', loss='binary_crossentropy')<br/><br/>autoencoder %&gt;% fit(x_train, x_train,<br/>    epochs=20,<br/>    batch_size=128,<br/>    validation_data=list(x_test, x_test))<br/>predicted &lt;- autoencoder %&gt;% predict(x_test)</pre>
+<p>以下是使用卷积自动编码器重建的一些样本测试图像:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1127 image-border" src="img/d4084746-f5d5-44e8-8820-efc7ee76f2a4.png" style="width:10.42em;height:2.08em;"/></p>
+<p>从前面的截图中，我们可以说我们的模型在重建原始图像方面做得很好。</p>
+<p class="mce-root"/>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Dimensionality reduction using autoencoders</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">使用自动编码器降维</h1>
+                
+            
+            
+                
+<p class="mce-root">自动编码器实际上可以学习非常有趣的数据投影，这有助于降低数据的维度，而不会在低维空间中丢失太多数据。编码器压缩输入，并在压缩过程中选择最重要的特征，也称为潜在特征。解码器与编码器相反，它试图尽可能地重建原始输入。在对原始输入数据进行编码时，自动编码器会尝试使用较少的特征来捕捉数据的最大方差。</p>
+<p class="mce-root">在这个食谱中，我们将构建一个深度自动编码器来提取低维潜在特征，并演示我们如何使用这个低维特征集来解决各种学习问题，如回归、分类等。降维显著减少了训练时间。在降低维度的同时，自动编码器还会学习数据中存在的非线性特征，从而增强模型的性能。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Getting ready</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">做好准备</h1>
+                
+            
+            
+                
+<p>在之前的配方中，<em>实现</em> <em> v </em> a <em> nilla自动编码器</em>，我们实现了最简单的自动编码器。在这个菜谱中，我们将使用MNIST数字数据构建一个深度自动编码器来演示维度缩减。数据预处理将与之前的配方相同，<em>实现</em> <em> v </em> a <em> nilla自动编码器。</em>我们将从编码器网络中提取编码特征(低维)，然后在解码器中使用这些编码特征来重构原始输入并评估重构误差。我们使用这些编码特征来建立数字分类模型。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How to do it...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">怎么做...</h1>
+                
+            
+            
+                
+<p>我们现在将继续构建我们的深度自动编码器。深度自动编码器在其编码器和解码器网络中具有多层:</p>
+<ol>
+<li>让我们构建一个自动编码器:</li>
+</ol>
+<pre style="padding-left: 60px">encoded_dim = 32<br/><br/># input layer<br/>input_img &lt;- layer_input(shape = c(784),name = "input")<br/><br/># encoder<br/>encoded = input_img %&gt;%<br/>    layer_dense(128, activation='relu',name = "encoder_1") %&gt;%<br/>    layer_dense(64, activation='relu',name = "encoder_2") %&gt;%<br/>    layer_dense(encoded_dim, activation='relu',name = "encoder_3")<br/><br/># decoder<br/>decoded = encoded %&gt;%<br/>    layer_dense(64, activation='relu',name = "decoder_1")%&gt;%<br/>    layer_dense(128, activation='relu',name = "decoder_2")%&gt;%<br/>    layer_dense(784,activation = 'sigmoid',name = "decoder_3")<br/><br/># autoencoder<br/>autoencoder = keras_model(input_img, decoded)<br/>summary(autoencoder)</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了autoencoder模型的概要:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1128 image-border" src="img/5bf593b6-8065-424f-905b-3da117906cfe.png" style="width:32.08em;height:15.00em;"/></p>
+<ol start="2">
+<li>让我们创建一个单独的编码器模型；该模型将输入映射到其编码表示:</li>
+</ol>
+<pre style="padding-left: 60px">encoder = keras_model(input_img, encoded)<br/>summary(encoder)</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了编码器网络的概要:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1129 image-border" src="img/fc8614aa-b3cc-4f8c-acb8-bde63b22ea63.png" style="width:33.67em;height:11.17em;"/></p>
+<p class="mce-root"/>
+<ol start="3">
+<li>让我们也创建解码器模型:</li>
+</ol>
+<pre style="padding-left: 60px"># input layer for decoder<br/>encoded_input = layer_input(shape=c(32),name = "encoded_input")<br/><br/># retrieve the layer of the autoencoder model for decoder<br/>decoder_layer1 &lt;- get_layer(autoencoder,name= "decoder_1")<br/>decoder_layer2 &lt;- get_layer(autoencoder,name= "decoder_2")<br/>decoder_layer3 &lt;- get_layer(autoencoder,name= "decoder_3")<br/><br/># create the decoder model from retreived layers<br/>decoder = keras_model(encoded_input, decoder_layer3(decoder_layer2(decoder_layer1(encoded_input))))<br/><br/>summary(decoder)</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了解码器网络的概要:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1130 image-border" src="img/80d7e8be-015c-4a90-a2fa-cedd1a97a5f4.png" style="width:35.33em;height:11.50em;"/></p>
+<ol start="4">
+<li>然后，我们编译并训练我们的自动编码器模型:</li>
+</ol>
+<pre style="padding-left: 60px"># compiling the model<br/>autoencoder %&gt;% compile(optimizer = 'adadelta',loss='binary_crossentropy')<br/><br/># training the model<br/>autoencoder %&gt;% fit(x_train, x_train,<br/>    epochs=50,<br/>    batch_size=256,<br/>    shuffle=TRUE,<br/>    validation_data=list(x_test, x_test))</pre>
+<ol start="5">
+<li>现在让我们对测试图像进行编码:</li>
+</ol>
+<pre style="padding-left: 60px">encoded_imgs = encoder %&gt;% predict(x_test)</pre>
+<ol start="6">
+<li>在对我们的测试图像进行编码之后，我们使用解码器网络从编码表示中重构原始输入测试图像，并计算重构误差:</li>
+</ol>
+<pre style="padding-left: 60px"># reconstructing images <br/>decoded_imgs = decoder %&gt;% predict(encoded_imgs)<br/><br/># calculating reconstruction error<br/>reconstruction_error = metric_mean_squared_error(x_test,decoded_imgs)<br/>paste("reconstruction error: " ,k_get_value(k_mean(reconstruction_error)))</pre>
+<p style="padding-left: 60px">我们可以看到，我们已经实现了0.228的令人满意的重建误差:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/95399162-bc4c-4265-ba3c-876ac03344aa.png" style="width:17.42em;height:1.50em;"/></p>
+<ol start="7">
+<li>现在让我们对训练图像进行编码。我们将使用编码数据来训练数字分类器:</li>
+</ol>
+<pre style="padding-left: 60px">encoded_train_imgs = encoder %&gt;% predict(x_train)</pre>
+<ol start="8">
+<li>我们现在构建一个数字分类器网络并编译它:</li>
+</ol>
+<pre style="padding-left: 60px"># Building the model<br/>model &lt;- keras_model_sequential() <br/>model %&gt;% <br/>  layer_dense(units = 256, activation = 'relu', input_shape = c(encoded_dim)) %&gt;% <br/>  layer_dropout(rate = 0.4) %&gt;% <br/>  layer_dense(units = 128, activation = 'relu') %&gt;%<br/>  layer_dropout(rate = 0.3) %&gt;%<br/>  layer_dense(units = 10, activation = 'softmax')<br/><br/># compiling the model<br/>model %&gt;% compile(<br/>  loss = 'categorical_crossentropy',<br/>  optimizer = optimizer_rmsprop(),<br/>  metrics = c('accuracy')<br/>)</pre>
+<ol start="9">
+<li>我们继续处理列车标签，然后我们将训练网络:</li>
+</ol>
+<pre style="padding-left: 60px"># extracting class labels<br/>y_train &lt;- mnist$train$y<br/>y_test &lt;- mnist$test$y<br/><br/># Converting class vector (integers) to binary class matrix.<br/>y_train &lt;- to_categorical(y_train, 10)<br/>y_test &lt;- to_categorical(y_test, 10)<br/><br/># training the model<br/>history &lt;- model %&gt;% fit(<br/>  encoded_train_imgs, y_train, <br/>  epochs = 30, batch_size = 128, <br/>  validation_split = 0.2<br/>)</pre>
+<ol start="10">
+<li>让我们来评估模型性能:</li>
+</ol>
+<pre style="padding-left: 60px">model %&gt;% evaluate(encoded_imgs, y_test, batch_size = 128)</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了模型的准确性和损失:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/e479acf4-9a5f-46e1-8c71-06da7f718353.png" style="width:10.25em;height:5.67em;"/></p>
+<p>从前面的截图中可以清楚地看到，我们的autoencoder模型在学习数据的编码表示方面做得非常好。使用这些编码特征，我们训练了一个准确率为79%的分类器。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How it works...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">它是如何工作的...</h1>
+                
+            
+            
+                
+<p>在<em>步骤</em> <em> 1 </em>中，我们构建了一个Keras功能自动编码器模型。我们首先定义了一个输入层和一个编码器和解码器网络，然后将它们结合起来创建一个深度自动编码器。编码器网络将784维的输入减少到32维。解码器网络将32维(解码器的输入)重构为784维。在第2步中，我们建立了一个单独的编码器模型。编码器模型共享自动编码器的编码器层，这意味着权重是共享的。</p>
+<p>在下一步中，我们定义了一个单独的解码器模型。该模型共享自动编码器的解码器层。我们首先定义一个编码输入层，然后从自动编码器中提取密集层来创建解码器。在<em>步骤</em> <em> 4 </em>中，我们使用Adadelta优化器配置我们的模型以最小化二进制交叉熵损失，然后训练该模型50个时期。在<em>步骤</em> <em> 5 </em>中，我们将测试图像编码成缩减的尺寸。</p>
+<p class="mce-root"/>
+<p>在<em>步骤6 </em>中，我们使用解码器模型重建测试数据并计算重建误差。下一步，我们对训练图像进行编码。在<em>步骤</em> <em> 8 </em>中，我们配置并编译了一个用于数字识别的分类网络。在<em>步骤9 </em>中，我们处理了训练标签，训练了网络。最后，我们评估了数字分类模型的性能。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>There's more...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">还有更多...</h1>
+                
+            
+            
+                
+<p>我们经常会遇到数据规模巨大的问题。我们可能需要降低数据的维度，以使降维后的数据最好地代表原始数据。主成分分析 ( <strong> PCA </strong>)和自动编码器是实现这一点的一些流行技术。</p>
+<p>尽管这两种算法的降维目的是相同的，但这两种技术有一些关键的区别:</p>
+<ul>
+<li>与PCA不同，自动编码器可以从数据中学习非线性特征表示，从而提高模型性能。</li>
+<li>PCA比自动编码器更容易训练和解释。自动编码器的底层数学也很复杂。</li>
+<li>与需要更多计算的自动编码器相比，PCA需要更少的时间来运行。</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Denoising autoencoders</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">降噪自动编码器</h1>
+                
+            
+            
+                
+<p>自动编码器广泛用于特征选择和提取。他们尝试对输入数据应用变换，以准确地重建输入。当隐藏层的节点等于或多于输入层中的节点时，自动编码器会承担学习恒等函数的风险，在恒等函数中，输出简单地等于输入，因此使自动编码器无用。<strong>去噪</strong>指的是在将原始输入馈送到网络之前，有意地将随机噪声添加到原始输入中。通过这样做，身份函数风险被解决，并且编码器从数据中学习重要特征，并且学习输入数据的健壮表示。使用去噪自动编码器时，需要注意的是，损失函数是通过将输出值与原始输入进行比较而不是与损坏的输入进行比较来计算的。</p>
+<p>以下是去噪自动编码器的示例表示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-1533 image-border" src="img/564b092c-ac9d-44f1-bf0c-a59fa6db0257.png" style="width:19.08em;height:19.75em;"/></p>
+<p>在这个菜谱中，我们将实现一个去噪自动编码器。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Getting ready</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">做好准备</h1>
+                
+            
+            
+                
+<p>在这个配方中，我们将使用之前配方中使用的MNIST数据集，<em>使用自动编码器</em>实现v  <em> anilla自动编码器</em>和<em>维度缩减。我们将向归一化的MNIST图像添加随机高斯噪声，并用去噪自动编码器对其去噪。我们将标准化的训练和测试数据集称为<kbd>x_train_norm</kbd>和<kbd>x_test_norm</kbd>。</em></p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How to do it...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">怎么做...</h1>
+                
+            
+            
+                
+<p>让我们从向输入数据添加噪声开始:</p>
+<ol>
+<li>在输入数据进入网络之前，我们在输入数据中加入一个正常的随机噪声。我们通过添加以0.5为中心的正态分布和0.5的标准偏差来生成损坏的图像:</li>
+</ol>
+<pre style="padding-left: 60px"># noise for train dataset<br/>noise_train &lt;- array(data = rnorm(seq(0, 1, by = 0.02),mean = 0.5,sd = 0.5) ,dim = c(n_train,28,28,1))<br/>dim(noise_train)<br/><br/># noise for test dataset<br/>noise_test &lt;- array(data = rnorm(seq(0, 1, by = 0.02),mean = 0.5,sd = 0.5) ,dim = c(n_test,28,28,1))<br/>dim(noise_test)<br/><br/># adding noise to train<br/>x_train_norm_noise &lt;- x_train_norm + noise_train<br/><br/># adding noise to test<br/>x_test_norm_noise &lt;- x_test_norm + noise_test</pre>
+<ol start="2">
+<li>我们剪切被破坏的输入数据(输入数据+噪声),以将像素值保持在0和1的范围内。小于0的值被剪裁为0，大于1的值被剪裁为1:</li>
+</ol>
+<pre style="padding-left: 60px"># clipping train set<br/>x_train_norm_noise[x_train_norm_noise &lt; 0] &lt;- 0 <br/>x_train_norm_noise[x_train_norm_noise &gt; 1] &lt;- 1<br/><br/># clipping test set<br/>x_test_norm_noise[x_test_norm_noise &lt; 0] &lt;- 0 <br/>x_test_norm_noise[x_test_norm_noise &gt; 1] &lt;- 1</pre>
+<p style="padding-left: 60px">现在让我们来看一下样本损坏的图像:</p>
+<pre style="padding-left: 60px">grid.raster(x_train_norm_noise[2,,,])</pre>
+<p style="padding-left: 60px" class="text_cell_render rendered_html">下面的屏幕截图显示了一个损坏后的图像。类似地，在添加噪声之后，所有其他图像也将被破坏:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1132 image-border" src="img/88f182a7-e30f-4d94-baf8-f68b0139ace2.png" style="width:11.58em;height:11.58em;"/></p>
+<ol start="3">
+<li>我们首先创建编码器部分。我们首先使用<kbd>layer_input</kbd>函数创建一个输入层:</li>
+</ol>
+<pre style="padding-left: 60px"># input layer<br/>inputs &lt;- layer_input(shape = c(28, 28, 1))<br/>x = inputs</pre>
+<p style="padding-left: 60px">接下来，我们为编码器模型配置层:</p>
+<pre style="padding-left: 60px"># outputs compose input + dense layers<br/>x &lt;- x %&gt;%<br/> layer_conv_2d(filter = 32, kernel_size = 3,padding = "same", input_shape = c(28, 28, 1)) %&gt;%<br/> layer_activation("relu") %&gt;%<br/> layer_conv_2d(filter = 64, kernel_size = 3) %&gt;%<br/> layer_activation("relu")</pre>
+<p style="padding-left: 60px">我们从前面代码块中创建的网络中提取输出张量的形状。构建解码器模型需要这些信息:</p>
+<pre style="padding-left: 60px">shape = k_int_shape(x)<br/>shape</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了编码器模型的输出张量的形状:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/6519c997-9d18-425f-b1e3-1d9dbd35a877.png" style="width:3.92em;height:4.67em;"/></p>
+<p style="padding-left: 60px">编码器的最后一层是具有16个单元的密集层。让我们在编码器模型的末尾添加一个展平层和一个密集层:</p>
+<pre style="padding-left: 60px">x = x %&gt;% layer_flatten()<br/>latent = x %&gt;% layer_dense(16,name = "latent")</pre>
+<div><div><p style="padding-left: 60px" class="prompt_container">我们现在实例化编码器模型。该模型将输入映射到其编码表示:</p>
+</div>
+<pre style="padding-left: 60px">encoder = keras_model(inputs, latent)</pre>
+<div><p style="padding-left: 60px" class="CodeMirror cm-s-ipython">现在让我们来看看编码器模型的概要:</p>
+</div>
+</div>
+<pre style="padding-left: 60px">summary(encoder)</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了编码器型号的概要:</p>
+<div><img src="img/820995bd-20ab-414c-9e47-7ac2f7e7c841.png" style="width:40.17em;height:20.17em;"/></div>
+<ol start="4">
+<li>编码器的输出作为解码器部分的输入。就层配置而言，解码器与编码器相反:</li>
+</ol>
+<pre style="padding-left: 60px">latent_inputs = layer_input(shape=16, name='decoder_input')<br/><br/>x = latent_inputs %&gt;% layer_dense(shape[[2]] * shape[[3]] * shape[[4]]) %&gt;%<br/>    layer_reshape(c(shape[[2]],shape[[3]], shape[[4]]))</pre>
+<p style="padding-left: 60px">接下来，我们配置解码器部分的层:</p>
+<pre style="padding-left: 60px">x &lt;- x %&gt;%<br/> layer_conv_2d_transpose(<br/> filter = 64, kernel_size = 3, padding = "same", <br/> input_shape = c(28, 28, 1)<br/> ) %&gt;%<br/> layer_activation("relu") %&gt;%<br/> # Second hidden layer<br/> layer_conv_2d_transpose(filter = 32, kernel_size =3) %&gt;%<br/> layer_activation("relu")<br/><br/>x = x %&gt;% layer_conv_2d_transpose(filters=1,<br/> kernel_size= 3,<br/> padding='same')<br/><br/>outputs = x %&gt;% layer_activation('sigmoid', name='decoder_output')</pre>
+<p style="padding-left: 60px">我们现在实例化解码器模型，并查看其摘要:</p>
+<pre style="padding-left: 60px">decoder = keras_model(latent_inputs, outputs)<br/>summary(decoder)</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了解码器型号的概要:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/92148c7c-3116-429c-a80c-ad44b683e71b.png" style="width:38.42em;height:22.83em;"/></p>
+<ol start="5">
+<li>现在，我们建立自动编码器模型。我们可以看到，在自动编码器模型中，输入和输出的形状具有相同的维度:</li>
+</ol>
+<pre style="padding-left: 60px"># Autoencoder = Encoder + Decoder ; instantiating autoencoder model<br/>autoencoder = keras_model(inputs, decoder(encoder(inputs)))<br/>summary(autoencoder)</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了autoencoder模型的概要:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1138 image-border" src="img/c7e04d5c-7e1b-403d-9b68-16de9c80df70.png" style="width:34.58em;height:10.25em;"/></p>
+<ol start="6">
+<li>现在，我们编译自动编码器模型，并将训练数据拟合到模型中，以训练自动编码器:</li>
+</ol>
+<pre style="padding-left: 60px">autoencoder %&gt;% compile(loss = 'mse',optimizer = 'adam')<br/><br/>autoencoder %&gt;% fit(x_train_norm_noise,<br/> x_train_norm,<br/> validation_data=list(x_test_norm_noise, x_test_norm),<br/> epochs=30,batch_size= 128<br/> )</pre>
+<ol start="7">
+<li>接下来，我们为测试数据生成预测:</li>
+</ol>
+<pre style="padding-left: 60px">prediction &lt;- autoencoder %&gt;% predict(x_test_norm_noise)</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了带有噪声的MNIST数字和对自动编码器去噪后的预测图像:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1133 image-border" src="img/d483da76-a8ad-4a24-8202-c377da08fcd7.png" style="width:37.17em;height:8.83em;"/></p>
+<p>从前面的截图，我们可以说，我们的模型做了一个体面的数字去噪工作。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How it works...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">它是如何工作的...</h1>
+                
+            
+            
+                
+<p>在<em>步骤1 </em>中，我们生成了一个均值为0.5、标准差为0.5的随机高斯噪声。噪声数据的形状必须与我们添加的数据的形状相似。</p>
+<p>我们希望像素值在0到1的范围内，但是在输入数据中引入噪声后，像素值可能会改变，不再在所需的范围内。为了避免这种情况，在<em>步骤</em> <em> 2 </em>中，我们将受损输入数据中的值修剪在0和1的范围内。剪裁将所有负值转换为0，将大于1的值转换为1，而其余值保持不变。在<em>步骤3 </em>中，我们创建了autoencoder模型的编码器部分。在我们的例子中，编码器模型是两个卷积层的堆栈。</p>
+<p>第一卷积层具有32个大小为3×3的滤波器，接着是另一个具有64个大小为3×3的滤波器的第二卷积层。使用的激活函数是<kbd>relu</kbd>。在下一步中，我们构建了自动编码器模型的解码器部分。注意，在解码器模型中，层配置正好与编码器模型相反。解码器模型的输入是由编码器提供的数据的压缩表示。解码器模型的输出将具有与输入维度相同的维度。在<em>步骤</em> <em> 5 </em>中，我们将编码器和解码器结合起来，构建了一个自动编码器模型。在下一步中，我们编译并训练了自动编码器。我们使用<strong>均方误差</strong>作为损失函数，使用<kbd>adam</kbd>作为优化器。总体目标是使模型稳健:</p>
+<p class="CDPAlignCenter CDPAlign"><strong>噪声+数据→去噪自动编码器→数据</strong></p>
+<p class="CDPAlignLeft CDPAlign">在最后一步中，我们为测试数据生成预测，并在预测后可视化重建图像。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>There's more...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">还有更多...</h1>
+                
+            
+            
+                
+<p>自动编码器可以从原始输入数据中学习内部表示。这些自动编码器面临的一个挑战是，它们对于训练数据来说可能过于专门化，也就是说，它们过拟合，并且不能针对新数据进行推广。正则化使自动编码器对输入不太敏感，但同时，最小化重构误差迫使它保持敏感以捕捉更多变化。将惩罚适当地应用于损失函数使得模型更健壮并学习一般化的特征。</p>
+<p>在本节中，我们将了解两种类型的正则化自动编码器:</p>
+<ul>
+<li>收缩自动编码器</li>
+<li>稀疏自动编码器</li>
+</ul>
+<p><strong>收缩型自动编码器</strong> : <strong> </strong>这些是规则化的自动编码器，其中对重构成本函数<img class="fm-editor-equation" src="img/e49f1140-3f20-4f05-9ce4-9e0dba26a96f.png" style="width:3.42em;height:1.25em;"/>应用惩罚，用于对数据中的小变化不太敏感的鲁棒的学习表示。该罚项是编码器激活的雅可比矩阵相对于训练数据输入的Frobenius范数:</p>
+<p style="padding-left: 180px"><img class="aligncenter size-full wp-image-1221 image-border" src="img/f6b36669-79ec-49e7-9ca1-cfc75d7ebdf9.png" style="width:18.00em;height:7.92em;"/></p>
+<p>添加这种损失导致局部空间收缩，这导致激活层中的鲁棒特征提取。收缩自动编码器提取由数据指示的变化的局部方向，其属于低维非线性流形，并且在与该流形正交的方向上更稳定。去噪自动编码器和收缩自动编码器之间的一个显著区别是去噪自动编码器使编码器和解码器网络都鲁棒，而收缩自动编码器仅使编码器部分鲁棒。</p>
+<p><strong>稀疏自动编码器</strong>:在训练时的自动编码器中，对于大多数训练样本，中间层中的隐藏单元非常频繁地触发。我们不想要这种特性。在稀疏自动编码器中，我们添加了一个稀疏约束来降低隐藏神经元的激活率，使它们只在一小部分训练样本中被激活。这被称为稀疏，因为每个隐藏单元只激活特定类型的输入，而不是所有的输入。通过迫使神经元只为训练样本中特定类型的输入而触发，该单元将稳健地工作，并学习数据中有用的表示。这是一种不同的正则化方法，在这里，我们正则化激活，不像其他方法，我们正则化网络的权重。在经过训练的稀疏自动编码器模型中，不同的输入将导致网络中不同节点的激活。</p>
+<p>主要有两种在稀疏自动编码器中施加稀疏约束的方式，并且两种方式都通过向损失函数添加一些项来惩罚过度激活:</p>
+<ul>
+<li><strong> L1正则化:</strong>在这种正则化技术中，我们将惩罚项添加到损失函数中，该损失函数惩罚用于观测值<em> i </em>的层<em> h </em>中的激活向量的绝对值，该值由调谐参数λ: <div> <img class="fm-editor-equation" src="img/c5c2629a-76ff-4a4c-866c-1a79b9b9fb59.png" style="width:10.92em;height:3.00em;"/> </div>缩放</li>
+<li><strong> KL-Divergence: </strong>我们添加一个稀疏度参数ρ，它是一组训练样本上神经元的平均激活度:</li>
+</ul>
+<p style="padding-left: 210px"><img class="aligncenter size-full wp-image-1223 image-border" src="img/1c5b9248-35cf-44a9-96d8-59ea4b229c4f.png" style="width:14.58em;height:6.08em;"/></p>
+<ul>
+<li><div/>这里，下标<em> j </em>表示层<em> h </em>中的一个特定神经元，<em> m </em>表示可以单独表示为<em> x </em>的训练观测值的个数。<br/>两个伯努利分布之间的KL散度可以写成:<div> <img class="fm-editor-equation" src="img/b07b5324-0d8a-4067-a996-bb98082d91ba.png" style="width:15.33em;height:3.50em;"/> </div></li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>See also</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">请参见</h1>
+                
+            
+            
+                
+<p>如果你有兴趣了解更多关于堆叠去噪自动编码器的信息，请参考以下链接:<a href="http://www.jmlr.org/papers/volume11/vincent10a/vincent10a.pdf">http://www . jmlr . org/papers/volume 11/Vincent 10a/Vincent 10a . pdf</a>。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Changing black and white into color</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">将黑白变成彩色</h1>
+                
+            
+            
+                
+<p>使用深度学习技术的图像彩色化是当今常见的现实世界应用。在图像着色中，黑白(即灰度)图像被转换成最能代表输入图像的语义颜色的彩色图像。例如，晴天的天空颜色必须由模型着色为蓝色，而不是红色。有许多可用的着色算法和技术；这些技术的主要区别在于它们处理数据和将灰度映射到颜色的方式。一些参数方法通过在大量彩色图像数据集上进行训练，将问题提出为回归或分类，并提供适当的损失函数来学习表示。其他方法依赖于定义一个或多个颜色参考图像。</p>
+<p>在这个食谱中，我们将使用自动编码器来完成这项任务。我们将用足够数量的灰度照片作为输入，相应的彩色图片作为输出来训练自动编码器，以便它可以在正确应用颜色时发现隐藏的结构。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Getting ready</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">做好准备</h1>
+                
+            
+            
+                
+<p>在本例中，我们将使用CIFAR-10数据集，它由大小为32x32的彩色图像组成。有50，000个训练图像和10，000个测试图像。我们将预处理其图像灰度，然后建立一个自动编码器给它们上色。</p>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p>让我们首先将所需的库加载到环境中:</p>
+<pre>library(keras)<br/>library(wvtool)<br/>library(grid)<br/>library(abind)</pre>
+<p>我们加载训练和测试数据集，并将它们存储到变量中:</p>
+<pre>data &lt;- dataset_cifar10()<br/>x_train = data$train$x<br/>x_test = data$test$x</pre>
+<div><div><div><p>让我们将相关的维度数据存储到各自的变量中:</p>
+</div>
+</div>
+</div>
+<div><div><div><div><div><div><div><div><div><div><div><pre>num_images = dim(x_train)[1]<br/>num_images_test = dim(x_test)[1]<br/>img_width = dim(x_train)[2]<br/>img_height = dim(x_train)[3]</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p>让我们使用<kbd>wvtools</kbd>中的<kbd>rgb2gray()</kbd>函数将训练和测试数据中的所有图像转换成灰度图像:</p>
+<pre># grayscale train set <br/>x_train_gray &lt;- apply(x_train[1:num_images,,,], c(1), FUN = function(x){<br/> rgb2gray(x, coefs=c(0.299, 0.587, 0.114))<br/>})<br/>x_train_gray &lt;- t(x_train_gray)<br/>x_train_gray = array(x_train_gray,dim = c(num_images,img_width,img_height))<br/><br/># grayscale test set<br/>x_test_gray &lt;- apply(x_test[1:num_images_test,,,], c(1), FUN = function(x){<br/> rgb2gray(x, coefs=c(0.299, 0.587, 0.114))<br/>})<br/>x_test_gray &lt;- t(x_test_gray)<br/>x_test_gray = array(x_test_gray,dim = c(num_images_test,img_width,img_height))</pre>
+<p>接下来，我们对训练进行归一化，并在0和1的范围内测试彩色图像和灰度图像:</p>
+<pre># normalize train and test coloured images<br/>x_train = x_train / 255<br/>x_test = x_test / 255<br/><br/># normalize train and test grayscale images<br/>x_train_gray = x_train_gray / 255<br/>x_test_gray = x_test_gray / 255</pre>
+<p>然后，我们将每个灰度图像重新调整为图像高度、图像宽度和通道数量的形状:</p>
+<pre>x_train_gray &lt;- array_reshape(x_train_gray,dim = c(num_images,img_height,img_width,1))<br/>x_test_gray &lt;- array_reshape(x_test_gray,dim = c(num_images_test,img_height,img_width,1))</pre>
+<p>注意，在灰度图像的情况下，通道的数量是1。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How to do it...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">怎么做...</h1>
+                
+            
+            
+                
+<p>我们已经将CIFAR-10数据集中的图像转换为灰度。现在，让我们建立一个自动编码器来给它们上色:</p>
+<ol>
+<li>让我们定义变量来设置自动编码器的参数:</li>
+</ol>
+<pre style="padding-left: 60px"># network parameters<br/>input_shape = c(img_height, img_width, 1)<br/>batch_size = 32<br/>kernel_size = 3<br/>latent_dim = 256</pre>
+<p style="padding-left: 60px">接下来，我们创建自动编码器的输入层:</p>
+<pre style="padding-left: 60px">inputs = layer_input(shape = input_shape,name = "encoder_input")</pre>
+<ol start="2">
+<li>我们已经创建了输入层，现在让我们定义和配置网络编码器部分的层:</li>
+</ol>
+<pre style="padding-left: 60px">x = inputs<br/>x &lt;- x %&gt;% layer_conv_2d(filters = 64,kernel_size = kernel_size,strides = 2,<br/> activation = "relu",padding = "same") %&gt;%<br/> layer_conv_2d(filters = 128,kernel_size = kernel_size,strides = 2,<br/> activation = "relu",padding = "same") %&gt;%<br/> layer_conv_2d(filters = 256,kernel_size = kernel_size,strides = 2,<br/> activation = "relu",padding = "same")</pre>
+<p style="padding-left: 60px">我们还从前面代码块中创建的网络中提取输出张量的形状。构建解码器模型需要这些信息:</p>
+<pre style="padding-left: 60px">shape = k_int_shape(x)</pre>
+<p class="mce-root"/>
+<p style="padding-left: 60px">让我们在编码器的末尾添加一个展平层和一个密集层，并构建编码器模型:</p>
+<pre style="padding-left: 60px">x &lt;- x %&gt;% layer_flatten()<br/>latent &lt;- x %&gt;% layer_dense(units = latent_dim,name = "latent")<br/>encoder = keras_model(inputs, latent)</pre>
+<p style="padding-left: 60px">我们现在看到编码器模型的摘要:</p>
+<pre style="padding-left: 60px">summary(encoder)</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了编码器网络的概要:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/99d71306-4630-4f95-ac55-a5a33bd5ecb6.png" style="width:38.50em;height:17.17em;"/></p>
+<ol start="3">
+<li>接下来，我们建立解码器模型。编码器的输出是解码器部分的输入；因此，编码器的输出形状应该设置为等于解码器的输入。注意，就层配置而言，解码器网络与编码器相反:</li>
+</ol>
+<pre style="padding-left: 60px"># decoder input layer<br/>latent_inputs = layer_input(shape = c(latent_dim), name='decoder_input')<br/><br/># adding layers to input layer<br/>x = latent_inputs %&gt;% layer_dense(shape[[2]] * shape[[3]] * shape[[4]])<br/>x = x %&gt;% layer_reshape(c(shape[[2]], shape[[3]], shape[[4]]))<br/>x &lt;- x %&gt;% layer_conv_2d_transpose(filters = 256,kernel_size = kernel_size,strides = 2,<br/> activation = "relu",padding = "same") %&gt;%<br/> layer_conv_2d_transpose(filters = 128,kernel_size = kernel_size,strides = 2,<br/> activation = "relu",padding = "same") %&gt;%<br/> layer_conv_2d_transpose(filters = 64,kernel_size = kernel_size,strides = 2,<br/> activation = "relu",padding = "same")<br/><br/># output layer<br/>outputs = x %&gt;% layer_conv_2d_transpose(filters=3,<br/> kernel_size=kernel_size,<br/> activation='sigmoid',<br/> padding='same',<br/> name='decoder_output')<br/><br/># decoder<br/>decoder = keras_model(latent_inputs, outputs)</pre>
+<p style="padding-left: 60px">我们来看看解码器模型的总结:</p>
+<pre style="padding-left: 60px">summary(decoder)</pre>
+<p style="padding-left: 60px">下面的屏幕截图显示了解码器网络的概要:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/5de0d4e8-d626-4929-8a28-79383fc29643.png" style="width:33.83em;height:16.67em;"/></p>
+<ol start="4">
+<li>下一步是将编码器和解码器合并成一个自动编码器模型:</li>
+</ol>
+<pre style="padding-left: 60px"># autoencoder = encoder + decoder<br/>autoencoder = keras_model(inputs, decoder(encoder(inputs)))</pre>
+<p style="padding-left: 60px">让我们来看看完整的自动编码器模型的概要:</p>
+<pre style="padding-left: 60px">summary(autoencoder)</pre>
+<p style="padding-left: 60px">以下屏幕截图显示了自动编码器网络的概要:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/e9b4dbda-adbf-43be-bd2a-db146ac87b7b.png" style="width:35.83em;height:10.75em;"/></p>
+<ol start="5">
+<li>我们现在编译和训练自动编码器:</li>
+</ol>
+<pre style="padding-left: 60px"># compile<br/>autoencoder %&gt;% compile(loss='mse', optimizer='adam')<br/><br/># train the autoencoder<br/>autoencoder %&gt;% fit(x_train_gray,<br/> x_train,<br/> validation_data= list(x_test_gray, x_test),<br/> epochs=20,<br/> batch_size=batch_size)</pre>
+<ol start="6">
+<li>我们使用训练好的模型来生成测试数据的预测:</li>
+</ol>
+<pre style="padding-left: 60px">predicted &lt;- autoencoder %&gt;% predict(x_test_gray)</pre>
+<p style="padding-left: 60px">下面的截图描述了我们的自动编码器如何对灰度图像进行着色:</p>
+<p class="CDPAlignCenter CDPAlign"><img src="img/66132c44-ce0c-4476-a497-e8803ad16b04.png" style="width:21.67em;height:8.58em;"/></p>
+<p>在下一节中，我们将深入了解我们实现的所有步骤的本质。</p>
+<p class="mce-root"/>
+<p class="mce-root"/>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How it works...</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">它是如何工作的...</h1>
+                
+            
+            
+                
+<p>在<em>步骤</em> <em> 1 </em>中，我们初始化变量来设置模型参数。<kbd>latent_dim</kbd>变量设置编码特征的维度。然后，我们创建了自动编码器的输入层。在<em>步骤</em> 2中，我们构建了一个编码器模型。我们首先创建编码器的卷积层，然后提取最后一个卷积层的输出形状。接下来，我们添加了一个展平层，然后连接了一个单位等于<kbd>latent_dim</kbd>变量的密集层。在下一步中，我们构建了解码器模型。我们为解码器定义了一个输入层，它接收一个形状等于<kbd>latent_dim</kbd>的输入。</p>
+<p>接下来，我们在解码器中添加了层，这样我们就可以反转编码器的操作。在<em>步骤</em> 4中，我们将编码器和解码器结合起来，构建了一个自动编码器。在下一步中，我们为20个时期编译和训练了自动编码器。我们使用均方差作为损失函数，adam作为优化器。在最后一步，我们输入黑白图像并给它们着色。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>See also</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">请参见</h1>
+                
+            
+            
+                
+<p>要了解使用自动编码器进行有损图像压缩，请参考本文:<a href="https://arxiv.org/pdf/1703.00395.pdf">https://arxiv.org/pdf/1703.00395.pdf</a>。</p>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>

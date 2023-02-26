@@ -1,0 +1,134 @@
+<html><head/><body><title>Chapter 3. Transfer Image Style Across Various Domains</title><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+<!-- kobo-style -->
+
+<script type="text/javascript" src="img/kobo.js"/>
+<style type="text/css" id="kobostylehacks">div#book-inner p, div#book-inner div { font-size: 1.0em; } a { color: black; } a:link, a:visited, a:hover, a:active { color: blue; } div#book-inner * { margin-top: 0 !important; margin-bottom: 0 !important;}</style>
+
+<div><div><div><div><div><div><h1 class="title"><a id="ch03"/>第三章。跨不同领域传递图像风格</h1></div></div></div><p>生成对抗网络是深度学习中发展最快的分支，适用于广泛的创造性应用(如图像编辑或绘画、风格转移、对象变形、照片增强等)。</p><p>在本章中，您将首先学习基于特定条件或特征生成或编辑图像的技术。然后，您将稳定GAN训练以克服模式崩溃问题，并应用<a id="id115" class="indexterm"/>收敛测量指标和<strong>边界平衡</strong>方法。最后，您将使用<a id="id116" class="indexterm"/> <strong>循环一致的生成网络</strong>执行跨各种域的图像到图像的翻译(例如将苹果变为橙色或将马变为斑马)。</p><p>我们将在本章中讨论以下主题:</p><div><ul class="itemizedlist"><li class="listitem" style="list-style-type: disc">什么是CGAN？它的概念和架构</li><li class="listitem" style="list-style-type: disc">使用CGAN从<code class="literal">Fashion-MNIST</code>数据生成时装衣柜</li><li class="listitem" style="list-style-type: disc">利用Wasserstein距离的边界平衡GAN稳定GAN训练</li><li class="listitem" style="list-style-type: disc">使用CycleGAN跨不同域传送图像样式</li><li class="listitem" style="list-style-type: disc">使用张量流从苹果生成橙子</li><li class="listitem" style="list-style-type: disc">自动将马的图像变成斑马</li></ul></div><div><div><div><div><h1 class="title"><a id="ch03lvl1sec16"/>弥合监督学习和非监督学习之间的差距</h1></div></div></div><p>人类通过观察和体验物理世界来学习，我们的大脑非常擅长预测，不需要进行显式计算就能得出正确答案。监督学习就是预测与数据相关的标签，目标是推广到新的未知数据。在无监督学习中，数据没有标签，目标通常不是将任何类型的预测推广到新数据。</p><p>在现实世界中，标记为<a id="id118" class="indexterm"/>的数据通常是稀缺和昂贵的。生成对抗网络采用监督学习方法，通过生成假/合成外观数据来进行无监督学习，并试图确定生成的样本是假还是真。这一部分(进行分类的鉴别器)是受监督的组件。但GAN的实际目标是理解数据的样子(即其分布或密度估计)，并能够根据所学内容生成新的示例。</p></div></div></div></div>
+<title>Introduction to Conditional GAN</title><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+<!-- kobo-style -->
+
+<script type="text/javascript" src="img/kobo.js"/>
+<style type="text/css" id="kobostylehacks">div#book-inner p, div#book-inner div { font-size: 1.0em; } a { color: black; } a:link, a:visited, a:hover, a:active { color: blue; } div#book-inner * { margin-top: 0 !important; margin-bottom: 0 !important;}</style>
+
+<div><div><div><div><div><div><h1 class="title"><a id="ch03lvl1sec17"/>条件性GAN简介</h1></div></div></div><p>一个<strong>生成对抗网络</strong> ( <strong>甘</strong>)同时训练两个网络——一个学习从未知分布或噪声中<a id="id119" class="indexterm"/>生成假样本的生成器，一个学习从真样本中辨别假样本的鉴别器。</p><p>在<a id="id120" class="indexterm"/> <strong>条件GAN </strong> ( <strong> CGAN </strong>)中，生成器学习生成具有特定条件或特征(如与图像相关联的标签或更详细的标签)的假样本，而不是来自未知噪声分布的一般样本。现在，为了给发生器和鉴别器添加这样一个条件，我们将简单地把一些向量<em> y </em>输入到两个网络中。因此，鉴别器<em> D(X，y) </em>和发生器<em> G(z，y) </em>共同受两个变量<em> z </em>或<em> X </em>和<em> y </em>的约束。</p><p>CGAN的目标函数是:</p><div><img src="img/B08086_03_01.jpg" alt="Introduction to Conditional GAN"/></div><p>GAN损耗和CGAN损耗的区别在于鉴频器和发生器功能中的附加参数<em> y </em>。下图所示的CGAN架构现在有了一个额外的输入层(以条件向量<strong> C </strong>的形式),输入到<a id="id121" class="indexterm"/>鉴别器网络和发生器网络。</p><div><img src="img/B08086_03_02.jpg" alt="Introduction to Conditional GAN"/></div><div><div><div><div><h2 class="title"><a id="ch03lvl2sec39"/>用CGAN生成时尚衣橱</h2></div></div></div><p>在这个例子中，我们<a id="id122" class="indexterm"/>将使用<code class="literal">Fashion-MNIST</code>数据集(<a class="ulink" href="https://github.com/zalandoresearch/fashion-mnist">https://github.com/zalandoresearch/fashion-mnist</a>)实现条件GAN来生成一个时装衣橱。<code class="literal">Fashion-MNIST</code>数据集<a id="id123" class="indexterm"/>与原始<code class="literal">MNIST</code>数据集<a id="id124" class="indexterm"/>相似，具有一组新的灰度图像和标签。</p><div><img src="img/B08086_03_03.jpg" alt="Generating a fashion wardrobe with CGAN"/></div><p>让我们跳到代码中来理解带有简单神经网络架构的CGAN对于<a id="id125" class="indexterm"/>生成器<a id="id126" class="indexterm"/>和鉴别器的工作。</p><p>首先，我们将定义一个新的输入变量来保持我们的条件:</p><div><pre class="programlisting">Y = tf.placeholder(tf.float32, shape=(None, num_labels))</pre></div><p>接下来，我们将<a id="id127" class="indexterm"/>新变量<code class="literal">y</code>合并到鉴别器<code class="literal">D(X)</code>和生成器<code class="literal">G(z)</code>中。现在，鉴别器<code class="literal">(x,y)</code>和发生器<code class="literal">(z,y)</code>与原来的GAN不同:</p><div><pre class="programlisting">Dhidden = 256  # hidden units of Discriminator's network
+Ghidden = 512  # hidden units of Generator's network
+K = 8          # maxout units of Discriminator
+
+# Discriminator Network
+
+def discriminator(x, y):
+    u = tf.reshape(tf.matmul(x, DW1x) + tf.matmul(y, DW1y) + Db1, [-1, K, Dhidden])
+    Dh1 = tf.nn.dropout(tf.reduce_max(u, reduction_indices=[1]), keep_prob)
+    return tf.nn.sigmoid(tf.matmul(Dh1, DW2) + Db2)
+
+# Generator Network
+
+def generator(z,y):
+    Gh1 = tf.nn.relu(tf.matmul(Z, GW1z) + tf.matmul(Y, GW1y) + Gb1)
+    G = tf.nn.sigmoid(tf.matmul(Gh1, GW2) + Gb2)
+    return G</pre></div><p>接下来，我们将使用我们的新网络并定义一个<code class="literal">loss</code>函数:</p><div><pre class="programlisting">G_sample = generator(Z, Y)
+DG = discriminator(G_sample, Y)
+
+Dloss = -tf.reduce_mean(tf.log(discriminator(X, Y)) + tf.log(1 - DG))
+Gloss = tf.reduce_mean(tf.log(1 - DG) - tf.log(DG + 1e-9)) </pre></div><p>在训练过程中，我们将<code class="literal">y</code>的值输入发生器网络和鉴别器网络:</p><div><pre class="programlisting">X_mb, y_mb = mnist.train.next_batch(mini_batch_size)
+
+Z_sample = sample_Z(mini_batch_size, noise_dim)
+
+_, D_loss_curr = sess.run([Doptimizer, Dloss], feed_dict={X: X_mb, Z: Z_sample, Y:y_mb, keep_prob:0.5})
+
+_, G_loss_curr = sess.run([Goptimizer, Gloss], feed_dict={Z: Z_sample, Y:y_mb, keep_prob:1.0})</pre></div><p>最后，我们<a id="id128" class="indexterm"/>基于某些条件生成新的数据样本。对于这个例子，我们使用图像标签作为我们的条件，并将标签设置为<code class="literal">7</code>，即生成<code class="literal">Sneaker</code>的图像。<a id="id129" class="indexterm"/>条件变量<code class="literal">y_sample</code>是在第七个索引中具有值<code class="literal">1</code>的独热码编码向量的集合:</p><div><pre class="programlisting">nsamples=6
+
+      Z_sample = sample_Z(nsamples, noise_dim)
+        y_sample = np.zeros(shape=[nsamples, num_labels])
+        y_sample[:, 7] = 1 # generating image based on label
+
+        samples = sess.run(G_sample, feed_dict={Z: Z_sample, Y:y_sample})</pre></div><p>现在，让我们执行以下步骤，根据类别标签条件生成衣柜图像。首先下载<code class="literal">Fashion-MNIST</code>数据集，通过运行<code class="literal">download.py</code>脚本将其保存在<code class="literal">data</code> / <code class="literal">fashion</code>目录下:</p><div><pre class="programlisting">
+<strong>python download.py</strong>
+</pre></div><div><img src="img/B08086_03_04.jpg" alt="Generating a fashion wardrobe with CGAN"/></div><p>接下来使用下面的命令<a id="id131" class="indexterm"/>训练<a id="id130" class="indexterm"/> CGAN模型，这将在<code class="literal">output</code>目录下每1000次迭代后生成样本图像:</p><div><pre class="programlisting">
+<strong>python simple-cgan.py</strong>
+</pre></div><div><img src="img/B08086_03_05.jpg" alt="Generating a fashion wardrobe with CGAN"/></div><p>以下是使用设置为<strong> 80k </strong>迭代后的<strong> 4(外套)</strong>和<strong> 60k </strong>迭代后的<strong> 7(运动鞋)</strong>运行CGAN的输出:</p><div><img src="img/B08086_03_06.jpg" alt="Generating a fashion wardrobe with CGAN"/></div></div><div><div><div><div><h2 class="title"><a id="ch03lvl2sec40"/>用边界平衡GAN进行稳定训练</h2></div></div></div><p>GAN在机器学习研究人员中的受欢迎程度正在迅速上升。GAN研究可以分为两种类型:一种是将GAN应用于挑战性问题，另一种是试图稳定训练。稳定GAN训练至关重要，因为原始GAN架构受到影响，并且有几个缺点:</p><div><ul class="itemizedlist"><li class="listitem" style="list-style-type: disc"><strong>模式崩溃</strong>:发生器崩溃成很窄的分布，产生的样本<a id="id133" class="indexterm"/>不多样。这个问题当然违背了甘的精神。</li><li class="listitem" style="list-style-type: disc"><strong>收敛度量</strong>的评估:没有明确定义的度量来告诉我们鉴频器损耗和发电机损耗之间的收敛。</li></ul></div><p>改进的<strong>Wasserstein GAN</strong>(<em>arXiv:1704.00028，2017 </em>)是一种新提出的GAN算法，它承诺<a id="id135" class="indexterm"/>通过向网络提供简单的梯度(如果输出被认为是真实的，则为+1，如果输出被认为是虚假的，则为-1)来最小化wasser stein距离(或推土机距离)，从而解决前面的问题。</p><p><strong>背后的主要思想<a id="id136" class="indexterm"/>始于</strong> ( <em> arXiv: 1703.10717，2017 </em>)是通过使用<strong>自动编码器</strong>作为鉴别器来拥有一个新的<code class="literal">loss</code>功能，其中真实损失是从<a id="id138" class="indexterm"/>与生成图像的重建损失之间的<a id="id137" class="indexterm"/>距离(以满足模式崩溃的问题)中导出的:</p><div><img src="img/B08086_03_07.jpg" alt="Stabilizing training with Boundary Equilibrium GAN"/></div><p>通过使用加权参数<em> k </em>来添加超参数γ，以赋予用户控制所需分集的能力:</p><div><img src="img/B08086_03_08.jpg" alt="Stabilizing training with Boundary Equilibrium GAN"/></div><p>与大多数交替训练鉴别器和发生器的GANs不同，BEGAN允许在每个时间步以对抗的方式同时训练两个网络:</p><div><img src="img/B08086_03_09.jpg" alt="Stabilizing training with Boundary Equilibrium GAN"/></div><p>最后，它允许<a id="id139" class="indexterm"/>一个收敛的近似度量<em> M </em>来理解整个网络的性能:</p><div><img src="img/B08086_03_10.jpg" alt="Stabilizing training with Boundary Equilibrium GAN"/></div></div></div></div></div>
+<title>The training procedure of BEGAN</title><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+<!-- kobo-style -->
+
+<script type="text/javascript" src="img/kobo.js"/>
+<style type="text/css" id="kobostylehacks">div#book-inner p, div#book-inner div { font-size: 1.0em; } a { color: black; } a:link, a:visited, a:hover, a:active { color: blue; } div#book-inner * { margin-top: 0 !important; margin-bottom: 0 !important;}</style>
+
+<div><div><div><div><div><div><h1 class="title"><a id="ch03lvl1sec18"/>的训练程序开始了</h1></div></div></div><p>培训开始所涉及的步骤描述如下:</p><div><ol class="orderedlist arabic"><li class="listitem">鉴别器(自动编码器)更新其权重以最小化真实图像的重建<a id="id140" class="indexterm"/>损失，并且以这种方式，开始更好地重建真实图像。</li><li class="listitem">同时，鉴别器开始最大化生成图像的重建损失。</li><li class="listitem">生成器以相反的方式工作，以最小化生成图像的重建损失。</li></ol></div><div><div><div><div><h2 class="title"><a id="ch03lvl2sec41"/>建筑的开始</h2></div></div></div><p>如下图所示，鉴别器是一个卷积网络，同时具有深度编码器和<a id="id141" class="indexterm"/>解码器。解码器有多层3×3卷积，后跟一个<strong>指数线性单元</strong> ( <strong> ELU </strong>)。下采样是用步长2卷积<a id="id142" class="indexterm"/>完成的。自动编码器的嵌入状态被映射到完全连接的层。发生器和解码器都是深度去卷积，具有相同的架构，但是具有不同的权重，并且上采样是使用最近邻来完成的:</p><div><img src="img/B08086_03_11.jpg" alt="Architecture of BEGAN"/><div><p>图BEGAN的架构。</p><p>来源:<em> arXiv: 1703.10717，2017，2017 </em></p></div></div><p>在前面的图中，鉴别器的发生器和解码器都显示在左侧。右侧显示了鉴频器的编码器网络。</p></div><div><div><div><div><h2 class="title"><a id="ch03lvl2sec42"/>开始使用Tensorflow的实现</h2></div></div></div><p>现在让我们<a id="id143" class="indexterm"/>深入<a id="id144" class="indexterm"/>代码，实现前面的概念和架构，以生成逼真的吸引人的图像。</p><p>生成器网络具有多层带<code class="literal">elu activation</code>函数的3×3卷积，之后是最近邻放大，但最后一层除外。卷积层数是根据图像的高度计算的:</p><div><pre class="programlisting">self.repeat_num = int(np.log2(height)) – 2.
+
+def GeneratorCNN(z, hidden_num, output_num, repeat_num, data_format, reuse):
+    with tf.variable_scope("G", reuse=reuse) as vs:
+        num_output = int(np.prod([8, 8, hidden_num]))
+        x = slim.fully_connected(z, num_output, activation_fn=None)
+        x = reshape(x, 8, 8, hidden_num, data_format)
+        
+        for idx in range(repeat_num):
+            x = slim.conv2d(x, hidden_num, 3, 1, activation_fn=tf.nn.elu, data_format=data_format)
+            x = slim.conv2d(x, hidden_num, 3, 1, activation_fn=tf.nn.elu, data_format=data_format)
+            if idx &lt; repeat_num - 1:
+                x = upscale(x, 2, data_format)
+
+        out = slim.conv2d(x, 3, 3, 1, activation_fn=None, data_format=data_format)
+
+    variables = tf.contrib.framework.get_variables(vs)
+    return out, variables</pre></div><p>鉴别器<a id="id146" class="indexterm"/>网络的编码器<a id="id145" class="indexterm"/>具有与<code class="literal">elu activation</code>函数的多层卷积，随后使用maxpooling进行下采样，除了在最后的卷积层:</p><div><pre class="programlisting">def DiscriminatorCNN(x, input_channel, z_num, repeat_num, hidden_num, data_format):
+    with tf.variable_scope("D") as vs:
+        # Encoder
+        x = slim.conv2d(x, hidden_num, 3, 1, activation_fn=tf.nn.elu, data_format=data_format)
+
+        prev_channel_num = hidden_num
+        for idx in range(repeat_num):
+            channel_num = hidden_num * (idx + 1)
+            x = slim.conv2d(x, channel_num, 3, 1, activation_fn=tf.nn.elu, data_format=data_format)
+            x = slim.conv2d(x, channel_num, 3, 1, activation_fn=tf.nn.elu, data_format=data_format)
+            if idx &lt; repeat_num - 1:
+                x = slim.conv2d(x, channel_num, 3, 2, activation_fn=tf.nn.elu, data_format=data_format)
+                #x = tf.contrib.layers.max_pool2d(x, [2, 2], [2, 2], padding='VALID')
+
+        x = tf.reshape(x, [-1, np.prod([8, 8, channel_num])])
+        z = x = slim.fully_connected(x, z_num, activation_fn=None)</pre></div><p><a id="id147" class="indexterm"/>鉴别器网络的解码器类似于发生器网络，具有多层<a id="id148" class="indexterm"/>卷积和<code class="literal">elu activation</code>函数，随后使用最近邻进行上采样，除了在最后的卷积层:</p><div><pre class="programlisting">        num_output = int(np.prod([8, 8, hidden_num]))
+        x = slim.fully_connected(x, num_output, activation_fn=None)
+        x = reshape(x, 8, 8, hidden_num, data_format)
+        
+        for idx in range(repeat_num):
+            x = slim.conv2d(x, hidden_num, 3, 1, activation_fn=tf.nn.elu, data_format=data_format)
+            x = slim.conv2d(x, hidden_num, 3, 1, activation_fn=tf.nn.elu, data_format=data_format)
+            if idx &lt; repeat_num - 1:
+                x = upscale(x, 2, data_format)
+
+        out = slim.conv2d(x, input_channel, 3, 1, activation_fn=None, data_format=data_format)
+
+    variables = tf.contrib.framework.get_variables(vs)</pre></div><p>现在，通过执行以下代码块，使用<strong> Adam Optimizer </strong>对之前讨论的真实图像和虚假图像的发生器损耗和鉴别器损耗进行了优化<a id="id149" class="indexterm"/>:</p><div><pre class="programlisting">d_out, self.D_z, self.D_var = DiscriminatorCNN(
+                tf.concat([G, x], 0), self.channel, self.z_num, self.repeat_num,
+                self.conv_hidden_num, self.data_format)
+        AE_G, AE_x = tf.split(d_out, 2)
+
+        self.G = denorm_img(G, self.data_format)
+        self.AE_G, self.AE_x = denorm_img(AE_G, self.data_format), denorm_img(AE_x, self.data_format)
+
+if self.optimizer == 'adam':
+            optimizer = tf.train.AdamOptimizer
+        else:
+            raise Exception("[!] Caution! Paper didn't use {} opimizer other than Adam".format(config.optimizer))
+
+        g_optimizer, d_optimizer = optimizer(self.g_lr), optimizer(self.d_lr)
+
+        self.d_loss_real = tf.reduce_mean(tf.abs(AE_x - x))
+        self.d_loss_fake = tf.reduce_mean(tf.abs(AE_G - G))
+
+        self.d_loss = self.d_loss_real - self.k_t * self.d_loss_fake
+        self.g_loss = tf.reduce_mean(tf.abs(AE_G - G))</pre></div><p>现在是时候执行代码来生成令人印象深刻的名人图片了:</p><div><ol class="orderedlist arabic"><li class="listitem">首先克隆下面的库，然后更改目录:<div> <pre class="programlisting"> <strong>git clone https://github.com/carpedm20/BEGAN-tensorflow.git</strong> <strong>cd BEGAN-tensorflow</strong> </pre> </div></li><li class="listitem">接下来，运行<a id="id151" class="indexterm"/>以下脚本，下载<code class="literal">data</code>目录下的<code class="literal">CelebA</code>数据集，并将其拆分为训练集、验证集和测试集:<div> <pre class="programlisting"> <strong>python download.py</strong> </pre> </div></li><li class="listitem">确保您的计算机上安装了p7zip。</li><li class="listitem">现在开始如下的训练过程，将生成的样本保存在<code class="literal">logs</code>目录下:<div> <pre class="programlisting"> <strong>python main.py --dataset=CelebA --use_gpu=True</strong> </pre> </div></li></ol></div><div><div><h3 class="title"><a id="note04"/>注意</h3><p>如果您遇到错误<strong>conv2d custombackpropinputop仅支持NHWC </strong>，请参考以下问题:</p><p><a class="ulink" href="https://github.com/carpedm20/BEGAN-tensorflow/ issues/29">https://github.com/carpedm20/BEGAN-tensorflow/问题/29 </a></p></div></div><p>在<a id="id152" class="indexterm"/>执行前面的命令后，在训练进行的同时，您会注意到<code class="literal">Model</code>目录、日志目录和各种损耗等信息，如下所示:</p><div><img src="img/B08086_03_12.jpg" alt="Implementation of BEGAN using Tensorflow"/></div><p>BEGAN生成的输出面在视觉上非常逼真和吸引人，如下面的屏幕截图所示:</p><div><img src="img/B08086_03_13.jpg" alt="Implementation of BEGAN using Tensorflow"/><div><p>图350k步后伽玛=0.5的发生器输出图像(64x64)</p></div></div><p>以下输出图像样本(128 x 128)是在250k步后生成的:</p><div><img src="img/B08086_03_14.jpg" alt="Implementation of BEGAN using Tensorflow"/><div><p>图250k步后伽玛=0.5的发生器输出图像(128x128)</p></div></div></div></div></div></div>
+<title>Image to image style transfer with CycleGAN</title><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+<!-- kobo-style -->
+
+<script type="text/javascript" src="img/kobo.js"/>
+<style type="text/css" id="kobostylehacks">div#book-inner p, div#book-inner div { font-size: 1.0em; } a { color: black; } a:link, a:visited, a:hover, a:active { color: blue; } div#book-inner * { margin-top: 0 !important; margin-bottom: 0 !important;}</style>
+
+<div><div><div><div><div><div><h1 class="title"><a id="ch03lvl1sec19"/>使用CycleGAN进行图像到图像风格转换</h1></div></div></div><p><strong>循环一致生成网络</strong> ( <strong> CycleGAN </strong>)，最初在论文<em>使用Cycle gan</em>—<em>arXiv:1703.10593，2017 </em>中提出，旨在为给定图像找到源域和目标域之间的映射<a id="id153" class="indexterm"/>，而无需任何配对信息(例如灰度到颜色、图像到语义标签、边缘映射到照片、马到斑马等等)</p><p>CycleGAN背后的关键思想是有两个翻译器F和G，其中F将图像从域<em> A </em>翻译到域<em> B </em>，而<em> G </em>将图像从域<em> B </em>翻译到域<em> A </em>。因此，对于域<em> A </em>中的图像<em> x </em>，我们应该期望函数<em> G(F(x)) </em>等价于<em> x </em>，类似地，对于域<em> B </em>中的图像<em> y </em>，我们应该期望函数<em> F(G(y)) </em>等价于<em> y </em>。</p><div><div><div><div><h2 class="title"><a id="ch03lvl2sec43"/>cycle gan的模型公式</h2></div></div></div><p><a id="id154" class="indexterm"/> CycleGAN模型的主要目标是使用训练样本<em>{ Xi } Ni = 1</em><em>∈</em><em>X</em>和<em>{ yj } Mj = 1</em><em>∈</em><em>Y</em>来学习两个域<em> X </em>和<em> Y </em>之间的映射。它还有两个对立的鉴别器<em>D</em>X和<em>D</em>Y:其中<em>D</em>T38】X试图区分原始图像<em> {x} </em>和翻译图像<em> {F(y)} </em>，同样，<em>D</em>Y试图区分<em>{ T48</em></p><p>CycleGAN模型有两个<code class="literal">loss</code>功能:</p><div><ul class="itemizedlist"><li class="listitem" style="list-style-type: disc"><strong>对抗性损失</strong>:匹配<a id="id155" class="indexterm"/>生成图像的分布到目标域分布:<div> <img src="img/B08086_03_15.jpg" alt="Model formulation of CycleGAN"/> </div></li><li class="listitem" style="list-style-type: disc"><strong>循环一致性丢失</strong>:防止<a id="id156" class="indexterm"/>学习到的映射<em> G </em>和<em> F </em>相互矛盾:<div> <img src="img/B08086_03_16.jpg" alt="Model formulation of CycleGAN"/> </div></li></ul></div><p>完整的CycleGAN目标函数由下式给出:</p><div><img src="img/B08086_03_17.jpg" alt="Model formulation of CycleGAN"/></div></div><div><div><div><div><h2 class="title"><a id="ch03lvl2sec44"/>使用张量流将苹果转化为橙子</h2></div></div></div><p>在本例中，我们<a id="id157" class="indexterm"/>将把一个域<em> A </em>中的图像的样式转移到另一个域<em> B </em>中的图像:更具体地说，我们将通过执行以下步骤应用CycleGAN将苹果转换成橙子，反之亦然:</p><div><ol class="orderedlist arabic"><li class="listitem">首先克隆下面的<code class="literal">git</code>存储库，并将目录更改为cycle gan-tensor flow:<div><pre class="programlisting"> git clone https://github.com/xhujoy/CycleGAN-tensorflow cd CycleGAN-tensorflow</pre></div></li><li class="listitem">现在使用<code class="literal">download_dataset.sh</code>脚本下载<code class="literal">apple2orange</code>数据集ZIP文件，提取<a id="id158" class="indexterm"/>并保存在<code class="literal">datasets</code>目录下:<div> <pre class="programlisting"> <strong>bash ./download_dataset.sh apple2orange</strong> </pre> </div></li><li class="listitem">接下来，使用下载的<code class="literal">apple2orange</code>数据集训练CycleGAN模型。在训练阶段，模型将被保存在<code class="literal">checkpoint</code>目录中，并在<code class="literal">logs</code>目录中启用日志记录，用于TensorBoard的可视化:<div> <pre class="programlisting"> <strong>python main.py --dataset_dir=apple2orange</strong> </pre> </div> <div> <img src="img/B08086_03_18.jpg" alt="Transforming apples into oranges using Tensorflow"/> </div></li><li class="listitem">运行以下命令，导航至<code class="literal">http://localhost:6006/</code>:<div><pre class="programlisting"> <strong>tensorboard --logdir=./logs</strong> </pre></div><div><img src="img/B08086_03_19.jpg" alt="Transforming apples into oranges using Tensorflow"/></div>，在浏览器中可视化训练阶段的各种损耗(鉴频器损耗和发电机损耗)</li><li class="listitem">最后，我们将从<code class="literal">checkpoint</code>目录加载训练好的模型，以跨图像传输<a id="id159" class="indexterm"/>样式，从而从苹果生成橙子，反之亦然(基于传递给<code class="literal">which_direction</code>参数的值(<code class="literal">AtoB</code>或<code class="literal">BtoA</code>)，该参数指示从域1到域2的样式传输:<div> <pre class="programlisting"> <strong>python main.py --dataset_dir=apple2orange --phase=test --which_direction=AtoB</strong> </pre> </div></li><li class="listitem">以下是在<code class="literal">test</code>阶段生成的示例输出图像:<div> <img src="img/B08086_03_20.jpg" alt="Transforming apples into oranges using Tensorflow"/> <div> <p>图- 4:左侧显示通过在方向参数中传递AtoB将苹果转换为橙子，而右侧显示通过在方向参数中传递BtoA生成的输出。</p> </div> </div></li></ol></div></div><div><div><div><div><h2 class="title">用CycleGAN将马变形为斑马</h2></div></div></div><p>就像前面的例子一样，在本节<a id="id160" class="indexterm"/>中，我们将通过执行以下步骤，使用CycleGAN将马转化为斑马，反之亦然:</p><div><ol class="orderedlist arabic"><li class="listitem">首先克隆下面的<code class="literal">git</code>存储库，并将目录更改为<code class="literal">CycleGAN-tensorflow</code>(如果您已经执行了前面的示例，可以跳过这一步):<div> <pre class="programlisting"> <strong>git clone https://github.com/xhujoy/CycleGAN-tensorflow cd CycleGAN-tensorflow</strong> </pre> </div></li><li class="listitem">现在从Berkley下载<code class="literal">horse2zebra</code> ZIP文件，解压它，并使用<code class="literal">download_dataset.sh</code>脚本:<div> <pre class="programlisting"> <strong>bash ./download_dataset.sh horse2zebra</strong> </pre> </div>将其保存在<code class="literal">datasets</code>目录下</li><li class="listitem">接下来，我们将使用<code class="literal">horse2zebra</code>数据集训练我们的CycleGAN模型，并在训练过程中使用TensorBoard可视化损失:<div> <pre class="programlisting"> <strong>python main.py --dataset_dir=horse2zebra</strong> </pre> </div> <div> <img src="img/B08086_03_21.jpg" alt="Transfiguration of a horse into a zebra with CycleGAN"/> </div></li><li class="listitem">运行以下命令并导航至<code class="literal">http://localhost:6006/</code>查看各种发电机或鉴频器损耗:<div> <pre class="programlisting"> <strong>tensorboard --logdir=./logs</strong> </pre> </div> <div> <img src="img/B08086_03_22.jpg" alt="Transfiguration of a horse into a zebra with CycleGAN"/> </div></li><li class="listitem">最后，我们将使用来自<code class="literal">checkpoint</code>目录的<a id="id161" class="indexterm"/>训练模型将一匹马转换成斑马，反之亦然，这取决于值<code class="literal">AtoB</code>或<code class="literal">BtoA</code>是否被传递给<code class="literal">which_direction</code>参数:<div> <pre class="programlisting"> <strong>python main.py --dataset_dir=horse2zebra --phase=test --which_direction=AtoB</strong> </pre> </div></li></ol></div><p>以下样本<a id="id162" class="indexterm"/>输出图像在<code class="literal">test</code>阶段生成:</p><div><img src="img/B08086_03_23.jpg" alt="Transfiguration of a horse into a zebra with CycleGAN"/><div><p>图5:左边显示了将马转化为斑马，而右边显示了将斑马转化为马。</p></div></div></div></div></div></div>
+<title>Summary</title><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+<!-- kobo-style -->
+
+<script type="text/javascript" src="img/kobo.js"/>
+<style type="text/css" id="kobostylehacks">div#book-inner p, div#book-inner div { font-size: 1.0em; } a { color: black; } a:link, a:visited, a:hover, a:active { color: blue; } div#book-inner * { margin-top: 0 !important; margin-bottom: 0 !important;}</style>
+
+<div><div><div><div><div><div><h1 class="title"><a id="ch03lvl1sec20"/>总结</h1></div></div></div><p>到目前为止，您已经学习了基于某些特征或条件创建图像的方法，方法是将条件向量传递给生成器和鉴别器。此外，您已经了解如何通过使用BEGAN稳定您的网络训练来克服模型崩溃问题。最后，通过使用CycleGAN从一个苹果生成一个橙子，从一匹马生成一匹斑马，或者反过来，您已经实现了图像到图像样式的转换。在下一章中，我们将通过堆叠或耦合两个或更多GAN模型来解决复杂的现实问题，如文本到图像的合成和跨域发现。</p></div></div></div></body></html>

@@ -1,0 +1,429 @@
+<html><head/><body>
+
+
+	
+		<title>B15778_03_Final_SZ_ePub</title>
+		
+	
+	
+		<div><div/>
+		</div>
+		<div><h1 id="_idParaDest-67"><a id="_idTextAnchor084"/> 3。一个使用DNN的分类问题</h1>
+		</div>
+		<div><p class="callout-heading">概观</p>
+			<p class="callout">在本章中，我们将看一个银行业的真实例子，以解决分类数据问题。您将学习如何利用PyTorch的定制模块来定义网络架构和训练模型。您还将探索错误分析的概念，以提高模型的性能。最后，您将学习部署模型的不同方法，以便在将来使用它。在本章结束时，您将对这一过程有一个牢固的理解，以便您可以使用PyTorch中的<strong class="bold">深度神经网络</strong> ( <strong class="bold"> DNN </strong>)开发一个分类数据问题的端到端解决方案。</p>
+			<h1 id="_idParaDest-68"><a id="_idTextAnchor085"/>简介</h1>
+			<p>在前一章中，我们了解了dnn的构建模块，并回顾了三种最常见架构的特征。此外，我们还学习了如何使用DNN解决回归问题。</p>
+			<p>在本章中，我们将使用DNNs来解决一个分类任务，其目标是从一系列选项中预测一个结果。</p>
+			<p>利用这种模型的一个领域是银行业。这主要是因为他们需要根据人口统计数据预测未来的行为，以及确保长期盈利的主要目标。在银行业中的一些应用包括贷款申请评估、信用卡审批、股票市场价格预测以及通过分析行为检测欺诈。</p>
+			<p>本章将重点关注使用深度<strong class="bold">人工神经网络</strong> ( <strong class="bold"> ANN </strong>)解决分类银行问题，遵循实现有效模型所需的所有步骤:数据探索、数据准备、架构定义和模型训练、模型微调、错误分析，以及最后部署最终模型。</p>
+			<p class="callout-heading">注意</p>
+			<p class="callout">本章中出现的所有代码都可以在:<a href="https://packt.live/38qLadV">https://packt.live/38qLadV</a>找到。</p>
+			<h1 id="_idParaDest-69"><a id="_idTextAnchor086"/>问题定义</h1>
+			<p>定义问题与构建模型或提高准确性一样重要。这是因为，虽然您可能能够使用最强大的算法和最先进的方法来改善其结果，但如果您正在解决错误的问题或使用错误的数据，这可能会被证明是毫无意义的。</p>
+			<p>学会如何深入思考以理解什么能做什么不能做，以及什么能做是如何完成的，这一点至关重要。考虑到当我们正在学习应用机器学习或深度学习算法时，大多数课程中呈现的问题总是定义清晰，除了训练模型和提高其性能之外，不需要进一步分析，这一点尤为重要。另一方面，现实生活中，问题往往扑朔迷离，数据往往杂乱无章。</p>
+			<p>在本节中，您将了解一些根据组织的需求和手头的数据来定义问题的最佳实践。</p>
+			<p>为此，您需要遵循以下步骤:</p>
+			<ol>
+				<li>理解问题的内容、原因和方式。</li>
+				<li>分析手头的数据，以确定我们的模型的一些关键参数，例如要执行的学习任务的类型、必要的准备以及绩效指标的定义。</li>
+				<li>执行数据准备，以降低向模型引入偏差的可能性。</li>
+			</ol>
+			<h2 id="_idParaDest-70"><a id="_idTextAnchor087"/>银行业的深度学习</h2>
+			<p>银行和金融实体每天都要处理大量的信息，这是他们做出重要决策所必需的，这些决策不仅会影响他们自己组织的未来，还会影响信任他们的数百万个人的未来。</p>
+			<p>这些决策每秒钟都在做出，早在20世纪90年代，银行业的人们曾经依赖专家系统来编写基于规则的程序；也就是说，程序根据人类专家的知识来制定一套要遵循的规则。不足为奇的是，这类程序存在缺陷，因为它们需要预先对所有信息或可能的情景进行编程，这使得它们在处理不确定性和高度变化的市场时效率低下。</p>
+			<p>随着技术的进步，银行业一直在引领向更专业的系统过渡，这些系统利用统计模型来帮助做出此类决策。此外，由于银行既需要考虑自身的盈利能力，也需要考虑客户的盈利能力，因此在不断跟上技术进步的众多行业中，它们被认为是引人注目的。</p>
+			<p>如今，随着医疗保健市场的发展，银行和金融行业正在推动神经网络市场的发展。这主要是由于神经网络通过使用大量以前的数据来预测未来行为来处理不确定性的能力。考虑到人脑没有能力分析如此大量的数据，这是基于人类专家知识的系统无法实现的。</p>
+			<p>深度学习在银行和金融服务中的一些领域得到了展示和简要说明:</p>
+			<ul>
+				<li><strong class="bold">Loan application evaluation</strong>: Banks issue loans to customers based on different factors, including demographical information, credit history, and so on. Their main objective in this process is to minimize the number of customers who will default on loan payments (minimize the failure rate), thereby maximizing the returns obtained through the loans that have been issued.<p>神经网络用于帮助做出是否给予贷款的决定。他们通常使用以前未能还贷的贷款申请人以及那些按时还贷的贷款申请人的数据进行训练。一旦创建了一个模型，其思想就是将新申请人的数据输入到模型中，以便获得他们是否会偿还贷款的预测，考虑到模型的重点应该是减少误报的数量(模型预测的客户会拖欠贷款，但实际上没有)。</p><p>众所周知，在工业中，神经网络的失败率低于依赖人类专业知识的传统方法。</p></li>
+				<li><strong class="bold">Detection of fraud</strong>: Fraud detection is crucial for banks and financial providers, considering the advancements of technology that, in spite of making our lives easier, also leave us exposed to greater financial risks.<p>在这一领域中使用神经网络，特别是CNN，用于字符和图像识别，以检测字符图像中的隐藏和抽象模式，从而确定用户是否遭受欺诈。</p></li>
+				<li><code>Data Folder</code>链接，并下载<code>.xls</code>文件。数据集也可以在这本书的GitHub知识库中找到，在https://packt.live/38qLadV的<a href="https://packt.live/38qLadV"/>。</li>
+			</ul>
+			<h2 id="_idParaDest-71"><a id="_idTextAnchor088"/>探索数据集</h2>
+			<p>在接下来的几节中，我们将使用信用卡客户的<strong class="bold">默认设置</strong> ( <strong class="bold"> DCCC </strong>)数据集来解决一个与信用卡支付相关的分类任务，这个数据集以前是从加州大学欧文分校的知识库站点下载的。</p>
+			<p>这一部分的主要思想是清楚地陈述数据问题的内容、原因和方式，这将有助于确定研究的目的和评估指标。此外，我们将详细分析手头的数据，以确定数据准备过程中所需的一些步骤(例如，将定性特征转换为数字表示)。</p>
+			<p>首先，让我们定义什么、为什么和如何。考虑这样做是为了识别组织的真正需求:</p>
+			<p><strong class="bold"> What </strong>:建立一个能够确定客户是否会拖欠即将到来的付款的模型。</p>
+			<p><strong class="bold">为什么</strong>:能够预测下个月收到的付款金额(货币)。这将有助于公司确定当月的支出策略，并允许他们确定对每个客户采取的行动，以确保那些将支付账单的客户未来付款，并提高那些违约客户的付款概率。</p>
+			<p><strong class="bold">如何</strong>:使用历史数据来训练模型，这些数据包含人口统计信息、信用历史以及有和没有拖欠付款的客户的先前账单。在对输入数据进行训练后，该模型应该能够确定客户是否有可能拖欠下一笔付款。</p>
+			<p>考虑到这一点，似乎目标特性应该是声明客户是否会在下一次付款时违约，这需要一个二元结果(是/否)。这意味着要开发的学习任务是一个分类任务，因此损失函数应该能够测量这种学习类型的差异(例如，交叉熵函数，如前一章所述)。</p>
+			<p>一旦很好地定义了问题，您需要确定最终模型的优先级。这意味着确定所有输出类是否同等重要。例如，测量肺部肿块是否是恶性的模型应该主要集中在最小化<code>false negatives</code>(模型预测为没有恶性肿块，但肿块实际上是恶性的患者)，而为识别手写字符而建立的模型不应该集中在一个特定的字符上，而是在同等地识别所有字符时最大化其性能。</p>
+			<p>考虑到这一点，以及why语句中的解释，<code>Default of Credit Card Clients</code>数据集的模型的优先级应该是最大化模型的整体性能，而不是优先考虑任何类标签。这主要是因为“为什么”声明宣称，研究的主要目的应该是更好地了解银行将收到的资金，以及对可能拖欠付款的客户采取某些行动(例如，提出将债务分成较小的付款)，并对不会拖欠付款的客户采取不同的行动(例如，为表现良好的客户提供福利作为奖励)。</p>
+			<p>据此，在本案例研究中使用的性能指标是<strong class="bold">准确性</strong>，其重点是最大化<strong class="bold">正确分类的实例</strong>。这是指任何类别标签的正确分类实例与实例总数的比率。</p>
+			<p>下表包含对数据集中出现的每个要素的简要说明，这有助于确定它们与研究目的的相关性，并确定需要执行的一些准备任务:</p>
+			<div><div><img src="img/B15778_03_01.jpg" alt="Figure 3.1: A description of features from the DCCC dataset&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图3.1:DCCC数据集中的要素描述</p>
+			<div><div><img src="img/B15778_03_02.jpg" alt="Figure 3.2: A description of features from the DCCC dataset (continued)&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图3.2:DCCC数据集中的要素描述(续)</p>
+			<p>考虑到这些信息，可以得出这样的结论:在25个特征(包括目标特征)中，有两个需要从数据集中移除，因为它们被认为与研究目的无关。请记住，与本研究无关的功能可能与其他研究相关。例如，一项关于个人卫生用品的研究可能认为性别特征是相关的。</p>
+			<p>此外，所有的特征都是定量的，这意味着不需要转换它们的值；我们需要做的就是重新调整它们。目标特征也被转换成它的数字表示，其中拖欠下一次付款的客户用1表示，而没有拖欠付款的客户用0表示。</p>
+			<h2 id="_idParaDest-72"><a id="_idTextAnchor089"/>数据准备</h2>
+			<p>虽然在这方面有一些良好的做法，但没有一套固定的步骤来准备(预处理)数据集以开发深度学习解决方案，而且大多数时候，采取的步骤将取决于手头的数据、要使用的算法和研究的其他特征。</p>
+			<p class="callout-heading">注意</p>
+			<p class="callout">本节将介绍准备DCCC数据集的过程，并附有简要说明。随意打开一个Jupyter笔记本，复制这个过程，考虑到这将是后续活动的起点。</p>
+			<p>尽管如此，在您开始训练您的模型之前，有一些关键的方面必须处理。其中大部分您已经在上一章中了解过，将应用于当前数据集，并在目标要素中添加了类别不平衡的修订版:</p>
+			<ul>
+				<li><code>skiprows</code> argument to remove the first row of the Excel file, which is irrelevant as it contains a second set of headers.<p>执行代码时，会获得以下结果:</p></li>
+			</ul>
+			<div><div><img src="img/B15778_03_03.jpg" alt="Figure 3.3: The head of the DCCC dataset&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图3.3:DCCC数据集的头部</p>
+			<p>数据集的形状是30，000行和25列，这可以使用以下代码行获得:</p>
+			<pre>print("rows:",data.shape[0]," columns:", data.shape[1])</pre>
+			<ul>
+				<li><strong class="bold">Remove irrelevant features</strong>: By performing analysis on each of the features, it is possible to determine that two of the features should be removed from the dataset as they are irrelevant to the purpose of the study:<pre>data_clean = data.drop(columns=["ID", "SEX"])
+data_clean.head()</pre><p>结果数据集应该包含23列，而不是最初的25列，如下面的屏幕截图所示:</p></li>
+			</ul>
+			<div><div><img src="img/B15778_03_04.jpg" alt="Figure 3.4: The head of the DCCC dataset after removing irrelevant features&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图3.4:移除不相关要素后的DCCC数据集的头部</p>
+			<ul>
+				<li><strong class="bold">Check for missing values</strong>: Next, it is time to check whether the dataset is missing any values, and, if so, calculate the percentage of how much they represent each feature, which can be done using the following lines of code:<pre>total = data_clean.isnull().sum()
+percent = (data_clean.isnull().sum()\
+           /data_clean.isnull().count()*100)
+pd.concat([total, percent], axis=1, \
+          keys=['Total', 'Percent']).transpose() </pre><p>第一行对数据集的每个要素的缺失值进行求和。接下来，我们计算每个要素缺失值的参与度。最后，我们连接前面计算的两个值，在一个表中显示结果。结果如下:</p></li>
+			</ul>
+			<div><div><img src="img/B15778_03_05.jpg" alt="Figure 3.5: The count of missing values in the DCCC dataset&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图3.5:DCCC数据集中缺失值的计数</p>
+			<p>根据这些结果，可以说数据集没有丢失任何值，因此这里不需要进一步的操作。</p>
+			<ul>
+				<li><code>BILL_AMT1</code> and <code>BILL_AMT4</code>, each with a participation of 2.3% out of the total instances.<p>这意味着，如果每个要素的异常值的参与度太低，则不需要采取进一步的措施，因此它们不太可能对最终模型产生影响。</p></li>
+				<li><code>target</code> feature, as shown here:<pre>target = data_clean["default payment next month"]
+yes = target[target == 1].count()
+no = target[target == 0].count()
+print("yes %: " + str(yes/len(target)*100) + " - no %: " \
+      + str(no/len(target)*100))</pre><p>从前面的代码中，可以得出这样的结论:拖欠付款的客户数量占数据集的22.12%。这些结果也可以使用以下代码行显示在图中:</p><pre>import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(10,5))
+plt.bar("yes", yes)
+plt.bar("no", no)
+ax.set_yticks([yes,no])
+plt.xticks(fontsize=15)
+plt.yticks(fontsize=15)
+plt.show()</pre><p>这导致了下图:</p></li>
+			</ul>
+			<div><div><img src="img/B15778_03_06.jpg" alt="Figure 3.6: The count of classes of the target feature&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图3.6:目标特征的类别计数</p>
+			<p>为了解决这个问题，并且考虑到没有更多数据要添加并且性能度量实际上是准确性的事实，有必要执行数据重采样。</p>
+			<p>以下是对数据集执行过采样的代码片段，随机创建未充分表示的类的重复行:</p>
+			<pre>data_yes = data_clean[data_clean["default payment next month"] == 1]
+data_no = data_clean[data_clean["default payment next month"] == 0]
+over_sampling = data_yes.sample(no, replace=True, \
+                                random_state = 0)
+data_resampled = pd.concat([data_no, over_sampling], \
+                            axis=0)</pre>
+			<p>首先，我们将每个类标签的数据分成独立的数据帧。接下来，我们使用Pandas的<code>sample()</code>函数来构造一个新的数据帧，它包含的欠表示类的重复实例与过表示类的数据帧一样多。</p>
+			<p class="callout-heading">注意</p>
+			<p class="callout">请记住，<code>sample()</code>函数的第一个参数(<code>no</code>)指的是先前计算的过度表示类中的项目数。</p>
+			<p>最后，<code>concat()</code>函数用于连接过度表示的类的数据帧和新创建的相同大小的数据帧，以便创建在后续步骤中使用的最终数据集。</p>
+			<p>使用新创建的数据集，可以再次计算目标要素中每个分类标签在整个数据集上的参与度，这将反映一个同等表示的数据集，其中两个分类标签具有相同的参与度。此时，数据集的最终形状应该等于(46728，23)。</p>
+			<ul>
+				<li><strong class="bold">从目标中分割特征</strong>:我们将数据集分割成特征矩阵和目标矩阵，以避免重新调整目标值:<pre>data_resampled = data_resampled.reset_index(drop=True) X = data_resampled.drop(columns=["default payment next month"]) y = data_resampled ["default payment next month"]</pre></li>
+				<li><strong class="bold">Rescaling the data</strong>: Finally, we rescale the values of the features matrix in order to avoid introducing bias to the model:<pre>X = (X - X.min())/(X.max() - X.min())
+X.head()</pre><p>前面几行代码的结果如下:</p></li>
+			</ul>
+			<div><div><img src="img/B15778_03_07.jpg" alt="Figure 3.7: The features matrix after being normalized&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图3.7:标准化后的特征矩阵</p>
+			<p class="callout-heading">注意</p>
+			<p class="callout">考虑到<code>Marriage</code>和<code>Education</code>都是序数特征，意味着它们遵循一个顺序或层次；选择重新调整方法时，请确保保持有序。</p>
+			<p>为了便于在即将到来的活动中使用准备好的数据集，特征(<code>X</code>)和目标(<code>y</code>)矩阵将连接成一个Pandas数据帧，该数据帧将使用以下代码保存到CSV文件中:</p>
+			<pre>final_data = pd.concat([X, y], axis=1)
+final_data.to_csv("dccc_prepared.csv", index=False)</pre>
+			<p>执行上述步骤后，DCCC数据集已被转换并准备好(在新的CSV文件中)用于训练模型，这将在下一节中进行说明。</p>
+			<h2 id="_idParaDest-73"><a id="_idTextAnchor090"/>建立模型</h2>
+			<p>一旦定义了问题，并研究和准备了手头的数据，就该定义模型了。网络体系结构的定义、层的类型、损失函数等等应该在前面的分析之后处理。这主要是因为机器学习没有“放之四海而皆准”的方法，深度学习更没有。</p>
+			<p>回归任务需要与分类任务不同的方法，聚类、计算机视觉和机器翻译也是如此。在下一节中，您将了解构建用于解决分类任务的模型的关键特征，以及如何实现“良好”架构的解释，以及如何以及何时使用PyTorch中的定制模块。</p>
+			<h2 id="_idParaDest-74"><a id="_idTextAnchor091"/>用于分类任务的人工神经网络</h2>
+			<p>正如在<em class="italic">活动2.02 </em>、<em class="italic">为回归问题开发深度学习解决方案</em>中所看到的，从<em class="italic">第2章</em>、<em class="italic">神经网络的构建模块</em>中可以看出，为回归任务构建的神经网络使用输出作为连续值，这就是为什么输出层没有激活函数，只有一个输出节点(真实值)，就像基于房屋和邻居的特征来预测房价的模型一样。</p>
+			<p>有鉴于此，要衡量与此类模型相关的性能，您应该计算实际值和预测值之间的差异，例如，计算125.3(预测值)和126.38(实际值)之间的距离。正如我们之前提到的，有许多方法可以测量这种差异，最常用的指标是<strong class="bold">均方误差</strong> ( <strong class="bold"> MSE </strong>)或另一种变体<strong class="bold">均方根误差</strong> ( <strong class="bold"> RMSE </strong>)。</p>
+			<p>与此相反，分类任务的输出是某一组输入要素属于每个输出标注或类的概率，这是使用sigmoid(用于二元分类)或softmax(用于多类分类)激活函数完成的。对于二元分类任务，输出层应该包含一个(对于sigmoid)或两个(对于softmax)输出节点，而对于多类分类任务，输出层应该等于类标签的数量。</p>
+			<p>这种计算输入要素属于每个输出类的可能性的能力，再加上一个<code>argmax</code>函数，将检索到概率较高的类作为最终预测。</p>
+			<p class="callout-heading">注意</p>
+			<p class="callout">Python中的<code>argmax</code>函数是一个能够返回轴上最大值的索引的函数。</p>
+			<p>考虑到这一点，模型的性能应该是实例是否被分类到正确的类标签，而不是与测量两个值之间的距离有关的任何事情-因此使用不同的损失函数(交叉熵是最常用的)来训练神经网络以解决分类问题，以及使用不同的性能指标，如准确度、精确度和召回率。</p>
+			<h2 id="_idParaDest-75"><a id="_idTextAnchor092"/>好的架构</h2>
+			<p>正如本章所解释的，为了确定神经网络的一般拓扑，理解手头的数据问题是很重要的。同样，一个常规的分类问题不需要计算机视觉所需要的网络架构。</p>
+			<p>一旦修改并准备好数据，考虑到在确定隐藏层数或每层中的单元数方面没有正确的答案，最好的方法是从初始架构开始(可以通过改进来提高性能)。</p>
+			<p>这一点很重要，因为有大量的参数需要优化，有时很难做出承诺并开始开发解决方案。然而，考虑到当训练神经网络时，一旦初始架构已经被训练和测试，有几种方法来确定需要改进什么。事实上，将数据集划分为三个子集的全部原因是，允许用一个子集训练数据集，用另一个子集测量和微调模型，最后，用以前未使用过的最终子集测量最终模型的性能。</p>
+			<p>考虑到所有这些，将解释以下一组惯例和经验规则，以帮助定义人工神经网络初始结构的决策过程:</p>
+			<ul>
+				<li><strong class="bold">输入层</strong>:这个够简单了；只有一个输入层，其单元数取决于训练数据的形状。具体来说，输入图层中的单位数应等于输入数据包含的要素数。</li>
+				<li><strong class="bold">Hidden layer</strong>: Hidden layers can vary in quantity. ANNs can have one hidden layer, more, or none. To choose the right number, it is important to consider the following:<p>数据问题越简单，需要的隐藏层就越少。记住线性可分的简单数据问题应该只有一个隐藏层。另一方面，更复杂的数据问题可以而且应该使用许多隐藏层来解决(没有限制)。</p><p>隐藏单元的数量应介于输入层的单元数量和输出层的单元数量之间。</p></li>
+				<li><strong class="bold">输出层</strong>:同样，任何人工神经网络只有一个输出层。它包含的单元数量取决于要开发的学习任务以及数据问题。对于回归任务，只有一个单位，即预测值。然而，对于分类问题，考虑到模型的输出应该是属于每个类标签的一组特征的概率，单元的数量应该等于可用的类标签的数量。</li>
+				<li><strong class="bold">其他参数</strong>:网络第一次配置时，其他参数保留默认值。这主要是因为在考虑更复杂的近似方法之前，测试最简单的数据问题模型总是一个好的做法，更复杂的近似方法可能表现得一样好或更差，但需要更多的资源。</li>
+			</ul>
+			<p>一旦定义了初始架构，就应该训练和测量模型的性能，以便执行进一步的分析，这很可能导致网络架构或其他参数值的变化，例如学习速率的变化或正则化项的增加。</p>
+			<h2 id="_idParaDest-76"><a id="_idTextAnchor093"/> PyTorch定制模块</h2>
+			<p>PyTorch的开发团队创建了定制模块，为用户提供了更大的灵活性。与我们在前面章节中探索的<code>Sequential</code>容器相反，当希望构建更复杂的模型架构时，或者当希望进一步控制每一层中发生的计算时，应该使用定制模块。</p>
+			<p>这并不意味着定制模块方法只能在这种情况下使用。相反，一旦您学会了使用这两种方法，那么选择哪一个(<code>Sequential</code>容器或定制模块)来处理不太复杂的数据问题就只是一个偏好问题了。</p>
+			<p>例如，下面的代码片段是使用<code>Sequential</code>容器定义的两层神经网络:</p>
+			<pre>import torch
+import torch.nn as nn
+model = nn.Sequential(nn.Linear(D_i, D_h), \
+                      nn.ReLU(), \
+                      nn.Linear(D_h, D_o), \
+                      nn.Softmax())</pre>
+			<p>这里，<code>D_i</code>是指输入维度(输入数据中的特征)，<code>D_h</code>是指隐藏维度(隐藏层中的节点数)，而<code>D_o</code>是指输出维度。</p>
+			<p>使用自定义模块，可以构建等效的网络体系结构，如下所示:</p>
+			<pre>import <a id="_idTextAnchor094"/>torch
+import torch.nn as nn
+import torch.nn.functional as F
+class Classifier(torch.nn.Module):
+    def __init__(self, D_i, D_h, D_o):
+        super(Classifier, self).__init__()
+        self.linear1 = torch.nn.Linear(D_i, D_h)
+        self.linear2 = torch.nn.Linear(D_h, D_o)
+    def forward(self, x):
+        z = F.relu(self.linear1(x))
+        o = F.softmax(self.linear2(z))
+        return o</pre>
+			<p>可以看出，输入层和输出层是在类的初始化方法中定义的。接下来，定义一个执行计算的附加方法。</p>
+			<p class="callout-heading">注意</p>
+			<p class="callout">对于本章中的练习和活动，您需要安装Python 3.7、Jupyter 6.0、Matplotlib 3.1、PyTorch 1.3、NumPy 1.17、scikit-learn 0.21、Pandas 0.25和Flask 1.1。</p>
+			<h2 id="_idParaDest-77"><a id="_idTextAnchor095"/>练习3.01:使用定制模块定义模型的架构</h2>
+			<p>使用前面解释的理论，我们将使用定制模块的语法来定义模型的架构:</p>
+			<ol>
+				<li value="1">打开Jupyter笔记本，导入所需的库:<pre>import torch import torch.nn as nn import torch.nn.functional as F</pre></li>
+				<li>为输入、隐藏和输出维度定义必要的变量。分别设置为<code>10</code>、<code>5</code>和<code>2</code>:<pre>D_i = 10 D_h = 5 D_o = 2</pre></li>
+				<li>使用PyTorch的定制模块，创建一个名为<code>Classifier</code>的类，并定义模型的架构，使其具有两个线性层——第一个层后面跟着一个<code>ReLU</code>激活函数，第二个层后面跟着一个<code>Softmax</code>激活函数:<pre>class C<a id="_idTextAnchor096"/>lassifier(torch.nn.Module):     def __init__(self, D_i, D_h, D_o):         super(Classifier, self).__init__()         self.linear1 = torch.nn.Linear(D_i, D_h)         self.linear2 = torch.nn.Linear(D_h, D_o)     def forward(self, x):         z = F.relu(self.linear1(x))         o = F.softmax(self.linear2(z))         return o</pre></li>
+				<li>Instantiate the class and feed it with the three variables we created in <em class="italic">Step 2</em>. Print the model:<pre>model = Classifier(D_i, D_h, D_o)
+print(model)</pre><p><code>print</code>语句的输出应该如下所示:</p><pre>Classifier(
+  (linear1): Linear(in_features=10, out_features=5, bias=True)
+  (linear2): Linear(in_features=5, out_features=2, bias=True)
+)</pre><p class="callout-heading">注意</p><p class="callout">要访问该特定部分的源代码，请参考<a href="https://packt.live/2VwWlgU">https://packt.live/2VwWlgU</a>。</p><p class="callout">你也可以在<a href="https://packt.live/2BrUWkD">https://packt.live/2BrUWkD</a>在线运行这个例子。您必须执行整个笔记本才能获得想要的结果。</p></li>
+			</ol>
+			<p>至此，您已经使用PyTorch的定制模块成功构建了一个神经网络架构。现在，你可以继续前进，了解训练深度学习模型的过程。</p>
+			<h2 id="_idParaDest-78"><a id="_idTextAnchor097"/>定义损失函数并训练模型</h2>
+			<p>值得一提的是，交叉熵损失函数要求网络的输出是原始的(在通过使用<code>softmax</code>激活函数获得概率之前)，这就是为什么通常发现用于分类问题的神经网络架构没有用于输出层的激活函数。此外，为了通过这种方法获得预测，有必要在模型被训练后将<code>softmax</code>激活函数应用于网络的输出。</p>
+			<p>另一种处理方式是使用输出层的<code>log_softmax</code>激活功能。这样，损失函数可以定义为负对数似然损失(<code>nn.NLLLoss</code>)。最后，通过从网络输出中取指数，可以得到属于每个类标签的一组特征的概率。这是本章活动中将要用到的方法。</p>
+			<p>一旦定义了模型架构，下一步将是编写负责根据训练数据训练模型的部分，以及测量它在训练集和验证集上的性能。</p>
+			<p>遵循我们所讨论的这些逐步说明的代码如下:</p>
+			<pre>model = Classifier()
+criterion = nn.NLLLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.005)
+epochs = 10
+batch_size = 100</pre>
+			<p>从前面的片段中可以看出，第一步是定义训练网络时将使用的所有变量。</p>
+			<p>接下来，第一个<code>for</code>循环用于遍历我们之前定义的历元数。</p>
+			<p>请记住，<code>epochs</code>指的是整个数据集在网络架构中来回传递的次数。<code>batch_size</code>指单批(数据集的一个切片)训练样本的数量。最后，<code>iterations</code>指完成一个历元所需的批次数。</p>
+			<p>第二个<code>for</code>循环用于遍历总数据集的每一批，直到一个时期完成。在这个循环中，会发生以下计算:</p>
+			<ol>
+				<li value="1">该模型在一批训练集中被训练。这里得到一个预测。</li>
+				<li>通过比较上一步的预测和来自训练集的标签(基本事实)来计算损失。</li>
+				<li>梯度被设置为零，并为当前步骤再次计算。</li>
+				<li>基于梯度更新网络的参数。</li>
+				<li>The accuracy of the model over the training data is calculated as follows:<p>获取模型预测的指数，以获得属于每个类标签的给定数据的概率。</p><p>使用<code>topk()</code>方法以更高的概率获得类别标签。</p><p>使用scikit-learn的公制部分，计算准确度、精确度或召回率。您还可以探索其他性能指标。</p></li>
+			</ol>
+			<p>一旦所有批次的训练数据都被馈送到模型，梯度的计算就被关闭，以便验证当前模型对验证数据的性能，其发生如下:</p>
+			<ol>
+				<li value="1">该模型对验证集中的数据执行预测。</li>
+				<li>通过将先前的预测与来自验证集的标签进行比较来计算损失函数。</li>
+				<li>精确度是在验证集上计算的。要计算模型在验证集上的准确性，请使用对训练数据进行相同计算时使用的相同步骤:<pre>train_losses, dev_losses, \ train_acc, dev_acc= [], [], [], [] for e in range(epochs):     X, y = shuffle(X_train, y_train)     running_loss = 0     running_acc = 0     iterations = 0     for i in range(0, len(X), batch_size):         iterations += 1         b = i + batch_size         X_batch = torch.tensor(X.iloc[i:b,:].\                                values).float()         y_batch = torch.tensor(y.iloc[i:b].values)         pred = model(X_batch)         loss = criterion(pred, y_batch)         optimizer.zero_grad()         loss.backward()         optimizer.step()         running_loss += loss.item()         ps = torch.exp(pred)         top_p, top_class = ps.topk(1, dim=1)         running_acc += accuracy_score(y_batch, top_class)     dev_loss = 0     acc = 0     with torch.no_grad():         pred_dev = model(X_dev_torch)         dev_loss = criterion(pred_dev, y_dev_torch)         ps_dev = torch.exp(pred_dev)         top_p, top_class_dev = ps_dev.topk(1, dim=1)         acc = accuracy_score(y_dev_torch, top_class_dev)     train_losses.append(running_loss/iterations)     dev_losses.append(dev_loss)     train_acc.append(running_acc/iterations)     dev_acc.append(acc)     print("Epoch: {}/{}.. ".format(e+1, epochs), \           "Training Loss: {:.3f}.. "\           .format(running_loss/iterations),\           "Validation Loss: {:.3f}.. "\           .format(dev_loss),\           "Training Accuracy: {:.3f}.. "\           .format(running_acc/iterations),\           "Validation Accuracy: {:.3f}".format(acc))</pre></li>
+			</ol>
+			<p>前面的代码片段将打印两组数据的损失和准确性。在下面的活动中，我们解释的关于构建和训练DNN的所有概念都将付诸实践。</p>
+			<h2 id="_idParaDest-79"><a id="_idTextAnchor098"/>活动3.01:构建人工神经网络</h2>
+			<p>对于此活动，使用之前准备的数据集，我们将构建一个四层模型，该模型能够确定客户是否会拖欠下次付款。为此，我们将使用定制模块的方法。</p>
+			<p>让我们看看下面的场景:你在一家数据科学精品店工作，这家精品店专门为世界各地的银行提供机器/深度学习解决方案。他们最近为一家银行承担了一个项目，希望能够预测下个月是否会收到付款。探索性数据分析团队已经为您准备好了数据集，他们要求您构建模型并计算模型的准确性。按照以下步骤完成本活动:</p>
+			<ol>
+				<li value="1">Import the following libraries:<pre>import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
+from sklearn.metrics import accuracy_score
+import torch
+from torch import nn, optim
+import torch.nn.functional as F
+import matplotlib.pyplot as plt</pre><p class="callout-heading">注意</p><p class="callout">考虑到训练集在每个时期之前被混洗，即使使用种子，该活动的确切结果也将是不可再现的。</p></li>
+				<li>读取之前准备好的数据集，应该已经命名为<code>dccc_prepared.csv</code>。</li>
+				<li>从目标中分离特征。</li>
+				<li>使用scikit-learn的<code>train_test_split</code>函数，将数据集分成训练集、验证集和测试集。使用60:20:20的分流比。将<code>random_state</code>设置为<code>0</code>。</li>
+				<li>将验证和测试集转换为张量，考虑到特征矩阵应该是浮点类型，而目标矩阵不应该是。暂时不要转换训练集，因为它们将经历进一步的转换。</li>
+				<li>构建一个自定义模块类来定义网络层。包括指定将应用于每层输出的激活函数的转发函数。将<code>ReLU</code>用于除了输出层之外的所有层，这里你应该使用<code>log_softmax</code>。</li>
+				<li>实例化模型并定义训练模型所需的所有变量。将时期数设置为<code>50</code>，将批次大小设置为<code>128</code>。使用<code>0.001</code>的学习率。</li>
+				<li>Train the network using the training set's data. Use the validation sets to measure performance. To do this, save the loss and the accuracy for both the training and validation sets in each epoch.<p class="callout-heading">注意</p><p class="callout">培训过程可能需要几分钟，具体取决于您的资源。如果您希望看到培训过程的进度，添加打印报表是一个很好的做法。</p></li>
+				<li>绘制两组的损失图。</li>
+				<li>绘制两组的精确度。</li>
+			</ol>
+			<p>最终的情节将如下所示:</p>
+			<div><div><img src="img/B15778_03_08.jpg" alt="Figure 3.8: A plot displaying the accuracy of the sets&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图3.8:显示器械包精确度的图表</p>
+			<p class="callout-heading">注意</p>
+			<p class="callout">这项活动的解决方案可在第245页找到。</p>
+			<p>现在，您已经成功地编程并训练了一个能够根据历史数据进行推理的四层神经网络。接下来，您将学习如何提高模型的性能，以便对看不见的数据做出可信的推断。</p>
+			<h1 id="_idParaDest-80"><a id="_idTextAnchor099"/>处理欠拟合或过拟合模型</h1>
+			<p>构建深度学习解决方案不仅仅是定义一个架构，然后使用输入数据训练一个模型；相反，大多数人会认为这是容易的部分。创造高科技模型的艺术需要达到超越人类表现的高水平的准确性。本节将介绍错误分析的主题，错误分析通常用于诊断已训练的模型，以发现哪些操作更有可能对模型的性能产生积极影响。</p>
+			<h2 id="_idParaDest-81"><a id="_idTextAnchor100"/>误差分析</h2>
+			<p>误差分析是指对训练和验证数据集的误差率的初始分析。然后，该分析用于确定改善模型性能的最佳行动方案。</p>
+			<p>为了进行误差分析，有必要确定贝叶斯误差(也称为不可约误差)，这是可达到的最小误差。几十年前，贝叶斯误差相当于人为误差，这意味着专家能够达到的最小误差水平。</p>
+			<p>如今，随着技术和算法的改进，这个值变得越来越难以估计，因为机器能够超越人类的表现；无法衡量它们与人类相比能做得多好，因为我们只能了解我们的能力。</p>
+			<p>最初，为了进行误差分析，通常将贝叶斯误差设置为等于人为误差。然而，这种限制并不是一成不变的，研究人员认为超越人类的表现也应该是一个最终目标。</p>
+			<p>执行误差分析的过程如下:</p>
+			<ol>
+				<li value="1">计算选择的度量标准来衡量模型的性能。这个度量应该在训练和验证数据集上计算。</li>
+				<li>Using this measure, calculate the error rate of each of the sets by subtracting the performance metric that was previously calculated from 1. Take, for instance, the following equation:<div><img src="img/B15778_03_09.jpg" alt="Figure 3.9: The equation to calculate the error rate of the model over the training set&#13;&#10;"/></div><p class="figure-caption">图3.9:计算模型在训练集上的错误率的公式</p></li>
+				<li>从训练集误差中减去贝叶斯误差<code>A)</code>。保存差异，这将用于进一步的分析。</li>
+				<li>从验证集误差<code>B)</code>中减去训练集误差，并保存差值。</li>
+				<li>Take the differences calculated in Steps 3 and 4 and use the following set of rules:<p>如果在<em class="italic">步骤3 </em>中计算的差值高于在<em class="italic">步骤4 </em>中计算的差值，则模型欠拟合，也称为遭受高偏差。</p><p>如果在<em class="italic">步骤4 </em>中计算的差值高于在<em class="italic">步骤3 </em>中计算的差值，则模型过度拟合，也称为遭受高方差，如下图所示:</p></li>
+			</ol>
+			<div><div><img src="img/B15778_03_10.jpg" alt="Figure 3.10: Diagram showing how to perform error analysis&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图3.10:显示如何执行错误分析的图表</p>
+			<p>这些规则并不表示模型可能只受到刚才提到的问题之一(高偏差或高方差)的影响，而是通过误差分析检测到的问题对模型的性能有更大的影响，这意味着修复它将在更大程度上提高性能。</p>
+			<p>让我们解释一下如何处理这些问题:</p>
+			<ul>
+				<li><strong class="bold">High bias</strong>: An underfitted model, or a model suffering from high bias, is a model that is not capable of understanding the training data, and, hence, it is not able to uncover patterns and generalize with other sets of data. This means that the model does not perform well over any set of data.<p>要降低影响模型的高偏差，建议您定义一个更大/更深的网络(更多隐藏层)或训练更多迭代。通过添加更多的层和增加训练时间，网络有更多的资源来发现描述训练数据的模式。</p></li>
+				<li><strong class="bold">High variance</strong>: An overfitted model, or a model suffering from high variance, is a model that is having trouble generalizing the training data; it is learning the details of the training data too well (this means that through the training process, the model learned the information from the training set too well, which means that it is unable to generalize to other sets of data), including its outliers. This means that the model is performing too well over the training data, but poorly over other sets of data.<p>这通常通过向训练集添加更多数据，或者通过向损失函数添加正则化项来处理。第一种方法旨在迫使网络对数据进行归纳，而不是理解少量示例的细节。另一方面，第二种方法惩罚具有较高权重的输入，以便忽略异常值并平等考虑所有值。</p></li>
+			</ul>
+			<p>鉴于此，处理一个正在影响模型的条件可能会导致另一个条件出现或增加。例如，遭受高偏差的模型在被处理后，可以提高其在训练数据上的性能，但在验证数据上的性能没有提高，这意味着该模型将开始遭受高方差，并且将需要采取另一组补救措施。</p>
+			<p>一旦对模型进行了诊断，并采取了必要的措施来提高性能，就应该选择最佳模型进行最终测试。这些模型中的每一个都应该用于对测试集(唯一对构建模型没有影响的集)执行预测。</p>
+			<p>考虑到这一点，可以选择最终模型作为测试数据中表现最好的模型。这主要是因为对测试数据的性能作为模型对未来未知数据集性能的指标，这是最终目标。</p>
+			<h2 id="_idParaDest-82"><a id="_idTextAnchor101"/>练习3.02:执行错误分析</h2>
+			<p>在本练习中，我们将使用在之前的练习中计算的准确性指标来执行错误分析，这将帮助我们确定在接下来的练习中要对模型执行的操作。按照以下步骤完成本练习:</p>
+			<p class="callout-heading">注意</p>
+			<p class="callout">这个练习不需要进行任何编码，而是需要对之前活动的结果进行分析。</p>
+			<ol>
+				<li value="1">Assuming a Bayes error of <code>0.15</code>, perform error analysis and diagnose the model:<pre>Bayes error (BE) = 0.15
+Training set error (TSE) = 1 – 0.716 = 0.284
+Validation set error (VSE) = 1 – 0.71 = 0.29</pre><p>用作两组精度(<code>0.716</code>和<code>0.71</code>)的值是在<em class="italic">活动3.01 </em>、<em class="italic">构建ANN </em>的最后一次迭代中获得的值:</p><pre>High bias = TSE – BE = 0.134
+High variance = VSE – TSE = 0.014</pre><p>据此，该模型正遭受高偏差，这意味着该模型是欠拟合的。</p></li>
+				<li>Determine the actions necessary to improve the accuracy of the model. <p>为了提高模型的性能，可以遵循的两个行动方针是增加历元的数量和增加隐藏层的数量和/或单元(每层中的神经元)的数量。</p><p>据此，可以进行一组测试，以达到最佳结果。</p></li>
+			</ol>
+			<p>至此，您已经成功地执行了错误分析。这种方法是开发最先进的深度学习解决方案的关键，这些解决方案在看不见的数据上表现出色。</p>
+			<h2 id="_idParaDest-83">活动3 <a id="_idTextAnchor102"/> .02:提高模型的性能</h2>
+			<p>对于此活动，我们将实施我们在练习中定义的操作，以减少影响模型性能的高偏差。考虑以下场景:您的团队成员对您交付的工作和代码的组织方式印象深刻，但他们要求您尝试将性能提高到80%，考虑到这是他们向客户承诺的。按照以下步骤完成本活动:</p>
+			<p class="callout-heading">注意</p>
+			<p class="callout">在本练习中使用不同的Jupyter笔记本。在这里，您将再次加载数据集，并执行与上一个活动类似的步骤，不同之处在于训练过程将进行多次，以训练不同的体系结构和训练时间。</p>
+			<ol>
+				<li value="1">导入与上一练习中相同的库。</li>
+				<li>加载数据并从目标中分割要素。接下来，使用60:20:20的分割比例将数据分割成三个子集(训练、验证和测试)。最后，将验证集和测试集转换成PyTorch张量，就像您在上一个活动中所做的那样。</li>
+				<li>Considering that the model is suffering from a high bias, the focus should be on increasing the number of epochs or increasing the size of the network by adding additional layers or units to each layer. The aim should be to approximate the accuracy over the testing set to 80%.<p class="callout-heading">注意</p><p class="callout">没有正确的方法来选择先进行哪个测试，所以要有创造性和分析性。如果模型架构的变化减少或消除了高偏差，但引入了高方差，那么考虑，例如，保持变化，但增加一个对抗高方差的措施。</p></li>
+				<li>绘制两组数据的损失和精确度。</li>
+				<li>使用性能最佳的模型，对测试集执行预测(在微调过程中不应该使用测试集)。通过计算该组模型的精确度，将预测值与实际值进行比较。</li>
+			</ol>
+			<p>预期输出:通过模型架构和这里定义的参数获得的准确性应该在80%左右。</p>
+			<p class="callout-heading">注意</p>
+			<p class="callout">这项活动的解决方案可在第250页找到。</p>
+			<p>至此，您已经成功地使用误差分析提高了模型的性能。接下来，您将学习如何部署您的模型，以便在生产环境中使用它。</p>
+			<h1 id="_idParaDest-84">部署您的模型</h1>
+			<p>到目前为止，您已经学习并实践了为常规回归和分类问题构建卓越的深度学习模型的关键概念和技巧。在现实生活中，模型不仅仅是为了学习而构建的。相反，在为研究之外的目的训练模型时，主要思想是能够在将来重用它们来对新数据执行预测，尽管模型没有被训练，但模型应该在中执行得同样好。</p>
+			<p>在小型组织中，序列化和反序列化模型的能力就足够了。然而，当模型被大公司、用户使用，或者改变一个非常重要的大型任务时，更好的做法是将模型转换成可以在大多数生产环境中使用的格式(比如API、网站以及在线和离线应用程序)。</p>
+			<p>在这一节中，我们将学习如何保存和加载模型，以及如何使用PyTorch的最新特性将我们的模型转换成高度通用的C++应用程序。我们还将学习如何创建一个API来利用一个经过训练的模型。</p>
+			<h2 id="_idParaDest-85"><a id="_idTextAnchor104"/>保存并加载您的模型</h2>
+			<p>正如你可能想象的那样，每次要使用模型时都重新训练它是非常不切实际的，尤其是考虑到大多数深度学习模型可能需要相当长的时间来训练(取决于你的资源)。</p>
+			<p>相反，PyTorch中的模型可以被训练、保存和重新加载，以执行进一步的训练或进行推理。这可以通过考虑PyTorch模型中每一层的参数(权重和偏差)保存到<code>state_dict</code>字典中来实现。</p>
+			<p>这里提供了如何保存和加载已训练模型的分步指南:</p>
+			<ol>
+				<li value="1">Originally, a checkpoint of a model will only include the model's parameters. However, when loading the model, this is not the only information that's required. Depending on the arguments that your classifier takes in (that is, the class containing the network architecture), it may be necessary to save further information, such as the number of <code>input</code> units. Considering this, the first step is to define the information to be saved:<pre>checkpoint = {"input": X_train.shape[1], \
+       <a id="_idTextAnchor105"/>       "state_dict": model.state_dict()}</pre><p>这将把输入层中的单元数量保存到检查点中，这在加载模型时会派上用场。</p></li>
+				<li>Save the model using PyTorch's <code>save()</code> function:<pre>torch.save(checkpoint, "checkpoint.pth")</pre><p>第一个参数引用我们之前创建的字典，而第二个参数是要使用的文件名。</p></li>
+				<li>使用您选择的文本编辑器，创建一个Python文件，该文件导入PyTorch库并包含创建您的模型的网络架构的类。这样做是为了方便您将模型加载到一个新的工作表中，该工作表与用于定型模型的工作表不同。</li>
+				<li>To load the model, let's create a function that will perform three main actions:<pre>def load_model_checkpoint(path):
+    checkpoint = torch.load(path)
+    model = final_model.Classifier(checkpoint["input"], \
+                                   checkpoint["output"], \
+                                   checkpoint["hidden"])
+    model.load_state_dict(checkpoint["state_dict"])
+    return model
+model = load_model_checkpoint("checkpoint.pth")</pre><p>这个函数接收保存的模型文件(检查点)的路径作为输入。首先，加载检查点。接下来，使用保存在Python文件中的网络架构实例化一个模型。这里，<code>final_model</code>指的是Python文件的名称，它应该已经被导入到新的工作表中，而<code>Classifier()</code>指的是保存在那个文件中的类的名称。该模型将具有随机初始化的参数。最后，来自检查点的参数被加载到模型中。</p><p>当被调用时，该函数返回训练好的模型，该模型现在可以用于进一步的训练或执行推理。</p></li>
+			</ol>
+			<h2 id="_idParaDest-86"><a id="_idTextAnchor106"/> PyTorch用于C++中的生产</h2>
+			<p>根据框架的名称，PyTorch的主要接口是Python编程语言。这主要是由于许多用户对这种编程语言的偏好，这要归功于该语言在开发机器学习解决方案时的活力和易用性。</p>
+			<p>然而，在某些场景中，Python属性变得不利。这正是为生产开发的模型的情况，在这种情况下，其他编程语言被证明更有用。C++就是这种情况，它被广泛用于机器/深度学习解决方案的生产目的。</p>
+			<p>有鉴于此，PyTorch最近提出了一种简单的方法，让用户享受两个世界的好处。虽然他们可以继续以Python的方式编程，但现在可以将模型序列化为可以从C++加载和执行的表示，而不依赖于Python。这种表示被称为TorchScript。</p>
+			<p>将PyTorch模型转换成TorchScript是通过PyTorch的<code>torch.jit.trace()</code>函数完成的，如下所示:</p>
+			<pre>traced_script = torch.jit.trace(model, example)</pre>
+			<p>请记住，名为<code>model</code>的变量应该包含先前训练的模型，而名为<code>example</code>的变量应该包含您希望提供给模型以执行预测的一组特征。这将返回一个脚本模块，它可以用作常规的PyTorch模块，如下所示:</p>
+			<pre>prediction = traced_script(input)</pre>
+			<p>上述代码将返回通过模型运行输入数据获得的输出。</p>
+			<h2 id="_idParaDest-87"><a id="_idTextAnchor107"/>构建应用编程接口</h2>
+			<p>一个<strong class="bold">应用编程接口</strong> ( <strong class="bold"> API </strong>)由一个专门为其他程序使用而创建的程序组成(与网站或接口相反，它们是为人类操作而创建的)。根据这一点，在创建用于生产环境的深度学习解决方案时使用API，因为它们允许通过其他方式(例如，网站)访问从运行模型(例如，预测)中获得的信息。</p>
+			<p>在本节中，我们将探索web API(通过互联网与其他程序共享信息的API)的创建。该API的功能是加载之前保存的模型，并根据给定的一组特征进行预测。向API发出HTTP请求的程序可以访问这个预测。</p>
+			<p>关键术语解释如下:</p>
+			<ul>
+				<li><code>methods</code>, which help to determine the way in which data is transferred. The two most commonly used methods are explained as follows:<p><code>POST</code>方法，该方法将数据作为URL的一部分发送，这在发送大量数据时可能会不方便。</p></li>
+				<li>这是一个为Python开发的库，允许你创建API(除了别的以外)。</li>
+			</ul>
+			<p>要使用Flask创建一个简单的web API，请执行以下步骤:</p>
+			<ol>
+				<li value="1">导入必要的库:<pre>import fla<a id="_idTextAnchor108"/>sk from flask import request import torch import final_model</pre></li>
+				<li>Initialize the Flask app:<pre>app = flask.Flask(__name__)
+app.config["DEBUG"] = True</pre><p><code>DEBUG</code>配置在开发期间设置为<code>True</code>，但在生产时应设置为<code>False</code>。</p></li>
+				<li>加载先前训练的模型:<pre>def load_model_checkpoint(path):     checkpoint = torch.load(path)     model = final_model.Classifier(checkpoint["input"])     model.load_state_dict(checkpoint["state_dict"])     return model model = load_model_checkpoint("checkpoint.pth")</pre></li>
+				<li>定义可访问API的路径，以及可用于向API发送信息以执行操作的方法。这种语法被称为装饰器，应该紧接在函数之前:<pre>@app.route('/prediction', methods=['POST'])</pre></li>
+				<li>定义一个执行所需操作的函数。在这种情况下，该函数将获取发送给API的信息，并将其提供给之前加载的模型以执行预测。一旦获得了预测，该函数应该返回一个响应，该响应将显示为API请求的结果:<pre>def prediction():     body = request.get_json()     example = torch.tensor(body['data']).float()     pred = model(example)     pred = torch.exp(pred)     _, top_class_test = pred.topk(1, dim=1)     top_class_test = top_class_test.numpy()     return {"status":"ok", "result":int(top_class_test[0][0])}</pre></li>
+				<li>Run the Flask app. The following command makes it possible to start making use of the web API:<pre>app.run(debug=True, use_reloader=False)</pre><p>同样，<code>debug</code>在开发过程中被设置为<code>True</code>。<code>use_reloader</code>参数设置为<code>False</code>，允许应用程序在Jupyter笔记本上运行。但是，不建议从Jupyter笔记本上运行应用程序；这只是为了教学目的。在现实生活中，<code>use_reloader</code>应该设置为<code>True</code>，应用程序应该通过命令提示符实例或终端作为Python文件运行。</p></li>
+			</ol>
+			<h2 id="_idParaDest-88"><a id="_idTextAnchor109"/>练习3.03:创建Web API</h2>
+			<p>使用Flask，我们将创建一个web API，它将在被调用时接收一些数据，并返回一段将在浏览器中显示的文本。按照以下步骤完成本练习:</p>
+			<ol>
+				<li value="1">在Jupyter笔记本中，导入所需的库:<pre>import flask from flask import request</pre></li>
+				<li>初始化烧瓶应用:<pre>app = flask.Flask(__name__) app.config["DEBUG"] = True</pre></li>
+				<li>定义API的路径，使它成为<code>/&lt;name&gt;</code>。将方法设置为<code>GET</code>。接下来，定义一个函数，该函数接受一个参数(<code>name</code>)并返回一个字符串，该字符串包含一个带有单词<code>HELLO</code>的<code>h1</code>标签，后跟该函数接收的参数:<pre>@app.route('/&lt;name&gt;', methods=['GET']) def hello(name):     return "&lt;h1&gt;HELLO {}&lt;/h1&gt;".format(name.upper())</pre></li>
+				<li>Run the Flask app:<pre>app.run(debug=True, use_reloader=False)</pre><p>前面一行代码的输出如下所示:</p><div><img src="img/B15778_03_11.jpg" alt="Figure 3.11: Warnings after executing the code&#13;&#10;"/></div><pre>http://127.0.0.1:5000/</pre></li>
+				<li>Copy the URL into a browser, followed by your name, as follows:<pre>http://127.0.0.1:5000/your_name</pre><p>按下<em class="italic">进入</em>，一个简单的网站应该加载，它应该看起来像下面的:</p></li>
+			</ol>
+			<div><div><img src="img/B15778_03_12.jpg" alt="Figure 3.12: Result from performing a request to the API&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图3.12:执行API请求的结果</p>
+			<p class="callout-heading">注意</p>
+			<p class="callout">要访问该特定部分的源代码，请参考<a href="https://packt.live/3icVgEF">https://packt.live/3icVgEF</a>。</p>
+			<p class="callout">本节目前没有在线交互示例，需要在本地运行。</p>
+			<p>至此，您已经成功地创建了一个web API。这种能力将是您能够在生产环境中利用您的模型的关键，因为它允许您的模型和用户之间进行简单的通信。在下一个活动中，您将把在本章中学到的部署模型的不同概念付诸实践。</p>
+			<h2 id="_idParaDest-89">活动3.0 <a id="_idTextAnchor110"/> 3:利用你的模型</h2>
+			<p>对于本活动，保存您在上一个活动中创建的模型。此外，保存的模型将被加载到新的笔记本中使用。接下来，我们将把模型转换成可以在C++上执行的序列化表示，并创建一个Flask API。让我们看看下面的场景:每个人都对您致力于改进模型以及模型的最终版本非常满意，所以他们要求您保存模型并将其转换为一种格式，以便他们可以使用该格式为客户构建一个在线应用程序。按照以下步骤完成本活动:</p>
+			<p class="callout-heading">注意</p>
+			<p class="callout">这项活动将使用三本Jupyter笔记本。首先，我们将使用之前活动中的同一笔记本来保存最终模型。接下来，我们将打开一个新的笔记本，它将用于加载保存的模型。最后，第三个笔记本将用于创建一个API。</p>
+			<ol>
+				<li value="1">打开您在<em class="italic">活动3.02 </em>、<em class="italic">提高模特表现</em>中使用的Jupyter笔记本。</li>
+				<li>复制包含最佳性能模型架构的类，并将其保存在Python文件中。确保导入PyTorch所需的库和模块。命名为<code>final_model.py</code>。</li>
+				<li>在Jupyter笔记本中，保存性能最好的型号。确保保存与输入单位相关的信息以及模型的参数。命名为<code>checkpoint.pth</code>。</li>
+				<li>打开新的Jupyter笔记本。</li>
+				<li>导入PyTorch，以及我们在<em class="italic">步骤2 </em>中创建的Python文件。</li>
+				<li>创建一个加载模型的函数。</li>
+				<li>通过在你的模型中输入以下张量来进行预测:<pre>torch.tensor([[0.0606, 0.5000, 0.3333, 0.4828, 0.4000, \                0.4000, 0.4000, 0.4000, 0.4000, 0.4000, \                0.1651, 0.0869, 0.0980, 0.1825, 0.1054, \                0.2807, 0.0016, 0.0000, 0.0033, 0.0027, \                0.0031, 0.0021]]).float()</pre></li>
+				<li>使用JIT模块转换模型。</li>
+				<li>通过将来自<em class="italic">步骤7 </em>的张量输入到您的模型的追踪脚本中来执行预测。</li>
+				<li>打开一个新的Jupyter笔记本，导入使用Flask创建API所需的库，以及加载已保存模型的库。</li>
+				<li>初始化Flask应用程序。</li>
+				<li>定义一个函数来加载保存的模型并实例化该模型。</li>
+				<li>定义API的路径，使其成为<code>/prediction</code>，定义方法，使其成为<code>POST</code>。然后，定义将接收<code>POST</code>数据的函数，并将其提供给模型以执行预测。</li>
+				<li>运行烧瓶应用程序。</li>
+			</ol>
+			<p>运行后，该应用程序将如下所示:</p>
+			<div><div><img src="img/B15778_03_13.jpg" alt="Figure 3.13: A screenshot of the app after running it&#13;&#10;"/>
+				</div>
+			</div>
+			<p class="figure-caption">图3.13:应用程序运行后的屏幕截图</p>
+			<p class="callout-heading">注意</p>
+			<p class="callout">这项活动的解决方案可以在第257页找到。</p>
+			<h1 id="_idParaDest-90"><a id="_idTextAnchor111"/>总结</h1>
+			<p>在前几章中介绍了大部分理论知识之后，本章使用了一个真实的案例来巩固我们的知识。这个想法是鼓励通过动手实践来学习。</p>
+			<p>本章首先解释了深度学习对需要准确性的广泛行业的影响。推动深度学习增长的主要行业之一是银行和金融，这类算法被用于评估贷款申请、检测欺诈和评估过去的决策以预测未来行为等领域，这主要是因为算法在这些方面能够超越人类的表现。</p>
+			<p>本章使用了一家台湾银行的真实数据集，目的是预测客户是否会拖欠付款。本章通过解释定义任何数据问题的内容、原因和方式的重要性，以及分析手头的数据以充分利用数据，开始开发解决方案。</p>
+			<p>一旦根据问题定义准备好了数据，我们就探索定义一个“好的”架构的想法。尽管有一些经验法则可以考虑，但主要的收获是在不过度思考的情况下构建一个初始架构，以便获得一些可用于执行错误分析的结果，从而提高模型的性能。</p>
+			<p>误差分析的思想需要分析模型在训练集和验证集上的误差率，以便确定模型是更多地遭受高偏差还是高方差。模型的这种诊断然后用于改变模型的结构和一些学习参数，这将导致性能的改进。</p>
+			<p>最后，我们探讨了利用最佳性能模型的三种主要方法。第一种方法包括保存模型，然后将其重新加载到任何编码平台中，以便我们可以继续训练或执行推理。第二种方法主要用于将模型发布到产品中，并通过使用PyTorch的JIT模块来实现，该模块创建了可以在C++上运行的模型的序列化表示。最后，第三种方法包括创建一个可以被其他程序访问的API，这样它就可以向模型发送信息或者从模型接收信息。</p>
+			<p>在下一章中，我们将关注使用CNN解决一个图像分类任务。</p>
+		</div>
+		<div><div/>
+		</div>
+	
+
+</body></html>

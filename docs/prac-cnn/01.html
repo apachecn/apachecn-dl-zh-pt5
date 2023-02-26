@@ -1,0 +1,892 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Deep Neural Networks – Overview</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">深度神经网络–概述</h1>
+                
+            
+            
+                
+<p class="mce-root">在过去的几年里，我们看到了AI(深度学习)领域的显著进步。如今，深度学习是许多先进技术应用的基石，从无人驾驶汽车到生成艺术和音乐。科学家们旨在帮助计算机不仅理解语音，而且用自然语言说话。深度学习是一种机器学习方法，它基于学习数据表示，而不是特定于任务的算法。深度学习使计算机能够从更简单和更小的概念中构建复杂的概念。例如，深度学习系统通过组合较低的标签边缘和拐角来识别人的图像，并以分层的方式将它们组合成身体的各个部分。深度学习将扩展到使机器能够独立思考的应用程序的那一天并不遥远。<br/></p>
+<p>在本章中，我们将讨论以下主题:</p>
+<ul>
+<li>神经网络的构建模块</li>
+<li>张量流简介</li>
+<li>Keras简介</li>
+<li>反向传播</li>
+</ul>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Building blocks of a neural network</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">神经网络的构建模块</h1>
+                
+            
+            
+                
+<p>神经网络是由许多人工神经元组成的。是大脑的表征还是某种知识的数学表征？这里，我们将简单地尝试理解神经网络在实践中是如何使用的。一个<strong>卷积神经网络</strong> ( <strong> CNN </strong>)是一种非常特殊的多层神经网络。CNN旨在通过最少的处理直接从图像中识别视觉模式。下图是该网络的图形表示。神经网络领域最初是由模拟生物神经系统的目标所启发的，但从那时起，它已经分支到不同的方向，并且已经成为工程和在机器学习任务中获得良好结果的问题。</p>
+<p>人工神经元是一种接受输入并产生输出的功能。所用神经元的数量取决于手头的任务。它可以低至两个或多达几千个。有许多方法可以将人工神经元连接在一起，从而创建一个CNN。一种通常使用的拓扑被称为<strong>前馈网络</strong>:</p>
+<div><img height="208" src="img/76320048-d832-4c03-b7ad-bdbdb1b4bbd8.png" width="349"/></div>
+<p>每个神经元接收来自其他神经元的输入。每条输入线对神经元的影响由权重控制。权重可以是正数，也可以是负数。整个神经网络通过理解语言来学习执行识别物体的有用计算。现在，我们可以将这些神经元连接成一个网络，称为前馈网络。这意味着每一层中的神经元将它们的输出前馈到下一层，直到我们获得最终输出。这可以这样写:</p>
+<div><img class="fm-editor-equation" height="13" src="img/c628f996-d705-4a2b-ba50-c98351f1d30c.png" width="179"/></div>
+<div><img class="fm-editor-equation" height="48" src="img/3adae030-df62-40b2-ac2a-e99b0f921708.png" width="262"/></div>
+<p>前面的前向传播神经元可以如下实现:</p>
+<pre>import numpy as np<br/>import math<br/><br/><br/>class Neuron(object):<br/>    def __init__(self):<br/>        self.weights = np.array([1.0, 2.0])<br/>        self.bias = 0.0<br/>    def forward(self, inputs):<br/>        """ Assuming that inputs and weights are 1-D numpy arrays and the bias is a number """<br/>        a_cell_sum = np.sum(inputs * self.weights) + self.bias<br/>        result = 1.0 / (1.0 + math.exp(-a_cell_sum)) # This is the sigmoid activation function<br/>        return result<br/>neuron = Neuron()<br/>output = neuron.forward(np.array([1,1]))<br/>print(output)</pre>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Introduction to TensorFlow</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">张量流简介</h1>
+                
+            
+            
+                
+<p>TensorFlow基于基于图形的计算。例如，考虑下面的数学表达式:</p>
+<p class="mce-root CDPAlignCenter CDPAlign"><em> c=(a+b) </em>，<em> d = b + 5 </em>，</p>
+<p class="mce-root CDPAlignCenter CDPAlign"><em> e = c * d </em></p>
+<p class="mce-root">在TensorFlow中，这被表示为计算图形，如下所示。这是非常强大的，因为计算是并行进行的:</p>
+<div><img height="240" src="img/2d33fa46-e26b-4c5c-b29a-b3318b25b39f.png" width="153"/></div>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Installing TensorFlow</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">安装TensorFlow</h1>
+                
+            
+            
+                
+<p>安装TensorFlow有两种简单的方法:</p>
+<ul>
+<li>使用虚拟环境(此处推荐和描述)</li>
+<li>一个码头工人的形象</li>
+</ul>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>For macOS X/Linux variants</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">对于macOS X/Linux变体</h1>
+                
+            
+            
+                
+<p>以下代码片段创建了一个Python虚拟环境，并在该环境中安装TensorFlow。在运行这段代码之前，您应该安装Anaconda:</p>
+<pre>#Creates a virtual environment named "tensorflow_env" assuming that python 3.7 version is already installed.<br/>conda create -n tensorflow_env python=3.7 <br/>#Activate points to the environment named "tensorflow"  
+source activate tensorflow_env
+conda install pandas matplotlib jupyter notebook scipy scikit-learn<br/>#installs latest tensorflow version into environment tensorflow_env
+pip3 install tensorflow </pre>
+<p>请在TensorFlow官方页面<a href="https://www.tensorflow.org/install/" target="_blank">https://www.tensorflow.org/install/</a>查看最新更新。</p>
+<p>尝试在Python控制台中运行以下代码来验证您的安装。如果TensorFlow已安装并运行，控制台应显示<kbd>Hello World!</kbd>:</p>
+<pre>import tensorflow as tf
+
+#Creating TensorFlow object 
+hello_constant = tf.constant('Hello World!', name = 'hello_constant')
+#Creating a session object for execution of the computational graph
+with tf.Session() as sess:
+    #Implementing the tf.constant operation in the session
+    output = sess.run(hello_constant)
+    print(output)</pre>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>TensorFlow basics</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">张量流基础</h1>
+                
+            
+            
+                
+<p>在TensorFlow中，数据不是以整数、浮点数、字符串或其他原语的形式存储的。这些值被封装在一个叫做张量的对象中。它由一组原始值组成，形成任意维数的数组。一个张量的维数叫做它的<strong>秩</strong>。<strong> </strong>在上例中，<kbd>hello_constant</kbd>是秩为零的常量字符串张量。常数张量的几个例子如下:</p>
+<pre># A is an int32 tensor with rank = 0<br/>A = tf.constant(123) <br/># B is an int32 tensor with dimension of 1 ( rank = 1 ) <br/>B = tf.constant([123,456,789]) <br/># C is an int32 2- dimensional tensor <br/>C = tf.constant([ [123,456,789], [222,333,444] ])</pre>
+<p>TensorFlow的核心程序是基于计算图的思想。计算图是由以下两部分组成的有向图:</p>
+<ul>
+<li>构建计算图</li>
+<li>运行计算图表</li>
+</ul>
+<p>一个计算图在一个<strong>会话</strong>中执行。张量流会话是计算图形的运行时环境。它分配CPU或GPU，并维护TensorFlow运行时的状态。下面的代码使用<kbd>tf.Session</kbd>创建一个名为<kbd>sess</kbd>的会话实例。然后<kbd>sess.run()</kbd>函数计算张量并返回存储在<kbd>output</kbd>变量中的结果。它最终打印为<kbd>Hello World!</kbd>:</p>
+<pre>with tf.Session() as sess:<br/>    # Run the tf.constant operation in the session<br/>    output = sess.run(hello_constant)<br/>    print(output)</pre>
+<p>使用TensorBoard，我们可以将图形可视化。要运行TensorBoard，请使用以下命令:</p>
+<pre>tensorboard --logdir=path/to/log-directory</pre>
+<p>让我们如下创建一段简单的加法代码。创建一个值为<kbd>5</kbd>的常量整数<kbd>x</kbd>，给它加上<kbd>5</kbd>后，设置一个新变量<kbd>y</kbd>的值，并打印出来:</p>
+<pre class="mce-root">constant_x = tf.constant(5, name='constant_x')<br/>variable_y = tf.Variable(x + 5, name='variable_y')<br/>print (variable_y)</pre>
+<p class="mce-root">不同之处在于<kbd>variable_y</kbd>没有像在Python代码中那样被赋予<kbd>x + 5</kbd>的当前值。相反，它是一个等式；也就是说，在计算<kbd>variable_y</kbd>时，取该时间点的<kbd>x</kbd>值，并加上<kbd>5</kbd>。在前面的代码中，实际上从不计算<kbd>variable_y</kbd>的值。这段代码实际上属于典型TensorFlow程序的计算图形构建部分。运行后，您将得到类似于<kbd>&lt;tensorflow.python.ops.variables.Variable object at 0x7f074bfd9ef0&gt;</kbd>的结果，而不是作为<kbd>10</kbd>的<kbd>variable_y</kbd>的实际值。为了解决这个问题，我们必须执行计算图的代码部分，如下所示:<br/></p>
+<pre>#initialize all variables<br/>init = tf.global_variables_initializer()<br/># All variables are now initialized<br/><br/>with tf.Session() as sess:<br/>    sess.run(init)<br/>    print(sess.run(variable_y))</pre>
+<p>下面是一些基本数学函数的执行，比如加法、减法、乘法和张量除法。有关更多数学函数，请参考文档:</p>
+<p>对于TensorFlow数学函数，请访问<a href="https://www.tensorflow.org/versions/r0.12/api_docs/python/math_ops/basic_math_functions" target="_blank">https://www . tensor flow . org/versions/r 0.12/API _ docs/python/math _ ops/basic _ math _ functions</a>。</p>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Basic math with TensorFlow</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">张量流基础数学</h1>
+                
+            
+            
+                
+<p><kbd>tf.add()</kbd>函数接受两个数字、两个张量或两者各一个，并将它们的和作为一个张量返回:</p>
+<pre class="mce-root">Addition<br/>x = tf.add(1, 2, name=None) # 3</pre>
+<p class="mce-root">这里有一个减法和乘法的例子:</p>
+<pre class="mce-root">x = tf.subtract(1, 2,name=None) # -1<br/>y = tf.multiply(2, 5,name=None) # 10<br/> </pre>
+<p>如果我们想用一个非常数呢？如何向TensorFlow提供输入数据集？为此，TensorFlow提供了一个API，<kbd>tf.placeholder()</kbd>，并使用了<kbd>feed_dict</kbd>。</p>
+<p><kbd>placeholder</kbd>是一个变量，稍后在<kbd>tf.session.run()</kbd>函数中数据被分配给该变量。在这个的帮助下，我们的操作可以被创建，我们可以在不需要数据的情况下构建我们的计算图。然后，在<kbd>tf.session.run()</kbd>中的<kbd>feed_dict</kbd>参数的帮助下，这些数据通过这些占位符被输入到图表中，以设置<kbd>placeholder</kbd>张量。在下面的示例中，在会话运行之前，张量<kbd>x</kbd>被设置为字符串<kbd>Hello World</kbd>:</p>
+<pre>x = tf.placeholder(tf.string)<br/><br/>with tf.Session() as sess:<br/>    output = sess.run(x, feed_dict={x: 'Hello World'})</pre>
+<p>也可以使用<kbd>feed_dict</kbd>设置多个张量，如下所示:</p>
+<pre>x = tf.placeholder(tf.string)<br/>y = tf.placeholder(tf.int32, None)<br/>z = tf.placeholder(tf.float32, None)<br/><br/>with tf.Session() as sess:<br/>    output = sess.run(x, feed_dict={x: 'Welcome to CNN', y: 123, z: 123.45}) </pre>
+<p>占位符还允许借助多维来存储数组。请看下面的例子:</p>
+<pre>import tensorflow as tf<br/><br/>x = tf.placeholder("float", [None, 3])<br/>y = x * 2<br/><br/>with tf.Session() as session:<br/>    input_data = [[1, 2, 3],<br/>                 [4, 5, 6],]<br/>    result = session.run(y, feed_dict={x: input_data})<br/>    print(result)</pre>
+<p>如果传递给<kbd>feed_dict</kbd>参数的数据与张量类型不匹配，并且不能转换为张量类型，那么就会抛出一个错误<kbd>ValueError: invalid literal for...</kbd>。</p>
+<p><kbd>tf.truncated_normal()</kbd>函数从正态分布中返回带有随机值的张量。这主要用于网络中的权重初始化:</p>
+<pre>n_features = 5<br/>n_labels = 2<br/>weights = tf.truncated_normal((n_features, n_labels))<br/>with tf.Session() as sess:<br/>  print(sess.run(weights))</pre>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Softmax in TensorFlow</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">张量流中的Softmax</h1>
+                
+            
+            
+                
+<p>softmax函数将其输入(称为<strong> logit </strong>或<strong> logit scores </strong>)转换为0到1之间的值，并对输出进行归一化处理，使其总和为1。换句话说，softmax函数将您的逻辑转换为概率。数学上，softmax函数定义如下:</p>
+<div><img class="fm-editor-equation" height="40" src="img/f397aff3-9485-43c6-ae4f-7a33d9374b1e.png" width="136"/></div>
+<p>在TensorFlow中，实现了softmax函数。它采用逻辑并返回与输入逻辑具有相同类型和形状的softmax激活，如下图所示:</p>
+<div><img height="66" src="img/53e7b660-22b9-4eec-b435-623d7458a621.png" width="159"/></div>
+<p>以下代码用于实现这一点:</p>
+<pre>logit_data = [2.0, 1.0, 0.1]<br/>logits = tf.placeholder(tf.float32)<br/>softmax = tf.nn.softmax(logits)<br/><br/>with tf.Session() as sess:<br/>    output = sess.run(softmax, feed_dict={logits: logit_data})<br/>    print( output )</pre>
+<p>我们用数学方法表示标签的方式通常被称为<strong>一次性编码</strong>。每个标签由一个向量表示，正确的标签为1.0，其他标签为0.0。这对大多数有问题的情况都很有效。然而，当问题有数百万个标签时，一键编码是无效的，因为大多数向量元素是零。我们测量两个概率向量之间的相似性距离，称为<strong>交叉熵</strong>，用<strong> D </strong>表示。</p>
+<div><p>交叉熵是不对称的。意思是:<em> D(S，L)！= D(L，S) </em></p>
+</div>
+<p>在机器学习中，我们通常通过数学函数来定义一个模型是坏的意味着什么。这个函数叫做<strong>损失</strong>、<strong>成本</strong>，或者<strong>目标</strong>函数。用于确定模型损失的一个非常常见的函数叫做<strong>交叉熵损失</strong>。这个概念来自信息论(关于这个的更多信息，请参考在<a href="https://colah.github.io/posts/2015-09-Visual-Information/" target="_blank">https://colah.github.io/posts/2015-09-Visual-Information/</a>的视觉信息论)。直观地说，如果模型对训练数据的分类表现不佳，损失将会很高，否则损失将会很低，如下所示:</p>
+<div><img height="92" src="img/e1236125-87f5-4a42-8af8-84cdcd6920d1.png" width="188"/></div>
+<p>交叉熵损失函数</p>
+<p>在TensorFlow中，我们可以用<kbd>tf.reduce_sum()</kbd>写一个交叉熵函数；它接受一个数字数组，并将其总和作为张量返回(参见下面的代码块):</p>
+<pre>x = tf.constant([[1,1,1], [1,1,1]])<br/>with tf.Session() as sess:<br/>    print(sess.run(tf.reduce_sum([1,2,3]))) #returns 6 <br/>    print(sess.run(tf.reduce_sum(x,0))) #sum along x axis, prints [2,2,2]</pre>
+<p>但实际上，在计算softmax函数时，由于指数运算，中间项可能非常大。所以，除大数在数值上是不稳定的。我们应该使用TensorFlow提供的softmax和交叉熵损失API。以下代码片段手动计算交叉熵损失，并使用TensorFlow API打印出来:</p>
+<pre>import tensorflow as tf<br/><br/>softmax_data = [0.1,0.5,0.4]<br/>onehot_data = [0.0,1.0,0.0]<br/><br/>softmax = tf.placeholder(tf.float32)<br/>onehot_encoding = tf.placeholder(tf.float32)<br/><br/>cross_entropy = - tf.reduce_sum(tf.multiply(onehot_encoding,tf.log(softmax)))<br/><br/>cross_entropy_loss = tf.nn.softmax_cross_entropy_with_logits(logits=tf.log(softmax), labels=onehot_encoding)<br/><br/>with tf.Session() as session:<br/>    print(session.run(cross_entropy,feed_dict={softmax:softmax_data, onehot_encoding:onehot_data} ))<br/>    print(session.run(cross_entropy_loss,feed_dict={softmax:softmax_data, onehot_encoding:onehot_data} ))<br/><br/></pre>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Introduction to the MNIST dataset </title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">MNIST数据集简介</h1>
+                
+            
+            
+                
+<p>这里我们用的是<strong> MNIST </strong> ( <strong>修改后的国家标准技术研究院</strong>)，由手写数字及其标签的图像组成。自1999年发布以来，这个经典数据集被用于分类算法的基准测试。</p>
+<p>数据文件<kbd>train.csv</kbd>和<kbd>test.csv</kbd>由手绘数字组成，以灰度图像的形式从0到9。数字图像是形式为<em> f(x，y)=像素</em>值的数学函数。这些图像是二维的。</p>
+<p>我们可以对图像执行任何数学功能。通过计算图像上的梯度，我们可以测量像素值变化的速度以及变化的方向。对于图像识别，为了简单起见，我们将图像转换为灰度，并有一个颜色通道。<strong>图像的RGB </strong>表示由三个颜色通道组成，<strong>红色</strong>、<strong>蓝色</strong>和<strong>绿色</strong>。在RGB颜色方案中，图像是三幅图像(红色、蓝色和绿色)的叠加。在灰度配色方案中，颜色并不重要。彩色图像在计算上更难分析，因为它们占用更多的内存空间。强度是图像亮度和暗度的度量，对于识别物体非常有用。在某些应用中，例如在自动驾驶汽车应用中检测车道线，颜色很重要，因为它必须区分黄色车道和白色车道。灰度图像不能提供足够的信息来区分白色和黄色车道线。</p>
+<p>任何灰度图像都被计算机解释为一个矩阵，每个图像像素对应一个条目。每个图像的高度和宽度都是28 x 28像素，总计784像素。每个像素具有与其相关联的单个像素值。该值表示该特定像素的亮度或暗度。该像素值是范围从0到255的整数，其中零值表示最暗，255表示最白，灰色像素介于0和255之间。</p>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>The simplest artificial neural network</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">最简单的人工神经网络</h1>
+                
+            
+            
+                
+<p>下图显示了一个简单的双层神经网络:</p>
+<div><img height="150" src="img/246151fb-7893-448d-b9bb-7a87b387a24b.png" width="203"/></div>
+<p>简单双层神经网络</p>
+<p>第一层是<strong>输入层</strong>，最后一层是<strong>输出层</strong>。中间层是<strong>隐藏层</strong>。如果有一个以上的隐层，那么这样的网络就是深度神经网络。</p>
+<p>隐藏层中每个神经元的输入和输出连接到下一层中的每个神经元。根据问题的不同，每层中可以有任意数量的神经元。让我们考虑一个例子。你可能已经知道的一个简单的例子是流行的手写数字识别，它检测一个数字，比如说5。该网络将接受5的图像，并将输出1或0。1表示图像实际上是5，否则为0。一旦网络被创建，它必须被训练。我们可以用随机权重初始化，然后输入被称为<strong>训练数据集</strong>的样本。对于每个输入样本，我们检查输出，计算错误率，然后调整权重，以便每当它看到5时，它输出1，对于其他所有内容，它输出0。这种训练称为<strong>监督学习</strong>，调整权重的方法称为<strong>反向传播</strong>。在构造人工神经网络模型时，首要考虑的问题之一是如何选择隐含层和输出层的激活函数。三个最常用的激活函数是sigmoid函数、双曲线正切函数和<strong>整流线性单元</strong> ( <strong> ReLU </strong>)。sigmoid函数的美妙之处在于，它的导数在<em> z </em>处计算，简单地说就是<em> z </em>乘以1-减<em> z </em>。这意味着:</p>
+<p class="CDPAlignCenter CDPAlign"><em>dy/dx =σ(x)(1σ(x))</em></p>
+<p>这有助于我们以方便的方式有效地计算神经网络中使用的梯度。如果给定层的逻辑函数的前馈激活被保存在存储器中，则可以借助于简单的乘法和减法来评估该特定层的梯度，而不是实现和重新评估sigmoid函数，因为它需要额外的幂运算。下图显示了ReLU激活函数，当<em> x &lt; 0 </em>时为零，当<em> x &gt; 0 </em>时与斜率1成线性关系:</p>
+<div><img src="img/0b97ce94-3500-421b-ab0e-ac41ef330b0f.jpeg"/></div>
+<p>ReLU是计算函数<em xmlns:epub="http://www.idpf.org/2007/ops"> f(x)=max(0，x) </em>的非线性函数。这意味着负输入的ReLU函数为0，所有输入的ReLU函数为<em xmlns:epub="http://www.idpf.org/2007/ops">x</em>x&gt;0。这意味着激活的阈值为零(见左图)。TensorFlow实现了<kbd xmlns:epub="http://www.idpf.org/2007/ops">tf.nn.relu()</kbd>中的ReLU函数:</p>
+<div><img class="fm-editor-equation" height="47" src="img/1eede7d4-c92f-446e-81a1-37361897b254.png" width="200"/></div>
+<p>反向传播是“误差反向传播”的缩写，是一种与优化方法(如梯度下降)结合使用的训练人工神经网络的常用方法。该方法计算损失函数相对于网络中所有权重的梯度。优化方法被馈入梯度，并使用它来更新权重以减少损失函数。</p>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Building a single-layer neural network with TensorFlow</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">用TensorFlow构建单层神经网络</h1>
+                
+            
+            
+                
+<p>让我们一步步用TensorFlow搭建单层神经网络。在本例中，我们将使用MNIST数据集。该数据集是一组手写数字的28 x 28像素灰度图像。该数据集由55，000个训练数据、10，000个测试数据和5，000个验证数据组成。每个MNIST数据点都有两个部分:一个手写数字的图像和一个相应的标签。下面的代码块加载数据。<kbd>one_hot=True</kbd>表示标签是独热编码向量，而不是标签的实际数字。比如标签是<kbd>2</kbd>，你会看到【0，0，1，0，0，0，0，0，0，0】。这允许我们在网络的输出层直接使用它:</p>
+<pre>from tensorflow.examples.tutorials.mnist import input_data<br/>mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)</pre>
+<p>占位符和变量的设置如下:</p>
+<pre># All the pixels in the image (28 * 28 = 784)
+features_count = 784
+# there are 10 digits i.e labels
+labels_count = 10
+batch_size = 128
+epochs = 10
+learning_rate = 0.5
+
+features = tf.placeholder(tf.float32, [None,features_count])
+labels = tf.placeholder(tf.float32, [None, labels_count])
+
+#Set the weights and biases tensors
+weights = tf.Variable(tf.truncated_normal((features_count, labels_count)))
+biases = tf.Variable(tf.zeros(labels_count),name='biases')</pre>
+<p>让我们在TensorFlow中设置优化器:</p>
+<pre>loss,<br/>optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)    </pre>
+<p>在开始训练之前，让我们设置变量初始化操作和一个测量预测准确性的操作，如下所示:</p>
+<pre># Linear Function WX + b
+logits = tf.add(tf.matmul(features, weights),biases)
+
+prediction = tf.nn.softmax(logits)
+
+# Cross entropy
+cross_entropy = -tf.reduce_sum(labels * tf.log(prediction), reduction_indices=1)
+
+# Training loss
+loss = tf.reduce_mean(cross_entropy)
+
+# Initializing all variables
+init = tf.global_variables_initializer()
+
+# Determining if the predictions are accurate
+is_correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(labels, 1))
+# Calculating prediction accuracy
+accuracy = tf.reduce_mean(tf.cast(is_correct_prediction, tf.float32))</pre>
+<p>现在我们可以开始训练模型，如下面的代码片段所示:</p>
+<pre>#Beginning the session
+with tf.Session() as sess:
+   # initializing all the variables
+   sess.run(init)
+   total_batch = int(len(mnist.train.labels) / batch_size)
+   for epoch in range(epochs):
+        avg_cost = 0
+        for i in range(total_batch):
+            batch_x, batch_y = mnist.train.next_batch(batch_size=batch_size)
+            _, c = sess.run([optimizer,loss], feed_dict={features: batch_x, labels: batch_y})
+            avg_cost += c / total_batch
+        print("Epoch:", (epoch + 1), "cost =", "{:.3f}".format(avg_cost))
+   print(sess.run(accuracy, feed_dict={features: mnist.test.images, labels: mnist.test.labels}))</pre>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Keras deep learning library overview</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">Keras深度学习库概述</h1>
+                
+            
+            
+                
+<p>Keras是Python中的高级深度神经网络API，运行在TensorFlow、CNTK或Theano之上。</p>
+<p>以下是使用Keras时需要了解的一些核心概念。TensorFlow是一个用于数值计算和机器智能的深度学习库。它是开源的，使用数据流图进行数值计算。数学运算用节点和多维数据数组表示；也就是说，张量由图的边来表示。这个框架技术性很强，因此对数据分析师来说可能很难。Keras让深度神经网络编码变得简单。它还可以在CPU和GPU机器上无缝运行。</p>
+<p>一个<strong>模型</strong>是Keras的<strong> </strong>核心数据结构。由线性层叠层组成的顺序模型是最简单的模型类型。提供常用功能，如<kbd>fit()</kbd>、<kbd>evaluate()</kbd>、<kbd>compile()</kbd>。</p>
+<p>您可以在下面几行代码的帮助下创建一个序列模型:<strong> <br/> </strong></p>
+<pre>from keras.models import Sequential
+
+#Creating the Sequential model
+model = Sequential()</pre>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Layers in the Keras model</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">Keras模型中的图层</h1>
+                
+            
+            
+                
+<p>Keras层就像一个神经网络层。有完全连接的层、最大池层和激活层。可使用模型的<kbd>add()</kbd>功能将层添加到模型中。例如，一个简单的模型可以表示为:</p>
+<pre>from keras.models import Sequential
+from keras.layers.core import Dense, Activation, Flatten
+
+#Creating the Sequential model
+model = Sequential()
+
+#Layer 1 - Adding a flatten layer
+model.add(Flatten(input_shape=(32, 32, 3)))
+
+#Layer 2 - Adding a fully connected layer
+model.add(Dense(100))
+
+#Layer 3 - Adding a ReLU activation layer
+model.add(Activation('relu'))
+
+#Layer 4- Adding a fully connected layer
+model.add(Dense(60))
+
+#Layer 5 - Adding an ReLU activation layer
+model.add(Activation('relu'))</pre>
+<p>Keras会自动推断第一层之后所有层的形状。这意味着您只需设置第一层的输入尺寸。前面代码片段中的第一层<kbd>model.add(Flatten(input_shape=(32, 32, 3)))</kbd>将输入维度设置为(32，32，3)，将输出维度设置为(3072=32 x 32 x 3)。第二层接受第一层的输出，并将输出尺寸设置为(100)。这种将输出传递到下一层的链条一直持续到最后一层，也就是模型的输出。</p>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Handwritten number recognition with Keras and MNIST</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">基于Keras和MNIST的手写数字识别</h1>
+                
+            
+            
+                
+<p>数字识别器的典型神经网络可能有784个输入像素连接到隐藏层中的1，000个神经元，而隐藏层又连接到10个输出目标—每个数字一个。每一层都完全连接到上一层。该网络的图形表示如下，其中<kbd>x</kbd>是输入，<kbd>h</kbd>是隐藏神经元，<kbd>y</kbd>是输出类变量:</p>
+<div><img src="img/b24d6265-5067-4fd6-abfc-ccbacfa121a8.png"/></div>
+<p>在这本笔记本中，我们将建立一个神经网络，它将识别从0到9的手写数字。</p>
+<p>我们正在建立的这种神经网络被用于许多现实世界的应用中，例如识别电话号码和按地址分类邮件。为了构建这个网络，我们将使用<strong> MNIST </strong>数据集。</p>
+<p>我们将如下面的代码所示，首先导入所有需要的模块，然后加载数据，最后构建网络:</p>
+<pre># Import Numpy, keras and MNIST data
+import numpy as np
+import matplotlib.pyplot as plt
+
+from keras.datasets import mnist
+from keras.models import Sequential
+from keras.layers.core import Dense, Dropout, Activation
+from keras.utils import np_utils</pre>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Retrieving training and test data</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">检索培训和测试数据</h1>
+                
+            
+            
+                
+<p>MNIST数据集已经包含了训练和测试数据。训练数据有60000个数据点，测试数据有10000个数据点。如果在本地的<kbd>'~/.keras/datasets/' +</kbd>路径没有数据文件，可以在这个位置下载。</p>
+<p>每个MNIST数据点都有:</p>
+<ul>
+<li>手写数字的图像</li>
+<li>一个相应的标签，是一个从0到9的数字，用于帮助识别图像</li>
+</ul>
+<p>这些图像将被调用，并将输入到我们的神经网络，<strong>X</strong>；它们对应的标签是<strong> y </strong>。</p>
+<p>我们希望我们的标签是一个热点向量。独热向量是由许多0和1组成的向量。在一个例子中最容易看出这一点。数字0表示为[1，0，0，0，0，0，0，0，0，0]，4表示为[0，0，0，0，0，1，0，0，0，0，0]作为一个热向量。</p>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Flattened data</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">扁平化数据</h1>
+                
+            
+            
+                
+<p>在这个例子中，我们将使用扁平数据，或者也可以使用一维而不是二维的MNIST图像表示。因此，每个28×28像素数量的图像将被表示为784像素的一维阵列。</p>
+<p>通过展平数据，关于图像的2D结构的信息被抛出；然而，我们的数据是简化的。借助于此，我们所有的训练数据可以包含在一个形状数组(60，000，784)中，其中第一维表示训练图像的数量，第二维表示每个图像中的像素数量。使用简单的神经网络很容易分析这种数据，如下所示:</p>
+<pre># Retrieving the training and test data
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+
+print('X_train shape:', X_train.shape)
+print('X_test shape: ', X_test.shape)
+print('y_train shape:',y_train.shape)
+print('y_test shape: ', y_test.shape)</pre>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Visualizing the training data</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">可视化训练数据</h1>
+                
+            
+            
+                
+<p>以下函数将帮助您可视化MNIST数据。通过传入一个训练示例的索引，<kbd>show_digit</kbd>函数将在标题中显示该训练图像及其相应的标签:</p>
+<pre># Visualize the data
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+#Displaying a training image by its index in the MNIST set
+def display_digit(index):
+    label = y_train[index].argmax(axis=0)
+    image = X_train[index]
+    plt.title('Training data, index: %d,  Label: %d' % (index, label))
+    plt.imshow(image, cmap='gray_r')
+    plt.show()
+    
+# Displaying the first (index 0) training image
+display_digit(0)
+X_train = X_train.reshape(60000, 784)
+X_test = X_test.reshape(10000, 784)
+X_train = X_train.astype('float32')
+X_test = X_test.astype('float32')
+X_train /= 255
+X_test /= 255
+print("Train the matrix shape", X_train.shape)
+print("Test the matrix shape", X_test.shape)<br/><br/>
+#One Hot encoding of labels.
+from keras.utils.np_utils import to_categorical
+print(y_train.shape)
+y_train = to_categorical(y_train, 10)
+y_test = to_categorical(y_test, 10)
+print(y_train.shape)</pre>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Building the network</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">构建网络</h1>
+                
+            
+            
+                
+<p>对于本例，您将定义以下内容:</p>
+<ul>
+<li>输入层，您应该对每条MNIST数据有所预期，因为它会告诉网络输入的数量</li>
+<li>隐藏图层，因为它们识别数据中的模式，并将输入图层连接到输出图层</li>
+<li>输出层，因为它定义了网络如何学习并给出一个标签作为给定图像的输出，如下所示:</li>
+</ul>
+<pre># Defining the neural network
+def build_model():
+    model = Sequential()
+    model.add(Dense(512, input_shape=(784,)))
+    model.add(Activation('relu')) # An "activation" is just a non-linear function that is applied to the output
+ # of the above layer. In this case, with a "rectified linear unit",
+ # we perform clamping on all values below 0 to 0.
+                           
+    model.add(Dropout(0.2))   #With the help of Dropout helps we can protect the model from memorizing or "overfitting" the training data
+    model.add(Dense(512))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(10))
+    model.add(Activation('softmax')) # This special "softmax" activation,
+    #It also ensures that the output is a valid probability distribution,
+    #Meaning that values obtained are all non-negative and sum up to 1.
+    return model<br/>
+#Building the model
+model = build_model()
+model.compile(optimizer='rmsprop',
+          loss='categorical_crossentropy',
+          metrics=['accuracy'])</pre>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Training the network</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">训练网络</h1>
+                
+            
+            
+                
+<p>现在我们已经构建了网络，我们向它输入数据并训练它，如下所示:</p>
+<pre># Training
+model.fit(X_train, y_train, batch_size=128, nb_epoch=4, verbose=1,validation_data=(X_test, y_test))</pre>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Testing</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">测试</h1>
+                
+            
+            
+                
+<p>在您对训练输出和准确性感到满意之后，您可以在<strong>测试数据集</strong>上运行网络来测量它的性能！</p>
+<p>请记住，只有在您完成培训并对结果感到满意后，才能执行此操作。</p>
+<p>好的结果将获得高于95% 的准确度<strong xmlns:epub="http://www.idpf.org/2007/ops">。一些简单的模型甚至可以达到99.7%的准确率！我们可以测试模型，如下所示:</strong></p>
+<pre># Comparing the labels predicted by our model with the actual labels
+
+score = model.evaluate(X_test, y_test, batch_size=32, verbose=1,sample_weight=None)
+# Printing the result
+print('Test score:', score[0])
+print('Test accuracy:', score[1])</pre>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Understanding backpropagation </title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">理解反向传播</h1>
+                
+            
+            
+                
+<p>在这一节中，我们将理解一种关于反向传播的直觉。这是一种使用链式法则计算梯度的方法。理解这一过程及其微妙之处对于您能够理解并有效地开发、设计和调试神经网络至关重要。</p>
+<p>一般来说，给定一个函数<em> f(x) </em>，其中<em> x </em>是输入的向量，我们要计算<em> f </em>在<em> x </em>处的梯度，用<em> ∇(f(x表示)</em>。这是因为在神经网络的情况下，函数<em> f </em>基本上是损失函数(<em> L </em>)并且输入<em> x </em>是权重和训练数据的组合。符号<em> </em> <em> ∇ </em>读作<strong>纳布拉</strong>:</p>
+<p class="CDPAlignCenter CDPAlign"><em> (xi，易)i = 1......N </em></p>
+<p>为什么我们在权重参数上取梯度？</p>
+<p>假设训练数据通常是固定的，参数是我们可以控制的变量。我们通常计算参数的梯度，以便我们可以使用它进行参数更新。梯度<em> ∇f </em>是偏导数的向量，即:</p>
+<p class="CDPAlignCenter CDPAlign"><em> ∇f = [ df/dx，df/dy] = [y，x] </em></p>
+<p>简而言之，反向传播包括:</p>
+<ul>
+<li>进行前馈操作</li>
+<li>将模型的输出与期望的输出进行比较</li>
+<li>计算误差</li>
+<li>向后运行前馈操作(反向传播)以将误差传播到每个权重</li>
+<li>用这个来更新权重，得到一个更好的模型</li>
+<li>继续下去，直到我们有一个好的模型</li>
+</ul>
+<p>我们将建立一个神经网络来识别从0到9的数字。这种网络应用用于通过邮政编码对邮件进行分类、从图像中识别电话号码和门牌号、从包裹图像中提取包裹数量等等。</p>
+<p>在大多数情况下，反向传播是在一个框架中实现的，比如TensorFlow。然而，通过简单地添加任意数量的隐藏层，反向传播将神奇地在数据集上工作，这并不总是正确的。事实是，如果权重初始化草率，这些非线性函数会饱和并停止学习。这意味着培训损失将持平，并拒绝下降。这就是所谓的<strong>消失梯度问题</strong>。</p>
+<p class="graf graf--p graf-after--pre">如果你的权重矩阵<em xmlns:epub="http://www.idpf.org/2007/ops"> W </em>被初始化得太大，矩阵乘法的输出也可能有一个非常大的范围，这反过来会使向量<em xmlns:epub="http://www.idpf.org/2007/ops"> z </em>中的所有输出几乎都是二进制的:要么是1，要么是0。然而，如果是这种情况，那么在两种情况下，作为sigmoid非线性的局部梯度的<em xmlns:epub="http://www.idpf.org/2007/ops"> z*(1-z) </em>将变成<em xmlns:epub="http://www.idpf.org/2007/ops">零</em>(消失)<strong xmlns:epub="http://www.idpf.org/2007/ops"> </strong>将使<strong xmlns:epub="http://www.idpf.org/2007/ops"/>x和<strong xmlns:epub="http://www.idpf.org/2007/ops"> </strong> <em xmlns:epub="http://www.idpf.org/2007/ops"> W </em>的梯度也为零。由于链式法则中的乘法，向后传递的其余部分也将从这一点开始全为零。</p>
+<p>另一个非线性激活函数是ReLU，它将神经元阈值设为零，如下所示。使用ReLU的全连接层的前向和后向传递在核心处包括:</p>
+<pre>z = np.maximum(0, np.dot(W, x)) #Representing forward pass<br/>dW = np.outer(z &gt; 0, x) #Representing backward pass: local gradient for W</pre>
+<p class="graf graf--p graf-after--pre">如果你观察一段时间，你会发现如果一个神经元在正向传递中被箝位到零(即<em> z = 0 </em>，它不会触发)，那么它的权重将获得零梯度。这会导致所谓的T21问题。这意味着，如果一个ReLU神经元不幸地以一种永远不会触发的方式初始化，或者如果一个神经元的权重在训练到这种状态期间随着大的更新而被去除，在这种情况下，这个神经元将永远保持死亡。它类似于永久性的、不可恢复的脑损伤。有时，你甚至可以通过一个训练过的网络转发整个训练集，最终意识到你的神经元中有很大一部分(大约40%)一直为零。</p>
+<p>在微积分中，链式法则用于计算两个或多个函数的合成导数。也就是说，如果我们有两个函数，分别是<em> f </em>和<em> g </em>，那么链式法则表示它们的合成函数<em>f∘g</em>的导数，这个函数根据<em> f </em>和<em> g </em>的导数将<em> x </em>映射到<em> f(g(x)) </em>，函数的乘积表示如下:</p>
+<div><img class="fm-editor-equation" height="17" src="img/1505eff0-acc2-414b-a387-b63617368eb9.png" width="128"/></div>
+<p>有一种更明确的方式用变量来表示。设<em> F = f ∘ g </em>，或者等价地，<em> F(x) = f(g(x)) </em>为所有<em> x </em>。那么也可以写:</p>
+<p class="mce-root CDPAlignCenter CDPAlign"><em> F'(x)=f'(g(x))g'(x)。</em></p>
+<p>链式法则可以借助于莱布尼茨的符号写成如下形式。如果一个变量<em> z </em>依赖于一个变量<em> y </em>，而后者又依赖于一个变量<em> x </em>(这样<em> y </em>和<em> z </em>就是因变量)，那么<em> z </em>也通过中间变量<em> y </em>依赖于<em> x </em>。链式法则接着指出:</p>
+<div><img class="fm-editor-equation" height="36" src="img/681874b8-f2ac-41f4-9fba-f70007ccd003.png" width="94"/></div>
+<p><em> z = 1/(1 + np.exp(-np.dot(W，x))) </em> #正向传递<br/> <em> dx = np.dot(W.T，z*(1-z)) </em> #反向传递:用于<em>x</em><br/><em>dW = NP . outer(z *(1-z)，x) </em> #反向传递:用于<em> W </em>的局部梯度</p>
+<p>下图中左侧的向前传递使用输入变量<em> x </em>和<em> y </em>将<em> z </em>计算为函数<em> f(x，y) </em>。图的右侧表示向后传球。接收<em> dL/dz </em>，应用链式法则可以计算出损失函数相对于<em> z </em>的梯度，以及<em> x </em>和<em> y </em>对损失函数的梯度，如下图所示:</p>
+<div><img height="176" src="img/d1b049ab-5e05-49b1-9229-c01f1cb4e926.png" width="452"/></div>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Summary</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">摘要</h1>
+                
+            
+            
+                
+<p>在本章中，我们奠定了神经网络的基础，并介绍了最简单的人工神经网络。我们学习了如何使用TensorFlow构建单层神经网络。</p>
+<p>我们研究了Keras模型中各层的差异，并用Keras和MNIST演示了著名的手写数字识别。</p>
+<p>最后，我们理解了什么是反向传播，并使用MNIST数据集来建立我们的网络，训练和测试我们的数据。</p>
+<p>在下一章，我们将向你介绍CNN。</p>
+
+
+            
+
+            
+        
+    </body>
+
+</html></body></html>

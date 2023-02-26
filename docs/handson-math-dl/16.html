@@ -1,0 +1,415 @@
+<html><head/><body>
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">迁移和元学习</h1>
+                
+            
+            
+                
+<p class="mce-root">到目前为止，在本书中，我们已经研究了各种神经网络，正如我们所看到的，它们中的每一个对于各种任务都有自己的优点和缺点。我们还了解到，深度学习架构需要大量的训练数据，因为它们的大小和大量的可训练参数。你可以想象，对于许多我们想要建立模型的问题，可能无法收集足够的数据，即使我们能够这样做，这也将是非常困难和耗时的——甚至可能是昂贵的——来执行。解决这个问题的一个方法是使用生成模型来创建合成数据(我们在第8章、<em>正则化</em>中遇到过这种情况)，这些数据是从我们为任务收集的小数据集生成的。</p>
+<p class="mce-root">在这一章中，我们将讨论最近越来越受欢迎的两个主题，并且很可能会继续在这个领域得到更广泛的应用(这是理所当然的)。它们被称为<strong>迁移学习</strong>和<strong>元学习</strong>。它们之间的区别在于，迁移学习是我们试图使用一个模型所学的知识来尝试解决另一个不同但相似的问题，而元学习是我们试图创建可以学习新概念的模型。关于迁移学习的文献很少，而且是一种比较杂乱的实践；我们之所以介绍它，主要是因为理解迁移和元学习之间的区别是很重要的，因为它们是相似的，但有很大的不同，而且经常被混淆。然而，本章的重点是元学习。随着本章的深入，我们将更深入地探究它们的区别。</p>
+<p>我们将在本章中讨论以下主题:</p>
+<ul>
+<li>迁移学习</li>
+<li>元学习</li>
+</ul>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">迁移学习</h1>
+                
+            
+            
+                
+<p>我们人类有惊人的学习能力，然后我们把学到的知识应用到不同类型的任务中。新任务与我们已知的任务越密切相关，我们就越容易解决新任务。基本上，当我们学习新的东西时，我们从来没有真正从零开始。</p>
+<p>然而，神经网络却没有这种奢侈；他们需要从头开始接受培训，以完成我们希望他们应用的每一项任务。正如我们在前面的章节中所看到的，神经网络非常善于学习如何很好地做一件事情，因为它们只学习它们已经被训练识别的分布的插值内的内容，所以它们无法概括它们的知识来处理超出它们在训练数据集中遇到的任务。</p>
+<p>此外，深度神经网络可能需要数千万个数据样本，以便在能够很好地执行之前学习数据中的潜在模式。出于这个原因，该领域的研究人员创造了迁移学习——一种将一个神经网络学到的东西转移到另一个神经网络的方法，本质上是引导学习过程。当我们有一个想要构建的项目或想要测试的假设，但我们没有资源(如GPU、足够的数据等)来从头构建和训练网络时，这非常方便。相反，我们可以使用在类似任务中工作的现有模型，并将其用于我们自己的任务。</p>
+<p>让我们暂时回想一下<a href="2c830a26-9964-47fb-8d69-904e4f087b95.xhtml">第九章</a>、<em>卷积神经网络</em>。我们看到的架构都有一个输入层，它接收特定大小的图像(<em> h </em> × <em> w </em> × <em> c </em>)，然后我们有多个卷积层，后面是一个可选的池(或子采样)层。在网络的末端，我们将特征地图展开成一个完全连接的层，然后输出层就有了我们想要检测的尽可能多的节点和类。我们还了解到<strong>卷积神经网络</strong>(<strong>CNN</strong>)可以提取自己的特征，每一层学习不同种类或级别的特征。更靠近输入的层学习非常精细的特征，例如边、曲线、颜色斑点等，而更靠近输出的层学习更大的特征，例如眼睛、耳朵、尾巴、嘴等。</p>
+<p>我们可以做的是采用现有的已训练CNN并移除最后几个层(即，完全连接的层和输出层)，并将该CNN视为我们正在为其构建模型的新数据集的特征提取器。或者，我们也可以使用现有的经过训练的CNN来解决新问题，方法是在我们想要为其创建CNN的新数据集上对其进行微调。我们可以通过冻结早期层(因为它们学习非常精细或通用的特征)并使用反向传播微调后面的层来做到这一点，以便CNN学习特定于新数据集的更复杂的特征。</p>
+<p>在我们进入迁移学习的细节之前，重要的是我们对它有一个清楚的了解。我们将使用庄等人给出的定义；但是在此之前，让我们回顾一下域和任务的定义。</p>
+<p>一个<strong>域</strong>、<sub>、<img class="fm-editor-equation" src="img/ecdb812d-9f63-4cc4-936a-a46ebdc8f667.png" style="width:0.92em;height:1.08em;"/>、</sub>，由两部分组成；即一个特征空间，<sub> <img class="fm-editor-equation" src="img/b22a0031-59f3-49d7-aff3-f1f1ceeb885d.png" style="width:0.92em;height:1.00em;"/> </sub>，一个边际分布，<em> P(X) </em>。换句话说，<sub> <img class="fm-editor-equation" src="img/f4c39005-71bd-4ce1-bd3c-37a3690dd64f.png" style="width:7.08em;height:1.25em;"/> </sub>，其中<em> X </em>表示一个数据样本，定义为<sub> <img class="fm-editor-equation" src="img/5d9c50e3-d537-4b5a-ad6b-a6e55c947d22.png" style="width:14.50em;height:1.33em;"/> </sub>。</p>
+<p>一个<strong>任务</strong>、<sub>、<img class="fm-editor-equation" src="img/646485a7-7078-432b-a0ad-210e59a18fe7.png" style="width:0.92em;height:1.08em;"/>、</sub>，由一个标签空间、<sub>、<img class="fm-editor-equation" src="img/6cc27b75-27bf-4f72-b71f-519a01fb5d58.png" style="width:0.83em;height:1.08em;"/>、</sub>和一个映射函数、<em> f </em>组成；也就是<sub> <img class="fm-editor-equation" src="img/49c753da-aa11-4cfb-9a48-e42c55ba50f3.png" style="width:5.17em;height:1.25em;"/> </sub>。映射函数(我们的模型)是一个隐式函数，可以从样本数据中学习。</p>
+<p>在迁移学习的情况下，我们有两个不同的领域和任务——每个领域和任务对应一个源和一个目标——我们的目标是将模型在源领域学到的知识转移到目标领域的模型，以提高其整体性能。</p>
+<p>在我们深入了解细节之前，有四个概念对我们理解很重要。它们如下:</p>
+<ul>
+<li>目标域<sub> <img class="fm-editor-equation" src="img/0a72c0f6-3a96-4143-8842-bbff752b8afd.png" style="width:1.17em;height:1.08em;"/> </sub>和源域<sub> <img class="fm-editor-equation" src="img/c00984a3-9026-4749-a016-872fe956bf77.png" style="width:1.33em;height:1.17em;"/> </sub>的特征空间不相同。</li>
+<li>目标域的标签空间，<sub> <img class="fm-editor-equation" src="img/d75d33b8-41c3-4f7b-a4d8-ec055aa56d6e.png" style="width:1.17em;height:1.08em;"/> </sub>，和源域，<sub> <img class="fm-editor-equation" src="img/e85c128c-f81f-4cc4-a81d-db2c97b521e5.png" style="width:1.25em;height:1.08em;"/> </sub>，不一样。</li>
+<li>领域适应——这是目标领域的边际概率<em> P(X <sub> t </sub> ) </em>和源领域的边际概率<em> P(X <sub> s </sub> ) </em>不相等的地方。</li>
+<li>目标域的条件概率<em>P(Y<sub>t</sub></em>|<em>X<sub>t</sub>)</em>和源域的条件概率<em>P(Y<sub>s</sub></em>|<em>X<sub>s</sub>)</em>不相等。</li>
+</ul>
+<p>正如你所想象的，这里有一些限制。你不能在另一项任务中使用任何预先训练好的任意大小的模型。对要使用的预训练网络类型的考虑很大程度上取决于我们为我们的任务所拥有的数据集是否与预训练模型被训练的数据集相似，以及对于我们手头的当前任务可用的数据集的大小。例如，如果我们有一个对象检测任务，我们不能使用预训练的甘或RNN，因为他们是不同的任务。此外，如果模型已经在图像上被训练来识别各种农场动物，它将不会在希望我们的网络识别飞机和汽车的品牌和型号的新任务中表现良好。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">元学习</h1>
+                
+            
+            
+                
+<p>元学习——也被称为<strong>学会学习</strong>——是深度学习中另一个有趣的话题，被许多人认为是通向<strong>人工通用智能</strong> ( <strong> AGI </strong>)的一条有前途的道路。对于那些不知道AGI是什么的人来说，当人工智能达到理解和学习做人类能够做的任何类型的智能任务的能力时，这就是人工智能的目标。</p>
+<p>正如我们所知，深度神经网络非常渴求数据，需要大量的训练时间(取决于模型的大小)，有时可能需要几周时间，而人类能够更快、更有效地学习新概念和技能。例如，作为孩子，我们可以很快学会在只见过一次或几次之后，就绝对肯定地说出驴、马和斑马之间的区别；然而，一个神经网络可能需要几十万到一百万个数据样本，才能学会以专家级的准确度区分这三个类别。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">元学习方法</h1>
+                
+            
+            
+                
+<p>我们试图用元学习来回答的问题是，我们是否可以创建一个可以像我们一样学习的模型——也就是说，只需要少量的训练样本，就可以学习新概念和技能来处理新任务。因此，简而言之，我们希望找到我们所学知识之间的相似之处，并利用这一点来学习更快地完成新任务。一个好的元学习模型是一个在许多任务上被训练过的模型，并且已经被优化以在这些任务上表现良好，以及在它没有被训练过的任务上表现良好。</p>
+<p>到目前为止，我们在本书中看到的深度神经网络都需要数百万个数据样本，有时甚至需要数亿个样本。然而，在元学习中，我们希望我们的模型仅使用少量样本进行学习；我们称之为少量学习。</p>
+<p>仅使用少量数据样本进行学习的问题被称为<strong>少镜头学习</strong>或<strong> k镜头学习</strong>(其中<em> k </em>是数据集每类的数据样本数量)。假设我们有一个图像识别问题，有三个类别——驴、马和斑马。如果每个类有10个样本，那么这被称为10次学习。但是，如果每个类只有1个样本，那么这就是一次性学习。还可能有另一种有趣的情况，我们没有数据样本，这被称为<strong>零炮学习</strong>。(没错，我们可以在没有任何数据的情况下训练一个神经网络...开个玩笑！我们用元数据代替；我们很快就会了解到这一点。)</p>
+<p>如果我们的数据集中有多个类，并且我们想要执行少镜头学习，这被称为<strong> n路k镜头学习</strong>，其中<em> n </em>是类的数量。在我们的例子中，我们有3个类，每个类有10个样本，所以我们正在进行3向10次学习。</p>
+<p>前面的每个任务都有一个关联的数据集，<sub> <img class="fm-editor-equation" src="img/3e14a459-4b46-4b59-866d-8e77f94da3fb.png" style="width:5.67em;height:1.33em;"/> </sub>(由数据样本和各自的标签组成)。如我们所知，我们的模型<em> f </em>具有可训练参数θ，因此我们可以将模型表示为学习以下内容:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/89747e70-3e01-413a-a86f-6b50a854f36b.png" style="width:4.50em;height:1.42em;"/></p>
+<p>在这里，<sub> <img class="fm-editor-equation" src="img/f5251024-813f-45c1-9aa3-98df285bcdd1.png" style="width:14.75em;height:1.83em;"/> </sub>。</p>
+<p>对于元学习，我们将我们的数据集分成两部分——一个支持集<em> S </em>和一个查询集<em>B</em>—<sub><img class="fm-editor-equation" src="img/8da431f6-b85f-49ef-8f3c-68f33e00970b.png" style="width:5.25em;height:1.33em;"/></sub>。然后，我们取<sub> <img class="fm-editor-equation" src="img/f59a5a73-2b47-4d9b-9d2a-add6ce005c24.png" style="width:3.08em;height:1.08em;"/> </sub>标签的子集，这样就得到<sub> <img class="fm-editor-equation" src="img/ea8599d6-798e-4210-883c-15641271b9e4.png" style="width:5.83em;height:1.42em;"/> </sub>。然后，我们在支持集上训练我们的模型，同时在查询集上进行测试，这是以一种片断的方式进行的。通过从<sub> <img class="fm-editor-equation" src="img/5179ede3-ae6b-42fd-9ca4-6162de594436.png" style="width:0.75em;height:0.83em;"/> </sub>的每一个类中采样来构建支持集，并且使用来自相同数据集的其他样本来类似地构建预测集。通过使用这种方法，我们的模型逐渐学会从较小的数据集学习。然后，我们计算模型的损失，并使用训练集使用反向传播进行优化，就像我们之前所做的那样。</p>
+<p class="mce-root">目标现在看起来如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/657b0bb3-059c-4fc1-8571-18726fdcc388.png" style="width:25.83em;height:4.00em;"/></p>
+<p>正如你所看到的，这有点类似于迁移学习，除了它更进一步，通过优化在几个任务而不是一个任务上表现良好。</p>
+<p>实践中使用的元学习方法有三种，如下所示:</p>
+<ul>
+<li>基于模型的</li>
+<li>基于度量的</li>
+<li>基于优化</li>
+</ul>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">基于模型的元学习</h1>
+                
+            
+            
+                
+<p>在基于模型的元学习中，我们希望创建一个模型，该模型能够仅使用少量的训练步骤来快速学习和更新其参数。我们可以在内部(在模型中)或外部(使用另一个模型)这样做。现在让我们探索一些方法。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">记忆增强神经网络</h1>
+                
+            
+            
+                
+<p>顾名思义，<strong>记忆增强神经网络</strong> ( <strong>曼恩斯</strong>)使用外部存储器(一个存储缓冲区)进行增强，这使得模型更容易学习和保留新信息，以便以后不会忘记。使用的方法之一是训练一台<strong>神经图灵机</strong> ( <strong> NTM </strong>)通过改变训练设置和记忆检索来学习学习算法。</p>
+<p>为了使NTM适应元学习，我们需要它能够快速编码与新任务相关的信息，同时还确保可以快速访问存储的信息。其工作方式是，我们在当前时间步长传递信息，在下一个时间步长传递相应的标签，这迫使网络将信息保留更长时间。因此，在每个时间步，网络接收到以下内容:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/211c364a-ba91-46e3-bfc7-12476389d646.png" style="width:5.25em;height:1.58em;"/></p>
+<p class="CDPAlignLeft CDPAlign">在下图中，我们可以观察到网络的样子:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-975 image-border" src="img/2c70726a-25f5-408f-aafc-2cacea4955a3.png" style="width:30.25em;height:15.83em;"/></p>
+<p class="CDPAlignLeft CDPAlign">通过稍后提供标签，网络被迫记忆信息，以便当它被给予标签时，它可以回顾并回忆数据以做出预测。为了确保这个模型最适合元学习，读写机制也被改变了。</p>
+<p>阅读作品使用内容相似度，如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/ef80545a-3c43-4f8a-8908-d46fede66f9f.png" style="width:7.92em;height:2.92em;"/></p>
+<p>这里，<sub> <img class="fm-editor-equation" src="img/b48b2175-5db5-4b09-ba4d-766caeb7cf3a.png" style="width:15.67em;height:2.67em;"/> </sub>，<em> k <sub> t </sub> </em>是控制器在第<em>t<sup/></em>时间步输出的关键特征向量，<sub> <img class="fm-editor-equation" src="img/813aced3-fc3d-442b-a971-17473301f348.png" style="width:1.58em;height:1.58em;"/> </sub>是通过内存中各行之间的余弦相似度计算的对<em> N </em>元素的读取权重，<em> k <sub> t </sub> </em>和<em> r <sub> t 而<em>M<sub>t</sub>T38】是内存矩阵(而<em> M <sub> t </sub> (i) </em>是其<em> i <sup> th </sup> </em>行)。</em></sub></em></p>
+<p>现在，为了写入内存，我们使用<strong>最近最少使用的访问</strong> ( <strong> LRUA </strong>)，它将新信息写入存储最近最少使用的 ( <strong> LRU </strong>)内存或最频繁使用的<strong>(<strong>MRU</strong>)内存的位置。这样做的理由是，通过替换LRU内存，我们将能够维护更频繁使用的信息，而一旦MRU内存被检索，它可能在一段时间内不会被需要，所以我们可以重写它。</strong></p>
+<p>我们使用以下等式计算LRUA:</p>
+<ul>
+<li><sub> <img class="fm-editor-equation" src="img/aa17376c-21bd-4235-9e8b-eccdb52733a3.png" style="width:11.17em;height:1.33em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/7905aa3d-1592-4b46-924a-9d88122cffc2.png" style="width:14.58em;height:1.25em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/8518df2d-27ee-4355-b34c-b2fb3f41a7bb.png" style="width:15.75em;height:1.58em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/4c4e5760-0ea9-46d8-b78b-89cc6bace217.png" style="width:9.58em;height:1.67em;"/> </sub>，其中<sub> <img class="fm-editor-equation" src="img/faa1a309-c2b8-457b-ae46-14d8b529ccae.png" style="width:3.83em;height:1.17em;"/> </sub>是<sub> <img class="fm-editor-equation" src="img/73327a01-6ae7-41bb-a471-698181df4224.png" style="width:1.25em;height:1.17em;"/> </sub>中第<em><sup/></em>个最小的元素</li>
+</ul>
+<p>在最后的更新等式中，当LRU存储器被设置为0时，存储器中的每一行都使用下面的等式来更新:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/335ec747-d88d-443f-9596-c4e864759e77.png" style="width:12.25em;height:1.33em;"/></p>
+<p>现在我们已经看到了元学习如何使用外部存储器通过覆盖一段时间没有使用的信息来学习新信息，我们将继续讨论另一种基于模型的元学习方法，该方法使用其内部架构来快速学习新信息。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">元网络</h1>
+                
+            
+            
+                
+<p><strong>元网络</strong> ( <strong>元网络</strong>)是一种被创建来快速概括跨任务的架构；它使用快速的重量来做到这一点。它们被称为快速权重的原因是，我们不是像通常那样使用梯度下降来更新权重，而是使用一个神经网络来预测另一个神经网络的权重。另一个神经网络生成的权重被称为快速权重，而依赖于梯度下降的权重被称为慢速权重。这样做的效果是，它支持元级别的持续学习。</p>
+<p>在下图中，您可以看到MetaNet的整体架构:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-976 image-border" src="img/7fa791b8-5de8-42b9-a0f7-2655055f620e.png" style="width:27.33em;height:17.50em;"/></p>
+<p>元网络由两个组件组成——元学习器，它学习嵌入函数<em>f<sub>θ</sub>T3】，以帮助确定两个数据输入之间的相似性并验证两个输入是否属于同一个类，以及基本学习器<em>g<sub>φ</sub>T7】，它执行实际的学习。正如您在前面的图表中所看到的，快速权重和慢速权重被加在一起，并输入到模型中。元学习者和基础学习者都有各自的快速权重。</em></em></p>
+<p>这需要两个神经网络——<em>F<sub>w</sub></em>(一个LSTM，其输入为<em> f </em>的嵌入损失)和<em> G <sub> v </sub> </em>(一个ANN)——每个神经网络输出<em> f <sub> θ </sub> </em>和<em> g <sub> φ </sub> </em>的快速权重。与<em> f <sub> θ </sub> </em>和<em> g <sub> θ </sub> </em>对应的快速权重分别为<em> θ <sup> * </sup> </em>和<em> φ <sup> * </sup> </em>。两者的区别在于，<em>F<sub>w</sub>T45】的输入是<em> f </em>的嵌入损耗梯度，而<em>G<sub>v</sub>T51】则是利用<em> g </em>的损耗梯度进行学习。</em></em></p>
+<p>如你所见，这意味着我们必须学习四组不同的参数<sub> <img class="fm-editor-equation" src="img/73ea5643-3927-46cd-8e40-e3cd9150e7be.png" style="width:4.33em;height:1.17em;"/> </sub>。为了训练我们的网络，我们使用了两个数据集——一个训练集<sub> <img class="fm-editor-equation" src="img/65ca0144-fc10-4a84-9d09-3075799f9a69.png" style="width:4.83em;height:1.42em;"/> </sub>，以及一个支持集<sub> <img class="fm-editor-equation" src="img/e1370139-fef0-403c-b8fa-6f85fda53800.png" style="width:4.83em;height:1.42em;"/> </sub>。</p>
+<p>该网络的整体培训可分为三个不同的部分:</p>
+<ul>
+<li>获取元信息</li>
+<li>生成快速权重</li>
+<li>优化慢速权重</li>
+</ul>
+<p>我们首先创建一个任务序列，每个任务都有一个训练集和一个支持集，然后从支持集中随机抽取<em> T </em>个输入对、<sub> <img class="fm-editor-equation" src="img/b644ea5c-647b-4f8b-b430-88e2669a1375.png" style="width:3.67em;height:1.50em;"/> </sub>和<sub> <img class="fm-editor-equation" src="img/dc36b543-4375-4d44-bd45-a5c1928eb437.png" style="width:3.25em;height:1.50em;"/> </sub>，其中<em>T&lt;N</em>——然后计算验证任务的嵌入的交叉熵损失。</p>
+<p>然后，我们计算任务级别的快速权重，<sub> <img class="fm-editor-equation" src="img/6f5ca367-b136-481a-8879-5e1e95c0cb03.png" style="width:15.08em;height:1.33em;"/> </sub>。一旦完成，我们从支持集计算示例级的快速权重<sub> <img class="fm-editor-equation" src="img/2184f5e9-dd5e-4d11-9f92-10c0165f6a8c.png" style="width:16.92em;height:1.42em;"/> </sub>，并更新值存储器的<em> i <sup> th </sup> </em>位置、<em> M </em>、<sub> <img class="fm-editor-equation" src="img/255a91ae-6744-4a88-8790-84ad258c6c36.png" style="width:1.67em;height:1.75em;"/> </sub>(对于元学习)。然后，我们使用<sub> <img class="fm-editor-equation" src="img/6ae3456b-c75c-4095-b43a-01b6f93e13a4.png" style="width:6.00em;height:1.42em;"/> </sub>将来自支持集的采样点编码到任务空间中，并在关键存储器的<em>I</em><em><sup>th</sup></em>位置<em> R </em>处更新(对于基础学习者)。</p>
+<p>一旦完成，我们从测试集中抽取样本，并使用<sub> <img class="fm-editor-equation" src="img/9b120196-d062-405e-8e32-c9d25799e747.png" style="width:6.08em;height:1.42em;"/> </sub>将它们编码到任务空间中，然后我们计算余弦相似度，以找出记忆索引和输入嵌入有多相似。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">基于度量的元学习</h1>
+                
+            
+            
+                
+<p>基于度量的元学习使用类似于聚类中使用的概念，我们试图学习对象之间的距离。这类似于核密度估计，其中我们使用核函数<em>k<sub>θ</sub>T32】来计算权重或两个样本的相似程度，然后找到标签的预测概率:</em></p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/618676bb-4cec-49c6-bf99-1d1e4fdf8b74.png" style="width:14.17em;height:2.58em;"/></p>
+<p>这类元学习算法明确地学习数据的嵌入以创建最佳核。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">原型网络</h1>
+                
+            
+            
+                
+<p class="mce-root">原型网络是一种用于少量学习的元学习算法。其工作方式是我们使用一个编码函数，<em> f <sub> θ </sub> </em>，将每个<em> D </em>维输入编码成一个<em> M </em>维向量。该原型向量定义如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/9f9e78df-2a8c-48d9-99dc-af47d9385d78.png" style="width:10.50em;height:3.00em;"/></p>
+<p><img class="fm-editor-equation" src="img/8d1f81cb-e366-4365-8a2d-1f1b8791fe61.png" style="width:2.75em;height:1.00em;"/>每一个职业都是如此。然后，我们计算测试数据的嵌入和原型向量之间的距离<sub> <img class="fm-editor-equation" src="img/2b5615fc-8936-4ea1-8b31-ee759df5c7af.png" style="width:11.58em;height:1.50em;"/> </sub>，然后使用它来计算类的概率分布，如下所示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/bcef8ca0-3935-4db0-8f89-a8d15711ebd2.png" style="width:30.58em;height:3.17em;"/></p>
+<p>这里，<em>d<sub>φ</sub>T3】是距离函数，但φ必须可微。</em></p>
+<p>在下面的图表中，我们可以看到原型网络计算了少量发射原型和零发射原型:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-977 image-border" src="img/e1944b16-bc7f-49b2-b7ea-a60d4a135481.png" style="width:37.75em;height:12.00em;"/></p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">连体神经网络</h1>
+                
+            
+            
+                
+<p>暹罗神经网络是由两个具有共享权重的相同神经网络组成的架构，并且它们的参数被训练成使用关于嵌入的距离度量来确定两个数据样本之间的相似性。这种架构已被证明对于一次性图像分类是有效的，其中网络学习辨别两幅图像是否属于同一类。</p>
+<p>在下图中，我们可以看到网络接收两幅图像，每幅图像都经过相同的CNN ( <em> f <sub> θ </sub> </em>)来生成特征向量(嵌入):</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-978 image-border" src="img/a32043c8-2695-4fd3-957f-78a0771b9db0.png" style="width:44.83em;height:30.67em;"/></p>
+<p>计算嵌入后，我们可以计算两个嵌入之间的距离，如下所示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/c80bb938-b24c-4384-b671-45cdf7023a03.png" style="width:8.58em;height:1.42em;"/></p>
+<p>距离的输出通过带有sigmoid函数的<strong>多层感知器</strong> ( <strong> MLP </strong>)计算两个输入是否属于同一类别的概率。</p>
+<p>由于图像的标签是二进制的(<em> 1 </em>表示是，而<em> 0 </em>表示否)，我们使用交叉熵来计算损失:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/7a0a1901-b47c-4488-88c7-f120b4133533.png" style="width:32.58em;height:2.75em;"/></p>
+<p>我们使用以下公式计算它属于哪一类的概率:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/7d97572b-37a9-4c70-b133-e11ac9cccc61.png" style="width:13.00em;height:2.00em;"/></p>
+<p>这里，<em> S </em>是支撑集，<em> x </em>是测试图像，<em> c(x) </em>是图像对应的标签，<sub> <img class="fm-editor-equation" src="img/ff769b17-331c-4e89-bd96-283fa7cd35f0.png" style="width:2.25em;height:1.67em;"/> </sub>是类别预测。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">基于优化的元学习</h1>
+                
+            
+            
+                
+<p>在<a href="e1f37008-1ad5-49f6-a229-4d6249c2d7e3.xhtml">第7章</a>、<em>前馈神经网络</em>中，我们介绍了反向传播和梯度下降作为优化模型参数以减少损失的方法；但我们也看到它非常慢，需要大量的训练样本和大量的计算能力。为了克服这一点，我们使用基于优化的元学习，我们学习优化过程。但是我们怎么做呢？</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">长短期记忆元学习者</h1>
+                
+            
+            
+                
+<p>让我们暂时回想一下我们学习基于梯度的优化的时候。那里发生了什么？我们从参数空间中的初始点开始，然后计算梯度，并向局部/全局最小值前进一步，然后重复这些步骤。在梯度下降中，利用动量，我们使用先前更新的历史来指导下一次更新。仔细想想，这与RNNs和<strong>长时短时记忆</strong> ( <strong> LSTM </strong>)略有相似，所以我们只要用一个RNN来代替梯度下降的整个过程就可以了。这种方法被称为<strong>通过梯度下降学习</strong>。这个名字背后的原因是我们使用梯度下降来训练RNN，然后我们使用RNN来执行梯度下降。在这个场景中，我们将RNN称为优化器，将基本模型称为优化器。</p>
+<p>正如我们所知，普通的rnn有他们的问题(消失梯度)，所以在这里，我们将涵盖使用LSTM细胞优化模型。但首先，让我们重温一下参数优化是如何工作的。它看起来如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/3c259c7a-a1f0-4b27-a1d8-1e62e88532c3.png" style="width:10.42em;height:1.33em;"/></p>
+<p>让我们将此与LSTM牢房中的更新进行比较:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/0544de67-fda1-4930-ad5c-e82b1aa82b38.png" style="width:9.42em;height:1.42em;"/></p>
+<p>这里的<sub><img class="fm-editor-equation" src="img/18ee349b-ac5d-4582-a8ca-0876d8d06400.png" style="width:3.25em;height:1.08em;"/></sub><sub><img class="fm-editor-equation" src="img/3808b60a-c4d3-496c-95d3-294dec9ef860.png" style="width:2.75em;height:1.17em;"/></sub><sub><img class="fm-editor-equation" src="img/7a9dcafe-d986-42c7-bbd4-e869a633c650.png" style="width:3.42em;height:1.08em;"/></sub>和<sub> <img class="fm-editor-equation" src="img/fc5efa4d-a79f-4646-a901-15931f8b6f52.png" style="width:7.08em;height:1.50em;"/> </sub>。然而，遗忘门和输入门不必是固定的；它们是可以学习的，这样我们就可以把它们用于其他任务。遗忘门、输入门、候选层和存储器状态的计算现在分别变成如下:</p>
+<ul>
+<li><sub> <img class="fm-editor-equation" src="img/315de60a-48ff-4fcb-acf0-df63a9a6aba1.png" style="width:18.50em;height:1.33em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/ade581b4-4231-4cbe-ae54-26c6197f1ab0.png" style="width:19.42em;height:1.42em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/72bb6f71-baf3-45cc-b7a3-23b5052555e6.png" style="width:7.25em;height:1.58em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/e4400363-463d-4b9f-a9c7-dbbb8f2646a3.png" style="width:8.17em;height:1.33em;"/> </sub></li>
+</ul>
+<p>在下图中，我们可以看到LSTM元学习者是如何构成的:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-974 image-border" src="img/0e36128a-2683-4530-afbe-16076f0cd6be.png" style="width:31.75em;height:13.17em;"/></p>
+<p>在训练过程中，我们希望尝试并模拟测试过程中会发生的情况，在训练过程中，我们对数据集进行如下采样:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/349cd6dc-8852-486f-8093-cf36818bfeb1.png" style="width:15.42em;height:1.58em;"/></p>
+<p>在此之后，我们从<sub> <img class="fm-editor-equation" src="img/e79f6f58-c0f9-49f0-ad80-26f4f71b7a26.png" style="width:2.58em;height:1.08em;"/> </sub>采样，以通过总数为<em> T </em>的迭代来更新模型的参数，并计算相对于基础模型的权重的损失(θ)，以及将损失、梯度和元学习器参数(φ)馈送给优化器(元学习器)。然后元学习器将输出新的单元状态，我们用它来更新基本模型的参数。</p>
+<p>一旦我们完成了<em> T </em>次迭代，我们就可以期望找到基础模型的最佳参数。为了测试<em> θ <sub> T </sub> </em>的优度并更新元学习器的参数，我们找到测试数据相对于<em> θ <sub> T </sub> </em>的损失，然后找到测试损失相对于φ的梯度，对φ进行更新<em> N </em>次迭代。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">模型不可知元学习</h1>
+                
+            
+            
+                
+<p><strong>模型不可知元学习</strong> ( <strong> MAML </strong>)是一种优化算法，可以在任何类型的使用梯度下降训练的神经网络上工作。假设我们有一个模型，<em> f </em>，带参数θ，还有一个任务，<em>τ<sub>I</sub>T27】，它有一个对应的数据集<sub> <img class="fm-editor-equation" src="img/301eb65d-08ff-4919-9f71-33809910f9eb.png" style="width:7.00em;height:1.92em;"/> </sub>。然后，我们可以使用一个或几个梯度下降步骤对模型进行更新。该算法中的一个步骤如下:</em></p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/3b665474-9a7f-4d7f-a503-5260f6559108.png" style="width:8.67em;height:1.58em;"/></p>
+<p>前面的步骤学习了优化单个任务，但是我们想要优化多个任务。因此，我们可以更改任务以找到多个任务的最佳参数，如下所示:</p>
+<p><img src="img/de93df36-ea22-4b2c-b23e-74b709a8517a.png" style="width:34.08em;height:6.83em;"/></p>
+<p>这里，<em> L <sup> (0) </sup> </em>是初始训练批次对应的损失，<em> L <sup> (1) </sup> </em>是下一个训练批次的损失。</p>
+<p>这看起来非常类似于我们知道的梯度下降，那么它有什么特别之处呢？这样做的目的是学习与其他任务相关的参数，并尝试学习用于下一个任务的最佳初始参数，以减少训练时间。但是，这使用二阶优化，计算量更大一些，因此，我们可以使用一阶方法，这种方法更可行。这种方法被称为<strong>一阶模型不可知元学习</strong> ( <strong> FOMAML </strong>)。下面的计算我们来看看两者的区别。</p>
+<p>让我们考虑一种情况，我们执行<em> n </em>个梯度下降步骤，其中<em> n ≥ 1 </em>。我们的起点是<em> θ <sub>元</sub> </em>，步骤如下:</p>
+<p><img src="img/b6fa45f1-2c0e-4d24-92ea-640cf8d84e0b.png" style="width:14.50em;height:7.17em;"/></p>
+<p>一旦计算出<em> n </em>步，我们就对下一批进行采样并对其进行更新。这就变成了以下内容:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/de6c4eac-2fd2-41b2-be9c-552c01fa4b81.png" style="width:9.42em;height:1.33em;"/>T12】</p>
+<p>这里，<sub> <img class="fm-editor-equation" src="img/f0929297-80a7-4429-844c-0ca4a737d1b1.png" style="width:25.50em;height:3.58em;"/> </sub>。</p>
+<p>但是，FOMAML中的梯度如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/f1a9cb83-f2b3-4c45-8284-0162d4755e78.png" style="width:11.83em;height:1.67em;"/></p>
+<p>祝贺你——你已经完成了关于迁移学习和元学习的这一章！</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">摘要</h1>
+                
+            
+            
+                
+<p>在这一章中，我们涵盖了深度学习领域中两个非常有趣的领域——迁移学习和元学习——这两个领域都有望通过使神经网络能够学习额外的任务并对看不见的分布进行归纳，不仅推进深度学习领域，还推进人工智能领域。我们探讨了几种元学习方法，包括基于模型的、基于度量的和基于优化的，并探讨了它们之间的区别。</p>
+<p>下一章，我们将学习几何深度学习。</p>
+
+
+            
+
+            
+        
+    </div>
+</body></html>

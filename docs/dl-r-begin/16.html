@@ -1,0 +1,2113 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Sentiment Analysis with Word Embedding</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">嵌入单词的情感分析</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">在这一章，我们转向情感分析的问题。情感分析是一个总括术语，指的是一系列技术，用来计算说话者对某个话题或某段内容的感受。</p>
+
+<p>情绪分析的一个典型案例是极性。给定一个文档或文本串(例如，一条推文、一条评论或社交网络上的一条评论)，目的是确定作者对所讨论的项目或主题的感觉是好、坏还是中立。</p>
+
+<p>乍一看，这个问题似乎微不足道:一个包含正面和负面单词的查找表，简单地计算词频就可以了，对吗？没那么快。这里有几个例子说明为什么这很棘手:</p>
+
+<ul>
+
+<li>他们颓废的甜点让我讨厌自己</li>
+
+<li>如果你喜欢冷食，你应该试试这个地方</li>
+
+<li>我不喜欢蛋糕</li>
+
+</ul>
+
+<p>在这些例子中我们能看到什么？</p>
+
+<ul>
+
+<li>可能用于正面意义的负面术语</li>
+
+<li>讽刺性地使用积极的词语</li>
+
+<li>两个暗示积极事物的消极术语</li>
+
+</ul>
+
+<p>请注意，我们没有处理拼写错误、新词和多种语言的使用，这只是列举了现实生活中的一些潜在问题。</p>
+
+<p>正如你所看到的，情感分析是一个非常复杂的任务，我们将仅仅触及表面。</p>
+
+<p>人的因素是情感分析中最重要的因素。情感分析系统的准确性取决于它与人类判断的一致程度。这有多准确呢？不幸的是没有那么多。一些研究人员报告不同意率高达20%。这意味着，如果你的情感分析系统有70%的准确率，尽管看起来不起眼，但它仍然是好的，因为人类会同意一个完美的情感分析系统的80%的分类。但是，要小心！</p>
+
+<p>这些数字并不完全可比，因为计算机在识别最容易被人类猜到的细微之处方面存在问题，例如讽刺、笑话或与之前显示的例子在含义上的细微差异。</p>
+
+<p>尽管如此，个人和组织似乎越来越意识到他们在网上存在的重要性。我们可以通过专门从事社交媒体监控的机构和专业人士的迅速增加来衡量这种影响。这有助于增加该领域研究人员的关注(包括大学和行业)，我们相信我们很可能会看到该领域的重大进展。</p>
+
+<p>正如本书其他地方所述，我们的重点是尽可能以最简单的方式向您介绍算法。我们将使用一个众所周知的数据集，它与<em>现实生活中的</em>数据集有许多相同的属性，您可以在那里找到。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Warm-up – data exploration</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">预热–数据探索</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>让我们用一个小例子来推动事情的发展。让我们来看看这个小小的评论集:</p>
+
+<pre>text &lt;- c("The food is typical Czech, and the beer is good. The service is quick, if short and blunt, and the waiting on staff could do with a bit of customer service training",<br/>          "The food was okay. Really not bad, but we had better",<br/>          "A venue full of locals. No nonsense, no gimmicks. Only went for drinks which were good and cheap. People friendly enough.",<br/>          "Great food, lovely staff, very reasonable prices considering the location!")</pre>
+
+<p>这里我们会做一些简单的分析，这将有助于我们体会到情绪分析的一些微妙之处。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Working with tidy text</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">处理整齐的文本</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>为此，我们将使用<kbd>tidytext</kbd>包。这个软件包是建立在整齐数据的哲学基础上的，是由哈德利·韦翰在他2014年的论文(<a href="https://www.jstatsoft.org/article/view/v059i10" target="_blank">https://www.jstatsoft.org/article/view/v059i10</a>)中提出的。如果满足以下三个条件，则数据集是整齐的:</p>
+
+<ul>
+
+<li>每个变量都是一列</li>
+
+<li>每个观察值都是一行</li>
+
+<li>每种类型的观察单位都是一张表</li>
+
+</ul>
+
+<p>通过每行放置一个标记，<kbd>tidytext</kbd>包帮助我们将文本转换成整齐的形式。让我们从装载<kbd>dplyr</kbd>和<kbd>tidytext</kbd>开始。如果没有<kbd>tidytext</kbd>，先用<kbd>install.packages("tidytext")</kbd>安装。</p>
+
+<p>加载包，让我们将文本转换为数据框:</p>
+
+<pre>library(tidytext)<br/>library(dplyr)<br/>text_df &lt;- data_frame(line = 1:4, text = text)</pre>
+
+<p><kbd>unnest_tokens</kbd>功能是<kbd>tidytext</kbd>魔力的开始:</p>
+
+<pre>text_df &lt;- text_df %&gt;%<br/> unnest_tokens(word, text)<br/>head(text_df)<br/># A tibble: 6 x 2<br/>   line word<br/>  &lt;int&gt; &lt;chr&gt;<br/>1 1 the<br/>2 1 food<br/>3 1 is<br/>4 1 typical<br/>5 1 czech<br/>6 1 and</pre>
+
+<p>如您所见，我们的文本被转换为每行一个标记(默认为一个单词=一个标记)。首先，让我们去掉停用词:</p>
+
+<pre>data(stop_words)<br/>head(stop_words)<br/>text_df &lt;- text_df %&gt;% anti_join(stop_words)</pre>
+
+<p>我们的目标是至少从视觉上确定之前评论的观点。我们先来快速总结一下字数:</p>
+
+<pre>library(ggplot2)<br/>text_df %&gt;% <br/>  count(word, sort=T) %&gt;%<br/>  mutate(word = reorder(word, n)) %&gt;%<br/>  ggplot(aes(word, n)) +<br/>  geom_col() +<br/>  xlab(NULL) +<br/>  coord_flip()+<br/>  theme_bw()</pre>
+
+<p>我们得到了这样一个漂亮的条形图:</p>
+
+<div><img src="img/b5990faa-7eb6-46c6-921e-64a8375bea04.png"/></div>
+
+<p>玩具评论数据集中的基本字数</p>
+
+<p><kbd>tidytext</kbd>包包括三个由情感注释的词典(单词集合):</p>
+
+<ul>
+
+<li><kbd>AFINN</kbd>出自芬厄普·尼尔森(<a href="http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=6010" target="_blank">http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=6010 </a></li>
+
+<li><kbd>bing</kbd>出自刘兵及其合作者(<a href="https://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html" target="_blank"/>)<br/></li>
+
+<li><kbd>nrc</kbd>来自赛义夫·穆罕默德和彼得·特尼(<a href="http://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm" target="_blank">http://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm</a></li>
+
+</ul>
+
+<p><kbd>AFINN</kbd>词典给英语中的常用词一个介于-5和5之间的数值，负值就是负面词。例如:</p>
+
+<pre>get_sentiments("afinn") %&gt;% <br/>  filter(score==-5) %&gt;% <br/>  head</pre>
+
+<p>给出(敏感的读者应该跳过下一段):</p>
+
+<pre># A tibble: 6 x 2<br/>        word score<br/>       &lt;chr&gt; &lt;int&gt;<br/>1 bastard -5<br/>2 bastards -5</pre>
+
+<p>鉴于，以下内容:</p>
+
+<pre>get_sentiments("afinn") %&gt;% <br/> filter(score==0) %&gt;% <br/> head</pre>
+
+<p>简单来说就是:</p>
+
+<pre># A tibble: 1 x 2<br/> word score<br/> &lt;chr&gt; &lt;int&gt;<br/>1 some kind 0</pre>
+
+<p>以及以下内容:</p>
+
+<pre>get_sentiments("afinn") %&gt;% <br/> filter(score==5) %&gt;% <br/> head</pre>
+
+<p>退货:</p>
+
+<pre># A tibble: 5 x 2<br/> word score<br/> &lt;chr&gt; &lt;int&gt;<br/>1 breathtaking 5<br/>2 hurrah 5<br/>3 outstanding 5<br/>4 superb 5<br/>5 thrilled 5</pre>
+
+<p><kbd>bing</kbd>词典只有正面词和负面词:</p>
+
+<pre>&gt; get_sentiments("bing") %&gt;% head<br/># A tibble: 6 x 2<br/> word sentiment<br/> &lt;chr&gt; &lt;chr&gt;<br/>1 2-faced negative<br/>2 2-faces negative<br/>3 a+ positive<br/>4 abnormal negative<br/>5 abolish negative<br/>6 abominable negative</pre>
+
+<p>然而，<kbd>nrc</kbd>有不同的类别:</p>
+
+<pre>&gt; get_sentiments("nrc") %&gt;% head<br/># A tibble: 6 x 2<br/> word sentiment<br/> &lt;chr&gt; &lt;chr&gt;<br/>1 abacus trust<br/>2 abandon fear<br/>3 abandon negative<br/>4 abandon sadness<br/>5 abandoned anger<br/>6 abandoned fear</pre>
+
+<p>我们如何使用这些单词表？一旦我们的数据整理好了，我们就可以加入它们并创建不同的聚合来尝试了解正在发生的事情。让我们从存储<kbd>bing</kbd>词汇开始:</p>
+
+<pre>bing &lt;- get_sentiments("bing")</pre>
+
+<p>把它和我们的数据结合起来:</p>
+
+<pre>&gt; text_df %&gt;% inner_join(bing) %&gt;% count(line,sentiment)<br/>Joining, by = "word"<br/># A tibble: 5 x 3<br/> line sentiment n<br/> &lt;int&gt; &lt;chr&gt; &lt;int&gt;<br/>1 1 negative 1<br/>2 2 negative 1<br/>3 3 negative 3<br/>4 3 positive 1<br/>5 4 positive 2</pre>
+
+<p>还不错，但是我们可以用一个情节做得更好:</p>
+
+<pre># Plot<br/>text_df %&gt;% <br/> inner_join(bing) %&gt;% <br/> count(line,sentiment) %&gt;%<br/> ggplot(aes(line, n, fill=sentiment))+<br/> geom_col()+<br/> coord_flip()+<br/> theme_bw()</pre>
+
+<p>结果如下所示。还不错。我们看到，一个简单的连接和一个汇总已经提供了如何按情感对评论进行分类的基本信息:</p>
+
+<div><img src="img/2e1142c1-5725-47b5-ab1e-fa75b391b35d.png" style="width:36.25em;height:26.50em;"/></div>
+
+<p>使用bing词典汇总统计数据</p>
+
+<p>这已经很有价值了，但是在某些情况下，我们想知道一个评论是积极的还是消极的；例如，将问题重定向到适当的客户服务代表。在这种情况下，使用<kbd>AFINN</kbd>词典可能会有用:</p>
+
+<pre>afinn &lt;- get_sentiments("afinn")</pre>
+
+<p class="mce-root">现在，我们像以前一样加入评审数据:</p>
+
+<pre class="mce-root">text_df %&gt;% inner_join(afinn)</pre>
+
+<p class="mce-root">看看每次评论的总得分:</p>
+
+<pre class="mce-root"># Group<br/>text_df %&gt;% <br/> inner_join(afinn) %&gt;% <br/> group_by(line) %&gt;% <br/> summarize(total_score = sum(score))</pre>
+
+<p>还不错；不过还是那句话，还是搞个剧情比较好:</p>
+
+<pre class="mce-root"># Plot<br/>text_df %&gt;% <br/> inner_join(afinn) %&gt;% <br/> group_by(line) %&gt;% <br/> summarize(total_score = sum(score)) %&gt;%<br/> mutate(sentiment=ifelse(total_score&gt;0,"positive","negative")) %&gt;%<br/> ggplot(aes(line, total_score, fill=sentiment))+<br/> geom_col()+<br/> coord_flip()+<br/> theme_bw()</pre>
+
+<p>如下图所示:</p>
+
+<div><img src="img/bfc30ca4-e75f-4d26-87bc-d69a621d2093.png" style="width:50.42em;height:36.83em;"/></div>
+
+<p>使用AFINN词典汇总统计数据</p>
+
+<p>哇，这里发生了什么？情况看起来有点诡异。首先，请注意，有一篇评论已经消失。这是因为在第一次审查中没有与<kbd>AFINN</kbd>词典相关的常用词(回想一下，我们有一个内部连接)。更令人担忧的是第三次审查的结果。分数为零，根据<kbd>AFINN</kbd>词典，该分数来自评论中每个单词的正面和负面分数的总和。然而，请注意，审查3大多是积极的。然后发生了什么？</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>The more, the merrier – calculating n-grams instead of single words</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">越多越好——计算n个字母而不是单词</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>上一节中这种奇怪结果的原因可以追溯到上下文。请注意，评论3中有一个短语<kbd>No nonsense, no gimmicks</kbd>，它在很大程度上是正面的，但有两个负面的词与之相关。我们怎样才能把上下文考虑进去呢？输入n-grams。n-gram是来自给定文本或语音序列的<em> n </em>个连续项目(单词，或者在语音的情况下，音素)的序列。让我们用一个例子来说明这一点，并使用2-grams或bigrams:</p>
+
+<pre>text_df &lt;- data_frame(line = 1:4, text = text)<br/>text_df &lt;- text_df %&gt;%<br/> unnest_tokens(bigram, text, token="ngrams", n=2)<br/>text_df</pre>
+
+<p>这为我们提供了以下信息:</p>
+
+<pre># A tibble: 70 x 2<br/> line bigram<br/> &lt;int&gt; &lt;chr&gt;<br/> 1 1 the food<br/> 2 1 food is<br/> 3 1 is typical<br/> 4 1 typical czech<br/> 5 1 czech and<br/> 6 1 and the<br/> 7 1 the beer<br/> 8 1 beer is<br/> 9 1 is good<br/>10 1 good the<br/># ... with 60 more rows</pre>
+
+<p>所以，我们现在看到连续的单词被放在一起。这已经足够有助于确定实际上是积极的消极词汇的否定，就像我们前面的综述3。我们来看看哪些否定词被否定了。首先，我们将二元模型的两个词分成两列:</p>
+
+<pre>library(tidyr)<br/>text_df &lt;- text_df %&gt;% separate(bigram, c("w1","w2"), sep=" ")<br/>text_df</pre>
+
+<p>这给了我们:</p>
+
+<pre># A tibble: 70 x 3<br/> line w1 w2<br/> * &lt;int&gt; &lt;chr&gt; &lt;chr&gt;<br/> 1 1 the food<br/> 2 1 food is<br/> 3 1 is typical<br/> 4 1 typical czech<br/> 5 1 czech and<br/> 6 1 and the<br/> 7 1 the beer<br/> 8 1 beer is<br/> 9 1 is good<br/>10 1 good the<br/># ... with 60 more rows</pre>
+
+<p>一点魔法让这句话中令人不快的部分受到质疑:</p>
+
+<pre>text_df %&gt;% <br/> filter(w1=="no") %&gt;% <br/> inner_join(afinn, by=c(w2="word"))</pre>
+
+<p>那就是:</p>
+
+<pre># A tibble: 1 x 4<br/> line w1 w2 score<br/> &lt;int&gt; &lt;chr&gt; &lt;chr&gt; &lt;int&gt;<br/>1 3 no nonsense -2</pre>
+
+<p>我们现在可以使用这些信息来覆盖第三次审查的分数。然而，请注意这可能是一个多么复杂的过程。当然，在许多情况下，它会很好地工作，但我们应该找到更系统的方法来处理上下文。</p>
+
+<p>n元语法对于跟踪单词的上下文，并正确使用它进行分类非常重要。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Bag of words benchmark</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">单词袋基准</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在<a href="0ce34454-1e0b-433b-a886-1717f0049686.xhtml">第14章</a>、<em>使用自动编码器进行欺诈检测</em>中，我们在识别欺诈性电子邮件时遇到了一次性嵌入。这个想法是将每个单词表示为一个基本向量；也就是一个除了一个坐标以外都有零的向量。因此，每个文档(在本例中是一篇评论)被表示为一个由1和0组成的向量。我们更进一步，使用了不同的权重(tf-idf)。</p>
+
+<p>让我们再一次回顾这个模型，但是包括n-grams而不是单个单词。这将是我们稍后要做的更复杂的单词嵌入的基准。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Preparing the data</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">准备数据</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>该数据是斯坦福大学大型电影评论数据集的子集，最初发表在:</p>
+
+<p>安德鲁·马斯、雷蒙德·戴利、彼得·范、黄丹、安德鲁·Ng和克里斯托弗·波茨。【2011】T8。学习用于情感分析的词向量。计算语言学协会第49届年会(ACL 2011) <em xmlns:epub="http://www.idpf.org/2007/ops">。</em></p>
+
+<p>这些数据可以在http://ai.stanford.edu/~amaas/data/sentiment/<a xmlns:epub="http://www.idpf.org/2007/ops" href="http://ai.stanford.edu/~amaas/data/sentiment/">下载，前提是原始论文要注明出处。这是原始数据，但你可以在Kaggle，</a><a xmlns:epub="http://www.idpf.org/2007/ops" href="https://www.kaggle.com/c/word2vec-nlp-tutorial/data">https://www.kaggle.com/c/word2vec-nlp-tutorial/data</a>找到预处理版本。</p>
+
+<p>让我们从加载数据开始:</p>
+
+<pre>df &lt;- read.csv("./data/labeledTrainData.tsv", encoding = "utf-8", quote = "", sep="\t", stringsAsFactors = F)<br/>text &lt;- df$review</pre>
+
+<p>我们重访<kbd>tm</kbd>图书馆。注意，代码有点不同，因为我们加载的文本是<kbd>VCorpus</kbd>，而不是之前的<kbd>Corpus</kbd>:</p>
+
+<pre>library(tm)<br/>corpus &lt;- VCorpus(VectorSource(text))<br/>inspect(corpus[[1]])</pre>
+
+<p>这是对这些数据的第一次回顾:</p>
+
+<pre>&gt; inspect(corpus[[1]])<br/>&lt;&lt;PlainTextDocument&gt;&gt;<br/>Metadata: 7<br/>Content: chars: 1681<br/><br/> stuff going moment mj ive started listening music watching odd documentary watched wiz watched moonwalker maybe just want get certain insight guy thought really cool eighties just maybe make mind whether guilty innocent moonwalker part biography part feature film remember going see cinema originally released subtle messages mjs feeling towards press also obvious message drugs bad mkaybr br visually impressive course michael jackson unless remotely like mj anyway going hate find boring may call mj egotist consenting making movie mj fans say made fans true really nice himbr br actual feature film bit finally starts 20 minutes excluding smooth criminal sequence joe pesci convincing psychopathic powerful drug lord wants mj dead bad beyond mj overheard plans nah joe pescis character ranted wanted people know supplying drugs etc dunno maybe just hates mjs musicbr br lots ... &lt;truncated&gt;</pre>
+
+<p>首先，一些预处理:</p>
+
+<pre>corpus &lt;- tm_map(corpus,content_transformer(tolower))<br/>corpus &lt;- tm_map(corpus, content_transformer(removePunctuation))<br/>corpus &lt;- tm_map(corpus, content_transformer(removeWords), stopwords("english"))</pre>
+
+<p>下一步是创建二元模型。我们看到了这一点的重要性:</p>
+
+<pre>BigramTokenizer &lt;- function(x){ unlist(lapply(ngrams(words(x), 2), paste, collapse = " "), use.names = FALSE)}<br/>dtm &lt;- DocumentTermMatrix(corpus, control = list(tokenize = BigramTokenizer))<br/>dtm &lt;- removeSparseTerms(dtm, 0.995)<br/>X &lt;- as.data.frame(as.matrix(dtm))<br/>X$sentiment &lt;- df$sentiment<br/>X$sentiment &lt;- ifelse(X$sentiment&lt;0.5,0,1)</pre>
+
+<p class="mce-root">我们现在准备将这些数据应用于分类模型；例如，逻辑回归。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Implementing a benchmark – logistic regression </title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">实施基准–逻辑回归</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>逻辑回归可能不是最好的算法，但肯定是最常用的算法之一。它非常健壮和强大，但解释起来很简单。与其他方法不同的是，它很容易看到引擎盖下，看看它在做什么。</p>
+
+<p>首先，我们为训练和测试集选择一些指数:</p>
+
+<pre># Train, test, split<br/>library(caTools)<br/>set.seed(42)<br/>spl &lt;- sample.split(X$sentiment, 0.7)<br/>train &lt;- subset(X, spl == TRUE)<br/>test &lt;- subset(X, spl == FALSE)</pre>
+
+<p>现在我们分成训练集和测试集:</p>
+
+<pre>X_train &lt;- subset(train,select=-sentiment)<br/>y_train &lt;- train$sentiment<br/>X_test &lt;- subset(test,select=-sentiment)<br/>y_test &lt;- test$sentiment</pre>
+
+<p>现在让我们看看模型和系数:</p>
+
+<pre>model &lt;- glm(y_train ~ ., data = X_train, family = "binomial")<br/>coefs &lt;- as.data.frame(model$coefficients)<br/>names(coefs) &lt;- c("value")<br/>coefs$token &lt;- row.names(coefs)</pre>
+
+<p>并查看模型如何使用每项功能:</p>
+
+<pre>library(ggplot2)<br/>library(dplyr)<br/>coefs %&gt;% <br/> arrange(desc(value)) %&gt;% <br/> head %&gt;% <br/> ggplot(aes(x=token, y=value))+<br/> geom_col()+<br/> coord_flip()+<br/> theme_bw()</pre>
+
+<p>这为我们提供了以下图表:</p>
+
+<div><img src="img/cba6ec3b-3753-4be5-a80f-b8bb94ba0276.png"/></div>
+
+<p>与积极情绪相关的特征</p>
+
+<p>现在让我们来看看与消极情绪相关的特征(在看代码之前，尝试自己做这件事！):</p>
+
+<pre>coefs %&gt;% <br/> arrange(value) %&gt;% <br/> head %&gt;% <br/> ggplot(aes(x=token, y=value))+<br/> geom_col()+<br/> coord_flip()+<br/> theme_bw()</pre>
+
+<p>这看起来像:</p>
+
+<div><img src="img/a1191ac2-5b69-4f29-a7e4-4d21a85b53a5.png"/></div>
+
+<p>与消极情绪相关的特征</p>
+
+<p>现在，让我们用ROC曲线更仔细地看看性能。我们可以编写自己的函数，而不是使用额外的包:</p>
+
+<pre>roc &lt;- function(y_test, y_preds){<br/> y_test &lt;- y_test[order(y_preds, decreasing = T)]<br/> return(data.frame(fpr=cumsum(!y_test)/sum(!y_test),<br/>                   tpr=cumsum(y_test)/sum(y_test)) )<br/>}</pre>
+
+<p>我们现在可以生成预测，并使用base R图形绘制曲线:</p>
+
+<pre>y_preds &lt;- predict(model, X_test, type="response")<br/>plot(roc(y_test,y_preds), xlim=c(0,1), ylim=c(0,1))</pre>
+
+<p>或者将它们存储在数据帧中并使用<kbd>ggplot2</kbd>:</p>
+
+<pre>roc_df &lt;- roc(y_test,y_preds)<br/>ggplot(roc_df, aes(x=fpr,y=tpr))+geom_point(color="red")+theme_bw()</pre>
+
+<p>ROC曲线看起来像这样:</p>
+
+<div><img src="img/fb0486be-f72d-4821-93ca-389549974ef0.png"/></div>
+
+<p>二元逻辑回归的ROC曲线</p>
+
+<p>我们可以量化AUC，但使用基本R代码会更复杂一些。你可以尝试使用<kbd>ROCR</kbd>或<kbd>pROC</kbd>软件包。我们将简单地设置一个阈值0.5，并计算该阈值的正类的精度，只是为了了解一下发生了什么:</p>
+
+<pre>labels &lt;- ifelse(y_preds&lt;0.5,0,1)<br/>table(labels,y_test)</pre>
+
+<p>这给出了:</p>
+
+<pre>table(labels,y_test)<br/> y_test<br/>labels   0    1<br/> 0    2536  896<br/> 1    1214 2854</pre>
+
+<p>因此我们得到的精度为:</p>
+
+<pre>2536/(2536+896)<br/>[1] 0.7389277</pre>
+
+<p>对于积极向上的阶层。还不错，在实践中；80%将是一个好的分类器，因为这大致是人类之间的一致率。在<em>练习</em>一节中，你可以尝试用几种不同的方法来提高这个基准。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Exercises</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">练习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<ol>
+
+<li>探索n元语法中不同的<em> n </em>值的分类器的性能。变化显著吗？</li>
+
+<li>上一节中的图表表明可能需要一些词干，因为一些顶级功能在含义上非常相似。应用词干，看看ROC曲线的形状。</li>
+
+<li>尝试其他分类器，例如，随机森林或支持向量机，以及不同种类的n-gram。你能提高性能吗？</li>
+
+</ol>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Word embeddings</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">单词嵌入</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>如今，自然语言处理领域发展非常迅速，就像现代数据科学和人工智能一样。</p>
+
+<p>word2vec (Mikolov等人，2013)和GloVe (Pennington等人，2014)等算法一直是该领域的先驱，虽然严格来说它们都与深度学习无关，但用它们训练的模型在深度学习的许多应用中被用作NLP的输入数据。</p>
+
+<p>我们将简要描述word2vec和GloVe，它们可能是最常用的单词嵌入算法，尽管对神经网络和语言交叉的研究至少可以追溯到20世纪90年代的Jeff Elman。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>word2vec</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">word2vec</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>word2vec <strong xmlns:epub="http://www.idpf.org/2007/ops">它首先从训练文本数据构建词汇表，然后学习单词的向量表示。然后我们使用这些向量作为机器学习算法的特征。</strong></p>
+
+<p>词向量能够捕捉语言中的一些直观规律，例如:</p>
+
+<div><em>vector('Paris') - vector('France') + vector('Italy')</em></div>
+
+<p>产生的矢量非常接近:</p>
+
+<div><em>vector('Rome')</em>,</div>
+
+<p>而且，</p>
+
+<div><em>vector('king') - vector('man') + vector('woman')</em> </div>
+
+<p>接近于:</p>
+
+<div><em>vector('queen').</em></div>
+
+<p>word2vec在幕后做什么？word2vec通过训练神经网络来预测单词向量:</p>
+
+<ul>
+
+<li>来自周围环境的中心单词(连续单词包，CBOW)</li>
+
+<li>一个词的周围从中心词(跳格模型)</li>
+
+</ul>
+
+<p>为什么这很有用？根据分布假说，一起出现的单词往往传达相似的意思。研究者Goldberg和Levy指出(<a href="https://arxiv.org/abs/1402.3722" target="_blank">https://arxiv.org/abs/1402.3722</a>)word 2 vec目标函数导致出现在相似语境中的单词具有相似的嵌入，这符合分布假说。然而，他们也指出需要一个更好的解释。</p>
+
+<p>分布假说认为在相同的上下文中使用的单词是相关的。这是GloVe或word2vec等矢量嵌入算法的基本假设。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>GloVe</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">手套</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>大约在word2vec一年后，斯坦福大学的研究人员发表了一篇论文(【http://web.stanford.edu/~jpennin/papers/glove.pdf】)明确指出了word2vec在幕后优化的目标。他们的方法，<strong xmlns:epub="http://www.idpf.org/2007/ops"> GloVe </strong>，(<strong xmlns:epub="http://www.idpf.org/2007/ops">全局向量</strong>)明确地命名了目标矩阵，确定了因式分解，并提供了一些直观的理由，说明为什么这会给我们带来工作上的相似性。</p>
+
+<p>本节从较高的层面描述了GloVe算法的内部工作原理。因此，它比我们想要的要多一点数学含量。如果不熟悉线性代数和微积分，可以放心跳过。</p>
+
+<p>手套是如何工作的？</p>
+
+<ol>
+
+<li>创建单词<strong>共现矩阵</strong> <em> <strong> </strong> </em>，其中每个条目代表单词<em> i </em>在单词<em> j </em>的上下文中出现的频率。这个矩阵显然是对称的。此外，对于每个术语，我们寻找在某些窗口上同时出现的单词，并且对更远的单词给予更小的权重。</li>
+
+<li>为每个词对定义软约束。</li>
+
+<li>最后，引入一个代价函数，惩罚从非常常见的词对中学习。<br/>对于软约束，我们的意思是:</li>
+
+</ol>
+
+<div><img class="fm-editor-equation" src="img/c3ffa53b-35ef-4143-b312-bd1b4b6f34f2.png" style="width:13.17em;height:1.50em;"/></div>
+
+<p>其中<em xmlns:epub="http://www.idpf.org/2007/ops">w<sub>I</sub>T12】和<em xmlns:epub="http://www.idpf.org/2007/ops">w<sub>j</sub>T16】分别表示主嵌入向量和上下文嵌入向量，偏差为<em xmlns:epub="http://www.idpf.org/2007/ops">b<sub>I</sub>T20】和<em xmlns:epub="http://www.idpf.org/2007/ops">b<sub>j</sub>T24】，<em xmlns:epub="http://www.idpf.org/2007/ops"> X <sub> ij </sub> </em>是单词<em xmlns:epub="http://www.idpf.org/2007/ops"> j </em>在单词<em xmlns:epub="http://www.idpf.org/2007/ops">的上下文中的同现</em></em></em></em></em></p>
+
+<p>成本函数由下式定义:</p>
+
+<div><img class="fm-editor-equation" src="img/20ea1e2e-bd31-47f6-95c0-56c993fe4eeb.png" style="width:17.75em;height:3.25em;"/></div>
+
+<p>其中<em> V </em>是词汇表，<em> f </em>定义如下:</p>
+
+<div><img class="fm-editor-equation" src="img/585dcc9e-cb68-4a13-b79b-08117e1dfbd5.png" style="width:18.42em;height:3.83em;"/></div>
+
+<p>其中<em> alpha </em>和<em> X <sub> max </sub> </em>是可以选择的超参数。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Sentiment analysis from movie reviews</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">来自电影评论的情感分析</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>让我们继续使用IMDb的数据，并将前面几节中的想法付诸实践。在本节中，我们将使用几个熟悉的包，如<kbd>tidytext</kbd>、<kbd>plyr</kbd>、<kbd>dplyr</kbd>，以及2017年发布的Dimitriy Selivanov的优秀<kbd>text2vec</kbd>，以及Max Kuhn的知名<kbd>caret</kbd>包。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Data preprocessing</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">数据预处理</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们需要为算法准备数据。</p>
+
+<p>首先，一些必要的导入:</p>
+
+<pre>library(plyr)<br/>library(dplyr)<br/>library(text2vec)<br/>library(tidytext)<br/>library(caret)</pre>
+
+<p>我们将像以前一样使用IMDb的数据:</p>
+
+<pre class="mce-root">imdb &lt;- read.csv("./data/labeledTrainData.tsv", encoding = "utf-8", quote = "", sep="\t", stringsAsFactors = F)</pre>
+
+<p class="mce-root">并在标记上创建一个迭代器:</p>
+
+<pre class="mce-root">tokens &lt;- space_tokenizer(imdb$review)<br/>token_iterator &lt;- itoken(tokens)</pre>
+
+<p>令牌是简单的单词，也称为<strong> unigrams </strong>。这构成了我们的词汇:</p>
+
+<pre class="mce-root">vocab &lt;- create_vocabulary(token_iterator)</pre>
+
+<p class="mce-root">对于共现矩阵来说，重要的是只包括频繁出现大量次的单词。我们将把这个阈值设置为<kbd>5:</kbd></p>
+
+<pre class="mce-root">vocab &lt;- prune_vocabulary(vocab, term_count_min = 5)</pre>
+
+<p class="mce-root">我们使用过滤后的词汇:</p>
+
+<pre class="mce-root">vectorizer &lt;- vocab_vectorizer(vocab)</pre>
+
+<p class="mce-root">并为上下文单词设置大小为<kbd>5</kbd>的窗口:</p>
+
+<pre class="mce-root">tcm &lt;- create_tcm(token_iterator, vectorizer, skip_grams_window = 5)</pre>
+
+<p>现在我们有了共生矩阵，让我们继续矢量嵌入。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>From words to vectors</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">从单词到向量</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们准备使用GloVe创建单词embedding。首先，让我们初始化GlobalVectors类的一个实例:</p>
+
+<pre>glove &lt;- GlobalVectors$new(word_vectors_size = 50, <br/>                           vocabulary = vocab, <br/>                           x_max = 10)</pre>
+
+<p>我们现在应用<kbd>fit_transform</kbd>方法(scikit learn用户可能很熟悉):</p>
+
+<pre>wv_main &lt;- glove$fit_transform(tcm, <br/>                                n_iter = 10, <br/>                                convergence_tol = 0.01)</pre>
+
+<p>一旦完成，我们就准备好了矢量器。我们现在需要解析我们的文本:</p>
+
+<pre>text &lt;- unlist(imdb$review)<br/>length(text)<br/># 25000<br/>text_df &lt;- data_frame(line = 1:25000, text = text)</pre>
+
+<p>并应用来自<kbd>tidytext</kbd>的<kbd>unnest_tokens</kbd>函数，将我们的数据转换成整齐的格式:</p>
+
+<pre class="mce-root">text_df &lt;- text_df %&gt;%<br/> unnest_tokens(word, text)<br/>head(text_df)</pre>
+
+<p>这给出了一个熟悉的输出:</p>
+
+<pre> head(text_df)<br/># A tibble: 6 x 2<br/> line word<br/> &lt;int&gt; &lt;chr&gt;<br/>1 1 with<br/>2 1 all<br/>3 1 this<br/>4 1 stuff<br/>5 1 going<br/>6 1 down</pre>
+
+<p>等等，那手套呢？让我们来看看:</p>
+
+<pre>head(wv_main[,1:3])<br/>             [,1] [,2] [,3]<br/>overpowered 0.03408282 -0.225022092 0.077734992<br/>nears 0.65971708 -0.005281781 -0.100175403<br/>producers) 0.46528772 0.063937798 -0.165794402<br/>Daddy, 0.06035958 -0.076200403 0.008196513<br/>rhetoric, -0.05500082 0.149410397 -0.314875215<br/>Johnsons' 0.43385875 0.078220785 -0.177165091</pre>
+
+<p>实际上<kbd>text2vec</kbd>包返回两个对象:</p>
+
+<pre>wv_context &lt;- glove$components</pre>
+
+<p>我们可以使用<kbd>wv_main</kbd>或<kbd>wv_context</kbd>作为我们的矢量嵌入，但有时将它们放在一起会有所帮助(根据手套文件)。因此，您可以创建一个<kbd>wv</kbd>对象作为这两个向量的和或平均值，例如:</p>
+
+<pre>wv &lt;- wv_main + t(wv_context).</pre>
+
+<p>现在让我们只使用<kbd>wv_main</kbd>。我们需要将矩阵强制转换为数据框格式，并添加<kbd>row.names</kbd>作为列，以整齐的格式将其与我们的文本连接起来:</p>
+
+<pre>wv &lt;- as.data.frame(wv_main)<br/>wv$word &lt;- row.names(wv)</pre>
+
+<p>最后，把这两个放在一起:</p>
+
+<pre>df &lt;-  wv%&gt;% inner_join(text_df)</pre>
+
+<p>这还没有准备好使用，因为我们需要汇总审查中出现的向量。一种可能性是只取平均向量作为代表；评论的向量将是组成评论的所有单词的平均向量。我们将在这里采用这种方法，并在练习中提出一些其他的可能性:</p>
+
+<pre>df &lt;- df %&gt;% <br/>        group_by(line) %&gt;% <br/>        summarize_all(mean) %&gt;% <br/>        select(1:50) <br/>df$label &lt;- as.factor(imdb$sentiment)</pre>
+
+<p>这些数据现在可以通过不同的分类器，从中我们可以预测情感极性(积极/消极)。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Sentiment extraction</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">情感提取</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们将使用<kbd>caret</kbd>一次尝试不同的分类器:</p>
+
+<pre>library(caret)</pre>
+
+<p class="mce-root">我们首先需要准备培训方案:</p>
+
+<pre class="mce-root">control &lt;- trainControl(method="cv", repeats=5)</pre>
+
+<p>我们将设置不同的模型进行尝试:</p>
+
+<ul>
+
+<li>随机森林</li>
+
+<li>梯度推进机器</li>
+
+<li>Logit增强</li>
+
+<li>朴素贝叶斯</li>
+
+</ul>
+
+<p>不要忘记设置随机数生成器的种子，以使结果可重复:</p>
+
+<pre class="mce-root">set.seed(7)<br/> modelRF &lt;- train(<br/>                    label~., <br/>                    data=df, <br/>                    method="rf", <br/>                    trControl=control<br/>                   )<br/><br/> modelGbm &lt;- train(<br/>                    label~., <br/>                    data=df, <br/>                    method="gbm", <br/>                    trControl=control, <br/>                    verbose=FALSE<br/>                    )<br/><br/>modelLogitBoost &lt;- train(<br/>                        label~., <br/>                        data=df, <br/>                        method="LogitBoost",<br/>                        trControl=control</pre>
+
+<pre class="mce-root">                        )<br/><br/>modelNaiveBayes &lt;- train(<br/>                        label~., <br/>                        data=df, <br/>                        method="nb", <br/>                        trControl=control<br/>                        )</pre>
+
+<p class="mce-root">培训将需要一些时间，但一旦完成，我们可以将结果收集到一个数据框中，以供以后研究:</p>
+
+<pre class="mce-root"><br/> results &lt;- resamples(<br/>                    list(<br/>                        RF=modelRF, <br/>                        GBM=modelGbm, <br/>                        LB=modelLogitBoost, <br/>                        NB=modelNaiveBayes<br/>                        )<br/>                    )</pre>
+
+<p class="mce-root">我们可以通过熟悉的<kbd>summary</kbd>功能轻松获得结果摘要:</p>
+
+<pre class="mce-root">&gt; summary(results)<br/><br/>Call:<br/>summary.resamples(object = results)<br/><br/>Models: RF, GBM, LB, NB <br/>Number of resamples: 10 <br/><br/>Accuracy <br/>      Min. 1st Qu. Median Mean 3rd Qu. Max. NA's<br/>RF 0.7116 0.7189 0.7284 0.72732 0.7363 0.7412 0<br/>GBM 0.7168 0.7199 0.7352 0.73228 0.7410 0.7496 0<br/>LB 0.5680 0.5933 0.6124 0.60656 0.6184 0.6420 0<br/>NB 0.6244 0.6291 0.6374 0.63992 0.6510 0.6588 0<br/><br/>Kappa <br/>      Min. 1st Qu. Median Mean 3rd Qu. Max. NA's<br/>RF 0.4232 0.4378 0.4568 0.45464 0.4726 0.4824 0<br/>GBM 0.4336 0.4398 0.4704 0.46456 0.4820 0.4992 0<br/>LB 0.1360 0.1866 0.2248 0.21312 0.2368 0.2840 0<br/>NB 0.2488 0.2582 0.2748 0.27984 0.3020 0.3176 0<br/> </pre>
+
+<p class="mce-root">或更详细的可视化:</p>
+
+<pre class="mce-root">bwplot(results) </pre>
+
+<p>上述代码产生以下指标:</p>
+
+<div><img src="img/ddb46e5a-2845-4a95-ae1c-4ec764d61838.png" style="width:34.08em;height:17.92em;"/></div>
+
+<p>比较手套顶部不同分类器性能的箱线图</p>
+
+<p class="mce-root">您也可以通过以下方式实现:</p>
+
+<pre class="mce-root">dotplot(results)</pre>
+
+<p>总之，是时候看看性能指标了！</p>
+
+<div><img src="img/a0d71caf-12c6-4c6e-a7f4-7d92a3f0105a.png" style="width:35.17em;height:19.58em;"/></div>
+
+<p>比较手套顶部不同分类器性能的点图<br/></p>
+
+<p>在图中和前面显示的汇总结果中，<strong>精度</strong>是所有实例中正确分类的实例的百分比，而<strong> kappa </strong>度量(或Cohen的kappa统计)是使用基线随机分类对数据进行标准化的精度，就好像每个观察值都是根据每个类的频率给出的概率分布进行分类的一样。</p>
+
+<p>kappa值为零表示模型没有用(kappa值在0到1之间)，kappa值越高，你的模型越有可能有用，尽管这个统计数据没有统一的解释。</p>
+
+<p>所以我们看到基于树的方法做得很好。这在某种程度上与一次性编码模型形成了对比。通常不建议在具有大量稀疏特征的数据中使用基于树的方法，如果我们像以前一样使用一次性编码的模型，就会出现这种情况。因为我们改为嵌入到密集向量中，所以树再次受到欢迎，它们确实表现很好，即使没有调整超参数。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>The importance of data cleansing</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">数据清理的重要性</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>如果您遵循前面的工作流程，并不时停下来看看结果(顺便说一句，这是您绝对应该做的)，您会注意到周围有许多垃圾——有大小写的单词、标点符号等等。如果通过正确解析单词来改进这个工作流程，会发生什么？您可以使用tokenizers库代替text2vec中的<kbd>space_tokenizer</kbd>函数来删除单行中的停用词和标点符号:</p>
+
+<pre> library(tokenizers)<br/> tokens &lt;- tokenize_words(imdb$review, stopwords = stopwords())</pre>
+
+<p>完整的代码现在是:</p>
+
+<pre>library(plyr)<br/>library(dplyr)<br/>library(text2vec)<br/>library(tidytext)<br/>library(caret)<br/><br/>imdb &lt;- read.csv("./data/labeledTrainData.tsv"<br/>                   , encoding = "utf-8"<br/>                   , quote = ""<br/>                   , sep="\t"<br/>                   , stringsAsFactors = F)<br/><strong># Standard preprocessing: change to lowercase, remove english stopwords and punctuation</strong><br/>library(tokenizers)<br/>tokens &lt;- tokenize_words(imdb$review, stopwords = stopwords())<br/><br/><br/><strong># Create vocabulary. The tokens are simple words here.</strong><br/>token_iterator &lt;- itoken(tokens)<br/>vocab &lt;- create_vocabulary(token_iterator)<br/><br/><strong># Kill sparse terms</strong><br/>vocab &lt;- prune_vocabulary(vocab, term_count_min = 5L)<br/><br/>vectorizer &lt;- vocab_vectorizer(vocab)<br/><br/><strong># use window of 5 for context words</strong><br/> tcm &lt;- create_tcm(token_iterator, vectorizer, skip_grams_window = 5L)<br/><br/>glove &lt;- GlobalVectors$new(word_vectors_size = 50, <br/>                         vocabulary = vocab, <br/>                         x_max = 10)<br/>wv_main &lt;- glove$fit_transform(tcm, <br/>                             n_iter = 10, <br/>                             convergence_tol = 0.05)<br/><br/>text &lt;- unlist(imdb$review)<br/><br/>text_df &lt;- data_frame(line = 1:25000, text = text)<br/><br/>text_df &lt;- text_df %&gt;%<br/>         unnest_tokens(word, text)<br/><br/>wv &lt;- as.data.frame(wv_main)<br/><br/>wv$word &lt;- row.names(wv)<br/><br/>df &lt;- wv%&gt;% inner_join(text_df)<br/><br/><strong># Now we need to create the trained matrix</strong><br/>df &lt;- df %&gt;% group_by(line) %&gt;% summarize_all(mean) %&gt;% select(1:51) <br/>df$label &lt;- as.factor(imdb$sentiment)<br/><br/>library(caret)<br/><br/>control &lt;- trainControl(method="cv", repeats=5)<br/><br/><br/><strong># Train the different models</strong><br/>set.seed(7)<br/>modelRF &lt;- train(label~., data=df, method="rf", trControl=control)<br/><br/>set.seed(7)<br/>modelGbm &lt;- train(label~., data=df, method="gbm", trControl=control, verbose=FALSE)<br/><br/>set.seed(7)<br/>modelLogitBoost &lt;- train(label~., data=df, method="LogitBoost", trControl=control)<br/><br/>set.seed(7)<br/>modelNaiveBayes &lt;- train(label~., data=df, method="nb", trControl=control)<br/><br/><strong># collect resamples: this is useful for the plots</strong><br/>results &lt;- resamples(<br/>                    list(RF=modelRF, <br/>                    GBM=modelGbm, <br/>                    LB=modelLogitBoost, <br/>                    NB=modelNaiveBayes))<br/><br/><br/><strong># summarize and check the model performance</strong><br/>summary(results)<br/>bwplot(results)<br/>dotplot(results)</pre>
+
+<p>我们可以看到结果有了明显的改善！</p>
+
+<pre>&gt; summary(results)<br/>Call:<br/>summary.resamples(object = results)<br/>Models: RF, GBM, LB, NB <br/>Number of resamples: 10<br/>Accuracy <br/> Min. 1st Qu. Median Mean 3rd Qu. Max. NA's<br/>RF 0.7820 0.7892 0.7946 0.79340 0.7972 0.8012 0<br/>GBM 0.7904 0.7952 0.7978 0.79732 0.7996 0.8036 0<br/>LB 0.6904 0.6978 0.7040 0.70388 0.7098 0.7176 0<br/>NB 0.6728 0.6810 0.6900 0.68824 0.6957 0.7008 0</pre>
+
+<p>这里的点图和箱线图如下所示:</p>
+
+<div><img src="img/6c85a5da-5745-46fd-9a3e-2fabd0fec14d.png"/></div>
+
+<p>显示经过适当预处理的不同分类器的点图</p>
+
+<p>箱线图:</p>
+
+<div><img src="img/7e8268c5-8f17-409a-bd82-cd1ede590576.png"/></div>
+
+<p>显示经过适当预处理的不同分类器的箱线图</p>
+
+<p class="mce-root">请记住，就软件而言，数据科学也不例外:</p>
+
+<div><strong>Garbage in, garbage out</strong>: Always pay attention to the data you are feeding to the models! The most powerful models available will produce unsatisfactory results when feeding them with the wrong data! It's important to log, or at least print, to the console, any preprocessing steps you are doing. Treating models as a magic black box is a very dangerous thing, and unfortunately too common. </div>
+
+<p>正如我们前面提到的，向量嵌入不是正确的深度学习，而是一种特征表示方法。然而，我们可以将向量嵌入与深度神经网络相结合，并有望获得更好的结果。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Vector embeddings and neural networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">向量嵌入和神经网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>是时候将向量嵌入和神经网络结合起来，有望创建更健壮的模型了。让我们通过训练神经网络作为分类器来对我们的工作流程进行简单的扩展。我们从现在熟悉的预处理和矢量嵌入开始:</p>
+
+<pre>library(plyr)<br/>library(dplyr)<br/>library(text2vec)<br/>library(tidytext)<br/>library(caret)<br/>library(tokenizers)<br/><br/>imdb &lt;- read.csv("./data/labeledTrainData.tsv"<br/>                , encoding = "utf-8"<br/>                , quote = ""<br/>                , sep="\t"<br/>                , stringsAsFactors = F)<br/><br/>tokens &lt;- tokenize_words(imdb$review, stopwords = stopwords())<br/><br/><strong># Boring boilerplate preprocessing</strong><br/>token_iterator &lt;- itoken(tokens)<br/>vocab &lt;- create_vocabulary(token_iterator)<br/>vocab &lt;- prune_vocabulary(vocab, term_count_min = 5L)<br/>vectorizer &lt;- vocab_vectorizer(vocab)<br/><br/><strong># Create context and embedding</strong><br/>tcm &lt;- create_tcm(token_iterator, vectorizer, skip_grams_window = 5L)<br/>glove &lt;- GlobalVectors$new(word_vectors_size = 50, <br/> vocabulary = vocab, <br/> x_max = 10)<br/>wv_main = glove$fit_transform(tcm, <br/> n_iter = 10, <br/> convergence_tol = 0.01)<br/>text &lt;- unlist(imdb$review)<br/>text_df &lt;- data_frame(line = 1:length(text), text = text)<br/>text_df &lt;- text_df %&gt;%<br/> unnest_tokens(word, text)</pre>
+
+<p>现在让我们用上下文向量来代替主词向量:</p>
+
+<pre>wv_context &lt;- glove$components<br/>wv &lt;- as.data.frame(wv_main+t(wv_context))<br/>wv$word &lt;- row.names(wv)<br/>df &lt;- wv%&gt;% inner_join(text_df)</pre>
+
+<p class="mce-root">为了最终创建训练好的矩阵:</p>
+
+<pre class="mce-root">df &lt;- df %&gt;% group_by(line) %&gt;% summarize_all(mean) %&gt;% select(1:51)<br/>df$label &lt;- as.factor(imdb$sentiment)</pre>
+
+<p>最后，创建具有单层的基线神经网络模型:</p>
+
+<pre>library(keras)<br/><br/>X &lt;- df[,2:51]<br/>y &lt;- df[,52]<br/><br/>y &lt;- to_categorical(y[["label"]])<br/>y &lt;- y[,2:3]<br/><br/>model &lt;- keras_model_sequential()<br/>model %&gt;%<br/> layer_dense(activation='relu', units =20, input_shape=c(50))%&gt;%<br/> layer_dense(units=2, activation = 'softmax')<br/><br/>model %&gt;% compile(<br/> loss = 'categorical_crossentropy',<br/> optimizer = optimizer_rmsprop(),<br/> metrics = c('accuracy')<br/> )<br/><br/> history &lt;- model %&gt;% keras::fit(<br/> as.matrix(X), y,<br/> epochs = 30, batch_size = 128,<br/> validation_split = 0.2<br/> )</pre>
+
+<p class="mce-root">调用fit方法会触发训练过程。一旦训练完成，我们可以通过使用<kbd>plot</kbd>函数来查看它的进展情况:</p>
+
+<pre class="mce-root">plot(history)</pre>
+
+<p>这给了我们一些稍微令人失望的结果:</p>
+
+<div><img src="img/7f7606d0-ccc0-4ab3-86d2-d2cf3ede3abc.png"/></div>
+
+<p>具有20个神经元的单层神经网络的性能</p>
+
+<p>为什么会令人失望？嗯，我们拥有20个神经元的强大神经网络并没有改善，比如说，随机森林。怎样才能改善这个结果？</p>
+
+<p>在这种情况下，似乎神经网络，或者至少前馈神经网络可能没有太大的帮助，或者至少我们不能通过增加更多的层来找到显著的改进。实际上，三层或更多层似乎会使结果变得更糟，我们甚至观察到过度拟合。</p>
+
+<div><strong>Occam's razor</strong> should prevail. The model you keep should be as simple as possible. A complicated model might be of little use in production because of the technical complications needed to deploy it. Furthermore, when we have no way of interpreting the model, unexpected results might happen when the model is applied to slightly different data from that used for training and testing.</div>
+
+<p>我们可以保存我们的矢量嵌入和模型供以后使用:</p>
+
+<pre>write.csv(wv,"./data/wv.csv", row.names = F)<br/>save_model_hdf5(model,"glove_nn.hdf5")</pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Bi-directional LSTM networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">双向LSTM网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们的模型在简单的前馈网络中不太适用。在这一部分，我们将尝试一个不同的模型:双向LSTM网络。</p>
+
+<p>回想一下，LSTM网络通过隐藏状态保留了部分先前的信息。然而，这些信息仅仅是关于<strong>过去的</strong>。</p>
+
+<p>双向LSTM双向运行——从过去到未来，再回来！向后运行的LSTM保存了来自<strong>未来的信息。</strong>结合使用这两种隐藏状态，你可以保留过去和未来的背景。显然，这对于股票价格预测没有意义！它们的使用最初在语音识别领域是合理的，因为正如您从经验中可能知道的那样，理解一个单词的意思经常需要完整短语的上下文。例如，当你试图同时从一种语言翻译到另一种语言时，就会发生这种情况。</p>
+
+<p>好吧，那我们该怎么做？让我们回到<kbd>keras</kbd>。这会让体验相当流畅，就像我们之前看到的那样。</p>
+
+<p>对于双向LSTM API，keras期望每行有一个包含单词列表的文档，这些单词按顺序传递。</p>
+
+<p>让我们从一些熟悉的预处理步骤开始:</p>
+
+<pre>library(purrr)<br/>library(stringr)<br/>library(tm)<br/>library(keras)<br/><br/>df &lt;- read.csv("./data/labeledTrainData.tsv", encoding = "utf-8", quote = "", sep="\t", stringsAsFactors = F)<br/><br/>text &lt;- df$review<br/><br/>corpus &lt;- VCorpus(VectorSource(text))<br/>corpus &lt;- tm_map(corpus,content_transformer(tolower))<br/>corpus &lt;- tm_map(corpus, content_transformer(removePunctuation))<br/>corpus &lt;- tm_map(corpus, content_transformer(removeNumbers))<br/>corpus &lt;- tm_map(corpus, content_transformer(removeWords), stopwords("english"))<br/>dtm &lt;- DocumentTermMatrix(corpus)<br/>dtm &lt;- removeSparseTerms(dtm, sparse=0.99)<br/><br/>X &lt;- as.data.frame(as.matrix(dtm))</pre>
+
+<p>这将返回一个巨大的文档术语矩阵，其中有许多零。现在，我们需要对它进行解析，只保留具有非零值的单词的索引:</p>
+
+<pre>vocab &lt;- names(X)<br/>maxlen &lt;- 100<br/>dataset &lt;- map(<br/> 1:nrow(X), <br/> ~list(review = which(X[.x,]!=0))<br/>)<br/>dataset &lt;- transpose(dataset)</pre>
+
+<p>最后用一种有用的方式将其矢量化:</p>
+
+<pre>X &lt;- array(0, dim = c(length(dataset$review), maxlen))<br/>y &lt;- array(0, dim = c(length(dataset$review)))<br/>for(i in 1:length(dataset$review)){<br/>  for(j in 1:maxlen){<br/>    if(length(dataset$review[[i]])&gt;j){<br/>      X[i,j] &lt;- dataset$review[[i]][j] <br/>    }<br/>    else{<br/>      X[i,j] &lt;- 0<br/>    }<br/>      <br/>  }<br/>  y[i] &lt;- df[i,"sentiment"]<br/>}<br/><br/>X &lt;- as.matrix(X)</pre>
+
+<p>这给了我们:</p>
+
+<pre>&gt; X[1,]<br/> [1] 23 46 49 65 71 100 109 115 137 144 149 161 165 185 188 190 193 196 210 217 235 271<br/> [23] 286 287 295 308 317 326 359 365 366 376 380 390 407 436 441 464 469 483 494 498 511 514<br/> [45] 520 521 571 580 585 588 595 603 613 628 662 693 705 726 734 742 749 760 776 795 797 803<br/> [67] 808 828 832 843 848 852 871 872 890 892 897 900 908 922 929 931 955 973 975 983 994 1008<br/> [89] 1019 1044 1072 1127 1140 1144 1184 1205 1217 1315 1317 1321 </pre>
+
+<p>在每一行，我们有评论的前100个单词，如果评论少于100个单词，我们在末尾加零。现在，我们准备定义我们的网络:</p>
+
+<pre># Initialize model<br/>model &lt;- keras_model_sequential()<br/>model %&gt;%<br/> # Creates dense embedding layer; outputs 3D tensor<br/> # with shape (batch_size, sequence_length, output_dim)<br/>               layer_embedding(input_dim = length(vocab), <br/>               output_dim = 128, <br/>               input_length = maxlen) %&gt;% <br/> bidirectional(layer_lstm(units = 64)) %&gt;%<br/> layer_dropout(rate = 0.5) %&gt;% <br/> layer_dense(units = 1, activation = 'sigmoid')</pre>
+
+<p>这里有几个注释:首先，注意输出层是一维的，而不是像以前一样是二维的。这纯粹是出于教学目的，在多类设置中，您可能更喜欢使用与以前类似的代码。接下来，观察有一个<kbd>layer_embedding</kbd>函数，用于传递顺序数据。最后，对应于双向LSTM的层到来，随后是一个辍学。</p>
+
+<p>等等，什么是退学？<strong>辍学</strong>是最近推出的一种技术，简单来说就是<em>忘记</em>来训练一些神经元。这可能看起来很奇怪，但实际上这是用神经网络进行模型平均的一种非常有效的方法。与平均树产生更好的模型(不容易过度拟合)类似，平均较弱的神经网络产生更健壮的模型。</p>
+
+<p>现在，我们编译模型(注意不同的损失函数，由于不同的输出):</p>
+
+<pre># Compile: you can try different compilers<br/>model %&gt;% compile(<br/> loss = 'binary_crossentropy',<br/> optimizer = 'adam',<br/> metrics = c('accuracy')<br/>)</pre>
+
+<p>我们现在准备调用<kbd>fit</kbd>方法:</p>
+
+<pre>&gt; history &lt;- model %&gt;% fit(<br/>  X, y,<br/>  batch_size = 128,<br/>  epochs = 4,<br/>  validation_size = 0.2<br/>  )<br/>Epoch 1/4<br/>25000/25000 [==============================] - 155s - loss: 0.4428 - acc: 0.7886 <br/>Epoch 2/4<br/>25000/25000 [==============================] - 161s - loss: 0.3162 - acc: 0.8714 <br/>Epoch 3/4<br/>25000/25000 [==============================] - 166s - loss: 0.2983 - acc: 0.8770 <br/>Epoch 4/4<br/>25000/25000 [==============================] - 176s - loss: 0.2855 - acc: 0.8825 <br/><br/># Train model over four epochs<br/>history &lt;- model %&gt;% fit(<br/>  X, y,<br/>  batch_size = 128,<br/>  epochs = 4,<br/>  validation_size = 0.2<br/>)<br/><br/>&gt; plot(history)</pre>
+
+<p>不错，我们用LSTMs达到了非常好的精度，大大高于前馈网络。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Other LSTM architectures</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">其他LSTM建筑</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>双向LSTM似乎是个好主意，对吗？更简单的网络架构呢？</p>
+
+<p>除了双向LSTM，我们可以考虑简单的LSTM。为此，我们可以替换前面的模型(在做了同样的预处理之后；也就是说，以相同的格式输入数据)和一个简单的LSTM:</p>
+
+<pre>model &lt;- keras_model_sequential()<br/>model %&gt;%<br/> layer_embedding(input_dim = length(vocab), <br/> output_dim = 128, <br/> input_length = 100) %&gt;%<br/> layer_lstm(units = 64, dropout = 0.2, recurrent_dropout = 0.2) %&gt;% <br/> layer_dense(units = 1, activation = 'sigmoid')<br/> <br/>model %&gt;% compile(<br/>     loss = "binary_crossentropy",<br/>     optimizer = "adam",
+     metrics = "accuracy"<br/>)</pre>
+
+<p>经过训练，我们得到以下结果:</p>
+
+<div><img src="img/92521252-0ae5-465f-9cb3-b546d6ece589.png"/></div>
+
+<p>在IMDb数据中训练LSTM</p>
+
+<p>所以，如你所见，我们经历了质量上的重大损失。不幸的是，这个数据集太小，普通LSTMs无法击败更简单的配置，如tf-idf和逻辑回归，或者我们的GloVe + random forest实验。</p>
+
+<p>还要注意损失的不同形状。一个有趣的，如果不是完全清楚的(至少对我们来说)，引起我们注意的问题是形状的差异——一个小的凸起而不是指数衰减。与前馈网络或卷积神经网络等其他架构相比，这在LSTMs中并不少见。</p>
+
+<p>其实现在提到CNN，也可以用在语言上！：</p>
+
+<pre># Initialize model<br/>model &lt;- keras_model_sequential()<br/><br/>model %&gt;%<br/> layer_embedding(<br/>                 input_dim = length(vocab), <br/>                 output_dim = 128, <br/>                 input_length = 100<br/>                    ) %&gt;%<br/> layer_dropout(0.25) %&gt;%<br/> layer_conv_1d(<br/>                filters=64, <br/>                 kernel_size=5, <br/>                 padding = "valid",<br/>                 activation = "relu",<br/>                 strides = 1<br/>             ) %&gt;%<br/> layer_max_pooling_1d(pool_size=4) %&gt;%<br/> layer_lstm(70) %&gt;%<br/> layer_dense(1) %&gt;%<br/> layer_activation("sigmoid")<br/><br/>model %&gt;% compile(<br/> loss = "binary_crossentropy",<br/> optimizer = "adam",<br/> metrics = "accuracy"<br/>)</pre>
+
+<p>结果如下所示:</p>
+
+<div><img src="img/2d947e15-f90f-434f-9814-f054ff9b508c.png" style="width:40.08em;height:22.33em;"/></div>
+
+<p>CNN和LSTM电视网的组合结果</p>
+
+<p>我们得到了令人印象深刻的表演。CNN是如何在文本中工作的？与它们在图片中工作的方式类似，一维卷积神经网络在一个空间窗口长度(在我们的例子中是五个)上与输入层卷积。想象图像中某个窗口的颜色/强度的平均值当然更容易，我们不想进行毫无意义的类比。由于这个领域发展如此之快，也许很快我们就会对CNN在情感分析任务中的有效性有一个更令人满意的解释。就目前而言，让我们高兴的是，他们工作得很好，可以合理地快速训练。</p>
+
+<p>注意，为了简洁起见，在本章的大多数例子中，我们省略了对验证集结果的验证(这仍然是正确的做法，即使我们依赖Keras的验证机制)。所以不要相信表面上的分数。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Exercises</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">练习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<ul>
+
+<li>使用<em>上下文向量</em>，或者来自GloVe的上下文向量和主向量的组合。结果如何变化？你也可以建立一个元模型来计算你应该给每个向量的适当权重。</li>
+
+<li>如果我们使用词干，结果会显著改善吗？</li>
+
+<li>玩手套的参数能提高成绩吗？例如，您可以调整<kbd>skip_grams_window</kbd>或迭代次数。</li>
+
+<li>也可以尝试用<kbd>keras</kbd>实现<kbd>fastText</kbd>(<a href="https://keras.rstudio.com/articles/examples/imdb_fasttext.html" target="_blank">https://keras . r studio . com/articles/examples/IMDB _ fast text . html</a>)。</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Mining sentiment from Twitter</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">从Twitter中挖掘情感</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>是时候将我们对不同情感分类模型的了解放到一个更现实的场景中了——Twitter情感分析。</p>
+
+<p>正如我们在引言中提到的，情感分析对所有在网上有业务的公司都有很大的吸引力(这是很多国家的很多公司)。它也与政治家、研究人员、股票交易员和其他人相关。</p>
+
+<p>在使用任何服务或API之前，请务必阅读并遵守它们的<em>服务条款</em>！我们不鼓励任何形式的非法行为。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Connecting to the Twitter API</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">连接到Twitter API</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>幸运的是，R中有一个很好的包来检索我们的Tweets:library<kbd>twitteR</kbd>。首先，您需要遵循一些步骤:</p>
+
+<ol>
+
+<li>如果你还没有，创建一个Twitter账户来访问他们的API。</li>
+
+<li>去<a href="https://dev.twitter.com/apps" target="_blank">https://dev.twitter.com/apps</a>用你的凭证登录。</li>
+
+<li>登录后，点击创建新应用程序。</li>
+
+<li>把这个作为回调URL<a href="http://localhost:1410">http://localhost:1410</a>。</li>
+
+<li>现在转到“密钥和访问令牌”,然后创建我的访问令牌。</li>
+
+<li>你应该有一个屏幕显示四件事:<ul>
+
+<li>消费者密钥</li>
+
+<li>消费者秘密</li>
+
+<li>访问令牌</li>
+
+<li>访问机密</li>
+
+</ul>
+
+</li>
+
+</ol>
+
+<p>在下面的代码片段中使用它们来收集一些推文:</p>
+
+<pre>#install.packages("twitteR")
+
+library(twitteR)
+
+
+
+# Change the next four lines based on your own consumer_key, consume_secret, access_token, and access_secret. 
+
+consumer_key &lt;- "YOUR CONSUMER KEY"
+
+consumer_secret &lt;- "YOUR CONSUMER SECRET"
+
+access_token &lt;- "YOUR ACCESS TOKEN"
+
+access_secret &lt;- "YOUR ACCESS SECRET"
+
+
+
+setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
+
+tw = twitteR::searchTwitter('#something'<br/>                            , n = 1e4<br/>                            , since = '2017-12-08'<br/>                            , retryOnRateLimit = 1e3)
+
+d = twitteR::twListToDF(tw)</pre>
+
+<p>请注意，这仅仅是为了演示的目的，但是请记住，您应该负责任地使用API，并自担风险和责任。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Building our model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">构建我们的模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>如果你有一个Twitter帐户，并且你想分析你自己的历史，你可以遵循他们网站上的官方说明(<a href="https://help.twitter.com/en/managing-your-account/how-to-download-your-twitter-archive" target="_blank">https://help . Twitter . com/en/managing-your-account/how-to-download-your-Twitter-archive</a>)，你会收到一个ZIP文件，里面有你自己的Tweet历史。</p>
+
+<p>我们将使用Pablo的Twitter数据进行演示。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Exploratory data analysis</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">探索性数据分析</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>正如本章前面所解释的，你可以做的一件事是为每个情感寻找一个带注释的词典，并尝试在那里做一些基本的分析，这要感谢包<kbd>tidytext</kbd>。</p>
+
+<p>首先，我们导入一些方便的库来加载我们的Twitter历史:</p>
+
+<pre>library(plyr)<br/>library(dplyr)<br/>library(tidytext)<br/>library(ggplot2)<br/>df &lt;- read.csv("./data/Tweets.csv", stringsAsFactors = F)<br/>text_df &lt;- data_frame(tweet_id=df$tweet_id, tweet=df$text)</pre>
+
+<p>现在，我们使用<kbd>unnest_tokens</kbd>函数将数据整理成整齐的格式:</p>
+
+<pre>text_df &lt;- text_df %&gt;%<br/> unnest_tokens(word, tweet)</pre>
+
+<p>并删除停用词:</p>
+
+<pre>data(stop_words)<br/>head(stop_words)<br/>text_df &lt;- text_df %&gt;% anti_join(stop_words)</pre>
+
+<p>一旦这样做了，我们就把它和，例如，<kbd>bing</kbd>词典结合起来:</p>
+
+<pre>bing &lt;- get_sentiments("bing")<br/>text_df %&gt;% inner_join(bing)</pre>
+
+<p>我们准备好了！</p>
+
+<pre># Plot<br/>text_df %&gt;% <br/> inner_join(bing) %&gt;% <br/> count(sentiment) %&gt;%<br/> ggplot(aes(sentiment, n, fill=sentiment))+<br/> geom_col()+<br/> theme_bw()</pre>
+
+<p>我们从中学到了什么？数据显示，Pablo在Twitter上更像是一个消极的人。不幸的是，作为数据科学家，呈现事实是我们的职责，即使事实对我们不利。</p>
+
+<div><img src="img/2de30917-acb5-4309-9e51-80c0730c14a1.png" style="width:41.58em;height:25.50em;"/></div>
+
+<p>Pablo在Twitter上比私下里更消极</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Using a trained model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用经过训练的模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>或者，也许更有趣的是，我们可以使用一个训练好的模型来预测情绪。我们可以在更大的语料库中训练我们的模型，然后简单地将它在线应用到新出现的例子中。</p>
+
+<p>首先，让我们加载之前为电影评论训练的模型和矢量嵌入:</p>
+
+<pre>wv &lt;- read.csv("./data/wv.csv")<br/>model &lt;- load_model_hdf5("glove_nn.hdf5")</pre>
+
+<p>如前所述，我们将矢量表示与数据以整齐的形式结合起来:</p>
+
+<pre>df &lt;- wv%&gt;% inner_join(text_df)</pre>
+
+<p>取每条推文向量的平均值作为我们推文的嵌入表示:</p>
+
+<pre>df &lt;- df %&gt;% group_by(tweet_id) %&gt;% summarize_all(mean) %&gt;% select(1:51) <br/>preds &lt;- model %&gt;% predict(as.matrix(df[,2:51]))<br/>hist(preds[,1])</pre>
+
+<p>当我们构建我们的模型时，我们将得到每一类的预测概率。这在直方图中显示如下:</p>
+
+<div><img src="img/bed13390-66c7-4b3c-a6e9-892e5e83dc51.png"/></div>
+
+<p>预测类别(即情感)概率的分布</p>
+
+<p>所以，这与之前的分布大致相同(回想一下，之前我们没有概率，但我们直接推断了情绪)。这是一个很好的迹象，表明模型可能在做正确的事情，但和往常一样，最好直接查看数据。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">摘要</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在这一章里，我们讲了很多！我们学习了如何用密集的而不是稀疏的向量来表示单词，用word2vec或者GloVe，虽然我们只用了GloVe。我们使用带注释的词典；整齐的数据已经可以带来很多洞察！很多情况下不需要重炮。我们看到稍微复杂一点的模型可能表现不好(给前馈神经网络加层)；令人惊讶的是，更复杂的模型可以(使用双向LSTMs)！之后，我们提供了一个连接到Twitter的参考，同时记住应该遵守服务条款。为此，我们使用之前计算的向量嵌入和模型来评估新数据的情感。不要忘记，关键的一点是，要经常检查你的数据！记住，垃圾进，垃圾出。如果使用了错误的数据，即使是最好的模型也会提供无用的结果。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

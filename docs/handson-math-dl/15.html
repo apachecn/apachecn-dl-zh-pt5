@@ -1,0 +1,429 @@
+<html><head/><body>
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">生成模型</h1>
+                
+            
+            
+                
+<p>到目前为止，在本书中，我们已经介绍了三种主要类型的神经网络— <strong>前馈神经网络</strong> ( <strong> FNNs </strong>)、<strong>卷积神经网络</strong> ( <strong> CNNs </strong>)和<strong>递归神经网络</strong> ( <strong> RNNs </strong>)。它们中的每一个都是判别模型；也就是说，他们学会了区分我们希望他们能够预测的类别，例如<em>这种语言是法语还是英语？</em>，<em>这首歌是经典摇滚还是90年代流行？</em>和<em>这个场景中出现的物体是什么？</em>。然而，深度神经网络并不止于此。它们还可以用来提高图像或视频分辨率，或者生成全新的图像和数据。这些类型的模型被称为<strong>生成模型</strong>。</p>
+<p>在本章中，我们将讨论以下与创成式模型相关的主题:</p>
+<ul>
+<li>为什么我们需要生成模型</li>
+<li>自动编码器</li>
+<li>生成对抗网络</li>
+<li>基于流的网络</li>
+</ul>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">为什么我们需要生成模型</h1>
+                
+            
+            
+                
+<p>我们在本书中学习的所有各种神经网络架构都有一个特定的目的——对一些给定的数据进行预测。这些神经网络中的每一个对于各种任务都有其各自的优势。CNN对于对象识别任务或音乐流派分类非常有效，RNN对于语言翻译或时间序列预测非常有效，而FNN对于回归或分类非常有用。另一方面，生成模型是那些对数据建模的模型，<em> p(x) </em>，我们可以从中采样数据，这不同于判别模型，后者学习估计条件分布，如<em>p(| x)</em>。</p>
+<p>但是这对我们有什么好处呢？我们可以用生成模型做什么？理解生成模型的工作原理对我们来说很重要，这有几个原因。首先，在图像识别中，我们要学会估计一个<em> p(y <sub> i </sub> | x) </em>形式<em>，</em>的高维空间，我们可以用它来预测我们的数据属于哪一类。你要记住，这些模型需要大量的训练数据。现在，我们可以做的是让我们的数据从一个低维的潜在变量<img style="font-size: 1em;width:0.67em;height:0.83em;" class="fm-editor-equation" src="img/027d2051-202b-49c6-a219-f8a475795732.png"/>中产生，这使得我们的概率函数变成<sub> <img class="fm-editor-equation" src="img/4f4a5787-45fc-414c-996b-013313462790.png" style="width:9.17em;height:2.42em;"/> </sub>。我们现在要做的是改变我们的预测问题top，<em> (y <sub> i </sub> | z) </em>。我们可以利用生成模型的另一种方式是理解我们的神经网络已经学习了什么。正如我们所知，深度神经网络非常复杂，知道它们到底学到了什么或没有学到什么是非常具有挑战性的。所以，我们能做的就是从他们身上取样，并将这些抽取的样本与真实数据进行比较。最后，如果我们缺少数据，我们可以使用生成模型来创建合成数据来训练我们的模型。</p>
+<p>既然我们知道了生成模型的用途，让我们探索一些更流行的模型，并了解它们是如何工作的。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">自动编码器</h1>
+                
+            
+            
+                
+<p><strong>自动编码器</strong>是一种无监督类型的FNN，它学习使用潜在编码数据重建高维数据。你可以把它想成是试图学习一个恒等式函数(就是把<em> x </em> <strong> </strong>作为输入然后预测<em> x </em>)。</p>
+<p>让我们从下图开始，它向您展示了自动编码器的样子:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-999 image-border" src="img/d72007f7-570f-492d-a99a-81b0f5419821.png" style="width:21.00em;height:27.42em;"/></p>
+<p>如您所见，网络分为两个部分——编码器和解码器，它们互为镜像。这两个组件通过瓶颈层(有时称为潜在空间表示或压缩)相互连接，瓶颈层的维度比输入小得多。您应该注意到网络架构是对称的，但这并不一定意味着它的权重也是对称的。但是为什么呢？这个网络学什么，怎么学的？让我们看看这两个网络，并探索他们在做什么。</p>
+<p>编码器网络接收高维输入，并将其简化为低维潜在代码(即，它学习输入数据中的模式)。这类似于主成分分析和矩阵分解。它的工作原理如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/c5caa1c6-61d8-436a-8faa-def8e087c0fd.png" style="width:4.67em;height:1.33em;"/></p>
+<p>解码器网络将包含关于输入的所有主要信息的低维潜在代码(模式)作为输入，并从中重构原始输入(或尽可能接近原始输入)。它的工作原理如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/ad1243a9-b986-4eb0-b79a-a37179e012cb.png" style="width:5.42em;height:1.50em;"/></p>
+<p>我们可以结合前面的两个等式，将自动编码器表示如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/0251ffe4-131f-4928-a10f-d6bb16787405.png" style="width:7.17em;height:1.42em;"/></p>
+<p class="CDPAlignLeft CDPAlign">我们的目标是让原始输入尽可能接近(理想情况下，完全相同)重构输出，即<img class="fm-editor-equation" src="img/a3f50e2e-0a9a-46ef-b7ad-5e5693082f85.png" style="width:3.08em;height:1.08em;"/>。</p>
+<p>编码器和解码器都有单独的权重，但我们一起学习参数，以输出重建的数据，这几乎与原始输入相同。在训练期间，我们可以使用<strong> MSE </strong>损失:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/55975824-f4be-4347-812a-195b276dca84.png" style="width:16.17em;height:3.08em;"/></p>
+<p>这种类型的自动编码器通常被称为<strong>欠完整自动编码器</strong>，因为瓶颈层远小于输入和输出层的尺寸。</p>
+<p>但是在这个瓶颈层中发生了什么，使得解码器能够从中重建输入呢？这种潜在的编码，是一个高维空间映射到一个低维空间，学习一个流形，这是一个拓扑空间，在每个点上类似欧几里德空间(我们会在<a href="9e02b8b3-2351-4537-9ec1-88f2946ed358.xhtml">第十二章</a>、<em>几何深度学习</em>中对拓扑空间和流形进行更多的阐述)。我们可以将这种流形表示为一个矢量场，并将数据聚类可视化。自动编码器正在学习从这个向量场重建输入。每个数据点都可以在这个流形上找到，我们可以把它投射回更高维的空间来重建它。</p>
+<p>假设我们有MNIST数据集，其中包含从0到9的手写数字图像。在下面的屏幕截图中，我们可以看到数据集中的一些图像:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1000 image-border" src="img/6b98beeb-e3ce-4df3-a008-0c6be83c8a93.png" style="width:23.58em;height:12.42em;"/></p>
+<p>编码器网络将这些数据作为输入，并将其编码到一个更低维度的潜在瓶颈层中，该层包含了这个更高维输入的压缩表示，并以二维的形式展示给我们。该嵌入空间如下所示，其中每种颜色代表一个特定的数字:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1001 image-border" src="img/17071535-d5ac-49b4-bc03-e9e34d47f9b6.png" style="width:28.08em;height:28.08em;"/></p>
+<p>现在，你可能想知道这样的架构有什么用途。通过训练一个模型来重新创建和输出它自己的输入，我们能得到什么？事实证明，我们可以用它来压缩和存储数据，以节省空间，并在需要访问时重建数据，我们可以从图像或音频文件中去除噪声，或者我们可以用它来降低数据可视化的维度。</p>
+<p>然而，仅仅因为这种架构可以用于压缩图像，并不意味着这类似于MP3或JPEG等数据压缩算法。自动编码器只能压缩它在训练过程中看到的数据，所以如果它是在汽车图像上训练的，它在压缩马的图像方面将是非常无效的，因为它学习的特征是特定于汽车的，不能很好地推广到马。另一方面，MP3和JPEG等压缩算法不学习它们接收的输入的特征；他们对自己的输入做出一般假设。</p>
+<p>在下图中，您可以看到自动编码器将图像压缩到潜在空间中，并在输出中重建它:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1002 image-border" src="img/95f51791-3bdc-407e-8563-5ec844780914.png" style="width:31.17em;height:7.75em;"/></p>
+<p>你可以在图中看到，自动编码器已经成功地重建了输入图像，它看起来仍然像数字4，但它不是一个精确的复制品；一些信息已经丢失。这不是训练中的错误；这是故意的。自动编码器被设计成<em>有损</em>，并且只近似复制输入数据，这样它就可以通过对它认为更有用的东西进行优先排序，只提取必要的东西。</p>
+<p>正如我们到目前为止在本书中看到的，添加层和深入自动编码器确实有其优势；它允许我们的神经网络捕捉更大的复杂性，并降低所需的计算成本(与变得更宽和更浅相比)。同样，我们可以在编码器和解码器中增加额外的层。在处理图像的情况下尤其如此，因为我们知道卷积层比展平图像并将其用作输入会带来更好的结果。</p>
+<p>现在让我们来探索一下自动编码器的一些变体，它们允许我们完成上述任务。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">去噪自动编码器</h1>
+                
+            
+            
+                
+<p><strong>去噪自动编码器</strong> ( <strong> DAE </strong>)是前面的自动编码器的变体，因为它学习以近乎确定的方式重建被破坏或有噪声的输入。假设我们有一个图像，由于某种原因，它很模糊或者一些像素已经损坏，我们希望提高图像的分辨率(就像电影中他们可以在分辨率相对较低的图像中找到线索一样)。我们可以将它通过我们的DAE，并获得完全重建的图像。</p>
+<p>我们首先使用条件分布<sub><img class="fm-editor-equation" src="img/48d9fd15-b6d5-4734-bc0c-0ea2d324eef4.png" style="width:4.00em;height:1.33em;"/></sub>——这基本上是一种随机映射——来破坏初始输入，然后它将破坏的样本返回给我们。现在我们有了新的输入，我们的autoencoder将学习如何重建未损坏的数据，即<sub><img class="fm-editor-equation" src="img/cdcfb74f-cb73-4ede-8f26-47bbeb429aea.png" style="width:3.83em;height:1.33em;"/></sub>——为了训练它，我们的数据将是<sub> <img class="fm-editor-equation" src="img/ac839076-6290-470a-90a9-605594b4e505.png" style="width:4.25em;height:1.67em;"/> </sub>对。我们希望解码器学习的是<sub> <img class="fm-editor-equation" src="img/cbeb2203-75c2-49f2-b8e3-20329c634b53.png" style="width:8.33em;height:1.25em;"/>，</sub>和之前一样，<em> z </em>是编码器的输出。</p>
+<p>上述损坏的工作方式如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/994ab74e-bc89-4e82-beec-a58712976674.png" style="width:17.33em;height:1.42em;"/></p>
+<p>这里，<em>σ<sup>2</sup>T22】是噪声的方差。</em></p>
+<p class="CDPAlignLeft CDPAlign">我们可以像训练任何其他FNN一样训练我们的DAE，并在以下项目上执行梯度下降:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/b77edc12-94b3-42b3-aa3d-962f89e3fe00.png" style="width:17.25em;height:1.42em;"/></p>
+<p>在这里，<sub> <img class="fm-editor-equation" src="img/ef738a85-58c6-4ba5-a214-3a9d04ef9af2.png" style="width:2.42em;height:1.42em;"/> </sub>是训练数据的分布。</p>
+<p>如前所述，编码器将高维数据投影到一个更低维的空间，称为<strong>潜在空间</strong>，学习流形的形状。然后，它试图将损坏的数据映射到该流形上或其附近，以确定它可能是什么，然后在重建过程中将其拼凑在一起，通过估计<sub> <img class="fm-editor-equation" src="img/49c3ecbb-84c6-4e50-8271-cb027389c7d8.png" style="width:10.33em;height:1.58em;"/> </sub>并最小化平方误差<sub> <img class="fm-editor-equation" src="img/d7b19ff6-a81c-4be3-8a6f-532cfcce6398.png" style="width:7.42em;height:1.67em;"/> </sub>来获得<em> x </em>。</p>
+<p>我们可以在下图中查看这一过程:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1003 image-border" src="img/512b9835-4815-4deb-a858-d919d12181cd.png" style="width:43.25em;height:21.67em;"/></p>
+<p>这里，黑色曲线是潜在空间中的已学习流形，你可以看到噪声点<img class="fm-editor-equation" src="img/868b5a11-6951-4911-b0cb-5db8b860c160.png" style="width:0.83em;height:1.17em;"/>被投影到流形上最近的点，以估计它可能是什么。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">变分自动编码器</h1>
+                
+            
+            
+                
+<p class="mce-root"><strong>变型自动编码器</strong> ( <strong> VAE </strong>)是另一种类型的自动编码器，但有一些特殊的区别。实际上，它不是学习函数<em> f() </em>和<em> g() </em>，而是学习输入数据的概率密度函数。</p>
+<p class="mce-root">假设我们有一个分布，<em> p <sub> θ </sub> </em>，用θ参数化。这里，我们可以将<em> x </em>和<em> z </em>的关系表示如下:</p>
+<ul>
+<li><em>p<sub>θ</sub>T20】(<em>z)</em>:先验</em></li>
+<li><em>p<sub>θ</sub>T26】(<em>x</em>|<em>z)</em>:可能性(给定潜在空间的输入分布)</em></li>
+<li><em>p<sub>θ</sub>(z</em>|<em>x)</em>:后验(给定输入的潜在空间的分布)</li>
+</ul>
+<p>上述分布由神经网络参数化，这使它们能够捕捉复杂的非线性，正如我们所知，我们使用梯度下降来训练它们。</p>
+<p>但是为什么这种方法的作者决定背离以前学习分布的方法呢？这更有效的原因有几个。首先，我们经常处理的数据是有噪声的，因此，对分布进行建模对我们来说更好。您可能已经猜到了，这里的目标是生成具有与输入相似的统计数据的数据。</p>
+<p>在我们继续之前，让我们看看VAE是什么样子的:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1004 image-border" src="img/05560f37-c3a9-4577-b778-ccd6d466ea74.png" style="width:138.00em;height:41.83em;"/></p>
+<p>正如你所看到的，它与自动编码器有一些相似之处，但正如我们提到的，我们学习的不是<em>z</em>=<em>f</em>(<em>x</em>)和<em>x’</em>=<em>g</em>(<em>z</em>)，而是<em>p</em>=(<em>z</em>|<em>x</em>)和<em> p </em> =。然而，因为现在在输入和输出之间有一个随机变量，这种结构不能通过常规的反向传播来训练；相反，我们通过潜在分布的参数进行反向传播。</p>
+<p>一旦我们知道了先验和似然分布以及真实参数<em> θ <sup> * </sup> </em>，我们就可以通过重复执行以下操作来生成样本:</p>
+<ul>
+<li>从<sub> <img class="fm-editor-equation" src="img/8c20a7d0-fdd4-4ee1-b103-d7fac9970784.png" style="width:5.25em;height:1.33em;"/>中随机生成样本。</sub></li>
+<li>生成一个<sub> <img class="fm-editor-equation" src="img/f6f5782a-900c-4f3f-a71d-f3a23909dd88.png" style="width:8.58em;height:1.33em;"/> </sub>样本。</li>
+</ul>
+<p>利用我们在<a href="719fc119-9e7a-4fce-be04-eb1e49bed753.xhtml">第3章</a>、<em>概率统计</em>中获得的概率知识，我们知道<em> θ <sup> * </sup> </em>应该最大化生成真实数据样本的概率；即<sub> <img class="fm-editor-equation" src="img/421c4862-83be-4bee-afe8-726d2ec9a759.png" style="width:10.50em;height:3.08em;"/> </sub>。</p>
+<p class="CDPAlignLeft CDPAlign">现在用于生成数据的公式如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/9171c9c5-59e2-4b3a-b492-957e990b943e.png" style="width:13.42em;height:2.58em;"/></p>
+<p>现在，假设我们可以通过重复采样<em> z <sub> i </sub> </em>来近似得到<em> x </em>的分布，如下所示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/20d3ca5b-6f53-4b30-a811-f19e81b43fba.png" style="width:9.83em;height:3.00em;"/></p>
+<p>但是，为了做到这一点，我们需要大量样本，其中大部分可能是零或接近零。这是难以解决的(也就是说，在计算上不实用)。所以，我们所做的反而是学习另一种分布(即易处理的分布)-<sub><img class="fm-editor-equation" src="img/8e402986-ad06-40b0-bc9b-10840cd86f07.png" style="width:3.92em;height:1.25em;"/></sub>——近似后验分布，<sub> <img class="fm-editor-equation" src="img/f18cf9db-05ce-4863-acaa-9234f32dab91.png" style="width:4.17em;height:1.33em;"/> </sub>。自然，我们希望这两个分布彼此接近，以便它们能够更好地近似后验分布；因此，我们使用<strong>kull back-Leibler</strong>(<strong>KL</strong>)<strong>散度</strong>来测量它们之间的距离，并尽量将其相对于φ的距离减到最小。我们可以从下面的等式中看出我们是如何做到这一点的:</p>
+<p><img src="img/ed9330f0-f13e-4b44-92d8-ab992675540a.png" style="width:37.75em;height:1.92em;"/></p>
+<p>根据贝叶斯法则，我们知道以下几点:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/626d0eba-dbd7-4a40-b4fd-5a400a618659.png" style="width:11.67em;height:3.00em;"/></p>
+<p>如果我们取它的对数，我们得到以下结果:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/2ac4ede8-3db1-4349-bbf5-f2bfedf63e61.png" style="width:25.17em;height:1.42em;"/></p>
+<p>我们可以将其插回到KL散度方程中，得到以下结果:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/290ba423-80cd-429e-8a32-889b6f1a7d9d.png" style="width:43.33em;height:1.67em;"/></p>
+<p>由于<em> p </em> ( <em> x </em>)不依赖于<em> z </em>，所以我们可以将其保留在外面。</p>
+<p>我们现在可以将公式重新排列为以下形式:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/0f22aa0f-a974-49b8-a609-1af841c05c64.png" style="width:40.42em;height:1.58em;"/></p>
+<p>由于<sub> <img class="fm-editor-equation" src="img/cf20ab81-e971-4392-904f-2a9eccabb4a6.png" style="width:28.50em;height:1.67em;"/> </sub>，这里的目标是最大化<sub> <img class="fm-editor-equation" src="img/128ecb66-7f7b-4649-bcc9-48e95720cc8f.png" style="width:4.17em;height:1.33em;"/> </sub>的下界，因为<sub> <img class="fm-editor-equation" src="img/9457681b-2850-4c3d-8c49-bb25a5ca47e2.png" style="width:24.58em;height:1.42em;"/> </sub>，我们这样做是因为KL散度的输出是非零和非负的。</p>
+<p>但是等等——什么是编码器，什么是解码器？毕竟，这是一个自动编码器。有趣的是，它一直就在我们面前。VAE中的编码器是<sub> <img class="fm-editor-equation" src="img/607228c7-74f5-4d5a-884b-4fcde1f4979c.png" style="width:3.92em;height:1.25em;"/> </sub>，通常假设为高斯型:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/56baf6da-fe75-4de4-92e0-159d8b3c7c19.png" style="width:11.92em;height:1.50em;"/></p>
+<p>解码器是<sub> <img class="fm-editor-equation" src="img/4bdb1aef-6c4d-4b6b-9220-63d9544af357.png" style="width:5.17em;height:1.67em;"/>。</sub>这两者都使用神经网络建模。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">生成对抗网络</h1>
+                
+            
+            
+                
+<p><strong>生成对抗网络</strong> ( <strong>甘</strong>)是一种受博弈论启发的神经网络架构，由Ian Goodfellow于2014年创建。它由两个网络组成——一个生成者网络和一个批评者网络——这两个网络都在一个极大极小游戏中相互竞争，这使得它们都可以通过试图超越对方来同时提高。</p>
+<p>在过去的几年中，GANs已经在一些任务中取得了一些惊人的成果，例如创建与真实图像难以区分的图像，在给定一些录音时生成音乐，甚至生成文本。但是众所周知，这些模型很难训练。现在让我们来看看GANs到底是什么，它们是如何带来如此巨大的成果，以及是什么让它们的训练如此具有挑战性。</p>
+<p>正如我们所知，判别模型学习条件分布，并尝试预测给定输入数据的标签——即<em> P(Y | X) </em>。另一方面，生成模型对联合分布建模——即<em> P(X，Y)</em>——并且，使用贝叶斯规则，当给定标签时，它们可以生成数据。所以，像VAEs一样，他们学习分布，<em> P(X) </em>。</p>
+<p>批评家网络是一个带参数的鉴别器(<em> D </em>)，参数为<em> θ <sup> (D) </sup> </em>，它的工作就是确定被馈入其中的数据是真是假。生成器网络是一个带有参数<em> θ <sup> (G) </sup> </em>的生成器(<em> G </em>)，其工作是学习从噪声中创建合成数据样本，这些样本可以欺骗鉴别器，使其认为合成数据是真实的，概率很高。</p>
+<p>正如我们在本书中看到的，鉴别器模型在学习将输入数据映射到所需的标签(输出)方面表现出色，可以确定图像中是否存在对象，以及在视频中跟踪对象和翻译语言。然而，他们无法像我们能够发挥想象力那样，利用他们所学的知识生成全新的数据。</p>
+<p>在我们继续之前，让我们看看这个架构是什么样子的。在下图中，您可以看到gan是如何构成的:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-1341 image-border" src="img/40b465e7-16bb-4cfd-8f66-ba8fb25e9282.png" style="width:31.83em;height:17.33em;"/></p>
+<p>现在我们知道了gan的样子，让我们看看它们是如何工作的。我们可以用下面的等式来总结GAN:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/31fed236-4edc-4fb9-9dec-8f122cc1ab1d.png" style="width:30.58em;height:1.83em;"/></p>
+<p>鉴别器的目标是针对<sub> <img class="fm-editor-equation" src="img/f81c3f4e-92fd-4fa0-be07-5e0501343897.png" style="width:4.50em;height:1.33em;"/> </sub>和<sub> <img class="fm-editor-equation" src="img/1da30232-4881-49a6-a8ed-6494bf0a7bf5.png" style="width:5.75em;height:1.25em;"/> </sub>，而生成器的目标是针对<sub> <img class="fm-editor-equation" src="img/ab926380-284a-4422-8c5c-da1fac2adc7a.png" style="width:6.17em;height:1.33em;"/> </sub>。</p>
+<p>由于生成器和鉴别器有不同的目标，自然地，它们会有不同的成本函数。鉴频器和发生器各自的损耗如下:</p>
+<ul>
+<li><sub> <img class="fm-editor-equation" src="img/109a40d3-30ba-4b01-b5e0-908ecb13ac35.png" style="width:7.17em;height:1.58em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/7f419fab-1427-43d2-b731-924ca5ed369e.png" style="width:7.17em;height:1.58em;"/> </sub></li>
+</ul>
+<p>自然，两个网络都不会直接影响对方的参数。如前所述，由于这是一个受博弈论启发的架构，我们将它视为一个两人游戏，我们的目标是找到<em> x </em>如下情况的纳什均衡:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/291c82b4-7896-462f-b7b5-242643fb58dc.png" style="width:9.75em;height:1.58em;"/></p>
+<p>这是一个鞍点。当我们实现这一点时，鉴别器无法区分真实数据和生成的数据。</p>
+<p class="mce-root">我们现在如何找到鉴别器的最佳值？首先，我们知道损失函数，从中我们可以找到最佳的<em> D </em> ( <em> x </em>)值:</p>
+<p><img src="img/260a4d2f-7168-4f94-90d0-e809ffe3d2af.png" style="width:26.92em;height:1.67em;"/></p>
+<p>然而，在训练时，生成器理想地输出<em> x </em>，因此我们可以将损失函数重写如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/c84c5302-08ae-4e03-9fd9-89205e92bbfe.png" style="width:23.92em;height:1.67em;"/></p>
+<p>这里，<em>p<sub>r</sub>T3】是真实的数据分布，<em>p<sub>g</sub>T7】是生成的数据分布。现在，我们有以下内容:</em></em></p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/b56b112a-cf62-443a-ad49-af8588a9415c.png" style="width:22.75em;height:2.58em;"/></p>
+<p>为了让生活变得简单一点，让我们用下面的变量来代替等式的一部分:</p>
+<ul>
+<li><sub> <img class="fm-editor-equation" src="img/6213aff8-ec9c-4e54-9e9d-f4414f7e5e88.png" style="width:5.00em;height:1.42em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/927d0693-2d9f-45d9-8636-c8775eaa0ccb.png" style="width:4.83em;height:1.33em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/baa45245-695d-4137-bd58-bd1ab899d5a1.png" style="width:4.92em;height:1.33em;"/> </sub></li>
+</ul>
+<p>由于我们对<em> x </em>的所有可能值进行采样，我们可以将前面的三个变量写成如下:</p>
+<p><img src="img/b5919b48-c8b7-4114-ba23-781a606c0ea5.png" style="width:15.00em;height:8.17em;"/></p>
+<p>现在，为了找到鉴别器的最佳值，我们将前面的导数等于0，得到如下结果:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/923deeaa-23a0-4031-91a2-bb816fba906e.png" style="width:17.33em;height:2.67em;"/></p>
+<p>所以，当<sub><img class="fm-editor-equation" src="img/b9b8b765-d95a-456b-a813-32c5c64bd69d.png" style="width:6.25em;height:1.25em;"/></sub><sub><img class="fm-editor-equation" src="img/f8fc37cb-8d6d-411c-bcf4-dfae37d22703.png" style="width:5.08em;height:2.33em;"/></sub>时，即满足我们的条件。损失函数现在变成如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/ea87562f-0b41-42ad-b2c8-78250f7de0e6.png" style="width:23.58em;height:5.17em;"/></p>
+<p>既然我们知道了如何找到最佳鉴别器，自然，你可能想知道我们如何找到最佳生成器。我们的目标是最小化真实分布和生成分布之间的<strong>Jensen–Shannon</strong>(<strong>JS</strong>)差异，如下所示:</p>
+<p><img src="img/ff1eb53f-681e-4029-bd0c-9d5fcda33012.png" style="width:36.33em;height:6.42em;"/></p>
+<p>所以，<sub> <img class="fm-editor-equation" src="img/69392744-4b77-4862-bc40-0bf406354007.png" style="width:14.58em;height:1.25em;"/> </sub>，它告诉我们，如果我们的生成器事实上是最优的，那么<img class="fm-editor-equation" src="img/ed4cef85-4c81-4a68-97b4-cf5a07de2a33.png" style="width:9.08em;height:1.25em;"/>。</p>
+<p>好了，这就是甘的工作方式。然而，GANs也存在一些问题。特别地，两个网络的收敛不能保证，因为任一模型的梯度下降不会直接影响另一个，并且模型参数倾向于振荡和不稳定。另一个问题是模式崩溃，这是不正确收敛的结果，这意味着发生器只输出选择的几个产生的样本，它知道这将欺骗鉴别器认为是真实的。由于发生器开始一遍又一遍地输出相同的几个样本，鉴别器学会将它们归类为假的。模式崩溃是一个很难解决的问题。最后，我们的鉴别器可能会变得非常好，以至于发生器的梯度消失，最终它什么也学不到。</p>
+<p>如果我们比较VAEs和GANs，两者都是生成模型，我们会看到，对于GANs，我们的目标是最小化两个分布之间的差异，而对于VAEs，我们的目标是最小化两个分布之间的差异界限。这是一个容易得多的任务，但它不会产生与GAN完全相同的结果。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">瓦瑟斯坦·甘斯</h1>
+                
+            
+            
+                
+<p>在前面的章节中，我们了解了甘，他们是如何工作的，以及他们在训练中如何面对一些问题。现在，我们将学习<strong>瓦瑟斯坦甘</strong> ( <strong> WGAN </strong>)，它利用了瓦瑟斯坦距离。它是度量给定度量空间上两个概率分布之间距离的函数。假设我们在一个海滩上，我们决定在沙滩上建立一个三维概率分布模型。瓦瑟斯坦距离测量的是将分布移动并重新形成另一个分布所需的最小能量。所以，我们可以说成本是我们移动的沙子的总质量和移动距离的乘积。</p>
+<p>这对GANs的作用是平滑梯度，防止鉴别器过度训练。我们的鉴频器和发生器的损耗分别如下:</p>
+<ul>
+<li><sub> <img class="fm-editor-equation" src="img/2dee8404-9204-4be6-a4c5-7f52fc37385d.png" style="width:17.83em;height:1.50em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/b1f96433-8bc8-4995-8e99-42baf1b83a52.png" style="width:11.08em;height:1.58em;"/> </sub></li>
+</ul>
+<p>为什么这个比JS和KL发散表现好？让我们用下面的例子来找出答案。</p>
+<p>我们有两个分布，<em> P </em>和<em> Q </em>，参数如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/c1a04e0b-b4ae-4395-9ef6-00320abdfd3d.png" style="width:22.50em;height:2.67em;"/></p>
+<p>现在，让我们用Wasserstein距离来比较KL散度和JS散度。如果<em> θ </em> ≠ 0，那么我们可以观察到以下情况:</p>
+<p><img src="img/52a69257-5188-4755-a639-ddba70da71b5.png" style="width:31.42em;height:10.83em;"/></p>
+<p>当<sub> <img class="fm-editor-equation" src="img/634e1de6-527d-411e-8c14-56503413042a.png" style="width:2.58em;height:1.00em;"/> </sub>出现时，我们可以观察到以下情况:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/b6ab4a3f-4cc6-4ad8-b9fb-0da9bb363ccb.png" style="width:21.00em;height:2.83em;"/></p>
+<p>如您所见，Wasserstein距离相对于KL和JS散度有一些明显的优势，因为它相对于<em> θ </em>是可微分的，这提高了学习的稳定性。因此，损失函数现在变成如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/7302f3fe-b94e-4baf-a1e4-d4c3ad5b8889.png" style="width:21.25em;height:2.83em;"/></p>
+<p>这就是K-Lipschitz连续——即<sub> <img class="fm-editor-equation" src="img/15eb568b-9e53-47ec-ba92-b3f7950ee3fd.png" style="width:15.08em;height:1.42em;"/> </sub>为<sub><img class="fm-editor-equation" src="img/1ee9e4c5-561d-48b6-9f80-bec07dfe502b.png" style="width:3.42em;height:1.17em;"/></sub><sub><img class="fm-editor-equation" src="img/77a62cc9-5f04-4c0d-83e5-3630202c36e7.png" style="width:5.50em;height:1.25em;"/></sub>。</p>
+<p>可悲的是，尽管WGAN比GAN有优势，但它仍然很难训练。有许多GAN变体试图解决这个问题。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">基于流的网络</h1>
+                
+            
+            
+                
+<p>到目前为止，在这一章中，我们已经研究了两种生成模型——GANs和VAEs——但还有另一种，称为<strong>基于流的生成模型</strong>，它直接学习数据分布的概率密度函数，这是以前的模型所不具备的。基于流的模型利用标准化流，这克服了gan和vae在尝试学习分布时面临的困难。这种方法可以通过一系列可逆映射将简单分布转化为更复杂的分布。我们反复应用变量变换规则，使初始概率密度流过一系列可逆映射，最后得到目标概率分布。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">标准化流程</h1>
+                
+            
+            
+                
+<p>在我们继续了解基于流的模型如何工作之前，让我们回顾一些概念，如雅可比矩阵、计算矩阵的行列式和概率中变量定理的变化，然后继续了解什么是正常化流。</p>
+<p>作为复习，雅可比矩阵是一个包含函数一阶导数的<em> m </em> × <em> n </em>维矩阵，它将一个<em> n </em>维向量映射到一个<em> m </em>维向量。这个矩阵的每个元素用<sub> <img class="fm-editor-equation" src="img/29e402b5-bbab-476c-b8ac-783cbd303693.png" style="width:4.42em;height:2.42em;"/> </sub>表示。</p>
+<p>行列式只能在方阵中找到。所以，我们假设我们有一个<em> n </em> × <em> n </em>矩阵，<em> M </em>。它的行列式可由下式求出:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/e0fa08dd-9519-47da-8127-03198f2c1cab.png" style="width:15.92em;height:2.75em;"/></p>
+<p>这里，总和是在所有的<em> n </em>上计算的！排列，<sub><img class="fm-editor-equation" src="img/6dc58252-2789-433d-b0bc-a62a70b168ec.png" style="width:8.25em;height:1.25em;"/></sub><sub><img class="fm-editor-equation" src="img/c4976b6a-35ea-4253-bf9c-b4e3d4e06840.png" style="width:5.33em;height:1.25em;"/></sub>，σ()告诉我们排列的签名。但是，如果| <em> M </em> |= 0，那么<em> M </em>不可逆。</p>
+<p>现在，假设我们有一个随机变量，<img class="fm-editor-equation" src="img/8bf87813-7568-4cab-a2e2-5000eb6b5361.png" style="width:0.67em;height:0.83em;"/>，它的概率密度函数是<em>z</em>∞π(<em>z</em>)。利用这一点，我们可以生成一个新的随机变量，作为一对一映射的结果，<em>x</em>=<em>f</em>(<em>z</em>)。由于这个函数是可逆的，我们知道<em>z</em>=<em>f<sup>-1</sup></em>(<em>x</em>)。那么，我们新的随机变量的概率密度函数是什么呢？根据我们对概率分布的了解，我们知道以下是正确的:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/c0ad8a7a-96be-498c-8b98-7791c01540f9.png" style="width:12.17em;height:2.58em;"/></p>
+<p>从<a href="3ce71171-c5fc-46c8-8124-4cb71c9dd92e.xhtml">第一章</a>、<em>向量微积分</em>中，我们应该记住，积分是曲线下的面积，在概率上，这总是等于1。曲线下的这个区域可以被切成宽度为δ<em>z</em>的无限小矩形，这个矩形在<em> z </em>处的高度为π( <em> z </em>)。</p>
+<p>知道<em>z</em>=<em>f<sup>-1</sup></em>(<em>x</em>)告诉我们<em> z </em>的小变化相对于<em> x </em>的小变化的比率给出如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/b9c16ee8-b64a-4205-ac5a-e5e0ee1bcdfe.png" style="width:8.92em;height:2.83em;"/></p>
+<p>我们可以这样重写:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/47dc8756-310c-438d-8db6-9d7fa96abb2a.png" style="width:9.75em;height:1.58em;"/></p>
+<p>现在，我们可以将前面的分布重写如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/fb731b44-94a7-4564-90ca-4ce53c7874bf.png" style="width:18.50em;height:3.08em;"/></p>
+<p>因为我们将使用向量，所以我们可以用多个变量来表示前面的等式，如下所示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/94dcb68d-ab02-47e0-a80d-cd5ba4d6a80c.png" style="width:21.75em;height:3.08em;"/></p>
+<p>太好了！现在我们已经对这些概念记忆犹新，让我们继续理解什么是正常化流程。</p>
+<p>得到一个好的概率密度估计在深度学习中是相当重要的，但做起来往往很有挑战性。因此，我们使用标准化流程，通过对简单分布应用一系列可逆函数，将其转换为更复杂的分布，从而更有效地近似分布。这个名字来源于这样一个事实，即在应用一个映射后，变量的变化使概率密度正常化，而流程意味着这些较简单的变换可以被连续地应用以创建一个复杂得多的变换。还要求这些变换函数易于可逆，并且行列式需要易于计算。</p>
+<p>让我们取一个初始分布，对它应用<em> K </em>变换(或映射),看看我们如何从中获得<em> x </em>。它的工作原理如下:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/0bb924a7-3778-4797-8e5a-8d722754aa7e.png" style="width:23.42em;height:2.17em;"/></p>
+<p class="CDPAlignLeft CDPAlign">我们还可以使用以下内容:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/f79ea1e1-bc5e-417a-a862-484c16af00a7.png" style="width:20.75em;height:1.42em;"/></p>
+<p>这里，我们有以下参数:</p>
+<ul>
+<li class="CDPAlignLeft CDPAlign"><sub> <img class="fm-editor-equation" src="img/aa1b5a6d-50d9-4f9a-ae3f-bcccc5bceead.png" style="width:8.75em;height:1.42em;"/> </sub></li>
+<li class="CDPAlignLeft CDPAlign"><sub> <img class="fm-editor-equation" src="img/34268cef-0b70-47fa-8db1-633f030d1c7c.png" style="width:7.00em;height:1.50em;"/> </sub></li>
+<li class="CDPAlignLeft CDPAlign"><sub> <img class="fm-editor-equation" src="img/2d50e53a-6e3e-474a-af31-46507e7170d8.png" style="width:7.67em;height:1.67em;"/> </sub></li>
+<li class="CDPAlignLeft CDPAlign"><sub> <img class="fm-editor-equation" src="img/9d406955-4ba0-42b3-9215-683476e995d6.png" style="width:15.42em;height:3.25em;"/> </sub>(来自变量变化定理)</li>
+</ul>
+<p>行列式是雅可比矩阵。</p>
+<p>让我们扩展一下我们用来求<em>p<sub>I</sub></em>(<em>z<sub>I</sub></em>)的第四个等式，以便更清楚地了解它:</p>
+<p style="padding-left: 180px"><img src="img/06cb55a0-63b9-43f8-af85-3cecba2acd67.png" style="width:16.92em;height:9.50em;"/></p>
+<p>如果我们取两边的对数，我们得到如下结果:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/aec07547-86dd-4479-a7c9-57712b13e70c.png" style="width:18.25em;height:2.50em;"/></p>
+<p>这告诉我们变量序列之间存在的关系，由此我们可以通过展开得到<em> x </em>与初始分布<em> z <sub> 0 </sub> </em>之间的关系，如下所示:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/e40121bf-896f-4d9e-afd2-4fc6074ac1e5.png" style="width:25.42em;height:3.33em;"/></p>
+<p>这个过程被称为<strong>规范化流程</strong>。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">实值非体积保持</h1>
+                
+            
+            
+                
+<p>本章到目前为止，我们已经介绍了两种非常流行的生成神经网络架构——VAEs和GANs——这两种架构都非常强大，并且在生成新数据方面带来了巨大的成果。然而，这两种架构也有其挑战。另一方面，基于流程的生成模型虽然不那么流行，但也有其优点。</p>
+<p>基于流程的生成模型的一些优势如下:</p>
+<ul>
+<li>他们有精确的潜在变量推断和对数似然估计，而在VAEs中，我们只能从潜在变量中进行近似推断，而GANs不能推断潜在变量，因为他们没有编码器。</li>
+<li>它们对于综合和推理的并行化是有效的。</li>
+<li>它们为下游任务提供了有用的潜在空间，因此能够在数据点之间进行插值并修改现有的数据点。</li>
+<li>与gan和VAEs相比，它们的内存效率更高。</li>
+</ul>
+<p>在本节中，我们将深入了解一种称为<strong>实值非体积保持</strong> ( <strong>实NVP </strong>)变换的生成概率模型，它可以对高维数据进行易处理的建模。该模型通过堆叠一系列可逆双射变换来工作。</p>
+<p>假设我们有一个<em> D- </em>维输入<em> x </em>，它被<em> d &lt; D </em>分成两部分，输出<em> y </em>使用以下两个等式计算:</p>
+<ul>
+<li><sub> <img class="fm-editor-equation" src="img/0d2b5289-c930-4d5b-b128-7704840f8530.png" style="width:5.83em;height:1.17em;"/> </sub></li>
+<li><sub> <img class="fm-editor-equation" src="img/8893c52b-151e-4a91-b563-25a72539d774.png" style="width:17.67em;height:1.75em;"/> </sub></li>
+</ul>
+<p>这里，<img class="fm-editor-equation" src="img/a5180735-3ffe-4ef0-97ea-f218b54ae4aa.png" style="width:1.08em;height:1.17em;"/>是元素式乘积；<em>s(</em><em>)</em><em>t(</em><em>)</em>是映射<sub> <img class="fm-editor-equation" src="img/262094d6-d674-45ee-a88d-d32ef4c8d2d3.png" style="width:5.58em;height:1.25em;"/> </sub>的缩放和平移函数。</p>
+<p>利用我们对标准化流程的了解，我们知道这种方法必须满足两个特性——它必须易于可逆，并且它的雅可比矩阵必须易于计算。现在让我们检查一下这个方法是否符合这两个标准。</p>
+<p>在下面的等式中，我们可以看到，事实上，求逆非常简单:</p>
+<p><img src="img/7ff50bf8-de63-4c93-a715-4f04b61cffab.png" style="width:43.00em;height:3.42em;"/></p>
+<p>计算耦合层的倒数不需要我们计算<em>s(</em><em>)</em>和<em>【t(</em><em>)</em>的倒数，这很好，因为在这种情况下，这两个函数都是CNN，很难求逆。</p>
+<p>现在，我们可以确定雅可比矩阵的计算有多简单:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/354c6a6e-3fa3-4921-8f52-9ac9e565aec5.png" style="width:15.25em;height:4.17em;"/></p>
+<p>这是一个下三角矩阵。如果我们想找到雅可比矩阵的行列式，我们可以使用下面的公式:</p>
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/a1861661-c791-4e2b-8785-0c0c1d431c48.png" style="width:12.00em;height:2.08em;"/></p>
+<p class="mce-root">这两个映射方程告诉我们，当我们在正向计算期间合并耦合层时，一些部分不受影响。为了克服这一点，这种方法的作者使用交替模式耦合各层，以便所有部分最终都得到更新。</p>
+
+
+            
+
+            
+        
+    </div>
+
+
+
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><h1 class="header-title">摘要</h1>
+                
+            
+            
+                
+<p>在本节中，我们讨论了各种生成模型，这些模型学习真实数据的分布，并试图生成与真实数据不可区分的数据。我们从一个简单的自动编码器开始，并在此基础上理解它的一个变体，该变体使用变分推理来生成类似于输入的数据。然后我们继续学习GANs，它在一个游戏中让两个模型——一个鉴别器和一个生成器——相互对抗，以便生成器试图学习创建看起来足够真实的数据，以欺骗鉴别器认为它是真实的。</p>
+<p>最后，我们学习了基于流的网络，它通过对复杂的概率密度应用几个可逆变换，用一个更简单的概率密度来近似一个复杂的概率密度。这些模型用于各种任务，包括但不限于合成数据生成，以克服数据限制并从数据中提取洞察力。</p>
+<p>在下一章，我们将学习迁移和元学习，其中包括各种方法，涉及将网络已经为一个任务学习的知识转移到另一个任务的引导学习。我们将区分这两种方法。</p>
+
+
+            
+
+            
+        
+    </div>
+</body></html>

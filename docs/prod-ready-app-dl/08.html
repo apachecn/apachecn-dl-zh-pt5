@@ -1,0 +1,1466 @@
+<html><head/><body>
+
+
+
+
+
+	
+
+		<title>B18522_06</title>
+
+		
+
+	
+
+	
+
+		<div><h1 id="_idParaDest-124" class="chapter-number"><a id="_idTextAnchor133"/> 6</h1>
+
+			<h1 id="_idParaDest-125"><a id="_idTextAnchor134"/>高效的模型训练</h1>
+
+			<p>类似于我们在上一章中如何扩大数据处理管道，我们可以通过分配更多的计算资源来减少训练<strong class="bold">深度学习</strong> ( <strong class="bold"> DL </strong>)模型所需的时间。在本章中，我们将学习如何配置<strong class="bold"> TensorFlow </strong> ( <strong class="bold"> TF </strong>)和<strong class="bold"> PyTorch </strong>训练逻辑，以利用不同机器上的多个CPU和GPU设备。首先，我们将了解TF和PyTorch如何在没有任何外部工具的情况下支持分布式训练。接下来，我们将描述如何利用SageMaker，因为它是为了端到端地处理云上的DL管道而构建的。最后，我们将看看专门为分布式培训开发的工具:Horovod、Ray和Kubeflow。</p>
+
+			<p>在本章中，我们将讨论以下主要话题:</p>
+
+			<ul>
+
+				<li>在单台计算机上训练模型</li>
+
+				<li>在群集上训练模型</li>
+
+				<li>使用SageMaker训练模型</li>
+
+				<li>使用Horovod训练模型</li>
+
+				<li>使用光线训练模型</li>
+
+				<li>使用Kubeflow训练模型</li>
+
+			</ul>
+
+			<h1 id="_idParaDest-126"><a id="_idTextAnchor135"/>技术要求</h1>
+
+			<p>你可以从本书的GitHub资源库下载本章的补充资料:https://GitHub . com/packt publishing/Production-Ready-Applied-Deep-Learning/tree/main/Chapter _ 6。</p>
+
+			<h1 id="_idParaDest-127"><a id="_idTextAnchor136"/>在单台机器上训练模型</h1>
+
+			<p>如<a href="B18522_03.xhtml#_idTextAnchor062"> <em class="italic">第三章</em> </a>，<em class="italic">开发一个强大的深度学习模型</em>，训练<a id="_idIndexMarker606"/>一个DL模型涉及<a id="_idIndexMarker607"/>从数据集中提取有意义的模式。当数据集的大小很小时，模型<a id="_idIndexMarker608"/>很少有参数需要调整，一个<strong class="bold">中央处理单元</strong> ( <strong class="bold"> CPU </strong>)可能足以训练<a id="_idIndexMarker609"/>该模型。然而，当DL <a id="_idIndexMarker610"/>模型用更大的训练集进行训练并且由更多数量的神经元组成时，它们表现出更好的性能。因此，使用<strong class="bold">图形处理单元</strong> ( <strong class="bold"> GPU </strong>)进行训练已经成为标准，因为你可以利用它在矩阵乘法方面的巨大并行性。</p>
+
+			<h2 id="_idParaDest-128"><a id="_idTextAnchor137"/>在TensorFlow中利用多种设备进行训练</h2>
+
+			<p>TF提供了<code>tf.distribute.Strategy</code>模块，通过非常简单的代码修改<a href="https://www.tensorflow.org/guide/distributed_training">阳离子(https://www.tensorflow.org/guide/distributed</a>_ training)，允许<a id="_idIndexMarker612"/>你使用多个GPU <a id="_idIndexMarker613"/>或CPU设备<a id="_idIndexMarker614"/>进行训练。<code>tf.distribute.Strategy</code>完全兼容<code>tf.keras.Model.fit</code>，以及自定义训练循环，详见<a href="B18522_03.xhtml#_idTextAnchor062"> <em class="italic">第三章</em></a><em class="italic">开发强大的深度学习模型</em>的<em class="italic">在TensorFlow </em>部分实现并训练模型。Keras的各种组件，包括变量、层、模型、优化器、指标、摘要和检查点，旨在支持各种<code>tf.distribute.Strategy</code>类，尽可能简单地过渡到分布式培训。让我们来看看<code>tf.distribute.Strategy</code>模块是如何让你快速修改一套为单台设备设计的代码到单台机器上的多台设备的:</p>
+
+			<pre class="source-code">
+
+import tensorflow as tf
+
+mirrored_strategy = tf.distribute.MirroredStrategy()
+
+# or 
+
+# mirrored_strategy = tf.distribute.MirroredStrategy(devices=["/gpu:0", "/gpu:1", "/gpu:3"])
+
+# if you want to use only specific devices 
+
+with mirrored_strategy.scope():
+
+    # define your model 
+
+    # …
+
+model.compile(... )
+
+model.fit(... ) </pre>
+
+			<p>一旦模型<a id="_idIndexMarker615"/>被保存，它可以加载<a id="_idIndexMarker616"/>带或不带<code>tf.distribute.Strategy</code>范围。要用定制的训练循环实现分布式训练，你可以效仿https://www.tensorflow.org/tutorials/distribute/cus汤姆训练的例子。说到这里，我们来回顾一下使用最多的策略。我们将讨论最常见的方法，其中一些方法超出了训练单个实例的范围。它们将在接下来的几个部分中使用，这些部分将涵盖多台机器上的培训:</p>
+
+			<ul>
+
+				<li>为<code>tf.keras.Model.fit</code>和定制训练循环提供全面支持的策略:<ul><li><code>MirroredStrategy</code>:在一台机器上使用多个GPU的同步分布式训练</li><li><code>MultiWorkerMirroredStrategy</code>:多台机器上的同步分布式训练(可能每台机器使用多个GPU)。这个策略类需要一个已经使用<code>TF_CONFIG</code>环境变量(<a href="https://www.tensorflow.org/guide/distributed_training#TF_CONFIG">https://www . tensor flow . org/guide/distributed _ training # TF _ CONFIG</a>)进行了<a id="_idIndexMarker618"/>配置的TF集群</li><li><code>TPUStrategy</code>:在多个<strong class="bold">张量处理单元</strong> ( <strong class="bold"> TPUs </strong>)上训练<a id="_idIndexMarker619"/></li></ul></li>
+
+				<li>用于<code>tf.keras.Model.fit</code>和定制训练循环的具有实验特征的策略(意味着类和方法仍处于开发阶段):<ul><li><code>ParameterServerStrategy</code>:模型参数在多个工作器之间共享(集群由工作器和参数服务器组成)。在每次迭代之后，工人读取并更新在参数服务器上创建的变量。</li><li><code>CentralStorageStrategy</code>:变量存储在中央存储器中，在每个GPU之间复制。</li></ul></li>
+
+				<li>最后要提到的策略是<code>tf.distribute.OneDev</code><a href="https://www.tensorflow.org/api_docs/python/tf/distribute/OneDeviceStrategy"><code>iceStrategy</code>(https://www . tensor flow . org/API _ docs/python/TF/distribute/One</a>device strategy)。它在单个GPU设备上运行训练代码<a id="_idIndexMarker620"/>，如下所示:<pre>strategy = tf.distribute.OneDeviceStrategy(device="/gpu:0")</pre></li>
+
+			</ul>
+
+			<p>在前面的例子中，我们选择了第一个GPU ( <code>"/gpu:0"</code>)。</p>
+
+			<p>另外值得一提的是，<code>tf.distribute.get_strategy</code>函数可以用来获取当前的<code>tf.distribute.Strategy</code>对象。您可以使用这个函数为您的训练代码动态地更改<code>tf.distribute.Strategy</code>对象，如下面的代码片段所示:</p>
+
+			<pre class="source-code">
+
+if tf.config.list_physical_devices('GPU'):
+
+    strategy = tf.distribute.MirroredStrategy()
+
+else:  # Use the Default Strategy
+
+    strategy = tf.distribute.get_strategy()</pre>
+
+			<p>在前面的代码中，当GPU设备可用时，我们使用<code>tf.distribute.MirroredStrategy</code><a id="_idIndexMarker621"/>，当GPU <a id="_idIndexMarker622"/>设备不可用时，我们退回到默认策略。接下来，我们来看看PyTorch提供的特性。</p>
+
+			<h2 id="_idParaDest-129"><a id="_idTextAnchor138"/>利用多种设备进行PyTorch培训</h2>
+
+			<p>为了成功训练PyTorch模型<a id="_idIndexMarker623"/>，需要为同一设备配置模型<a id="_idIndexMarker624"/>和输入张量。如果您想要使用GPU设备，则需要在训练之前使用<code>to(device=torch.device('cuda'))</code>或<code>cuda()</code>函数将它们明确加载到目标GPU设备上:</p>
+
+			<pre class="source-code">
+
+cpu = torch.device(cpu')
+
+cuda = torch.device('cuda')     # Default CUDA device
+
+cuda0 = torch.device('cuda:0')
+
+x = torch.tensor([1., 2.], device=cuda0)
+
+# x.device is device(type='cuda', index=0)
+
+y = torch.tensor([1., 2.]).cuda()
+
+# y.device is device(type='cuda', index=0)
+
+# transfers a tensor from CPU to GPU 1
+
+a = torch.tensor([1., 2.]).cuda()
+
+# a.device are device(type='cuda', index=1)
+
+# to function of a Tensor instance can be used to move the tensor to different devices
+
+b = torch.tensor([1., 2.]).to(device=cuda)
+
+# b.device are device(type='cuda', index=1)</pre>
+
+			<p>前面的例子展示了使用GPU设备时应该注意的一些关键操作。这是PyTorch官方文档中的一个子集:https://pytorch.org/docs/stable/notes/cuda.html.</p>
+
+			<p>然而，为培训设置单个组件<a id="_idIndexMarker628"/>可能会令人厌倦。因此，<code>Trainer</code>的<code>gpus</code>参数:</p>
+
+			<pre class="source-code">
+
+# Train using CPU
+
+Trainer()
+
+# Specify how many GPUs to use
+
+Trainer(gpus=k)
+
+# Specify which GPUs to use
+
+Trainer(gpus=[0, 1])
+
+# To use all available GPUs put -1 or '-1'
+
+Trainer(gpus=-1)</pre>
+
+			<p>在前面的示例中，我们描述了单台计算机的各种训练设置:仅使用CPU设备的训练、使用一组GPU设备的训练以及使用所有GPU设备的训练。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.TF和PyTorch为使用CPU和GPU设备训练模型提供了内置支持。</p>
+
+			<p class="callout">b.可以使用TF中的<code>tf.distribute.Strategy</code>类来控制训练。单机训练模型时，可以使用<code>MirroredStrategy</code>或<code>OneDeviceStrategy</code>。</p>
+
+			<p class="callout">c.要使用GPU设备训练PyTorch模型，模型和相关张量需要手动加载到同一个GPU设备上。PL通过将位置作为<code>Trainer</code>类的一部分来处理，隐藏了大部分样板代码。</p>
+
+			<p>在这一部分，我们学习了<a id="_idIndexMarker629"/>如何在一台机器上使用多个设备<a id="_idIndexMarker630"/>。然而，由于单台机器的计算能力是有限的，所以人们一直在努力利用机器集群进行训练。</p>
+
+			<h1 id="_idParaDest-130"><a id="_idTextAnchor139"/>在集群上训练模型</h1>
+
+			<p>尽管在一台机器上使用多个<a id="_idIndexMarker631"/>GPU<a id="_idIndexMarker632"/>已经大大减少了培训时间，但一些模型非常庞大，仍然需要多天进行培训。添加更多的GPU仍然是一种选择，但物理限制往往存在，阻止您充分利用多GPU设置的潜力:主板可以支持有限数量的GPU设备。</p>
+
+			<p>幸运的是，许多DL框架<a id="_idIndexMarker633"/>已经支持在分布式<a id="_idIndexMarker634"/>系统上训练模型。虽然在实际实现中有微小的差异<a id="_idIndexMarker635"/>，但是大多数<a id="_idIndexMarker636"/>框架都采用了<strong class="bold">模型并行</strong>和<strong class="bold">数据并行</strong>的思想。如下图所示，模型并行性将模型的组件分发到多台计算机上，而数据并行性则分发训练集的样本:</p>
+
+			<div><div><img src="img/B18522_06_01.jpg" alt="Figure 6.1 – The difference between model parallelism and data parallelism&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图6.1–模型并行性和数据并行性的区别</p>
+
+			<p>在为模型训练设置分布式系统时，有几个细节是您必须了解的。首先，集群中的机器需要稳定地连接到互联网，因为它们通过网络进行通信。如果稳定性得不到保证，集群必须有办法从连接问题中恢复。理想情况下，分布式系统应该不知道可用的机器，并且能够在不影响整体进度的情况下添加或删除机器。这种功能将允许用户动态地增加或减少机器的数量，以最具成本效益的方式实现模型训练。AWS通过<strong class="bold">Elastic MapReduce</strong>(<strong class="bold">EMR</strong>)和<strong class="bold">弹性容器服务</strong> ( <strong class="bold"> ECS </strong>)提供上述<a id="_idIndexMarker638"/>开箱即用的功能。</p>
+
+			<p>在接下来的两节中，我们将<a id="_idIndexMarker639"/>深入探讨模型并行性<a id="_idIndexMarker640"/>和数据并行性。</p>
+
+			<h2 id="_idParaDest-131"><a id="_idTextAnchor140"/>模型并行性</h2>
+
+			<p>在模型并行的情况下，分布式系统中的每台机器<a id="_idIndexMarker641"/>获取模型的一部分，并为分配的组件管理计算。当网络太大而不适合单个GPU时，通常会考虑这种方法。然而，这在现实中并不常见，因为GPU设备通常有足够的内存来适应该模型，并且设置它相当复杂。在本节中，我们将描述模型并行的两种最基本的方法:<strong class="bold">模型分片</strong>和<strong class="bold">模型流水线</strong>。</p>
+
+			<h3>模型分片</h3>
+
+			<p>模型分割只不过是将<a id="_idIndexMarker642"/>模型分割成跨越<a id="_idIndexMarker643"/>多个设备的多个计算子图。让我们假设一个基本单层<strong class="bold">深度神经网络</strong> ( <strong class="bold"> DNN </strong>)模型的简单场景(没有并行路径)。该模型可以被分割成几个连续的子图，并且分片轮廓可以用图形表示如下。数据将从具有第一个子图的器件开始按顺序流动。每个设备将把计算的值传递给下一个子图的设备。在必要的数据到达之前，设备将保持空闲状态。在这个例子中，我们有四个子图:</p>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US"><a id="_idIndexMarker644"/></p>
+
+			<div><div><img src="img/B18522_06_02.jpg" alt="Figure 6.2 – A sample distribution of a model in model sharding; each arrow indicates a mini-batch&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图6.2–模型分割中模型的样本分布；每个箭头表示一个小批量</p>
+
+			<p>正如你所看到的，模型分片并没有利用全部的计算资源；一个设备正在等待另一个设备处理它的子图。为了解决这个问题，提出了流水线方法。</p>
+
+			<h3>模型流水线</h3>
+
+			<p>在模型流水线的情况下，一个小批量被分割<a id="_idIndexMarker646"/>成小批量，并以链的形式提供给系统，如下图所示:</p>
+
+			<div><div><img src="img/B18522_06_03.jpg" alt="Figure 6.3 – A diagram of model pipeline logic; each arrow indicates a mini-batch&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图6.3–模型管道逻辑图；每个箭头表示一个小批量</p>
+
+			<p>然而，模型流水线<a id="_idIndexMarker647"/>需要反向传播的修改版本。让我们看看如何在模型流水线设置中实现单个前向和后向传播。在某种程度上，每个设备不仅需要执行其子图的正向计算，还需要执行梯度计算。单一的向前和向后传播可以这样实现:</p>
+
+			<div><div><img src="img/B18522_06_04.jpg" alt="Figure 6.4 – A single forward and backward propagation in model pipelining&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图6.4–模型管道中的单一前向和后向传播</p>
+
+			<p>在前面的<a id="_idIndexMarker648"/>图中，我们可以看到每个设备依次向前传播和反向传播，将计算值传递给下一个设备。把所有的东西放在一起，我们得到下面的图表，它总结了模型流水线的逻辑:</p>
+
+			<div><div><img src="img/B18522_06_05.jpg" alt="Figure 6.5 – Model parallelism based on model pipelining&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图6.5–基于模型流水线的模型并行性</p>
+
+			<p>为了进一步改善训练<a id="_idIndexMarker649"/>时间，每个设备存储其先前计算的值，并在随后的计算中使用它们。</p>
+
+			<h3>TensorFlow中的模型并行</h3>
+
+			<p>以下代码片段<a id="_idIndexMarker650"/>显示了在定义模型架构时，如何将一组层分配给TF中的特定<a id="_idIndexMarker651"/>设备:</p>
+
+			<pre class="source-code">
+
+with tf.device('GPU:0'): 
+
+    layer1 = layers.Dense(16, input_dim=8) 
+
+with tf.device('GPU:1'): 
+
+    layer2 = layers.Dense(4, input_dim=16)</pre>
+
+			<p>如果您想进一步探索TF中的模型并行性，我们建议查看Mesh TF 资源库(https://github . com/tensor flow/Mesh)。</p>
+
+			<h3>PyTorch中的模型并行性</h3>
+
+			<p>模型并行性<a id="_idIndexMarker652"/>仅在PyTorch上可用，尚未在PL中实现。虽然<a id="_idIndexMarker653"/>使用PyTorch实现模型并行有很多方法，但最标准的方法是使用<code>torch.distributed.rpc</code>模块，该模块使用<strong class="bold">远程过程调用</strong> ( <strong class="bold"> RPC </strong>)实现<a id="_idIndexMarker654"/>机器间的通信。基于RPC的方法的三个主要特征是远程触发功能或网络(远程执行)，访问和引用远程数据对象(远程引用)，以及跨机器边界扩展PyTorch的梯度更新功能(分布式梯度更新)。我们把细节委托给官方文件:https://pytorch.org/docs/stable/rpc.html.</p>
+
+			<h2 id="_idParaDest-132"><a id="_idTextAnchor141"/>数据并行</h2>
+
+			<p>与模型并行不同，数据并行旨在通过将数据集分割到集群中的机器来加速训练。每台机器都获得模型的副本，并使用它所分配到的数据集计算梯度。然后，聚集梯度<a id="_idIndexMarker657"/>,并且立即全局更新模型。</p>
+
+			<h3>TensorFlow中的数据并行</h3>
+
+			<p>利用<code>tf.distribute.MultiWorkerMirroredStrategy</code>、<code>tf.distribute.ParameterServerStrategy</code>和<code>tf.distribute.CentralStorageStrategy</code>可以在TF <a id="_idIndexMarker659"/>中实现数据并行<a id="_idIndexMarker658"/>。</p>
+
+			<p>我们在TensorFlow 部分的<em class="italic">中介绍了利用多台设备进行训练的策略，因为特定的<code>tf.distributed</code>策略也用于在一台机器内的多台设备上设置训练。</em></p>
+
+			<p>要使用这些策略，您需要建立一个TF集群，在这个集群中，每台机器都可以相互通信。</p>
+
+			<p>通常，使用一个<code>TF_CONFIG</code>环境变量来定义一个TF集群。<code>TF_CONFIG</code>只是一个<code>JSON</code>字符串，通过定义两个组件:<code>cluster</code>和<code>task</code>来指定集群配置。以下Python代码显示了如何从Python字典为<code>TF_CONFIG</code>生成一个<code>.json</code>文件:</p>
+
+			<pre class="source-code">
+
+tf_config = {
+
+    'cluster': {
+
+        'worker': ['localhost:12345', 'localhost:23456']
+
+    },
+
+    'task': {'type': 'worker', 'index': 0}
+
+}
+
+js_tf = json.dumps(tf_config)
+
+with open("tf_config.json", "w") as outfile:
+
+    outfile.write(js_tf)<a href="https://cloud.google.com/ai-platform/training/docs/distributed-training-details"/></pre>
+
+			<p><a href="https://cloud.google.com/ai-platform/training/docs/distributed-training-details"><code>TF_CONFIG</code>字段和格式在https://cloud.google.com</a>/ai-platform/training/docs/distributed-training-details中描述。</p>
+
+			<p>如<em class="italic">在TensorFlow </em>部分使用多种设备进行训练所演示的，您需要将训练代码放在<code>tf.distribute.Strategy</code>范围下。在下面的例子中，我们将展示一个<code>tf.distribute.MultiWorkerMirroredStrategy</code>类的使用示例。</p>
+
+			<p>首先，您<a id="_idIndexMarker661"/>必须将您的模型<a id="_idIndexMarker662"/>实例放在<code>tf.distribute.MultiWorkerMirroredStrategy</code>的范围内，如下面的代码片段所示:</p>
+
+			<pre class="source-code">
+
+strategy = tf.distribute.MultiWorkerMirroredStrategy()
+
+with strategy.scope():
+
+    model = … </pre>
+
+			<p>接下来，您需要确保已经为集群中的每台机器正确设置了<code>TF_CONFIG</code>环境变量，并运行训练脚本，如下所示:</p>
+
+			<pre># On the first node
+TF_CONFIG='{"cluster": {"worker": ['localhost:12345', 'localhost:23456']}, "task": {"index": 0, "type": "worker"}}' python training.py
+# On the second node
+TF_CONFIG='{"cluster": {"worker": ['localhost:12345', 'localhost:23456']}, "task": {"index": 1, "type": "worker"}}' python training.py</pre>
+
+			<p>为了正确保存<a id="_idIndexMarker663"/>你的<a href="https://www.tensorflow.org/tutorials/distribute/multi_worker_with_keras">模型，请看一下官方文档:https://www . t</a>ensorflow.org/tutorials/distribute/multi_worker_with_keras.</p>
+
+			<p>在<a href="https://www.tensorflow.org/tutorials/distribute/multi_worker_with_ctl">自定义训练循环的情况下，可以按照https://ww</a>w . tensor flow . org/tutorials/distribute/multi _ worker _ with _ CTL上的说明进行操作。</p>
+
+			<h3>PyTorch中的数据并行性</h3>
+
+			<p>与模型<a id="_idIndexMarker665"/>并行不同，数据并行<a id="_idIndexMarker666"/>可用于PyTorch和PL。在各种实现中，最标准的特性是<code>torch.nn.parallel.DistributedDataParallel</code> (DDP)。在本节中，我们将主要讨论PL，因为它的主要优势来自于使用数据并行性的训练模型的简单性。</p>
+
+			<p>为了使用数据并行性训练一个模型，你需要修改训练代码以利用底层的分布式系统，并在每台机器上用<code>torch.distributed.run</code>模块<a id="_idIndexMarker667"/>(<a href="https://pytorch.org/docs/stable/distributed.html">https://pytorch.org/docs/stable/distributed.html</a>)生成一个进程。</p>
+
+			<p>以下代码片段描述了<a id="_idIndexMarker668"/>您需要为ddp进行哪些更改。你只需<a id="_idIndexMarker669"/>为<code>Trainer</code>的<code>accelerator</code>参数提供<code>ddp</code>。<code>num_nodes</code>是集群中有多台机器时需要调整的参数:</p>
+
+			<pre class="source-code">
+
+# train on 8 GPUs (same machine)
+
+trainer = Trainer(gpus=8, accelerator='ddp')
+
+# train on 32 GPUs (4 nodes)
+
+trainer = Trainer(gpus=8, accelerator='ddp', num_nodes=4)</pre>
+
+			<p>一旦设置好脚本，您需要在每台机器上运行以下命令。请记住，<code>MASTER_ADDR</code>和<code>MASTER_PORT</code>必须一致，因为它们被每个处理器用来通信。另一方面，<code>NODE_RANK</code>表示机器的索引。换句话说，每台机器必须不同，而且必须从零开始:</p>
+
+			<pre>python -m torch.distributed.run
+    --nnodes=2 # number of nodes you'd like to run with
+    --master_addr &lt;MASTER_ADDR&gt;
+    --master_port &lt;MASTER_PORT&gt;
+    --node_rank &lt;NODE_RANK&gt;
+    train.py (--arg1 ... train script args...)</pre>
+
+			<p>根据官方文档，DDP的工作方式如下:</p>
+
+			<ol>
+
+				<li>每个节点上的每个GPU都会加速一个进程。</li>
+
+				<li>每个进程获得训练集的一个子集。</li>
+
+				<li>每个进程初始化模型。</li>
+
+				<li>每个进程并行执行向前和向后传播。</li>
+
+				<li>梯度在所有过程中被同步和平均。</li>
+
+				<li>每个进程更新它所拥有的模型的权重。</li>
+
+			</ol>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.TF和PyTorch提供了使用模型并行性和数据并行性在多台机器上训练DL模型的选项。</p>
+
+			<p class="callout">b.模型并行性将模型分割成多个组件，并将它们分布在不同的机器上。要在TF和PyTorch中设置模型并行性，您可以分别使用<code>Mesh TensorFlow</code>库和<code>torch.distributed.rpc</code>包。</p>
+
+			<p class="callout">c.数据并行将模型复制到每台机器上，并在机器间分发小批量数据用于训练。在TF中，可以使用<code>MultiWorkerMirroredStrategy</code>、<code>ParameterServerStrategy</code>或<code>CentralStorageStrategy</code>来实现数据并行。PyTorch中为数据并行设计的主包叫做<code>torch.nn.parallel.DistributedDataParallel</code>。</p>
+
+			<p>在本节中，我们学习了<a id="_idIndexMarker670"/>如何在集群<a id="_idIndexMarker671"/>的生命周期被明确管理的情况下实现模型训练。然而，一些工具也管理用于模型训练的聚类。由于每种工具都有不同的优点，所以您应该了解它们之间的差异，以便为您的开发选择正确的工具。</p>
+
+			<p>首先，我们将看看SageMaker的内置特性，这些特性以分布式方式训练DL模型。</p>
+
+			<h1 id="_idParaDest-133"><a id="_idTextAnchor142"/>使用SageMaker训练模型</h1>
+
+			<p>正如在<a href="B18522_05.xhtml#_idTextAnchor106"> <em class="italic">第5章</em> </a>、<em class="italic">云中的数据准备</em>的<em class="italic">利用SageMaker进行ETL </em>一节中提到的<a id="_idIndexMarker672"/>，SageMaker的动机<a id="_idIndexMarker673"/>是帮助工程师和研究人员专注于开发高质量的DL管道，而无需担心基础设施管理。SageMaker为您管理数据存储和计算资源，允许您以最小的努力利用分布式系统进行模型训练。此外，SageMaker支持将数据流式传输到您的模型，用于推理、超参数调整以及跟踪实验和工件。</p>
+
+			<p>SageMaker Studio是您定义模型逻辑的地方。SageMaker Studio笔记本允许您快速浏览可用数据并设置模型训练逻辑。当模型训练花费太长时间时，通过对基础设施的配置进行一些修改，可以有效地扩大规模以使用多种计算资源并找到最佳超参数集。此外，SageMaker支持在分布式系统上进行超参数调优，以利用并行性。</p>
+
+			<p>尽管SageMaker听起来像是DL管道的神奇钥匙，但它也有缺点。首先是它的成本。分配给SageMaker的实例比同等的EC2实例贵40%左右。接下来，你可能会发现笔记本里并不是所有的库都有。换句话说，您可能需要花费一些额外的时间来构建和安装您需要的库。</p>
+
+			<h2 id="_idParaDest-134"><a id="_idTextAnchor143"/>为SageMaker设置模型培训</h2>
+
+			<p>现在，您应该能够启动<a id="_idIndexMarker674"/>笔记本并为您的项目选择预定义的开发环境<a id="_idIndexMarker675"/>，因为我们已经在<a href="B18522_05.xhtml#_idTextAnchor106"> <em class="italic">第5章</em> </a>、<em class="italic">云中的数据准备</em>的<em class="italic">利用SageMaker进行ETL </em>部分中介绍了这些。假设您已经处理了原始数据并将处理后的数据存储在数据存储中，我们将在这一部分重点讨论模型训练。SageMaker的模型训练可以总结为以下三个步骤:</p>
+
+			<ol>
+
+				<li value="1">如果存储中已处理的数据尚未拆分为定型集、验证集和测试集，则必须先将其拆分。</li>
+
+				<li>您需要定义模型定型逻辑并指定群集配置。</li>
+
+				<li>最后，您需要训练您的模型，并将工件保存回数据存储中。训练完成后，分配的实例将自动终止。</li>
+
+			</ol>
+
+			<p>用SageMaker进行模型训练的关键是<code>sagemaker.estimator.Estimator</code>。它允许您<a id="_idIndexMarker676"/>配置训练设置，包括<a id="_idIndexMarker677"/>I<a href="https://sagemaker.readthedocs.io/en/stable/api/training/estimators.html">n基础结构设置、要使用的Docker图像类型以及超参数</a>(<a href="https://sagemaker.readthedocs.io/en/stable/api/training/estimators.html">https://sagemaker . readthedocs . io/en/stable/API/training/estimators . html</a>)。以下是您通常会配置的主要参数<a id="_idIndexMarker678"/>:</p>
+
+			<ul>
+
+				<li><code>role</code> ( <code>str</code>):一个AWS IAM角色</li>
+
+				<li><code>instance_count</code> ( <code>int</code>):用于训练的SageMaker EC2实例的数量</li>
+
+				<li><code>instance_type</code> ( <code>str</code>):用于训练的SageMaker EC2实例的类型</li>
+
+				<li><code>volume_size</code>(<code>int</code>):Amazon<strong class="bold">Elastic Block Store</strong>(<strong class="bold">EBS</strong>)卷的大小(以千兆字节为单位)，将用于临时下载<a id="_idIndexMarker679"/>输入数据进行训练</li>
+
+				<li><code>output_path</code> ( <code>str</code>):存储训练结果的S3对象</li>
+
+				<li><code>use_spot_instances</code> ( <code>bool</code>):指定是否使用SageMaker管理的AWS Spot实例进行训练的标志</li>
+
+				<li><code>checkpoint_s3_uri</code> ( <code>str</code>):一个S3 URI，训练时将在这里存放检查点</li>
+
+				<li><code>hyperparameters</code> ( <code>dict</code>):包含初始超参数集的字典</li>
+
+				<li><code>entry_point</code> ( <code>str</code>):运行Python文件的路径</li>
+
+				<li><code>dependencies</code> ( <code>list[str]</code>):将要加载到作业中的目录列表</li>
+
+			</ul>
+
+			<p>只要你从亚马逊<strong class="bold">弹性容器注册表</strong> ( <strong class="bold"> ECR </strong>)中选择<a id="_idIndexMarker680"/>正确的容器，你就可以为SageMaker设置任何训练配置。也存在为CPU和GPU设备配置不同的容器。你可以在https://github . com/AWS/deep-learning-containers/blob/master/available _ images . MD找到这些。</p>
+
+			<p>此外，还有一些开源工具包的存储库，旨在帮助亚马逊SageMaker上的TF和PyTorch模型培训。这些库<a id="_idIndexMarker681"/>还包含Docker文件，这些文件<a id="_idIndexMarker682"/>已经安装了必要的库，例如TF、PyTo <a href="https://github.com/aws/sagemaker-tensorflow-training-toolkit"> rch以及构建SageMaker ima </a> ges所需的其他依赖项:</p>
+
+			<ul>
+
+				<li>TF<a href="https://github.com/aws/sagemaker-pytorch-training-toolkit">:https://github.com/aws/sagemaker-tensorflow-traini</a>ng-工具包</li>
+
+				<li>https://github.com/aws/sagemaker-pytorch-training-toolkit</li>
+
+			</ul>
+
+			<p>最后，我们想提一下，您可以在本地机器上构建和运行容器。如果需要，还可以更新已安装的库。如果做了任何修改，需要将修改后的容器上传到Amazon ECR，然后才能和<code>sagemaker.estimator.Estimator</code>一起使用。</p>
+
+			<p>在下面的两个部分中，我们将描述训练TF和PyTorch模型所需的一组变化。</p>
+
+			<h2 id="_idParaDest-135"><a id="_idTextAnchor144"/>使用SageMaker训练张量流模型</h2>
+
+			<p>SageMaker <a id="_idIndexMarker683"/>提供了一个为TF构建的<code>sagemaker.estimator.Estimator</code>类:<code>sagemaker.tensorflow.estimator.TensorFlow</code>(<a href="https://sagemaker.readthedocs.io/en/stable/frameworks/tensorflow/sagemaker.tensorflow.html">https://SageMaker . readthe docs . io/en/stable/frameworks/tensor flow/SageMaker . tensor flow . html</a>)。</p>
+
+			<p>下面的例子<a id="_idIndexMarker684"/>展示了使用<code>sagemaker.tensorflow.estimator.TensorFlow</code>类在SageMaker上训练一个TF模型需要编写的包装器脚本<a id="_idIndexMarker685"/>:</p>
+
+			<pre class="source-code">
+
+import sagemaker
+
+from sagemaker.tensorflow import TensorFlow
+
+# Initializes SageMaker session
+
+sagemaker_session = sagemaker.Session()
+
+bucket = 's3://dataset/'
+
+tf_estimator = TensorFlow(entry_point='training_script.py', 
+
+              source_dir='.',
+
+              role=sagemaker.get_execution_role(),
+
+              instance_count=1, 
+
+              instance_type='ml.c5.18xlarge',
+
+              framework_version=tf_version, 
+
+              py_version='py3',
+
+              script_mode=True,
+
+              hyperparameters={'epochs': 30} )</pre>
+
+			<p>请记住<a id="_idIndexMarker686"/>在<code>hyperparameters</code>参数<a id="_idIndexMarker687"/>中的每个键必须有一个在训练脚本<code>train_script.py</code>的<code>ArgumentParser</code>中定义的对应条目。在前面的例子中，我们只定义了时期(<code>'epochs': 30</code>)。</p>
+
+			<p>要触发训练，需要调用<code>fit</code>函数。您需要为训练和验证提供数据集。如果您将它们放在S3桶上，<code>fit</code>函数将如下所示:</p>
+
+			<pre class="source-code">
+
+tf_estimator.fit({'training': 's3://bucket/training',
+
+                  'validation': 's3://bucket/validation'})   </pre>
+
+			<p>前面的例子将运行在<code>entry_point</code>参数中指定的<code>training_script.py</code>，在<code>source_dir</code>提供的目录中找到它。实例的细节可以在<code>instance_count</code>和<code>instance_type</code>参数中找到。训练脚本将使用在<code>fit</code>函数中定义的训练和验证数据集上为<code>tf_estimator</code>的<code>hyperparameters</code>定义的参数运行。</p>
+
+			<h2 id="_idParaDest-136"><a id="_idTextAnchor145"/>使用SageMaker训练PyTorch模型</h2>
+
+			<p>与<code>sagemaker.tensorflow.estimator.TensorFlow</code>类似的<a href="https://sagemaker.readthedocs.io/en/stable/frameworks/pytorch/sagemaker.pytorch.html">，还有<code>sagemaker.pytorch.PyTorch</code> ( </a> <a href="https://sagemaker.readthedocs.io/en/stable/frameworks/pytorch/sagemaker.pytorch.html"/>)。您可以为您的PyTorch(或PL)模型设置<a id="_idIndexMarker689"/>训练，如<em class="italic">云中的数据准备</em>的<em class="italic">实现和训练PyTorch中的模型</em>一节中的<a id="_idIndexMarker690"/>所述，并集成<code>sagemaker.pytorch.PyTorch</code>，如下面的代码片段所示:</p>
+
+			<pre class="source-code">
+
+import sagemaker
+
+from sagemaker.pytorch import PyTorch
+
+# Initializes SageMaker session
+
+sagemaker_session = sagemaker.Session()
+
+bucket = 's3://dataset/'
+
+pytorch_estimator = PyTorch(
+
+                      entry_point='train.py',
+
+                      source_dir='.',
+
+                      role=sagemaker.get_execution_role(),
+
+                      framework_version='1.10.0',
+
+                      train_instance_count=1,
+
+                      train_instance_type='ml.c5.18xlarge',
+
+                      hyperparameters={'epochs': 6})
+
+…
+
+pytorch_estimator.fit({
+
+                        'training': bucket+'/training',
+
+                        'validation': bucket+'/validation'})   </pre>
+
+			<p>PyTorch估计量的使用与上一节描述的TF估计量相同。</p>
+
+			<p>这就是SageMaker用于模型训练的基本<a id="_idIndexMarker691"/>用法。接下来，我们将学习如何扩大SageMaker的培训工作。我们将讨论使用分布式策略的分布式培训。我们还将介绍如何利用其他延迟更低的数据存储服务来加快培训速度。</p>
+
+			<h2 id="_idParaDest-137">使用SageMaker以分布式方式训练模型</h2>
+
+			<p>SageMaker中的Da <a href="https://sagemaker.readthedocs.io/en/stable/api/training/smd_data_parallel.html"> ta并行可以使用分布式数据并行</a> l <a id="_idIndexMarker695"/>库(https://SageMaker . readthe docs . io/en/stable/API/training/SMD _ data _ parallel . html)来实现。</p>
+
+			<p>您需要做的就是在创建<code>sagemaker.estimator.Estimator</code>实例时启用<code>dataparallel</code>，如下所示:</p>
+
+			<pre class="source-code">
+
+distribution = {"smdistributed": {"dataparallel": { "enabled": True}} </pre>
+
+			<p>下面的代码片段sho <a href="https://docs.aws.amazon.com/en_jp/sagemaker/latest/dg/data-parallel-use-api.html">是一个用<code>dataparallel</code>创建的TF估算器。完整的细节可以在https://docs . AWS . Amazon . com/en _ jp/sagemaker/latest/DG/data-parallel-use-API . html找到:</a></p>
+
+			<pre class="source-code">
+
+tf_estimator = TensorFlow(
+
+                 entry_point='training_script.py', 
+
+                 source_dir='.',
+
+                 role=sagemaker.get_execution_role(),
+
+                 instance_count=4, 
+
+                 instance_type='ml.c5.18xlarge',
+
+                 framework_version=tf_version, 
+
+                 py_version='py3',
+
+                 script_mode=True,
+
+                 hyperparameters={'epochs': 30}
+
+                 distributions={'smdistributed':
+
+                 "dataparallel": {"enabled": True}})</pre>
+
+			<p>PyTorch估计器也需要同样的修改。</p>
+
+			<p>SageMaker支持两种不同的<a id="_idIndexMarker697"/>机制来将<a id="_idIndexMarker698"/>输入数据传输到底层算法:文件模式和管道模式。默认情况下，SageMaker使用文件模式，将输入数据下载到EBS卷进行训练。但是，如果数据量很大，这会降低训练速度。在这种情况下，您可以使用管道模式，该模式从S3(使用Linux FIFO)传输数据，而无需制作额外的副本。</p>
+
+			<p>在TF的<a href="https://github.com/aws/sagemaker-tensorflow-extensions">情况下，你可以简单地从<code>sagemaker-tensorflow</code>扩展(https://github.com/aws/sagemaker-tensorflow-extensions)中使用<code>PipeModeDataset</code> fr </a>，如下所示:</p>
+
+			<pre class="source-code">
+
+from sagemaker_tensorflow import PipeModeDataset
+
+ds = PipeModeDataset(channel='training', record_format='TFRecord') </pre>
+
+			<p>然而，使用管道模式训练PyTorch模型需要更多的工程努力。因此，我们将为您提供一个深入描述每个步骤的笔记本示例:https://github.com/aws/amazon-sagemaker-examples/blob/main/advanced _ functional/pipe _ bring _ your _ own/pipe _ bring _ your _ own . ipynb</p>
+
+			<p>分布式策略<a id="_idIndexMarker699"/>和管道模式<a id="_idIndexMarker700"/>应该通过扩大底层计算资源和增加数据传输吞吐量来加速训练。然而，如果它们还不够，你可以尝试利用另外两个与SageMaker兼容的更高效的<a id="_idIndexMarker701"/>数据存储服务:亚马逊<strong class="bold">弹性文件系统</strong> ( <strong class="bold"> EFS </strong>)和亚马逊<strong class="bold">完全托管共享存储</strong> ( <strong class="bold"> FSx </strong>)，后者<a href="https://aws.amazon.com/efs/">是为Lustre f </a> ilesy <a href="https://aws.amazon.com/fsx/lustre/"> stem构建的。更多细节，你可以分别参考他们在https://aws.amazon.com/efs/和https://aws.amazon.com/fsx/lustre/,的官方网页。</a></p>
+
+			<h2 id="_idParaDest-138"><a id="_idTextAnchor147"/>带Horovod的SageMaker</h2>
+
+			<p>SageMaker分布式培训的另一个选择<a id="_idIndexMarker703"/>是使用<em class="italic"> Horovod，</em>一个基于<strong class="bold">消息传递接口</strong> ( <strong class="bold"> MPI </strong>)原则的免费开源分布式DL培训框架。MPI <a id="_idIndexMarker704"/>是一个标准的消息传递<a id="_idIndexMarker705"/>库，广泛应用于并行计算架构中。Horovod假设MPI可用于工人发现和缩减协调。Horovod还可以利用Gloo代替MPI，这是一个开源的集体通信库。以下是为Horovod配置的分布参数示例:</p>
+
+			<pre class="source-code">
+
+distribution={"mpi": {"enabled":True, 
+
+                        "processes_per_host":2 }}</pre>
+
+			<p>在前面的代码片段中，我们使用MPI实现了机器之间的协调。<code>processes_per_host</code>定义在每个实例上运行的进程数量。这相当于在<code>mpirun</code>或<code>horovodrun</code>命令中使用<code>-H</code>参数来定义进程的数量，这两个命令分别控制程序在MPI和Horovod中的执行。</p>
+
+			<p>在下面的代码片段中，我们选择了控制训练脚本执行数量的并行进程的数量(<code>-np</code>参数)。然后，使用<code>-H</code>参数的指定值将该数字分割到特定的机器中。使用以下命令，每台机器将运行<code>train.py</code>两次。当您有四台机器，每台机器有两个GPU时，这将是一个典型的设置。分配的<code>-H</code>进程的总和不能超过<code>-np</code>值:</p>
+
+			<pre>mpirun -np 8 -H server1:2,server2:2,server3:2,server4:2 … (other parameters) python train.py  </pre>
+
+			<p>我们将在下一节深入讨论Horovod，因为我们将介绍如何在由EC2实例组成的独立Horovod集群上训练DL模型。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.SageMaker提供了一个优秀的工具，SageMaker Studio，它允许您快速执行初始数据探索和训练基线模型。</p>
+
+			<p class="callout">b.<code>sagemaker.estimator.Estimator</code>对象是使用SageMaker训练模型的重要组件。它还支持在一组具有各种CPU和GPU配置的机器上进行分布式培训。</p>
+
+			<p class="callout">c.利用SageMaker进行TF和PyTorch模型训练可以实现为每个框架专门设计的估计器。</p>
+
+			<p>现在，让我们看看如何在没有SageMaker的情况下使用Horovod进行分布式<a id="_idIndexMarker707"/>模型训练。</p>
+
+			<h1 id="_idParaDest-139"><a id="_idTextAnchor148"/>使用Horovod训练模型</h1>
+
+			<p>即使我们像介绍SageMaker一样介绍了<a id="_idIndexMarker708"/> Horovod，Horovod也被设计为<a id="_idIndexMarker709"/>单独支持分布式训练(https://horovod.ai/)。它旨在通过为流行的DL框架(包括TensorFlow和PyTorch)提供良好的集成，提供一种以分布式方式训练模型的简单方法。</p>
+
+			<p>正如前面在<em class="italic"> SageMaker with Horovod </em>一节中提到的，Horovod的核心原则基于MPI概念，如大小、等级、本地ra  nk、allreduce、allgather、broadcast和all toall(https://horo VOD . readthedocs . io/en/stable/concepts . html)。</p>
+
+			<p>在本节中，我们将了解如何使用EC2实例来设置Horovod集群。然后，我们将描述您需要在TF和PyTorch脚本中进行的修改，以便在Horovod集群上训练您的模型。</p>
+
+			<h2 id="_idParaDest-140"><a id="_idTextAnchor149"/>建立一个Horovod集群</h2>
+
+			<p>要使用EC2实例设置Horovod集群<a id="_idIndexMarker711"/>,您必须遵循以下步骤:</p>
+
+			<ol>
+
+				<li value="1">去https://console.aws.amazon.com/ec2/.的<a id="_idIndexMarker712"/> EC2实例控制台</li>
+
+				<li>点击右上角的<strong class="bold">启动实例</strong>按钮。</li>
+
+				<li>选择安装了TF、PyTorch、Horovod的<strong class="bold">深度学习AMI </strong>(亚马逊机器映像的缩写)。点击右下角的<strong class="bold">下一步… </strong>按钮。</li>
+
+				<li>为您的培训选择正确的<strong class="bold">实例类型</strong>。您可以<a id="_idIndexMarker713"/>选择符合您需求的CPU或GPU实例类型。点击右下角的<strong class="bold">下一步… </strong>按钮:</li>
+
+			</ol>
+
+			<div><div><img src="img/B18522_06_06.jpg" alt="Figure 6.6 – Instance type selection in the EC2 Instance console&#13;&#10;"/>
+
+				</div>
+
+			</div>
+
+			<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图6.6–EC2实例控制台中的实例类型选择</p>
+
+			<ol>
+
+				<li value="5">选择组成Horovod集群的所需实例数量。在这里，您还可以请求AWS Spot实例(基于可以中断的稀疏EC2容量的更便宜的实例，使它们只适用于容错任务)。然而，为了简单起见，让我们使用按需资源。</li>
+
+				<li>选择正确的网络和子网设置。在现实生活中，这类信息将由DevOps部门提供。</li>
+
+				<li>在同一个页面上，选择<strong class="bold">将实例添加到放置组</strong>和<strong class="bold">添加到新的放置组</strong>，键入要用于该组的名称，并为<strong class="bold">放置组策略</strong>选择<strong class="bold">集群</strong>。</li>
+
+				<li>在同一页面上，提供您的<strong class="bold">身份和访问管理</strong> ( <strong class="bold"> IAM </strong>)角色，以便您可以<a id="_idIndexMarker714"/>访问S3存储桶。点击右下角的<strong class="bold">下一步… </strong>按钮。</li>
+
+				<li>为您的实例选择合适的存储大小。点击右下角的<strong class="bold">下一步……</strong>按钮。</li>
+
+				<li>为您的<a id="_idIndexMarker715"/>实例选择唯一的标签/标记(https://docs . AWS . Amazon . com/general/latest/gr/AWS _ tagging . html)。在现实生活中，这些可能被用作额外的安全措施，比如用特定的标签终止实例。点击右下角的<strong class="bold">下一步… </strong>按钮。</li>
+
+				<li>创建一个安全组或选择一个现有的安全组。同样，您必须与DevOps部门联系以获得适当的信息。点击右下角的<strong class="bold">下一步… </strong>按钮。</li>
+
+				<li>查看所有信息<a id="_idIndexMarker716"/>并启动。您将被要求提供一个用于认证的<strong class="bold">隐私增强邮件</strong> ( <strong class="bold"> PEM </strong>)密钥。</li>
+
+			</ol>
+
+			<p>完成这些步骤后，所需数量的实例<a id="_idIndexMarker717"/>将启动。如果您没有在<em class="italic">步骤10 </em>中添加<strong class="bold">名称</strong>标签，您的实例将没有任何名称。在这种情况下，您可以导航到EC2实例控制台并手动更新名称。在编写本文时，您可以请求名为Elastic IPs的静态IPv4地址，并将其分配给实例(https://docs . AWS . Amazon . com/AWS ec2/latest/user guide/Elastic-IP-addresses-EIP . html)。</p>
+
+			<p>最后，您需要确保实例可以顺利地相互通信。您应该检查<strong class="bold">安全组</strong>设置，并在必要时为SSH和其他流量添加入站规则。</p>
+
+			<p>此时，您只需要将您的PEM密钥从本地机器复制到主EC2实例。对于Ubuntu AMI，您可以运行以下命令:</p>
+
+			<pre>scp -i &lt;your_pem_key_path&gt; ubuntu@&lt;IPv4_Public_IP&gt;:/home/ubuntu/.ssh/ </pre>
+
+			<p>现在，您可以使用SSH连接到主EC2实例。接下来您需要做的是通过使用以下命令在SSH命令中提供您的PEM密钥来设置EC2实例之间的无密码连接:</p>
+
+			<pre>eval 'ssh-agent'
+ssh-add &lt;your_pem_key&gt;</pre>
+
+			<p>在前面的代码片段中，<code>eval</code>命令设置由<code>ssh-agent</code>命令提供的环境变量，而<code>ssh-add</code>命令向身份验证代理添加PEM身份。</p>
+
+			<p>现在，集群已经准备好<a id="_idIndexMarker719"/>支持Horovod了！完成后，必须在web控制台上停止或终止集群。否则，它会不断向你收取资源费用。</p>
+
+			<p>在接下来的两节中，我们将学习如何为Horovod更改TF和PyTorch训练脚本。</p>
+
+			<h2 id="_idParaDest-141"><a id="_idTextAnchor150"/>为Horovod配置TensorFlow培训脚本</h2>
+
+			<p>使用Horovod训练一个TF模型<a id="_idIndexMarker720"/>，你<a id="_idIndexMarker721"/>需要<code>horovod.tensorflow.keras</code>模块。首先，你需要导入<code>tensorflow</code>和<code>horovod.tensorflow.keras</code>模块。我们将把<code>horovod.tensorflow.keras</code>称为<code>hvd</code>。然后，您需要初始化Horovod集群，如下所示:</p>
+
+			<pre class="source-code">
+
+import tensorflow as tf
+
+import horovod.tensorflow.keras as hvd
+
+# Initialize Horovod
+
+hvd.init()</pre>
+
+			<p>此时，您可以使用<code>hvd.size</code>功能检查集群的大小。Horovod中的每个进程将被分配一个等级(根据您想要运行的进程或想要使用的设备，从0到集群大小的一个数字)，您可以通过<code>hvd.rank</code>函数访问该等级。在每个实例上，每个进程都有一个不同的编号，从0到该实例上的进程数，称为本地等级(每个实例的编号是唯一的，但在实例之间是重复的)。使用<code>hvd.local_rank</code>函数可以访问当前进程的本地等级<a id="_idIndexMarker722"/>。</p>
+
+			<p>可以使用local rank为每个进程固定一个特定的GPU设备，如下所示。这个例子还展示了如何使用<code>tf.config.experimental.set_memory_growth</code>为您的GPU设置内存增长:</p>
+
+			<pre class="source-code">
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+
+for gpu in gpus:
+
+    tf.config.experimental.set_memory_growth(gpu, True)
+
+if gpus:
+
+    tf.config.experimental.set_visible_devices(gpus[hvd.local_rank()], 'GPU')</pre>
+
+			<p>在下面的代码中，我们<a id="_idIndexMarker723"/>根据等级<a id="_idIndexMarker724"/>分割数据，以便每个流程训练不同的示例集:</p>
+
+			<pre class="source-code">
+
+dataset = np.array_split(dataset, hvd.size())[hvd.rank()]</pre>
+
+			<p>对于模型架构，可以按照第三章<a href="B18522_03.xhtml#_idTextAnchor062"><em class="italic"/></a>、<em class="italic">开发强大的深度学习模型</em>中<em class="italic">tensor flow</em>部分的说明进行:</p>
+
+			<pre class="source-code">
+
+model = …</pre>
+
+			<p>接下来，您需要配置优化器。在下面的例子中，学习率是由Horovod的大小决定的。此外，优化器需要用Horovod优化器包装:</p>
+
+			<pre class="source-code">
+
+opt = tf.optimizers.Adam(0.001 * hvd.size())
+
+opt = hvd.DistributedOptimizer(opt)</pre>
+
+			<p>下一步是编译您的模型，并将网络架构定义和优化器放在一起。当您使用比v2.2更早的TF版本调用<code>compile</code>函数时，您需要禁用<code>experimental_run_tf_function</code>，以便TF使用<code>hvd.DistributedOptimizer</code>来计算梯度:</p>
+
+			<pre class="source-code">
+
+model.compile(loss=tf.losses.SparseCategoricalCrossentropy(),
+
+              optimizer=opt,
+
+              metrics=['accuracy'],
+
+              experimental_run_tf_function=False)</pre>
+
+			<p>您需要配置的另一个组件是回调函数。你需要加上<code>hvd.callbacks.BroadcastGlobalVariablesCallback(0)</code>。这将把权重的初始<a id="_idIndexMarker725"/>值和从等级0到所有其他机器和进程的偏差<a id="_idIndexMarker726"/>。这是确保一致初始化或从检查点正确恢复训练所必需的:</p>
+
+			<pre class="source-code">
+
+callbacks=[
+
+    hvd.callbacks.BroadcastGlobalVariablesCallback(0)
+
+]</pre>
+
+			<p>您可以使用<code>rank</code>在特定的实例上执行特定的操作。例如，在主节点上记录和保存工件可以通过检查<code>rank</code>是否为0 ( <code>hvd.rank()==0</code>)来实现，如下面的代码片段所示:</p>
+
+			<pre class="source-code">
+
+# Save checkpoints only on the instance with rank 0 to prevent other workers from corrupting them.
+
+If hvd.rank()==0:
+
+    callbacks.append(keras.callbacks.ModelCheckpoint('./checkpoint-{epoch}.h5'))</pre>
+
+			<p>现在，您已经准备好触发<code>fit</code>功能。以下示例显示了如何使用Horovod集群的大小来缩放每个历元的步数。来自<code>fit</code>功能的消息仅在主节点上可见:</p>
+
+			<pre class="source-code">
+
+if hvd.rank()==0:
+
+    ver = 1
+
+else:
+
+    ver = 0
+
+model.fit(dataset,
+
+          steps_per_epoch=hvd.size(),
+
+          callbacks=callbacks,
+
+          epochs=num_epochs,
+
+          verbose=ver)</pre>
+
+			<p>这就是使用Horovod以分布式方式训练一个TF模型所需要做的全部改变。你可以在https://horo VOD . readthedocs.io/en/stable/tensorflow.html.找到完整的示例。Keras版本<a id="_idIndexMarker730"/>可以在https://horo VOD . rea<a href="https://horovod.readthedocs.io/en/stable/elastic_include.html">dthedocs.io/en/stable/keras.html.找到。此外，你可以修改你的训练脚本</a><a id="_idIndexMarker731"/>以便它以容错方式运行:https://horo VOD . readthedocs . io/en/stable/elastic _ include . html。通过这一更改，你应该能够使用AWS Spot实例并显著降低成本</p>
+
+			<h2 id="_idParaDest-142"><a id="_idTextAnchor151"/>为Horovod配置PyTorch培训脚本</h2>
+
+			<p>不幸的是，PL还没有合适的文档来支持Horovod。因此，本节我们将重点介绍PyTorch。类似于我们在上一节中所描述的，我们将演示您需要为PyTorch培训脚本所做的代码更改。对于PyTorch，您需要<code>horovod.torch</code>模块，我们将再次将其称为<code>hvd</code>。在下面的代码片段中，我们导入必要的模块并初始化集群:</p>
+
+			<pre class="source-code">
+
+import torch
+
+import horovod.torch as hvd
+
+# Initialize Horovod
+
+hvd.init()</pre>
+
+			<p>如TF示例中所述，您需要使用本地秩为当前进程绑定一个GPU设备:</p>
+
+			<pre class="source-code">
+
+torch.cuda.set_device(hvd.local_rank())</pre>
+
+			<p>培训脚本的其他部分需要类似的修改。数据集需要使用<code>torch.utils.data.distributed.DistributedSampler</code>跨实例分布，优化器必须围绕<code>hvd.DistributedOptimizer</code>包装。主要的区别来自于<code>hvd.broadcast_parameters(model.state_dict(), root_rank=0)</code>，它广播模型权重。你可以<a id="_idIndexMarker734"/>在下面的<a id="_idIndexMarker735"/>代码片段中找到细节:</p>
+
+			<pre class="source-code">
+
+# Define dataset...
+
+train_dataset = ...
+
+# Partition dataset among workers using DistributedSampler
+
+train_sampler = torch.utils.data.distributed.DistributedSampler(
+
+    train_dataset, num_replicas=hvd.size(), rank=hvd.rank())
+
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=..., sampler=train_sampler)
+
+# Build model...
+
+model = ...
+
+model.cuda()
+
+optimizer = optim.SGD(model.parameters())
+
+# Add Horovod Distributed Optimizer
+
+optimizer = hvd.DistributedOptimizer(optimizer, named_parameters=model.named_parameters())
+
+# Broadcast parameters from rank 0 to all other processes.
+
+hvd.broadcast_parameters(model.state_dict(), root_rank=0)</pre>
+
+			<p>现在，您已经准备好训练模型了。训练循环不需要任何修改。您只需将输入张量传递给模型，并通过触发<code>loss</code>上的<code>backward</code>函数和<code>optimizer</code>的<code>step</code>函数来触发反向传播。下面的代码片段描述了训练逻辑的主要部分:</p>
+
+			<pre class="source-code">
+
+for epoch in range(num_ephos):
+
+   for batch_idx, (data, target) in enumerate(train_loader):
+
+       optimizer.zero_grad()
+
+       output = model(data)
+
+       loss = F.nll_loss(output, target)<a href="https://horovod.readthedocs.io/en/stable/pytorch.html"/>
+
+<a href="https://horovod.readthedocs.io/en/stable/pytorch.html">       loss.backward()</a>
+
+<a href="https://horovod.readthedocs.io/en/stable/pytorch.html">       optimizer.step()</a></pre>
+
+			<p>c的完整描述可以在官方的Horovod文档页面上找到:https://horovod.readthedocs.io/en/stable/pytorch.html.</p>
+
+			<p>作为使用Horovod 部分的<em class="italic">训练模型的最后一个<a id="_idIndexMarker737"/>部分，下一个<a id="_idIndexMarker738"/>部分将解释如何使用<code>horovodrun</code>和<code>mpirun</code>命令启动模型训练过程。</em></p>
+
+			<h2 id="_idParaDest-143"><a id="_idTextAnchor152"/>在Horovod集群上训练DL模型</h2>
+
+			<p>Horovod使用MPI原理<a id="_idIndexMarker739"/>来协调进程之间的工作。要在一台机器上运行四个进程<a id="_idIndexMarker740"/>，可以使用以下命令之一:</p>
+
+			<pre>horovodrun -np 4 -H localhost:4 python train.py
+mpirun -np 4 python train.py</pre>
+
+			<p>在这两种情况下，<code>-np</code>参数定义了<code>train.py</code>脚本并行运行的次数。<code>-H</code>参数可用于定义每台机器的加工数量(见上例中的<code>horovodrun</code>命令)。当我们学习如何在单台机器上运行时，<code>-H</code>可以被删除，如<code>mpirun</code>命令所示。其他<code>mpirun</code>参数<a id="_idIndexMarker741"/>在https://www.open-mpi.org/doc/v4.0/man1/mpirun.1.php#sect6.描述</p>
+
+			<p>如果没有安装MPI，可以使用Gloo运行<code>horovodrun</code>命令。要使用Gloo对<code>localhost</code>运行相同的脚本四次(四个进程),只需添加<code>--gloo</code>标志:</p>
+
+			<pre>horovodrun --gloo -np 4 -H localhost:4 python train.py</pre>
+
+			<p>扩展到多个实例非常简单。以下命令显示了如何使用<code>horovodrun</code>在四台机器上运行训练脚本:</p>
+
+			<pre>horovodrun -np 4 -H server1:1,server2:1,server3:1,server4:1 python train.py </pre>
+
+			<p>以下命令显示了如何使用<code>mpirun</code>在四台机器上运行训练脚本:</p>
+
+			<pre>mpirun -np 4 -H server1:1,server2:1,server3:1,server4:1 python train.py</pre>
+
+			<p>一旦前面的<a id="_idIndexMarker742"/>命令之一从主<a id="_idIndexMarker743"/>节点被触发，您将会看到每个实例运行一个用于训练的进程。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.要使用Horovod，您需要一个在节点间开放交叉通信的集群。</p>
+
+			<p class="callout">b.Horovod为TF和PyTorch提供了一种简单有效的实现数据并行的方法。</p>
+
+			<p class="callout">c.可以使用<code>horovodrun</code>或<code>mpirun</code>命令在Horovod集群上执行训练脚本。</p>
+
+			<p>在下一节中，我们将描述Ray，另一个流行的分布式训练框架。</p>
+
+			<h1 id="_idParaDest-144"><a id="_idTextAnchor153"/>使用光线训练模型</h1>
+
+			<p>Ray是一个开源的执行框架，用于跨机器扩展Python工作负载(https://www.ray.io)。Ray支持以下Python工作负载:</p>
+
+			<ul>
+
+				<li>用PyTorch或TF实现的DL模型训练</li>
+
+				<li>超参数<a id="_idIndexMarker746"/>通过射线调谐进行调谐(https://docs.ray.io/en/latest/tune/index.html)</li>
+
+				<li><strong class="bold">强化学习</strong> ( <strong class="bold"> RL </strong>)通过<a id="_idIndexMarker747"/>RL lib(https://docs . ray . io/en/latest/RL lib/index . html)，RL的开源库</li>
+
+				<li>数据处理<a id="_idIndexMarker748"/>利用光线数据集(【https://docs.ray.io/en/latest/data/dataset.html】T21)</li>
+
+				<li>模特发球<a id="_idIndexMarker749"/>通过雷发球<a href="https://docs.ray.io/en/latest/serve/index.html">https://docs.ray.io/en/latest/serve/index.html</a></li>
+
+				<li>利用Ray Core的通用Python应用程序(<a href="https://docs.ray.io/en/latest/ray-core/walkthrough.html">https://docs.ray.io/en/latest/ray-core/walkthrough.html</a>)</li>
+
+			</ul>
+
+			<p>Ray <a id="_idIndexMarker751"/>的关键优势来自其集群定义的简单性；您可以用不同类型和不同来源的机器定义一个集群<a id="_idIndexMarker752"/>。例如，Ray允许您通过混合使用AWS EC2按需实例和具有不同CPU和GPU配置的EC2 Spot实例来构建实例群(基于各种EC2实例的集群，每个节点具有灵活和弹性的资源分配策略)。Ray简化了集群创建和与DL框架的集成，使其成为分布式DL模型训练过程的有效工具。</p>
+
+			<p>首先，我们将学习如何建立一个光线簇。</p>
+
+			<h2 id="_idParaDest-145"><a id="_idTextAnchor154"/>设置光线簇</h2>
+
+			<p>你可以用两种方法设置光线簇<a id="_idIndexMarker753"/>:</p>
+
+			<ul>
+
+				<li><strong class="bold">Ray Cluster Launcher</strong>:Ray<a id="_idIndexMarker754"/>提供的工具，帮助使用云服务上的实例构建集群，包括AWS、GCP和Azure</li>
+
+				<li><strong class="bold">手动构建簇</strong>:所有节点需要手动连接<a id="_idIndexMarker755"/>到光线簇</li>
+
+			</ul>
+
+			<p>光线簇由头节点(主节点)和工作节点组成。构成集群的实例应该配置为通过网络相互通信。Ray实例之间的通信<a id="_idIndexMarker756"/>是基于<strong class="bold">传输控制协议</strong> ( <strong class="bold"> TCP </strong>)连接的，您必须打开相应的端口。在接下来的两节中，我们将带<a id="_idIndexMarker757"/>仔细看看射线集群发射器和手动集群构造。</p>
+
+			<h3>使用射线簇发射器设置射线簇</h3>
+
+			<p>使用射线集群发射器时，YAML文件用于<a href="https://github.com/ray-project/ray/tree/master/python/ray/autoscaler">配置集群。你可以</a>在Ray的GitHub资源库上找到很多不同配置的示例<code>YAML</code>文件:<a href="https://github.com/ray-project/ray/tree/master/python/ray/autoscaler">https://GitHub . com/Ray-project/Ray/tree/master/python/Ray/auto scaler</a>。</p>
+
+			<p>本节我们将介绍最基础的一个。<code>YAML</code>文件以关于集群的一些基本信息开始，例如集群的名称、最大工作线程数和扩展速度，如下所示:</p>
+
+			<pre class="source-code">
+
+cluster_name: BookDL
+
+max_workers: 5
+
+upscaling_speed: 1.0</pre>
+
+			<p>接下来，它配置云服务提供商:</p>
+
+			<pre class="source-code">
+
+provider:
+
+    type: aws
+
+    region: us-east-1
+
+    availability_zone: us-east-1c, us-east-1b, us-east-1a
+
+    cache_stopped_nodes: True 
+
+    ssh_user: ubuntu
+
+    ssh_private_key: /Users/BookDL/.ssh/BookDL.pem</pre>
+
+			<p>在前面的例子中，我们指定了提供者类型(<code>type: aws</code>)并选择了将提供实例的地区和可用性区域(<code>region: us-east-1</code>和<code>availability_zone: us-east-1c, us-east-1b, us-east-1a</code>)。然后，我们定义节点在未来是否可以重用(<code>cache_stopped_nodes: True</code>)。最后的配置用于用户认证(<code>ssh_user:ubuntu</code>和<code>ssh_private_key:/Users/BookDL/.ssh/BookDL.pem</code>)。</p>
+
+			<p>接下来，需要指定节点配置。首先，我们从头部节点开始:</p>
+
+			<pre class="source-code">
+
+available_node_types:
+
+    ray.head.default:
+
+        node_config:
+
+            KeyName:"BookDL.pem"</pre>
+
+			<p>接下来，我们必须设置安全设置。详细设置必须咨询DevOps，devo PS负责监控和保护实例:</p>
+
+			<pre class="source-code">
+
+            SecurityGroupIds:
+
+                - sg-XXXXX
+
+                - sg-XXXXX
+
+            SubnetIds: [subnet-XXXXX]</pre>
+
+			<p>以下配置适用于应该使用的实例类型和AMI:</p>
+
+			<pre class="source-code">
+
+            InstanceType: m5.8xlarge
+
+            ImageId: ami-09ac68f361e5f4a13</pre>
+
+			<p>在以下代码片段中，我们提供了存储配置:</p>
+
+			<pre class="source-code">
+
+            BlockDeviceMappings:
+
+                  - DeviceName: /dev/sda1
+
+                    Ebs:
+
+                    VolumeSize: 580</pre>
+
+			<p>你可以很容易地定义<code>Tags</code>如下:</p>
+
+			<pre class="source-code">
+
+            TagSpecifications:
+
+                - ResourceType:"instance"
+
+                  Tags:
+
+                      - Key:"Developer"
+
+                        Value:"BookDL"</pre>
+
+			<p>如果需要，可以提供IAM例程配置文件来访问特定的S3时段:</p>
+
+			<pre class="source-code">
+
+            IamInstanceProfile:
+
+                Arn:arn:aws:iam::XXXXX</pre>
+
+			<p>在<code>YAML</code>文件的下一部分，我们需要为工作者节点提供一个配置:</p>
+
+			<pre class="source-code">
+
+    ray.worker.default:
+
+            min_workers: 2
+
+            max_workers: 4</pre>
+
+			<p>首先，我们必须指定工人的数量(<code>min_workers</code>和<code>max_workers</code>)。然后，我们可以像定义主节点配置一样定义节点配置:</p>
+
+			<pre class="source-code">
+
+        node_config:
+
+            KeyName: "BookDL.pem"
+
+            SecurityGroupIds:
+
+                - sg-XXXXX
+
+                - sg-XXXXX
+
+            SubnetIds: [subnet-XXXXX]
+
+            InstanceType: p2.8xlarge
+
+            ImageId: ami-09ac68f361e5f4a13
+
+            TagSpecifications:
+
+                - ResourceType: "instance"
+
+                  Tags:
+
+                      - Key: "Developer"
+
+                        Value: "BookDL"
+
+            IamInstanceProfile:
+
+                Arn: arn:aws:iam::XXXXX
+
+            BlockDeviceMappings:
+
+              - DeviceName: /dev/sda1
+
+                Ebs:
+
+                  VolumeSize: 120</pre>
+
+			<p>此外，您可以在<code>YAML</code>文件中指定在每个节点上运行的shell命令列表:</p>
+
+			<pre class="source-code">
+
+setup_commands:
+
+    - (stat $HOME/anaconda3/envs/tensorflow2_p38/ &amp;&gt; /dev/null &amp;&amp; echo 'export PATH="$HOME/anaconda3/envs/tensorflow2_p38/bin:$PATH"' &gt;&gt; ~/.bashrc) || true
+
+    - source activate tensorflow2_p38 &amp;&amp; pip install --upgrade pip
+
+    - pip install awscli
+
+    - pip install Cython
+
+    - pip install -U ray
+
+    - pip install -U ray[rllib] ray[tune] ray
+
+    - pip install mlflow
+
+    - pip install dvc</pre>
+
+			<p>在这个例子中，我们将为<code>conda</code>环境添加<code>tensorflow2_p38</code>到路径中，激活环境，并使用<code>pip</code>安装一些其他模块。如果您想只在head或worker节点上运行一些其他命令，您可以分别在<code>head_setup_commands</code>和<code>worker_setup_commands</code>中指定它们。它们将在执行完<code>setup_commands</code>中定义的命令后执行。</p>
+
+			<p>最后，<code>YAML</code>文件以启动光线簇的命令结束:</p>
+
+			<pre class="source-code">
+
+head_start_ray_commands:
+
+    - ray stop
+
+    - source activate tensorflow2_p38 &amp;&amp; ray stop
+
+    - ulimit -n 65536; source activate tensorflow2_p38 &amp;&amp; ray start --head --port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml
+
+worker_start_ray_commands:      
+
+    - ray stop
+
+    - source activate tensorflow2_p38 &amp;&amp; ray stop
+
+    - ulimit -n 65536; source activate tensorflow2_p38 &amp;&amp; ray start --address=$RAY_HEAD_IP:6379 --object-manager-port=8076</pre>
+
+			<p>起初，用一个<code>YAML</code>文件设置光线簇可能看起来很复杂。但是，一旦您习惯了，您会注意到为将来的项目调整集群设置变得相当简单。此外，由于您可以重用以前项目中有关安全组、子网、标记和IAM配置文件的信息，因此它大大减少了正确定义集群所需的时间。</p>
+
+			<p>如果你需要其他细节，我们建议<a id="_idIndexMarker762"/>你花点时间看看官方文档:https://docs . ray . io/en/latest/cluster/config . html # cluster-config。</p>
+
+			<p>值得一提的是，Ray Cluster Launcher既支持自动缩放，也支持使用带有或不带有EC2 Spot实例的实例车队。我们在前面的例子中使用了AMI，但是您也可以为您的实例提供一个特定的Docker映像。通过利用YAML配置文件的灵活性，您可以使用单个文件构建任何集群配置。</p>
+
+			<p>正如我们在本节开始时提到的<a id="_idIndexMarker763"/>，您也可以通过手动添加单个实例来设置光线簇。我们接下来将研究这个选项。</p>
+
+			<h3>手动设置光线簇</h3>
+
+			<p>假设您有一组带有网络连接的机器<a id="_idIndexMarker764"/>，第一步是在每台机器上安装Ray。接下来，您需要更改每台机器的安全设置，以便机器可以相互通信。之后，您需要选择一个节点作为头节点，并运行以下命令:</p>
+
+			<pre>ray start --head --redis-port=6379  </pre>
+
+			<p>前面的命令建立光线簇；Redis服务器(用于集中控制平面)启动，其IP地址打印在终端上(例如，<code>123.45.67.89:6379</code>)。</p>
+
+			<p>接下来，您需要在所有其他节点上运行以下命令:</p>
+
+			<pre>ray start --address=&lt;redis server ip address&gt;</pre>
+
+			<p>您需要提供的地址是head节点上的命令输出的地址。</p>
+
+			<p>现在，您的机器可以支持Ray应用程序了。在手动设置的情况下，需要手动完成以下步骤:启动机器、连接到头节点终端、将训练文件复制到所有节点以及停止机器。让我们看看如何利用Ray Cluster Launcher来帮助完成这些任务。</p>
+
+			<p>在这个阶段，您应该能够使用YAML文件指定所需的光线簇设置。准备就绪后，可以使用以下命令启动第一个光线簇:</p>
+
+			<pre>ray up your_cluster_setting_file.yaml</pre>
+
+			<p>要获得头节点上的远程终端，您可以运行以下命令:</p>
+
+			<pre>ray attach your_cluster_setting_file.yaml</pre>
+
+			<p>要终止<a id="_idIndexMarker765"/>集群，可以使用以下命令:</p>
+
+			<pre>ray down your_cluster_setting_file.yaml</pre>
+
+			<p>现在，是时候学习如何在光线簇上执行DL模型训练了。</p>
+
+			<h2 id="_idParaDest-146"><a id="_idTextAnchor155"/>使用光线以分布式方式训练模型</h2>
+
+			<p>Ray提供了Ray Train库，这个库<a id="_idIndexMarker766"/>允许你通过在幕后处理分布式训练来专注于定义<a id="_idIndexMarker767"/>训练逻辑。射线列车支持TF和PyTorch。它还提供了与Horovod的简单集成。此外，光线数据集的存在，通过分布式数据转换提供了<a id="_idIndexMarker768"/>分布式数据加载<a id="_idIndexMarker769"/>。最后，Ray通过Ray Tune库提供超参数调整。</p>
+
+			<p>为Ray调整TF训练逻辑类似于我们在TensorFlow 部分的<em class="italic">数据并行性中描述的内容。主要的区别来自于光线训练库，它帮助我们设置<code>TF_CONFIG</code>。</em></p>
+
+			<p>调整后的训练逻辑如下所示:</p>
+
+			<pre class="source-code">
+
+def train_func_distributed():
+
+    per_worker_batch_size = 64
+
+    tf_config = json.loads(os.environ['TF_CONFIG'])
+
+    num_workers = len(tf_config['cluster']['worker'])
+
+    strategy = tf.distribute.MultiWorkerMirroredStrategy()
+
+    global_batch_size = per_worker_batch_size * num_workers
+
+    multi_worker_dataset = dataset(global_batch_size)
+
+    with strategy.scope():
+
+        multi_worker_model = build_and_compile_your_model()
+
+    multi_worker_model.fit(multi_worker_dataset, epochs=20, steps_per_epoch=50)</pre>
+
+			<p>然后，您可以使用Ray Trainer运行训练，如下所示:</p>
+
+			<pre class="source-code">
+
+import ray
+
+from ray.train import Trainer
+
+ray.init()
+
+trainer = Trainer(backend="tensorflow", num_workers=4, use_gpu=True)
+
+trainer.start()
+
+trainer.run(train_func_distributed)
+
+trainer.shutdown()</pre>
+
+			<p>在前面的例子中，模型定义<a id="_idIndexMarker770"/>类似于单个设备<a id="_idIndexMarker771"/>的情况，除了它应该使用特定的策略<code>MultiWorkerMirroredStrategy</code>进行编译。数据集在<code>dataset</code>函数中被分割，为每个工作者节点提供不同的样本集。最后，<code>Trainer</code> <a href="https://docs.ray.io/en/latest/train/examples.html">实例处理分布式训练。</a></p>
+
+			<p>使用Ray的Trai  ning PyTorch模型<a id="_idIndexMarker772"/>也可以通过一组最小的修改来实现。在<a href="https://docs.ray.io/en/latest/train/examples.html#pytorch">https://docs.ray.io/en/latest/train/examples.html#pytorch</a>上展示了几个例子。</p>
+
+			<p>此外，您可以将Ray与Horovod一起使用，这样您可以利用弹性Horovod以容错的方式进行训练。Ray <a href="https://docs.ray.io/en/latest/train/examples/horovod/horovod_example.html">将通过简化主机的发现和orc </a>记录来自动调整培训流程。我们不会涉及细节，但可以在<a href="https://docs.ray.io/en/latest/train/examples/horovod/horovod_example.html">https://docs . ray . io/en/latest/train/examples/horo VOD/horo VOD _ example . html</a>找到一个很好的起点。</p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.Ray的主要优势来自于它对集群定义的简单性。</p>
+
+			<p class="callout">b.通过连接每台机器或使用一个名为射线簇发射器的内置工具，可以手动创建一个射线簇<a id="_idIndexMarker773"/>。</p>
+
+			<p class="callout">c.Ray为自动缩放训练过程提供了很好的支持。它简化了主机的发现和编排。</p>
+
+			<p>最后，我们来学习如何使用Kubeflow进行分布式训练。</p>
+
+			<h1 id="_idParaDest-147"><a id="_idTextAnchor156"/>使用Kubeflow训练模型</h1>
+
+			<p>kube flow<a id="_idIndexMarker774"/>(<a href="https://www.kubeflow.org">https://www.kubeflow.org</a>)涵盖了模型开发的每一个步骤，包括数据<a id="_idIndexMarker775"/>探索、预处理、特征提取、模型训练、模型服务、推理和版本化。Kubeflow允许您通过利用容器和Kubernetes(一个用于容器化应用程序的管理系统)轻松地从本地开发环境扩展到生产集群。</p>
+
+			<p>如果您的组织已经在使用Kubernetes生态系统，Kubeflow可能是您分布式培训的首选。</p>
+
+			<h2 id="_idParaDest-148">【Kubernetes简介</h2>
+
+			<p>Kubernetes是一个开源编排平台，用于管理容器化的工作负载和服务(<a href="https://kubernetes.io"> https://kubernetes.io </a>):</p>
+
+			<ul>
+
+				<li>Kubernetes <a id="_idIndexMarker776"/>有助于持续的<a id="_idIndexMarker777"/>交付、集成和部署。</li>
+
+				<li>它将开发环境与部署环境分开。您可以构造一个容器映像并并行开发应用程序。</li>
+
+				<li>基于容器的方法确保了开发、测试以及生产环境的一致性。环境将在桌面计算机或云中保持一致，这将最大限度地减少从一个步骤到另一个步骤所需的修改。</li>
+
+			</ul>
+
+			<p>我们假设您已经安装了Kubeflow及其所有依赖项，以及一个正在运行的Kubernetes集群。我们将在本节中描述的步骤足够通用<a id="_idIndexMarker778"/>，它们可以用于任何集群设置—<strong class="bold">Minikube</strong>(Kubernetes的本地版本)、AWS <strong class="bold"> Elastic Kubernetes服务</strong> ( <strong class="bold"> EKS </strong>)或许多节点的集群。这就是容器化工作负载和服务的美妙之处。在<a href="https://minikube.sigs.k8s.io/docs/start/">https://minikube.sigs.k8s.io/docs/start/</a>可以在线找到<a id="_idIndexMarker780"/>本地Minikube安装步骤。对于EKS，我们将引导您查看AWS用户指南:<a href="https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html">https://docs . AWS . Amazon . com/eks/latest/user guide/getting-started . html</a>。</p>
+
+			<h2 id="_idParaDest-149"><a id="_idTextAnchor158"/>为Kubeflow设置模型训练</h2>
+
+			<p>第一步是将你的<a href="https://docs.nvidia.com/deeplearning/frameworks/tensorflow-release-notes/running.html">训练代码打包到一个容器中。这可以通过Docker文件来实现。根据您的起点g点，您可以使用NVIDIA容器映像空间的容器(位于HTT</a>PS://docs . NVIDIA . com/deep learning/frameworks/tensor<a href="https://hub.docker.com/r/tensorflow/tensorflow/">flow-release-notes/running . html或位于https://docs . NV</a><a href="https://hub.docker.com/r/pytorch/pytorch">idia.com/deeplearning/frameworks/pytorch</a>-release-notes/index . html的PyTorch)或直接来自DL框架的容器(位于https://hub.docker.com/r/tensorflow/tensorflow的TF或位于https://hub.docker的PyTorch)</p>
+
+			<p>让我们来看一个TF docker文件(<code>kubeflow/tf_example_job</code>)的例子:</p>
+
+			<pre class="source-code">
+
+FROM tensorflow/tensorflow:latest-gpu-jupyter
+
+RUN pip install minio –upgrade
+
+RUN pip install –upgrade pip 
+
+RUN pip install pandas –upgrade 
+
+… 
+
+RUN mkdir -p /opt/kubeflow
+
+COPY train.py /opt/kubeflow
+
+ENTRYPOINT ["python", "/opt/kubeflow/train.py"]</pre>
+
+			<p>在前面的Docker定义中，<code>train.py</code>脚本是一个典型的TF训练脚本。</p>
+
+			<p>现在，我们假设一台机器将用于训练。换句话说，这将是一个单一的集装箱作业。假设您准备了一个Docker文件和一个训练脚本，您可以使用以下命令构建您的容器并将其推送到存储库:</p>
+
+			<pre>docker build -t kubeflow/tf_example_job:1.0
+docker push kubeflow/tf_example_job:1.0</pre>
+
+			<p>我们将使用<code>TFJob</code>，Kubeflow的一个定制<a id="_idIndexMarker783"/>组件，它包含一个被表示为<a id="_idIndexMarker785"/>的YAML文件的<code>TFJob</code>，该文件描述了容器映像、训练脚本和执行参数。让我们来看一个YAML文件，<code>tf_example_job.yaml</code>，它包含一个运行在单台机器上的Kubeflow模型训练作业:</p>
+
+			<pre class="source-code">
+
+apiVersion: "kubeflow.org/v1" 
+
+kind: "TFJob"
+
+metadata:
+
+    name: "tf_example_job"
+
+spec:
+
+    tfReplicaSpecs:
+
+        Worker:
+
+            replicas: 1
+
+        restartPolicy: Never
+
+        template:
+
+            specs:
+
+                containers:
+
+                    - name: tensorflow 
+
+                      image: kubeflow/tf_example_job:1.0</pre>
+
+			<p>API版本在第一行中定义。然后，会列出您的自定义资源的类型，<code>kind: "TFJob"</code>。<code>metadata</code>字段用于通过自定义名称来识别您的作业。该集群在<code>tfReplicaSpecs</code>字段中定义。如前面的例子所示，脚本(<code>tf_example_job:1.0)</code>将只执行一次(<code>replicas: 1</code>)。</p>
+
+			<p>要将定义的<code>TFJob</code>部署到您的集群，您可以使用<code>kubectl</code>命令，如下所示:</p>
+
+			<pre>kubectl apply -f tf_example_job.yaml</pre>
+
+			<p>您可以使用以下命令监视作业(使用元数据中定义的名称):</p>
+
+			<pre>kubectl describe tfjob tf_example_job </pre>
+
+			<p>要执行分布式<a id="_idIndexMarker786"/>训练，可以使用带有特定<code>tf.distribute.Strategy</code>的TF <a id="_idIndexMarker787"/>代码，创建一个新的容器，并修改<code>TFJob</code>。我们将在下一节课中了解<code>TFJob</code>的必要变化。</p>
+
+			<h2 id="_idParaDest-150"><a id="_idTextAnchor159"/>使用Kubeflow以分布式方式训练张量流模型</h2>
+
+			<p>让我们假设我们已经从<code>MultiWorkerMirroredStrategy</code>获得了<a id="_idIndexMarker788"/>TF训练<a id="_idIndexMarker789"/>代码。为了使<code>TFJob</code>支持该策略，您需要调整<code>spec</code>字段中的<code>tfReplicaSpecs</code>。我们可以通过YAML文件定义以下类型的副本:</p>
+
+			<ul>
+
+				<li><strong class="bold">首席(主)</strong>:编排计算任务</li>
+
+				<li><strong class="bold">工作者</strong>:运行计算</li>
+
+				<li><strong class="bold">参数服务器</strong>:管理模型参数的存储</li>
+
+				<li><strong class="bold">评估员</strong>:在模型训练期间运行评估</li>
+
+			</ul>
+
+			<p>作为一个最简单的例子，我们将把一个工作者定义为那些可以充当主要节点的人之一。参数<code>server</code>和<code>evaluator</code>不是必须的。</p>
+
+			<p>让我们来看看针对分布式TF训练的调整后的YAML文件<code>tf_example_job_dist.yaml</code>:</p>
+
+			<pre class="source-code">
+
+apiVersion: "kubeflow.org/v1"
+
+kind: "TFJob"
+
+metadata:
+
+    name: "tf_example_job_dist"
+
+spec:
+
+    cleanPodPolicy: None
+
+    tfReplicaSpecs:
+
+        Worker:
+
+            replicas: 4
+
+            restartPolicy: Never
+
+            template:
+
+                specs:
+
+                    containers:
+
+                        - name: tensorflow 
+
+                          image: kubeflow/tf_example_job:1.1</pre>
+
+			<p>前面的<code>YAML</code>文件将基于新容器<code>kubeflow/tf_example_job:1.1</code>上的<code>MultiWorkerMirroredStrategy</code>运行<a id="_idIndexMarker790"/>训练作业<a id="_idIndexMarker791"/>。我们可以使用相同的命令将<code>TFJob</code>部署到集群:</p>
+
+			<pre>kubectl apply -f tf_example_job_dist.yaml</pre>
+
+			<p>在下一节中，我们将学习如何使用PyTorch和Ray。</p>
+
+			<h2 id="_idParaDest-151"><a id="_idTextAnchor160"/>使用Kubeflow以分布式方式训练PyTorch模型</h2>
+
+			<p>对于PyTorch，我们只需要<a id="_idIndexMarker792"/>将<code>TFJob</code>改为<code>PyTorchJob</code>并为<a id="_idIndexMarker793"/>提供一个PyTorch训练脚本。关于训练脚本本身，请参考PyTorch 章节中的<em class="italic">数据并行。YAML文件需要相同的<a id="_idIndexMarker794"/>组修改，如下面的代码片段中的<a id="_idIndexMarker795"/>所示:</em></p>
+
+			<pre class="source-code">
+
+apiVersion: "kubeflow.org/v1 
+
+kind: "PyTorchJob"
+
+metadata:
+
+    name: "pt_example_job_dist"
+
+spec:
+
+    pytorchReplicaSpecs:
+
+        Master:
+
+            replicas: 1
+
+            restartPolicy: Never
+
+            template:
+
+                specs:
+
+                    containers:
+
+                        - name: pytorch 
+
+                          image: kubeflow/pt_example_job:1.0
+
+        Worker:
+
+            replicas: 5
+
+            restartPolicy: OnFailure
+
+            template:
+
+                specs:
+
+                    containers:
+
+                        - name: pytorch 
+
+                          image: kubeflow/pt_example_job:1.0</pre>
+
+			<p>在本例中，我们有一个主节点和五个工作节点的副本。完整的细节可以在https://www.kubeflow.org/docs/components/training/pytorch的<a href="https://www.kubeflow.org/docs/components/training/pytorch">找到。</a></p>
+
+			<p class="callout-heading">要记住的事情</p>
+
+			<p class="callout">a.Kubeflow允许您利用容器和Kubernetes轻松地从本地开发环境扩展到大型集群。</p>
+
+			<p class="callout">b.<code>TFJob</code>和<code>PyTorchJob</code>允许您分别使用Kubeflow以分布式方式运行TF和PyTorch培训作业。</p>
+
+			<p>在本节中，我们描述了<a id="_idIndexMarker796"/>如何利用Kubeflow <a id="_idIndexMarker797"/>以分布式方式训练TF和PyTorch模型。</p>
+
+			<h1 id="_idParaDest-152"><a id="_idTextAnchor161"/>总结</h1>
+
+			<p>通过认识到来自多个设备和机器的并行性的好处，我们已经了解了训练DL模型的各种方法。首先，我们学习了如何在一台机器上使用多个CPU和GPU设备。然后，我们介绍了如何利用TF和PyTorch的内置特性来以分布式方式实现训练，其中底层集群是显式管理的。之后，我们学习了如何使用SageMaker进行分布式培训和扩展。最后，最后三节描述了为分布式培训设计的框架:Horovod、Ray和Kubeflow。</p>
+
+			<p>在下一章，我们将讨论模型理解。我们将学习流行的模型理解技术，这些技术提供了在整个训练过程中模型内部发生的事情的一些见解。</p>
+
+		</div>
+
+		<div><div/>
+
+		</div>
+
+	
+
+
+
+</body></html>

@@ -1,0 +1,1738 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Text Generation using Recurrent Neural Networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用递归神经网络的文本生成</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">在这一章中，我们将描述现代(在撰写本文时——2017年末)机器学习、递归神经网络中一些最令人兴奋的技术。然而，它们不是新的；自20世纪80年代以来，它们就一直存在，但由于近年来语言相关任务中的大量记录，它们变得越来越受欢迎。</p>
+
+<p>为什么我们需要不同类型的文本架构？考虑下面的例子:</p>
+
+<p><em>“我从2015年开始住在布拉格”</em></p>
+
+<p>和</p>
+
+<p><em>“从2015年起我住在布拉格”</em></p>
+
+<p class="mce-root">如果我们想教一个传统的前馈网络，如感知器或多层感知器来识别我搬到布拉格的日期，那么这个网络将不得不为每个输入特征学习单独的参数，这特别意味着它将不得不学习语法来回答这个简单的问题！这在许多应用中是不希望的。类似的问题促使机器学习研究人员和统计学家在20世纪80年代引入了在模型的不同部分共享参数的想法。这个想法是递归神经网络的秘密酱，我们的下一个深度学习架构。</p>
+
+<p>通过设计，递归神经网络非常适合处理顺序数据。一般来说，应用于序列数据的机器学习可以大致分为四个主要领域:</p>
+
+<ul>
+
+<li>序列预测:给定<img class="fm-editor-equation" src="img/fa56ec8d-3848-46d3-882e-2c739d71aa52.png" style="width:9.33em;height:1.83em;"/>，预测序列的下一个元素<img class="fm-editor-equation" src="img/3d502f41-d8a2-43e8-9671-1f96de8b0d49.png" style="width:2.83em;height:1.25em;"/></li>
+
+<li>序列分类:给定<img class="fm-editor-equation" src="img/606817d2-fa6d-4052-8e57-ecebb25688c8.png" style="width:9.33em;height:1.83em;"/>，为其预测一个类别或标签</li>
+
+<li>序列生成:给定<img class="fm-editor-equation" src="img/bfb01567-813a-4edc-b71d-2ac81ecb905d.png" style="width:9.33em;height:1.83em;"/>，生成序列的一个新元素<img class="fm-editor-equation" src="img/7a696b9d-01cd-411f-b62b-64de9dac0ce8.png" style="width:2.83em;height:1.25em;"/></li>
+
+<li>序列对序列预测:给定<img class="fm-editor-equation" src="img/c6a0b434-d73e-4711-bfbe-6a27275bec7e.png" style="width:9.33em;height:1.83em;"/>，生成一个等价序列<img class="fm-editor-equation" src="img/b25d72d4-ff7c-45f5-ac61-057083d4190b.png" style="width:9.00em;height:1.83em;"/></li>
+
+</ul>
+
+<p>序列预测的应用包括天气预报和股票市场预测。对于分类，我们可以想到，例如，情感分析和文档分类。自动图像字幕或文本生成是序列生成问题家族的一部分，而机器翻译可能是我们在日常生活中看到的最熟悉的序列对序列预测的例子。</p>
+
+<p>本章的重点是递归神经网络在文本生成中的应用。正如我们之前看到的，文本生成是一个更大的问题集<em>，</em>的一部分，因此我们的许多算法可以移植到其他环境中。</p>
+
+<p>训练深度学习模型通常很耗时，递归神经网络也不例外。我们的重点是数据上的想法，我们将用比你以后在野外可能遇到的更小的数据集来说明。这是为了清楚起见:我们想让你在任何标准笔记本电脑上更容易上手。一旦你掌握了基础知识，你就可以在你最喜欢的云提供商那里剥离你自己的集群。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>What is so exciting about recurrent neural networks?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">递归神经网络有什么令人兴奋的？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>作为一名数学出身的人，在我相当忙碌的职业生涯中，我看到过许多不同的趋势，尤其是在过去几年里，这些趋势听起来都与我非常相似:“<em>你有问题吗？小波可以救你！</em>、<em>有限元是一切的解决方案</em>，以及类似的过激主张。</p>
+
+<p>当然，每个工具都有它的时间和地点，更重要的是，它擅长的应用领域。我发现递归神经网络非常有趣，因为它们可以实现许多功能:</p>
+
+<ul>
+
+<li>产生一致的标记文本(开始和结束标签，识别类似时间戳的数据)</li>
+
+<li>通过学习URL应该是什么样子，撰写带有参考的维基百科文章，并从不存在的地址创建URL</li>
+
+<li>用乳胶制作看起来可信的科学论文</li>
+
+</ul>
+
+<p>所有这些令人惊奇的特性在网络没有任何上下文信息或元数据的情况下都是可能的。特别是，在不懂英语，也不知道URL或LaTeX语法是什么样子的情况下。</p>
+
+<p>安德烈·卡帕西在<em>循环神经网络的不合理有效性:</em><a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/">http://karpathy.github.io/2015/05/21/rnn-effectiveness/</a>中出色地描述了神经网络的这些甚至更有趣的能力。<a href="http://karpathy.github.io/2015/05/21/rnn-effectiveness/"/></p>
+
+<p>是什么让递归神经网络令人兴奋？我们可以对向量序列进行操作，而不是将固定输入大小限制为固定输出大小。</p>
+
+<p>包括标准前馈神经网络在内的许多机器学习算法的局限性在于，它们接受固定大小的向量作为输入，并产生固定大小的向量作为输出。例如，如果我们想对文本进行分类，我们接收一个文档集，从中我们创建一个词汇表来对每个文档进行矢量化，输出是一个带有类别概率的向量。相反，递归神经网络允许我们将向量序列作为输入。因此，从固定输入大小和固定输出大小之间的一对一对应关系来看，我们有一个更丰富的前景，一对一，一对多，多对一，多对多。</p>
+
+<p>为什么这是可取的？让我们看几个例子:</p>
+
+<ul>
+
+<li><strong>一对一</strong>:监督学习，例如文本分类</li>
+
+<li><strong>一对多</strong>:给定一个输入文本，生成一个摘要(包含重要信息的单词序列)</li>
+
+<li><strong>多对一</strong>:文本中的情感分析</li>
+
+<li><strong>多对多</strong>:机器翻译</li>
+
+</ul>
+
+<p>此外，由于递归神经网络保持根据新信息更新的内部状态，我们可以将RNNs视为程序的描述。事实上，Siegelman在1995年的一篇论文表明，递归神经网络是图灵完全的，它们可以模拟任意程序。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>But what is a recurrent neural network, really?</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">但是什么是递归神经网络呢？</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>网络如何跟踪先前的状态？把它放在文本生成的上下文中，把我们的训练数据想象成一个字符序列的列表(标记化的单词)。对于每个单词，从第一个字符开始，我们将预测以下内容:</p>
+
+<p>形式上，我们将一个<em> t+1 </em>字符序列表示为<em>x =【x<sub>0</sub>，x <sub> 1 </sub>，x <sub> 2 </sub>，...，x<sub>t</sub></em>。<em> <strong> </strong> </em>让<em> s <sub> -1 </sub> =0 </em>。</p>
+
+<p>对于<em> k=0，2，...t </em>，我们构造如下序列:</p>
+
+<div><img class="fm-editor-equation" src="img/56a476f3-a4ae-40f0-bb0b-c41131eacbd4.png" style="width:13.83em;height:3.17em;"/></div>
+
+<p>下图对此进行了总结，当接收到输入<em> x <strong> </strong> </em>时，网络的内部状态<em> s </em>被修改，然后用于生成输出<em> o: </em></p>
+
+<div><img src="img/f38754a4-f53e-4980-ac29-305e96129686.png" style="width:30.83em;height:12.83em;"/></div>
+
+<p>图1:RNN的信息流。这些表示是等价的；展开的表示暗示了反向传播在这种设置中如何工作。</p>
+
+<p>隐藏状态，<em> s </em>，不需要像你想象的那样是一维的。当然，它不应该太大，否则您可能会经历过度拟合。一个好的开始方法是选择一个比输入空间小一个数量级的隐藏层，这样如果你的输入向量存在于一个一千维的空间中(这在文本问题中并不少见)，那么你的隐藏状态应该是数百个。</p>
+
+<p>传统的深度神经网络在每一层使用不同的参数。在递归神经网络中，参数在所有时间步骤中共享(参见前面的<em>图1 </em>)。这反映了任务是相同的(在这种情况下，<em>读取</em>)，只是输入不同。这也有助于减少我们需要学习的参数数量。</p>
+
+<p>我们选择<kbd>tanh</kbd>函数，因为它将输入放在范围[-1，1]内。稍后，我们将希望使用网络的输出作为概率；输出层是<em> softmax </em>函数。</p>
+
+<p>图1 所示的图表充分描述了我们网络的<strong xmlns:epub="http://www.idpf.org/2007/ops">正向传播</strong>，给定权重矩阵，我们可以计算网络的输出。但是我们应该如何训练网络来找到那些权重呢？</p>
+
+<p>与通常的神经网络一样，这种想法是使用网络预测和训练标签之间的差异来调整正确方向上的权重。为此，我们需要指定一个损失函数。一种常见的选择是交叉熵损失函数:</p>
+
+<div><img class="fm-editor-equation" src="img/3cce5bc8-3f34-4855-ae9b-39f3187c5d4b.png" style="width:14.83em;height:3.33em;"/></div>
+
+<p>其中<em> N </em>表示训练样本的数量。此函数测量预测类的加权分数乘以该类的对数概率。请注意，如果正确类别的概率为1，则损失为零，否则损失为正。这意味着交叉熵惩罚我们不自信。注意，它也惩罚了我们的自信和不正确(为什么？).</p>
+
+<p>为了更新权重，我们需要计算导数:</p>
+
+<div><img class="fm-editor-equation" src="img/fb085cc5-9c5a-41c0-bdee-e10c24d52cfa.png" style="width:6.92em;height:2.50em;"/> </div>
+
+<p>我们还需要在减小误差的方向上更新权重，即梯度的相反方向。这听起来并不比标准神经网络中的普通反向传播更复杂。由于隐藏状态，递归神经网络中的情况稍微复杂一些，隐藏状态将当前时间步长与先前历史联系起来。为了看到这一点，假设我们想要计算损失函数相对于<em> W </em>的偏导数。我们需要计算:</p>
+
+<div><img class="fm-editor-equation" src="img/e715f533-f036-4ea6-9d0e-1a2ac0fc0f0f.png" style="width:11.58em;height:2.67em;"/></div>
+
+<p>这里没有什么奇怪的，简单地使用链式法则。有什么诀窍？问题出在前面表达式的第二项和第三项中。在时间<em> t </em>的内部状态取决于前一时间的内部状态。因此，我们的计算实际上是:</p>
+
+<div><img class="fm-editor-equation" src="img/f06aa437-87a8-487f-8e24-c7f184fdfc75.png" style="width:20.42em;height:2.75em;"/></div>
+
+<p>从上图可以看出这种计算应该如何进行，图中显示了网络的展开版本。前面的计算是反向传播算法的一种不同形式，称为通过时间的<strong xmlns:epub="http://www.idpf.org/2007/ops">反向传播。<em xmlns:epub="http://www.idpf.org/2007/ops"><strong/>T8】</em></strong></p>
+
+<p>前述的一个重要结果是递归神经网络难以训练。由于<kbd>tanh</kbd>函数的导数以1为界，在前面的计算中，我们看到很多项在0和1之间相乘。因此，产生的梯度会很小，在训练的早期，它的数值可能会变为零。这很糟糕，因为这阻止了学习长期依赖。这是因为来自<em>远处</em>台阶的梯度贡献变为零，因为根据链式法则，它们是许多小于1的数的乘积。这个问题被称为消失梯度问题，由Sepp Hochreiter于1991年首次发现。它绝不排斥递归神经网络。当你有许多层时，标准的前馈神经网络也有同样的问题(当它们有四层或更多层时，我们说它们是深的)，只是递归神经网络往往非常深；在我们的例子中，和句子长度一样深。</p>
+
+<p>有几种方法可以解决渐变消失的问题，你可以使用ReLU函数，用R表示就是:</p>
+
+<pre>ifelse(x&gt;0,x,0)</pre>
+
+<p>这个函数的梯度为0或1，因此它可以帮助我们避免梯度消失的问题。将探索参数空间的相关部分，即使它们对应于<em>遥远的</em>历史中的变化。另一种可能性是使用不同的机制，如Hochreiter和Schmidhuber在1997年提出的LSTM网络，或Cho和合著者在2014年提出的GRU网络。我们将在下一节简要描述这些网络。</p>
+
+<p class="mce-root">除了消失梯度问题，你可以想象，根据网络的结构和你选择的激活函数，你可以有相反的情况，爆炸梯度。例如，如果雅可比矩阵的值很小，就会发生这种情况。这在某种程度上不那么严重，因为您将在代码中得到一个<kbd>NaN</kbd>错误。一种解决方法是剪切梯度，这只是意味着您应该添加一个条件，过滤掉超过某个阈值的值。当然，这将取决于您的特定应用，在某些情况下，您可能希望查看不同的值。</p>
+
+<p>实现不同类型的神经网络的主要复杂性是梯度的计算。在简单的情况下，这可以手工完成，但是，正如您所看到的，事情很快失去控制。</p>
+
+<p>一旦获得梯度，我们可以使用不同的方法，也许最流行的是随机梯度下降法。不幸的是，随机梯度下降不是即插即用的T2。您需要花一些时间来摆弄步长超参数，以使它正常工作。这对于使用神经网络来说是非常糟糕的。其他的解决方案，如<strong>阿达格拉德</strong>，在实践中使用。Adagrad实现起来特别简单，我们将在本章后面介绍。学习率是按分量调整的，由历史分量梯度的平方和的平方根给出。其他优化器包括RMSProp和Adam。Adagrad的一个优势，或者至少是理论上的保证，是它背后有一个完善的理论，而不是启发式的。</p>
+
+<p>有可能优化递归神经网络而不依赖于梯度方法。例如，通过使用遗传或进化算法。在某些情况下，进化算法有利于找到全局最小值，因为通过避免梯度的方向，它们可以找到更好的解决方案。这种算法的一个缺点是它们可能是计算密集型的。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>LSTM and GRU networks</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">LSTM和GRU网络</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>正如我们所见，RNN和LSTM网络的递归结构存在梯度问题，梯度要么消失，要么爆炸。一个解决方法是引入忘记门，它将删除一些旧的信息。这有助于在不破坏梯度的情况下跟踪相关信息，并更好地保存很久以前观察到的重要数据。</p>
+
+<p>LSTM和GRU分享了递归神经网络的相同设计原理，给出一个输入，计算一个输出，然后一个黑盒更新内部状态。为了理解更大的图景，这是至关重要的。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>LSTM</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">LSTM</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>对于LSTM，我们要计算很多东西:</p>
+
+<ul>
+
+<li>一个输入门，<em> i </em></li>
+
+<li>一个忘记的门，<em> f </em></li>
+
+<li>一个输出门，<em> <em> o </em> </em></li>
+
+<li>一个候选内部状态，<em> <em> g </em> </em></li>
+
+<li>单元的内部存储器，<em> c </em></li>
+
+<li>最终内部状态，<em> s </em></li>
+
+</ul>
+
+<p>这些由以下递归方程定义:</p>
+
+<div><img class="fm-editor-equation" src="img/96977b0a-c6ec-44b9-b5fb-94a9ee449d73.png" style="width:12.25em;height:8.33em;"/></div>
+
+<p>其中:</p>
+
+<div><img class="fm-editor-equation" src="img/4396c260-02fa-45cf-a853-4caf076d4e4e.png" style="width:8.75em;height:2.75em;"/></div>
+
+<p>前三个等式描述了输入门、遗忘门和输出门。它们被称为<strong>门</strong>，因为它们决定新计算的候选状态的哪一部分将被允许通过，哪一部分将被遗忘。给定新的观察结果，我们可能想要保留旧记忆中的一些东西，删除其他东西，或者决定考虑多少新信息。这是在内存变量<em> c </em>中计算的。最后，考虑到这次内存更新，我们保留了一部分内存供网络的其他部分使用。如果输入门的权重全部设置为1，则遗忘门的权重全部设置为0，输出门的权重全部设置为1。我们几乎恢复了标准的递归神经网络，只是激活层会多一个<kbd>tanh</kbd>。</p>
+
+<p>基于这一基本模型，LSTM建筑有许多变体。示例包括卷积、双向、窥视孔和带遗忘门的LSTM。一个很好的资源是Chris Olah关于这个主题的博客文章:<a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/">http://colah.github.io/posts/2015-08-Understanding-LSTMs/</a>。<a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/"/></p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>GRU</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">苏军总参谋部情报总局</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>门控循环单元 ( <strong xmlns:epub="http://www.idpf.org/2007/ops"> GRUs </strong>)与LSTM层有着相似的设计理念。它们包括:</p>
+
+<ul>
+
+<li>一个隐藏状态，<em> h </em></li>
+
+<li><em>一种内部状态，<em> s </em>一</em></li>
+
+<li>一个更新门，<em> z </em></li>
+
+<li>一个复位门，<em> r </em></li>
+
+</ul>
+
+<p>更新由以下递归关系给出:</p>
+
+<div><img class="fm-editor-equation" src="img/c99f90b4-50f7-454f-bba8-bace7185166f.png" style="width:15.33em;height:6.17em;"/></div>
+
+<p>重置门告诉我们如何把输入和之前的记忆放在一起。更新门定义了我们应该为下一次迭代保留多少先前的内存。这有助于网络忘记无用的东西，并与更新的证据建立联系。所得到的网络没有独立于内部状态的隐藏存储器(c ),这与LSTMs的情况不同。它们还将输入和遗忘门合并到更新门中。另一个关键区别是，在计算最终输出时，没有第二次非线性(第二次调用LSTMs中的<kbd>tanh</kbd>)。</p>
+
+<p>那么，用哪个呢？这个问题还没有定论。没有确凿的证据表明一个网络优于另一个网络。gru的参数更少，训练起来可能更快。他们也可能需要更少的数据来很好地概括(因为更容易准确地估计权重)。gru是2014年的新生事物，所以还没有得到很好的研究。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>RNNs from scratch in R</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">R中从头开始的RNNs</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>本节的目的是向您展示如何在r中从基本框架实现递归神经网络。出于多种原因，这可能不是最佳解决方案，但它是开始深度学习的一个好方法。</p>
+
+<p>有许多与r兼容的<em>即插即用</em>框架，如H2O、MXNet、TensorFlow或Keras。我们的目标是专注于对算法的理解，而不是特定的API，尽管我们将包括一个使用Keras的示例。这有两个原因，在撰写本文时，与R的兼容性正遭受着成长的烦恼，我们遇到了许多不同包的错误和问题。另一方面，即使是这些包的稳定版本也有不断变化的API。我们将在这一节集中讨论使用r。</p>
+
+<p>我们将从头开始，使用感知器的例子快速介绍R中的R6类，并从那里逐步构建。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Classes in R with R6</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">和R6一起在R中上课</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">R语言支持面向对象的编程，尽管没有通用的类定义标准。r有不同的阶级体系，S3，S4，R5和R6。因为R最初是一个统计游乐场软件，所以现代通用编程语言的一些特性在那里并不存在。因此，复杂的项目有点难写，但也不是不可能，由于社区的支持，情况一直在改善。</p>
+
+<p>为什么叫R6？根据R官方文档(<a href="https://cran.r-project.org/web/packages/R6/vignettes/Introduction.html">https://cran . R-project . org/web/packages/R6/vignettes/introduction . html</a>)，R6是R5包的继任者，R5包的开发已经停止。R6试图改善S3和S4的一些不足。它也是实现自修改对象的推荐方法，就像这里的情况。随着训练的进行，我们需要改变网络的权重。</p>
+
+<p>我们如何定义R6类？让我们在下一节中用一个例子向您展示这一点。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Perceptron as an R6 class</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">作为R6类的感知机</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>感知器是最简单的神经网络。它由一个输入和一个输出组成(无隐层)，当包含偏置项时，激活函数就是Heaviside函数(原点处的阶跃函数)。</p>
+
+<p>这是这个类的框架:</p>
+
+<pre>library(R6)<br/>Perceptron &lt;- R6Class("Perceptron", <br/> public = list(<br/>     threshold = NULL,<br/>     dim = NULL,<br/>     n_iter = NULL,<br/>     learning_rate = NULL,<br/>     w = NULL,<br/> initialize = function(threshold = 0, learning_rate = 0.25, n_iter=100, dim=2){<br/>     self$n_iter &lt;- n_iter<br/>     self$threshold &lt;- threshold<br/>     self$learning_rate &lt;- learning_rate<br/> }<br/> , forward = function(x){<br/>     }<br/> , backward = function(t,y,x){<br/>     }<br/><br/> }<br/> , train = function(X,t){<br/>     }<br/> }<br/> }<br/> }<br/> , predict = function(X){<br/>     X &lt;- cbind(-1,X) #add bias<br/>     preds &lt;- c()<br/>     for(i in 1:nrow(X)){<br/>     preds[i] &lt;- self$forward(X[i,])<br/> }<br/> return(preds)<br/> }<br/> )<br/>)</pre>
+
+<p>尽管R6支持私有方法，但我们现在并不真正需要它们；我们可以使用公共方法，这在前面已经指定了。请注意，您确实需要用<kbd>NULL</kbd>初始化您计划使用的所有对象；不这样做将导致错误。</p>
+
+<p>现在我们可以实现感知器，填补前面函数中的空白:</p>
+
+<pre>library(R6)<br/>Perceptron &lt;- R6Class("Perceptron", <br/> public = list(<br/>     threshold = NULL,<br/>     dim = NULL,<br/>     n_iter = NULL,<br/>     learning_rate = NULL,<br/>     w = NULL,<br/>     initialize = function(threshold = 0, <br/>                            learning_rate = 0.25, <br/>                            n_iter=100, dim=2)<br/>                        {<br/>                     self$n_iter &lt;- n_iter<br/>                     self$threshold &lt;- threshold<br/>                     self$learning_rate &lt;- learning_rate<br/>                     self$dim &lt;- dim<br/>                     self$w &lt;- matrix(runif(self$dim+1), ncol = self$dim+1)<br/>                     }<br/> , forward = function(x){<br/>             dot_product &lt;- sum(x*self$w)<br/>             y &lt;- ifelse(dot_product&gt;self$threshold,1,0)<br/>             return(y)<br/>     }<br/> , backward = function(t,y,x){<br/>             for(j in 1:ncol(x)){<br/>             self$w[j] &lt;- self$w[j]+self$learning_rate*(t-y)*x[j]<br/>         }<br/>}<br/> , train = function(X,t){<br/>             X &lt;- cbind(-1,X) #add bias term<br/>             n_examples &lt;- nrow(X)<br/> <br/>             for(iter in 1:self$n_iter){<br/>                 for(i in 1:nrow(X)){<br/>                     y_i &lt;- self$forward(X[i,])<br/>                     self$backward(t[i],y_i, X[i,])<br/>                     }<br/>                 if(iter %% 20 == 0){<br/>                     cat("Iteration: ", iter)<br/>                     print("Weights: ")<br/>                     print(unlist(self$w)) <br/>                     }                <br/>             }<br/> }<br/> , predict = function(X){<br/>              X &lt;- cbind(-1,X) #add bias<br/>              preds &lt;- c()<br/>              for(i in 1:nrow(X)){<br/>                 preds[i] &lt;- self$forward(X[i,])<br/>                 }<br/>         return(preds)<br/>     }<br/> )<br/>)</pre>
+
+<p>你如何测试你的实现是正确的？那么，在几次迭代之后，您的网络应该能够正确预测以下数据的标签(<kbd>OR</kbd>函数):</p>
+
+<table border="1" style="border-collapse: collapse">
+
+<tbody>
+
+<tr>
+
+<td><strong> x1 </strong></td>
+
+<td><strong> x2 </strong></td>
+
+<td><strong> t </strong></td>
+
+</tr>
+
+<tr>
+
+<td>0</td>
+
+<td>0</td>
+
+<td>0</td>
+
+</tr>
+
+<tr>
+
+<td>一</td>
+
+<td>0</td>
+
+<td>一</td>
+
+</tr>
+
+<tr>
+
+<td>0</td>
+
+<td>一</td>
+
+<td>一</td>
+
+</tr>
+
+<tr>
+
+<td>一</td>
+
+<td>一</td>
+
+<td>一</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p>要测试您的实施，您首先需要使用此数据集创建一个数据框:</p>
+
+<pre>x1 &lt;- c(0,0,1,1)<br/>x2 &lt;- c(0,1,0,1)<br/>t &lt;- c(0,1,1,1)<br/>X &lt;- data.frame(x1=x1, x2=x2)</pre>
+
+<p>现在，让我们初始化:</p>
+
+<pre>lr &lt;- LR$new(n_iter=100, dim=ncol(X))<br/>lr</pre>
+
+<p>接下来，我们称之为<kbd>train</kbd>法:</p>
+
+<pre>lr$train(X,t)<br/>lr$w</pre>
+
+<p>最后，<kbd>predict</kbd>:</p>
+
+<pre>lr$predict(X)</pre>
+
+<p>为了深入了解感知器正在做什么，我们将绘制决策边界，即算法用于分类的标准。</p>
+
+<p>首先，我们强制一个数据框架，因为我们将使用<kbd>ggplot2</kbd>库:</p>
+
+<pre>df &lt;- as.data.frame(X)<br/>df$t &lt;- as.factor(t)</pre>
+
+<p>然后，我们得到系数:</p>
+
+<pre># Get the line<br/>w0 &lt;- as.numeric(lr$w[1])<br/>w1 &lt;- as.numeric(lr$w[2])<br/>w2 &lt;- as.numeric(lr$w[3])</pre>
+
+<p>最后，我们创建了这条线:</p>
+
+<pre class="mce-root">x1_vals &lt;- seq(-0.15,1,0.1)<br/>x2_vals &lt;- (w0-w1*x1_vals)/w2<br/>boundary &lt;- data.frame(x1_vals=x1_vals, x2_vals=x2_vals)
+#Plot decision boundary<br/>library(ggplot2)<br/>ggplot()+<br/>    geom_point(data=df, aes(x=x1,y=x2, color=t, size=2))+<br/>    geom_line(data=boundary, aes(x=x1_vals, y=x2_vals, size=1))+<br/>    theme_bw()</pre>
+
+<p>这为我们提供了以下输出:</p>
+
+<div><img src="img/ea07f750-9cc9-408a-aeb3-817d04cc354a.png" style="width:24.67em;height:25.58em;"/></div>
+
+<p>OR函数和决策边界</p>
+
+<p>这向我们表明，感知器可以以非唯一的方式分离这个数据集。</p>
+
+<p>感知器的功能非常有限，这里只展示了在r中实现类的方法。例如，感知器无法分离如下所示的简单示例:</p>
+
+<div><img src="img/69f58287-7c7a-4baa-b640-c00aafefd0e3.png" style="width:23.17em;height:22.42em;"/></div>
+
+<p>异或函数</p>
+
+<p>正如你所看到的，没有办法画一条线来区分这两个类，因此显示了感知器的局限性。</p>
+
+<p>有两种方法可以解决这个问题。一种是创建额外的特性，比如<em> x1*x2 </em>，这确实会使数据可分离。另一种方法是创建更复杂的决策机制(非线性决策边界)。在某种意义上，我们将向您展示如何实现第二个目标。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Logistic regression</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">逻辑回归</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们可以以非常相似的方式，将逻辑回归实现为R6类。代码只是出于求知欲，因为它是密切相关的。</p>
+
+<p>感知器和逻辑回归之间没有太大的区别。它们有很多共同之处，主要区别是激活函数(logit而不是Heaviside step函数)，这也改变了权重的更新规则。为方便起见，我们用粗体突出显示了更相关的差异:</p>
+
+<pre>library(R6)<br/><strong>logit &lt;- function(x){</strong><br/><strong> 1/(1+exp(-x))</strong><br/><strong>}</strong><br/>LR &lt;- R6Class("LR", <br/>     public = list(<br/>     dim = NULL,<br/>     n_iter = NULL,<br/>     learning_rate = NULL,<br/>     w = NULL,<br/>     initialize = function(learning_rate = 0.25, n_iter=100, dim=2){<br/>         self$n_iter &lt;- n_iter<br/>         self$learning_rate &lt;- learning_rate<br/>         self$dim &lt;- dim<br/>         self$w &lt;- matrix(runif(self$dim+1), ncol = self$dim+1)<br/> }<br/> , forward = function(x){<br/>         dot_product &lt;- sum(x*self$w)<br/>         <strong>y &lt;- logit(dot_product)</strong><br/>         return(y)<br/>     }<br/> , <strong>backward = function(t,y,x){</strong><br/><strong>         for(j in 1:ncol(x)){</strong><br/><strong>         self$w[j] &lt;- self$w[j]+self$learning_rate*(t-y)*x[j]*logit(x[j])*(1-logit(x[j]))</strong><br/><strong> }</strong><br/> <br/> }<br/> , train = function(X,t){<br/>         X &lt;- cbind(-1,X) #add bias term<br/>         n_examples &lt;- nrow(X)<br/> <br/> for(iter in 1:self$n_iter){<br/>     for(i in 1:nrow(X)){<br/>     y_i &lt;- self$forward(X[i,])<br/>     self$backward(t[i],y_i, X[i,])<br/> }<br/> if(iter %% 20 == 0){<br/>     cat("Iteration: ", iter)<br/>     print("Weights: ")<br/>     print(unlist(self$w)) <br/> }<br/> <br/> }<br/> }<br/> , predict = function(X){<br/>     X &lt;- cbind(-1,X) #add bias<br/>     preds &lt;- c()<br/>     for(i in 1:nrow(X)){<br/>         preds[i] &lt;- self$forward(X[i,])<br/>     }<br/> return(preds)<br/> }<br/> )<br/>)</pre>
+
+<p>正如我们所看到的，相对于前面的代码没有太多的变化，主要的动作发生在后退的步骤上。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Multi-layer perceptron</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">多层感知器</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>就像煎饼一样，神经网络是相互堆叠的。我们可以将一层的输出作为下一层的输入，称为<strong>隐藏层</strong>。该隐藏层由应用了激活函数的输入的线性组合组成。这创建了一个新的隐藏向量，我们可以将它作为下一个隐藏层的输入，在每一步，通过一些权重重新组合前一层的输出，并应用一个激活函数。</p>
+
+<p>我们先介绍一下sigmoid函数，后面会很有用:</p>
+
+<pre>library(R6)<br/><br/>sigmoid &lt;- function(x){<br/>  1/(1+exp(-x))<br/>}</pre>
+
+<p>这个类的框架现在是:</p>
+
+<pre>MLP &lt;- R6Class("MLP", <br/>                      public = list(<br/>                        dim = NULL,<br/>                        n_iter = NULL,<br/>                        learning_rate = NULL,<br/>                        hidden_layer_size=NULL,<br/>                        Wih = NULL,<br/>                        Who = NULL,<br/>                        a = NULL,<br/>                        initialize = function(learning_rate = 0.3, <br/>                                                n_iter=NA, <br/>                                                dim=NA, <br/>                                                hidden_layer_size=NA){<br/>                          #INITIALIZATION CODE<br/>                        }<br/>                        , forward = function(x){<br/>                            #Input: training vector<br/>                            #Output: Class<br/>                        }<br/>                        , backward = function(t,y,X){<br/>                          <br/>                          # Input: Target, prediction and matrix of training examples<br/>                          # No output, gradients are modified in the class<br/>`  <br/>                        }<br/>                        <br/>                        , train = function(X,t){<br/>                           # Run the training loop: forward and backward propagation for n_iter<br/>                        }<br/>                        , predict = function(X){<br/>                            # Call to the forward function for all training examples<br/>                        }<br/>                      )<br/>)</pre>
+
+<p>前进的步骤通常是最简单的，在我们的例子中是:</p>
+
+<pre> , forward = function(x){<br/>                          h &lt;- as.matrix(x)%*%self$Wih<br/>                          self$a &lt;- sigmoid(h)<br/>                          y &lt;- sigmoid(self$a %*% self$Who) #Output of the network<br/>                          return(y)<br/>                        }</pre>
+
+<p>后退一步是这里比较棘手的部分。我们有一个误差分量，来自损失函数对最后一个分量的导数。这在代码中称为<kbd>layer2_delta</kbd>。另一个分量来自相对于第一层权重的导数，称为<kbd>layer1_delta</kbd>。这些是需要在对应点进行求值的导数，即<kbd>layer1_delta</kbd>情况下的<kbd>X</kbd>和<kbd>layer2_delta</kbd>激活函数的输出<kbd>a</kbd>。</p>
+
+<pre>, backward = function(t,y,X){<br/>                          <br/>                          # Compute the error in the output layer<br/>                          layer2_error &lt;- t-y<br/>                          layer2_delta &lt;- (layer2_error)*(y*(1-y)) <br/><br/>                          #Compute the error in the input layer<br/>                          layer1_error &lt;- layer2_delta %*% t(self$Who)<br/>                          layer1_delta &lt;- layer1_error*self$a*(1-self$a)<br/>                          <br/>                          # Adjustments of the weights<br/>                          layer1_adjustment &lt;- t(X) %*% layer1_delta<br/>                          layer2_adjustment &lt;- t(self$a) %*% layer2_delta<br/>                          <br/>                          self$Wih &lt;- self$Wih+self$learning_rate*layer1_adjustment<br/>                          self$Who &lt;-
+self$Who+self$learning_rate*layer2_adjustment<br/><br/>                        }</pre>
+
+<p>其他功能更容易完成。为了完整起见，此处包含了完整的代码:</p>
+
+<pre>MLP &lt;- R6Class("MLP", <br/>                      public = list(<br/>                        dim = NULL,<br/>                        n_iter = NULL,<br/>                        learning_rate = NULL,<br/>                        hidden_layer_size=NULL,<br/>                        Wih = NULL,<br/>                        Who = NULL,<br/>                        a = NULL,<br/>                        initialize = function(learning_rate = 0.3, <br/>                                                n_iter=NA, <br/>                                                dim=NA, <br/>                                                hidden_layer_size=NA){<br/>                          self$dim &lt;- dim<br/>                          self$n_iter &lt;- n_iter<br/>                          self$learning_rate &lt;- learning_rate<br/>                          self$hidden_layer_size &lt;- hidden_layer_size<br/>                          self$Wih &lt;- matrix(runif(self$hidden_layer_size*self$dim), <br/>                                               ncol = self$hidden_layer_size)<br/>                          self$Who &lt;- matrix(runif((self$hidden_layer_size)), ncol = 1)<br/>                          self$a &lt;- matrix(runif(self$hidden_layer_size*self$dim), ncol = self$dim)<br/>                        }<br/>                        , forward = function(x){<br/>                          h &lt;- as.matrix(x)%*%self$Wih<br/>                          self$a &lt;- sigmoid(h)<br/>                          y &lt;- sigmoid(self$a %*% self$Who) #Output of the network<br/>                          return(y)<br/>                        }<br/>                        , backward = function(t,y,X){<br/>                          <br/>                          # Compute the error in the output layer<br/>                          layer2_error &lt;- t-y<br/>                          layer2_delta &lt;- (layer2_error)*(y*(1-y)) <br/><br/>                          #Compute the error in the input layer<br/>                          layer1_error &lt;- layer2_delta %*% t(self$Who)<br/>                          layer1_delta &lt;- layer1_error*self$a*(1-self$a)<br/>                          <br/>                          # Adjustments of the weights<br/>                          layer1_adjustment &lt;- t(X) %*% layer1_delta<br/>                          layer2_adjustment &lt;- t(self$a) %*% layer2_delta<br/>                          <br/>                          self$Wih &lt;- self$Wih+self$learning_rate*layer1_adjustment<br/>                          self$Who &lt;- self$Who+self$learning_rate*layer2_adjustment<br/><br/>                        }<br/>                        <br/>                        , train = function(X,t){<br/>                          n_examples &lt;- nrow(X)<br/>                          for(iter in 1:self$n_iter){<br/>                            preds &lt;- self$forward(X)<br/>                            self$backward(t,preds, X)<br/>                            if(iter %% 1000 == 0){<br/>                              cat("Iteration: ", iter,"\n")<br/>                            }<br/>                            <br/>                          }<br/>                        }<br/>                        , predict = function(X){<br/>                          preds &lt;- self$forward(X)<br/>                          return(preds)<br/>                        }<br/>                      )<br/>)</pre>
+
+<p>让我们试试<kbd>OR</kbd>函数中的网络，正如我们所见，它是线性可分的:</p>
+
+<pre>x1 &lt;- c(0,0,1,1)<br/>x2 &lt;- c(0,1,0,1)<br/>t &lt;- c(0,1,1,1)<br/>X &lt;- as.matrix(data.frame(x1=x1, x2=x2))</pre>
+
+<p>现在，让我们生成预测标签:</p>
+
+<pre>clf &lt;- MLP$new(n_iter=5000,dim=ncol(X), hidden_layer_size=4)<br/>clf$train(X,t)<br/>clf$predict(X)</pre>
+
+<p>嗯，这些都很好，但肯定不是什么优势，对吧？我们已经知道这个简单的训练例子被感知器正确地解决了。</p>
+
+<p>为了更进一步，让我们考虑下面的数据(<kbd>xor</kbd>)函数:</p>
+
+<pre>xor &lt;- data.frame(x1=c(0,0,1,1), x2=c(0,1,0,1), t = c(0,1,1,0))<br/>clf$train(xor[,1:2],xor[,3])<br/>clf$predict(xor[,1:2])</pre>
+
+<p>我们知道这不是线性可分的:</p>
+
+<pre>library(ggplot2)<br/>grid_size &lt;- 1e2<br/>grid &lt;- data.frame(V1=0,V2=0)<br/>base &lt;- seq(0,1,1/grid_size)</pre>
+
+<p>让我们生成一个将应用决策函数的网格:</p>
+
+<pre class="mce-root">for(j in 1:grid_size){<br/> V1 &lt;- rep(base[j],grid_size+1)<br/> V2 &lt;- base<br/> tmp &lt;- data.frame(V1=V1,V2=V2)<br/> grid &lt;- rbind(tmp,grid)<br/>}</pre>
+
+<p>现在，让我们最后在网格上绘制这个函数的评估:</p>
+
+<pre class="mce-root">grid$z &lt;- with(grid,clf$predict(cbind(V1,V2)))<br/>ggplot(grid,aes(x=V1,y=V2))+geom_tile(aes(fill=z))+theme_bw()</pre>
+
+<p>我们看到多层感知器在这个数据上做得更好，并且能够正确地猜测这两个区域之间的分离边界:</p>
+
+<div><img src="img/74f2d980-8a07-439f-9ac9-c029de4a69c2.png" style="width:27.08em;height:24.92em;"/></div>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Implementing a RNN</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">实施RNN</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>让我们进入这一章最重要的部分。徒手实现我们的递归神经网络。我们展示了两个不同的实现，第一个使用了R6类，我们发现在您的项目中使用它可能更有用，因为它更具可移植性。我们展示的第二个实现严格遵循Andrej Karpathy的博客文章中使用的样本代码，用于前面引用的最小字符级递归神经网络。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Implementation as an R6 class</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">作为R6类实现</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>首先，我们来展示一下这个类的骨架。这里我们需要一些函数。首先，我们需要导入<kbd>R6</kbd>包并创建两个辅助函数:</p>
+
+<pre>library(R6)<br/>set.seed(1234)<br/>softmax &lt;- function(x){<br/> xt &lt;- exp(x-max(x))<br/> return(xt/sum(xt))<br/>}<br/>zeros_like &lt;- function(M){<br/> return(matrix(0,dim(as.matrix(M))[1],dim(as.matrix(M))[2])) <br/>}</pre>
+
+<p>这将在代码计算<em> softmax </em>和用正确的大小初始化矩阵时派上用场。和以前一样，我们的程序需要以下基本功能:</p>
+
+<ul>
+
+<li>正向传播</li>
+
+<li>反向传播</li>
+
+<li>从获得的概率分布中抽取一个样本</li>
+
+<li>训练模型</li>
+
+</ul>
+
+<p>该类的结构应该如下所示:</p>
+
+<pre>RNN &lt;- R6Class("RNN", <br/>         public = list(<br/>         hidden_size = NULL,<br/>         vocab_size = NULL, <br/>         learning_rate = NULL,<br/>         U = NULL,<br/>         V = NULL,<br/>         W = NULL,<br/>         seq_length = NULL,<br/>         chars = NULL,<br/>         n_iter = NULL,<br/>         initialize = function(hidden_size = NA, vocab_size = NA, <br/>                        chars=NA, n_iter=100, seq_length=NA, learning_rate=0.01){<br/>        <br/>         }<br/>         , forward_step = function(input_sample){<br/>             ## Takes one column vector and returns the softmax output<br/>          <br/>         }<br/>         , bptt = function(inputs,targets,s_prev){<br/>             seq_size &lt;- length(inputs) #total length of the sequence<br/>             loss &lt;- 0<br/>             for(idx in 1:seq_size){<br/>              # Forward pass: Update the hidden state and predict<br/>               # Backward pass: updates using the gradient<br/>                 for(j in length(inputs):1){<br/>                     ## derivatives of error vs output<br/>                     }<br/>             }<br/>             return(list("loss"=loss, "dU"=dU, "dW"=dW, "dV"=dV, "hs"=hs[length(inputs)-1]))<br/>         }<br/>         ,  sample_char &lt;- function(h, seed_ix, n){<br/>         ## generate a sample from the model<br/>         ## given a hidden state and an initial seed<br/>         <br/>             }<br/>         , train = function(text){<br/>             ## Main training loop with Adagrad updates<br/>             }<br/>     )<br/> )</pre>
+
+<p>最有趣的是<kbd>bptt</kbd>函数，所以让我们更详细地描述一下。当接收到来自环境的输入时，在这种情况下，是一个文本块，我们将循环遍历这个文本块的每个字符，并在给定当前状态和来自前一次迭代的隐藏状态的值的情况下，为下面的状态生成预测。一旦我们遍历了输入块，我们需要以相反的顺序计算梯度的更新。这是在这个函数的反向传播部分完成的。</p>
+
+<p>在<kbd>train</kbd>函数中，我们观察到Adagrad比随机梯度下降具有更好的性能，随机梯度下降应在最后部分实施。</p>
+
+<p>完整的代码是:</p>
+
+<pre>library(R6)<br/>set.seed(1234)<br/>softmax &lt;- function(x){<br/>  xt &lt;- exp(x-max(x))<br/>  return(xt/sum(xt))<br/>}<br/>zeros_like &lt;- function(M){<br/>  return(matrix(0,dim(as.matrix(M))[1],dim(as.matrix(M))[2])) <br/>}<br/>RNN &lt;- R6Class("RNN", <br/>               public = list(<br/>                 hidden_size = NULL,<br/>                 vocab_size = NULL, <br/>                 learning_rate = NULL,<br/>                 U = NULL,<br/>                 V = NULL,<br/>                 W = NULL,<br/>                 seq_length = NULL,<br/>                 chars = NULL,<br/>                 n_iter = NULL,<br/>                 initialize = function(hidden_size = NA, vocab_size = NA, chars=NA, n_iter=100, seq_length=NA, learning_rate=0.01){<br/>                   self$hidden_size &lt;- hidden_size<br/>                   self$n_iter &lt;- n_iter<br/>                   self$learning_rate &lt;- learning_rate<br/>                   self$seq_length &lt;- seq_length<br/>                   self$vocab_size &lt;- as.numeric(vocab_size)<br/>                   self$chars &lt;- chars<br/>                   self$U &lt;- matrix(rnorm(hidden_size*vocab_size)*0.01, nrow=self$hidden_size) # input to hidden<br/>                   self$W &lt;- matrix(rnorm(hidden_size*hidden_size)*0.01, nrow=self$hidden_size) # hidden to hidden<br/>                   self$V &lt;- matrix(rnorm(vocab_size*hidden_size)*0.01, nrow=self$vocab_size) # hidden to output<br/>                 }<br/>                 , forward_step = function(input_sample){<br/><strong>                      ## Takes one column vector and returns probabilities</strong><br/>                   x &lt;- input_sample<br/>                   s &lt;- tanh(self$U%*%x+self$W%*%self$s)<br/>                   o &lt;- softmax(self$V%*%self$s)<br/>                   return(list("pred"=o,"state"=s))<br/>                 }<br/>                 , bptt = function(inputs,targets,s_prev){<br/>                   seq_size &lt;- length(inputs) #total length of the sequence<br/>                   xs &lt;- lapply(vector('list',seq_size), function(i) matrix(0,self$vocab_size, 1))<br/>                   hs &lt;- lapply(vector('list',seq_size), function(i) matrix(0,self$hidden_size, 1))<br/>                   ys &lt;- lapply(vector('list',seq_size), function(i) matrix(0,self$vocab_size, 1))<br/>                   ps &lt;- lapply(vector('list',seq_size), function(i) matrix(0,self$vocab_size,1))<br/>                   loss &lt;- 0<br/>                   for(idx in 1:seq_size){<br/>                     xs[[idx]] &lt;- matrix(0,self$vocab_size,1)<br/>                     xs[[idx]][inputs[[idx]]] = 1<br/>                     ## Update the hidden state<br/>                     if(idx==1){<br/>                       hs[[idx]] &lt;- tanh(self$U%*%xs[[idx]]+self$W%*%s_prev) <br/>                     }<br/>                     else{<br/>                       hs[[idx]] &lt;- tanh(self$U%*%xs[[idx]]+self$W%*%hs[[(idx-1)]]) <br/>                     }<br/><strong>                     ## calculate the probabilities for the next character</strong><br/>                     ys[[idx]] &lt;- self$V%*%hs[[idx]]<br/>                     ps[[idx]] &lt;- softmax(ys[[idx]])<br/>                     <br/><strong>                     ## Cross-entropy loss</strong><br/>                     loss &lt;- loss-log(ps[[idx]][targets[idx], 1])<br/>                     <br/>                     # Calculate gradients<br/>                     dU &lt;- zeros_like(self$U)<br/>                     dW &lt;- zeros_like(self$W)<br/>                     dV &lt;- zeros_like(self$V)<br/>                     dhnext &lt;- zeros_like(s_prev)<br/>                     for(j in length(inputs):1){<br/><strong>                       ## Gradient of the error vs output</strong><br/>                       dy &lt;- ps[[j]]<br/>                       dy[targets[j]] &lt;- dy[targets[j]]-1 <br/>                       dV &lt;- dV+dy%*%t(hs[[j]])<br/>                       dh &lt;- t(self$V)%*%dy + dhnext<br/><strong>                       ## backprop through the tanh</strong><br/>                       dhraw &lt;- (1 - hs[[j]] * hs[[j]]) * dh<br/><strong>                       ## derivative of the error between input and hidden layer</strong><br/>                       dU &lt;- dU+dhraw%*%t(xs[[j]])<br/>                       if(j==1){<br/>                         dW &lt;- dW+dhraw%*%t(s_prev) <br/>                       }<br/>                       else{<br/>                         dW &lt;- dW+dhraw%*%t(hs[[(j-1)]]) <br/>                       }<br/>                      dhnext &lt;- t(self$W)%*%dhraw<br/>                     }<br/>                   }<br/>                   return(list("loss"=loss, "dU"=dU, "dW"=dW, "dV"=dV, "hs"=hs[length(inputs)-1]))<br/>                 }<br/>                 , <br/>                 sample_char = function(h, seed_ix, n){<br/><strong>                   # Generate a sequence of characters given a seed and a hidden state</strong><br/>                   x &lt;- matrix(0,self$vocab_size, 1)<br/>                   x[seed_ix] &lt;- 1<br/>                   ixes &lt;- c()<br/>                   for(t in 1:n){<br/>                     h &lt;- tanh(self$U%*%x+self$W%*%h)<br/>                     y &lt;- self$V%*%h<br/>                     p &lt;- exp(y)/sum(exp(y)) #softmax<br/>                     ix &lt;- sample(self$chars,size=1, replace=T, prob=p)<br/>                     x &lt;- matrix(0,self$vocab_size,1)<br/>                     x[which(chars==ix)] &lt;- 1<br/>                     ixes[t] &lt;- ix<br/>                   }<br/>                   return(ixes)<br/>                 }<br/>                 , train = function(text){<br/>                   n &lt;- 1<br/>                   p &lt;- 1<br/>                   mU &lt;- zeros_like(self$U)<br/>                   mW &lt;- zeros_like(self$W)<br/>                   mV &lt;- zeros_like(self$V)<br/>                   <br/><strong>                   # memory variables for Adagrad</strong><br/>                   smooth_loss = -log(1.0/self$vocab_size)*self$seq_length # loss at iteration 0<br/>                   <br/>                   for(n in 1:self$n_iter){<br/>                     # <br/>                     if(p + self$seq_length + 1 &gt;= length(text) || n == 1){<br/>                       # reset RNN memory<br/><strong>                       ## h_old is the previous hidden state of RNN</strong><br/>                       h_old &lt;- matrix(0,self$hidden_size, 1)<br/><strong>                       # go from start of data</strong><br/>                       p &lt;- 1<br/>                     }<br/>                     inputs &lt;- unlist(lapply(text[p:(p+self$seq_length)],function(c){which(self$chars==c)}))<br/>                     targets &lt;- unlist(lapply(text[(p+1):(p+self$seq_length+1)],function(c){which(self$chars==c)}))<br/><strong>                     # See what the model is doing from time to time</strong><br/>                     if(n %% 100 == 0){<br/>                       txt &lt;- self$sample_char(h_old, inputs[[1]], 200)<br/><strong>                       ## Find the line breaks </strong><br/>                       line_breaks &lt;- which(txt=="\n")<br/>                       if(length(line_breaks)&lt;2){<br/>                         print(txt)<br/>                       }<br/>                       else{<br/>                         for(ix in 2:(length(line_breaks-1))){<br/>                           first_ix &lt;- line_breaks[ix-1]+1<br/>                           last_ix &lt;- line_breaks[ix]-1<br/>                           print(paste(txt[first_ix:last_ix], collapse=""))<br/>                         }<br/>                       }<br/>                       smooth_loss = smooth_loss*0.99+loss*0.01<br/>                       print('---- sample -----')<br/>                       cat("Iteration number: ",n, "\n")<br/>                       cat("Loss: ", smooth_loss)<br/>                     }<br/>                     tmp &lt;- self$bptt(inputs, targets, h_old)<br/>                     loss &lt;- unlist(tmp$loss)<br/>                     dU &lt;- unlist(tmp$dU)<br/>                     dW &lt;- unlist(tmp$dW) <br/>                     dV &lt;- unlist(tmp$dV)<br/>                     h_old &lt;- unlist(tmp$hs)<br/><strong>                     ## Time to update the Adagrad weights</strong><br/>                     mU &lt;- mU+dU**2<br/>                     self$U &lt;- self$U-self$learning_rate * dU / sqrt(mU + 1e-8)<br/>                     mW &lt;- mW+dW**2<br/>                     self$W &lt;- self$W-self$learning_rate * dW / sqrt(mW + 1e-8)<br/>                     mV &lt;- mV+dV**2<br/>                     self$V &lt;- self$V-self$learning_rate * dV / sqrt(mV + 1e-8)<br/>                     p &lt;- p+self$seq_length<br/>                     n &lt;- n+1<br/>                   }<br/>                   return(1)<br/>                 }<br/>    )<br/>  )</pre>
+
+<p>这里肯定有一些工作要做。例如，您可以重构向前传递的部分，以显式使用<kbd>forward_step</kbd>函数。我们把它作为一个练习。</p>
+
+<p>为了测试你的代码，你可以使用男性和女性名字的列表(参见<em>练习</em>部分)。如果我们使用女性姓名列表(手动删除标题信息后)，我们将展示如何做到这一点:</p>
+
+<pre>library(readr)<br/>library(stringr)<br/>library(purrr)<br/>library(tokenizers)<br/>data &lt;- read_lines("./data/female.txt")<br/>text &lt;- data %&gt;%<br/>     str_to_lower() %&gt;%<br/>     str_c(collapse = "\n") %&gt;%<br/>     tokenize_characters(strip_non_alphanum = FALSE, simplify = TRUE)<br/>chars &lt;- text %&gt;% unique<br/>test &lt;- RNN$new(hidden_size = 100, <br/>                 vocab_size = length(chars), <br/>                 chars=chars, <br/>                 n_iter=100, <br/>                seq_length=25,<br/>                learning_rate=0.01)<br/>test$train(text)</pre>
+
+<p>可以用自己的数据；它只需要是一个文本文件。</p>
+
+<p>当用你自己的数据训练你的模型时，小心你传递的输入，永远记住，<em>垃圾输入，垃圾输出</em>。在这里或那里插入一些日志或打印声明，以便您可以看到您的网络在做什么。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Implementation without R6</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">没有R6的实施</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在这一节中，我们包括不使用R6类的相同的基本递归神经网络的实现。首先，一些进口和设置种子:</p>
+
+<pre>library(readr)<br/>library(stringr)<br/>library(purrr)<br/>library(tokenizers)<br/>set.seed(1234)</pre>
+
+<p>我们引入一个辅助函数来初始化一个具有矩阵形状的零矩阵，<kbd>M</kbd>:</p>
+
+<pre class="mce-root">zeros_like &lt;- function(M){<br/> return(matrix(0,dim(as.matrix(M))[1],dim(as.matrix(M))[2])) <br/>}</pre>
+
+<p>我们还需要<kbd>softmax</kbd>函数:</p>
+
+<pre class="mce-root">softmax &lt;- function(x){<br/> xt &lt;- exp(x-max(x))<br/> return(xt/sum(xt))<br/>}</pre>
+
+<p class="mce-root">我们将用它来测试女性姓名数据(参见<em>练习</em>部分):</p>
+
+<pre class="mce-root">data &lt;- read_lines("./data/female.txt")</pre>
+
+<p class="mce-root">并做一些预处理:</p>
+
+<pre class="mce-root">text &lt;- data %&gt;%<br/> str_to_lower() %&gt;%<br/> str_c(collapse = "\n") %&gt;%<br/> tokenize_characters(strip_non_alphanum = FALSE, simplify = TRUE)</pre>
+
+<p>我们建立了词汇的特征。这是对每个输入数据进行一次性编码所必需的:</p>
+
+<pre class="mce-root">chars &lt;- text %&gt;% unique<br/>chars</pre>
+
+<p>现在，我们进入节目的主要部分。除了初始化之外，注意我们定义了一个<kbd>lossFun</kbd>,它包括向前的步骤和随时间向后传播:</p>
+
+<pre class="mce-root">library(readr)<br/>library(stringr)<br/>library(purrr)<br/>library(tokenizers)<br/><br/>set.seed(1234)<br/><br/>zeros_like &lt;- function(M){<br/>  return(matrix(0,dim(as.matrix(M))[1],dim(as.matrix(M))[2])) <br/>}<br/><br/><br/>softmax &lt;- function(x){<br/>  xt &lt;- exp(x-max(x))<br/>  return(xt/sum(xt))<br/>}<br/>data &lt;- read_lines("./data/female.txt")<br/>head(data)<br/><br/><br/>text &lt;- data %&gt;%<br/>  str_to_lower() %&gt;%<br/>  str_c(collapse = "\n") %&gt;%<br/>  tokenize_characters(strip_non_alphanum = FALSE, simplify = TRUE)<br/><br/><br/>chars &lt;- text %&gt;% unique<br/>chars<br/><br/><br/><strong># hyperparameters</strong><br/>hidden_size = 100 # size of hidden layer of neurons<br/>seq_length = 10 # number of steps to unroll the RNN for<br/>learning_rate = 1e-1<br/>vocab_size = length(chars)<br/><br/><br/>U &lt;- matrix(rnorm(hidden_size*vocab_size)*0.01, nrow=hidden_size) # input to hidden<br/>W &lt;- matrix(rnorm(hidden_size*hidden_size)*0.01, nrow=hidden_size) # hidden to hidden<br/>V &lt;- matrix(rnorm(vocab_size*hidden_size)*0.01, nrow=vocab_size) # hidden to output<br/>bh &lt;- matrix(0,hidden_size, 1) # hidden bias<br/>by &lt;- matrix(0,vocab_size, 1) # output bias<br/><br/><br/>lossFun &lt;- function(inputs,targets,prev_hidden){<br/>  tot &lt;- length(inputs) #total sequence length<br/>  xs &lt;- lapply(vector('list',tot), function(i) matrix(0,vocab_size, 1))<br/>  hs &lt;- lapply(vector('list',tot), function(i) matrix(0,hidden_size, 1))<br/>  ys &lt;- lapply(vector('list',tot), function(i) matrix(0,vocab_size, 1))<br/>  ps &lt;- lapply(vector('list',tot), function(i) matrix(0,vocab_size,1))<br/>  loss &lt;- 0<br/>  for(idx in 1:tot){<br/>    xs[[idx]] &lt;- matrix(0,vocab_size,1)<br/>    xs[[idx]][inputs[[idx]]] = 1<br/><br/>    ## update the hidden state<br/>    if(idx==1){<br/>      hs[[idx]] &lt;- tanh(U%*%xs[[idx]]+W%*%h_old+bh) <br/>    }<br/>    else{<br/>      hs[[idx]] &lt;- tanh(U%*%xs[[idx]]+W%*%hs[[(idx-1)]]+bh) <br/>    }<br/>    <br/><strong>    ## Get char probabilities</strong><br/>    ys[[idx]] &lt;- V%*%hs[[idx]] + by<br/>    ps[[idx]] &lt;- softmax(ys[[idx]])<br/>    <br/><strong>    ## Loss function (cross-entropy here)</strong><br/>    loss &lt;- loss-log(ps[[idx]][targets[idx], 1])<br/>    <br/>    # Initialize the gradients<br/>    dU &lt;- zeros_like(U)<br/>    dW &lt;- zeros_like(W)<br/>    dV &lt;- zeros_like(V)<br/>    dbh &lt;- zeros_like(bh)<br/>    dby &lt;- zeros_like(by)<br/>    dhnext &lt;- zeros_like(h_old)<br/>    <br/>    # Here comes the backprop loop<br/>    for(j in length(inputs):1){<br/>      # Output vs loss<br/>      dy &lt;- ps[[j]]<br/>      dy[targets[j]] &lt;- dy[targets[j]]-1 <br/>      dV &lt;- dV+dy%*%t(hs[[j]])<br/>      dby &lt;- dby+dy<br/>      <br/>      ## Hidden layer<br/>      dh &lt;- t(V)%*%dy + dhnext<br/>      dh_raw &lt;- (1 - hs[[j]] * hs[[j]]) * dh<br/>      dbh &lt;- dbh+dh_raw<br/>      <br/>      dU &lt;- dU+dh_raw%*%t(xs[[j]])<br/>      <br/>      if(j==1){<br/>        dW &lt;- dW+dh_raw%*%t(h_old) <br/>      }<br/>      else{<br/>        dW &lt;- dW+dh_raw%*%t(hs[[(j-1)]]) <br/>      }<br/>      dhnext &lt;- t(W)%*%dh_raw<br/>      <br/>      <br/>    }<br/>  }<br/>  return(list("loss"=loss, "dU"=dU, "dW"=dW, "dV"=dV, "dbh"=dbh, "dby"=dby, "hs"=hs[length(inputs)-1]))<br/>}<br/><br/><br/><strong>## Sample a few chars given a hidden state and a seed</strong><br/>sample_char &lt;- function(h, seed_ix, n){<br/>  x &lt;- matrix(0,vocab_size, 1)<br/>  x[seed_ix] &lt;- 1<br/>  <br/>  ixes &lt;- c()<br/>  <br/>  for(t in 1:n){<br/>    h &lt;- tanh(U%*%x+W%*%h+bh)<br/>    y &lt;- V%*%h+by<br/>    p &lt;- exp(y)/sum(exp(y)) #softmax<br/>    ix &lt;- sample(chars,size=1, replace=T, prob=p)<br/>    x &lt;- matrix(0,vocab_size,1)<br/>    x[which(chars==ix)] &lt;- 1<br/>    ixes[t] &lt;- ix<br/>  }<br/>  return(ixes)<br/>}<br/><br/><br/>n &lt;- 1<br/>p &lt;- 1<br/><br/>mU &lt;- zeros_like(U)<br/>mW &lt;- zeros_like(W)<br/>mV &lt;- zeros_like(V)<br/>mbh &lt;- zeros_like(bh)<br/>mby &lt;- zeros_like(by) <strong># memory variables for Adagrad</strong><br/>smooth_loss = -log(1.0/vocab_size)*seq_length # loss at iteration 0<br/><br/>while(T){<br/>  if(p + seq_length + 1 &gt;= length(data) || n == 1){<br/>    <strong># reset RNN memory</strong><br/><strong>    ## h_old is the hidden state of RNN</strong><br/>    h_old &lt;- matrix(0,hidden_size, 1)<br/><strong>    # go from the start of the data</strong><br/>    p &lt;- 1<br/>  }<br/>  <br/>  inputs &lt;- unlist(sapply(text[p:(p+seq_length)],function(c){which(chars==c)}))<br/>  targets &lt;- unlist(sapply(text[(p+1):(p+seq_length+1)],function(c){which(chars==c)}))<br/>  <br/><strong>  # Check what the model is doing from time to time</strong><br/>  if(n %% 100 == 0){<br/>    txt &lt;- sample_char(h_old, inputs[[1]], 200)<br/><strong>    ## Find line breaks</strong><br/>    line_breaks &lt;- which(txt=="\n")<br/>    if(length(line_breaks)&lt;2){<br/>      print(txt)<br/>    }<br/>    else{<br/>      for(ix in 2:(length(line_breaks-1))){<br/>        first_ix &lt;- line_breaks[ix-1]+1<br/>        last_ix &lt;- line_breaks[ix]-1<br/>        print(paste(txt[first_ix:last_ix], collapse=""))<br/>      }<br/>    }<br/>    <br/>    smooth_loss = smooth_loss*0.99+loss*0.01<br/>    print('---- sample -----')<br/>    cat("Iteration number: ",n, "\n")<br/>    cat("Loss: ", smooth_loss)<br/>    <br/>    <br/>  }<br/>  <br/>  tmp &lt;- lossFun(inputs, targets, h_old)<br/>  loss &lt;- unlist(tmp$loss)<br/>  dU &lt;- unlist(tmp$dU)<br/>  dW &lt;- unlist(tmp$dW) <br/>  dV &lt;- unlist(tmp$dV)<br/>  dbh &lt;- unlist(tmp$dbh)<br/>  dby &lt;- unlist(tmp$dby)<br/>  h_old &lt;- unlist(tmp$hs)<br/>  <br/><strong>  ## Weight updates for Adagrad</strong><br/> <br/>  mU &lt;- mU+dU**2<br/>  U &lt;- U-learning_rate * dU / sqrt(mU + 1e-8)<br/>  mW &lt;- mW+dW**2<br/>  W &lt;- W-learning_rate * dW / sqrt(mW + 1e-8)<br/>  mV &lt;- mV+dV**2<br/>  V &lt;- V-learning_rate * dV / sqrt(mV + 1e-8)<br/>  mbh &lt;- mbh+mbh**2<br/>  bh &lt;- bh-learning_rate * dbh / sqrt(mbh + 1e-8)<br/>  mby &lt;- mby+dby**2<br/>  by &lt;- by-learning_rate * dby / sqrt(mby + 1e-8)<br/> <br/>  p &lt;- p+seq_length<br/>  n &lt;- n+1<br/>}<br/>  </pre>
+
+<p>这个递归神经网络产生了什么？一开始，我们得到以下女性名字:</p>
+
+<pre>[1] "iaiaaan"<br/>[1] "aannaeinraaniaraeinareanaeaaraana"<br/>[1] "iainii"<br/>[1] "laeoda"<br/>[1] "arineaeia"<br/>[1] "rdiiaai"<br/>[1] "eiaa"<br/>[1] "irineaaasrnaaaaaalaiiaaiaiiaranaxiaaaannnaiiorieiida"<br/>[1] "naiiaaiaaialiaraaaaannaian"<br/>[1] "aaaaieaiaain"<br/>[1] "nad"<br/>[1] "iiaaeaeaianiaa"<br/>[1] "---- sample -----"<br/>Iteration number: 100 </pre>
+
+<p>一段时间后，网络开始理解数据:</p>
+
+<pre>[1] "anna"<br/>[1] "annanianinbnatarmadnanannannnablantd"<br/>[1] "antsnamannd"<br/>[1] "iniaina"<br/>[1] "anta"<br/>[1] "alnaenalnalna"<br/>[1] "annilinnina"<br/>[1] "anma"<br/>[1] "bna"<br/>[1] "anganna"<br/>[1] "alnaniannnnna"<br/>[1] "iriannannennandana"<br/>[1] "anyoa"<br/>[1] "annannllynaenpanda"<br/>[1] "anedaannna"<br/>[1] "anna"<br/>[1] "---- sample -----"<br/>Iteration number: 700</pre>
+
+<p>请注意这是多么惊人。仅仅700次迭代后，你开始重新发现女性名字，并产生一些听起来真实的名字(如<kbd>anyoa</kbd>)。这一切都是从人物层面实现的。网络对文字和语言没有概念。它只能根据输入数据的统计相关性来创建这些名称。</p>
+
+<p>我们还能做什么？我在我博士论文的LaTeX版本上尝试了相同的代码。经过几千次迭代后，它学会了正确地导入包。再往前一点，它开始用英语写小单词。可以用其他数据试试；参见<em>练习</em>部分获得一些建议。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>RNN without derivatives — the cross-entropy method</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">无导数的RNN—交叉熵方法</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们将用蒙特卡罗算法取代前面神经网络上的反向传播部分，称为<strong>交叉熵方法</strong>。这是一个由Reuven Rubinstein推出的通用算法，在许多情况下非常有用，尤其是对于罕见事件模拟。它已经被证明对许多强化学习任务是有效的，所以为什么不试一试呢？</p>
+
+<p>该方法由两部分组成:</p>
+
+<ol>
+
+<li>根据指定的机制生成随机数据样本(轨迹、向量)。</li>
+
+<li>基于数据更新随机机制的参数，以在下一次迭代中产生更好的<em xmlns:epub="http://www.idpf.org/2007/ops">样本。这一步包括最小化交叉熵或kull back-lei bler散度。</em></li>
+
+</ol>
+
+<p>让我们首先用一个小的示例代码来说明这种情况。假设我们想最小化函数:</p>
+
+<pre># the function we need to maximize<br/>f &lt;- function(theta){<br/> reward = -sum((solution - theta)**2)<br/> return(reward)<br/>}</pre>
+
+<p>作为<kbd>theta</kbd>的函数，该函数的最大值在<kbd>theta==solution</kbd>时达到。</p>
+
+<p>让我们为<kbd>solution</kbd>固定一个值作为向量:</p>
+
+<pre>solution &lt;- c(0.5, 0.1, -0.3)</pre>
+
+<p>并设置一些初始参数:</p>
+
+<pre>dim_theta &lt;- 3<br/>theta_mean &lt;- matrix(0,dim_theta,1)<br/>theta_std &lt;- diag(dim_theta)</pre>
+
+<p>我们将使用的交叉熵方法如下:</p>
+
+<ul>
+
+<li>使用参数平均值和标准偏差的初始估计值生成一些样本解决方案。</li>
+
+<li>计算尽可能多的<kbd>batch_size</kbd>(其中<kbd>batch_size</kbd>是一个超参数)。</li>
+
+<li>只考虑其中的一小部分，称为精英部分(<kbd>elite_frac</kbd>)。这是另一个超参数。</li>
+
+<li>得到最上面的<kbd>elite_frac</kbd>，这意味着，根据我们想要最大化的函数，那些生成的样本解决方案给出了最高的回报。</li>
+
+<li>找出这些参数的平均值和协方差，以生成新的候选解。</li>
+
+</ul>
+
+<p>下面的代码示例显示了如何实现前面描述的逻辑:</p>
+
+<pre class="mce-root">cem &lt;- function(f, n_iter, theta_mean, theta_std, batch_size=25, elite_frac=0.2){<br/> for(it in 1:n_iter){<br/><strong> # Get a sample using the previous parameters</strong><br/> thetas &lt;- matrix(mvrnorm(n=batch_size*dim_theta, mu= theta_mean, Sigma=theta_std), ncol = dim_theta)<br/> rewards &lt;- apply(thetas,1,f) <br/><strong> # Now choose the best</strong><br/> n_elite &lt;- as.integer(batch_size * elite_frac)<br/> elite_inds &lt;- sort(rewards, decreasing = T, index.return=T)$ix[1:n_elite]<br/> elite_thetas &lt;- thetas[elite_inds,]<br/> <strong># Update theta_mean, theta_std</strong><br/> theta_mean &lt;- apply(elite_thetas, 2,mean)<br/> theta_std &lt;- 0.01*diag(dim_theta)+0.99*cov(elite_thetas)<br/> }<br/> return(theta_mean)<br/>}</pre>
+
+<p>我们称我们的函数为:</p>
+
+<pre class="mce-root">cem(f,300, theta_mean, theta_std)</pre>
+
+<p>我们得到了这些值的一个非常合理的近似值，只需要几次迭代。</p>
+
+<p>对于文本生成问题，我们需要将我们的矩阵<kbd>self$U,self$V,self$W</kbd>聚集成一个大向量<kbd>theta</kbd>，运行网络的正向传递，并计算对数损失的负值。因此，我们有一个函数将我们的向量映射成一个标量值，这与前面显示的情况相同。<kbd>train</kbd>函数是唯一被修改的函数，如下所示:</p>
+
+<pre>train = function(text){<br/>                   n &lt;- 1<br/>                   p &lt;- 1<br/>                   smooth_loss = -log(1.0/self$vocab_size)*self$seq_length # loss at iteration 0<br/>                   for(n in 1:self$n_iter){<br/>                     if(p + self$seq_length + 1 &gt;= length(text) || n == 1){<br/>                       # reset RNN memory<br/>                       ## s_prev is the hidden state of RNN<br/>                       s_prev &lt;- matrix(0,self$hidden_size, 1)<br/>                       # go from start of data<br/>                       p &lt;- 1<br/>                     }<br/>                     inputs &lt;- unlist(lapply(text[p:(p+self$seq_length)],function(c){which(self$chars==c)}))<br/>                     targets &lt;- unlist(lapply(text[(p+1):(p+self$seq_length+1)],function(c){which(self$chars==c)}))<br/>                     if(n %% 100 == 0){<br/>                       txt &lt;- self$sample_char(s_prev, inputs[[1]], 200)<br/>                       ## Find the \n in the string<br/>                       line_breaks &lt;- which(txt=="\n")<br/>                       if(length(line_breaks)&lt;2){<br/>                         print(txt)<br/>                       }<br/>                       else{<br/>                         for(ix in 2:(length(line_breaks-1))){<br/>                           first_ix &lt;- line_breaks[ix-1]+1<br/>                           last_ix &lt;- line_breaks[ix]-1<br/>                           print(paste(txt[first_ix:last_ix], collapse=""))<br/>                         }<br/>                       }<br/>                       print('---- sample -----')<br/>                       cat("Iteration number: ",n, "\n")<br/>                       cat("Loss: ", smooth_loss)<br/>                     }<br/>                     ## UPDATES<br/>                     theta_m &lt;- c(as.vector(self$U), as.vector(self$V), as.vector(self$W))<br/>                     new_m &lt;- cem(-self$forward, theta_m, diag(length(theta_m))*0.01) <br/>                     <br/>                     self$U &lt;- as.matrix(theta_m[1:hidden_size*vocab_size],nrow=self$hidden_size)<br/>                     self$W &lt;- as.matrix(theta_m[(hidden_size*vocab_size+1):(hidden_size*(vocab_size+hidden_size)+1)],<br/>                                          nrow=self$hidden_size)<br/>                     self$V &lt;- as.matrix(theta_m[(hidden_size*(vocab_size+hidden_size)+1):length(theta_m)], nrow=self$vocab_size) # hidden to output<br/>                     <br/>                     loss &lt;- self$forward(inputs,targets,s_prev)<br/>                     p &lt;- p+self$seq_length<br/>                     n &lt;- n+1<br/>                   }<br/>                   return(1)<br/>                 }</pre>
+
+<p>你可以自己试试这个！结果是可比较的，尽管要注意运行时间要长得多！不幸的是，这是许多依赖于随机优化的算法的情况，无论是蒙特卡罗还是进化算法。然而，通常等待时间是值得的，因为它们能够避免局部极值，并且至少有很高的概率达到最优。</p>
+
+<p>有了前面的代码，您就有了一个开始尝试不同进化算法的好模板。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>RNN using Keras</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用Keras的RNN</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本节中，我们将介绍一个使用Keras的示例。Keras可能是深度学习的最高级别API(同样，在撰写本文时，在这个快速变化的深度学习世界中)。当您需要非常快地完成生产就绪的模型时，这非常有用，但不幸的是，有时对于学习来说并不太好，因为一切对您来说都是隐藏的。因为，在理想情况下，当你读到这一节时，一个循环神经网络的专家，我们可以向你展示如何创建一个类似的模型。</p>
+
+<p>在此之前，我们先介绍一个简单的基准模型。当我们谈到神经网络的记忆时，我们会想到以下内容，如果我有足够的存储空间来计算条件概率，并将文本生成模拟为马尔可夫过程，其中状态变量是观察到的文本，会怎么样？我们将实现这个基准模型，看看它在文本生成质量方面与递归神经网络相比如何。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>A simple benchmark implementation</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">一个简单的基准实现</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>让我们创建一个简单的基准实现，并将文本生成模拟为马尔可夫链。想法是这样的，我们将在观察到历史<em> h </em>后估计字符<em> c </em>出现的概率，其中<em> h </em>具有固定长度。这个长度叫做<strong>内存</strong>。例如，如果我们有一个很小的语料库，包括:</p>
+
+<p><kbd>"My name is Pablo"</kbd></p>
+
+<p>我们固定一个内存长度<kbd>4</kbd>，我们得到一个训练集，看起来像这样:</p>
+
+<div><table border="1" style="border-collapse: collapse">
+
+<tbody>
+
+<tr>
+
+<td><strong> h </strong></td>
+
+<td><strong> c </strong></td>
+
+</tr>
+
+<tr>
+
+<td><kbd>My n</kbd></td>
+
+<td><kbd>a</kbd></td>
+
+</tr>
+
+<tr>
+
+<td><kbd>y na</kbd></td>
+
+<td><kbd>m</kbd></td>
+
+</tr>
+
+<tr>
+
+<td><kbd>nam</kbd></td>
+
+<td><kbd>e</kbd></td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<p>我们的任务是估计条件概率分布:</p>
+
+<div><img class="fm-editor-equation" src="img/4fb8851b-de9a-4fef-ae46-aa7c9bcb4cdc.png" style="width:4.25em;height:1.58em;"/></div>
+
+<p>这个条件概率简单的通过估算<em> c </em>在<em> h </em>之后出现的次数，除以历史<em> h </em>出现的次数得到。</p>
+
+<p>本章的目标是建立一个基准模型。我们应该澄清我们的意思，因为没有评估生成模型性能的黄金标准。我们评估该模型的方式是通过查看生成的文本的质量，为此我们需要关于问题上下文的信息，即我们想要从中学习生成文本的语料库。</p>
+
+<p>对于这个例子，我们将使用Lewis Carroll的书<em>爱丽丝梦游仙境</em>的文本，多亏了古腾堡计划，这本书可以在线获得。你可以在他们的网站上找到:<a href="https://www.gutenberg.org/">https://www.gutenberg.org/</a>。</p>
+
+<p>我们首先加载一些库:</p>
+
+<pre>library(readr)<br/>library(stringr)<br/>library(purrr)<br/>library(tokenizers)<br/>library(dplyr)</pre>
+
+<p>现在，我们加载数据(可在该书的网站上获得)，并设置内存长度<kbd>5</kbd>:</p>
+
+<pre>orig &lt;- read_lines("./data/alice.txt")<br/>maxlen &lt;- 2</pre>
+
+<p>接下来，为了简单起见，我们应该清除文本中的换行符，并将所有内容转换为小写:</p>
+
+<pre>text &lt;- orig %&gt;%<br/>  str_to_lower() %&gt;%<br/>  str_c(collapse = "\n") %&gt;%<br/>  tokenize_characters(strip_non_alphanum = FALSE, simplify = TRUE)</pre>
+
+<p>我们将变量<kbd>chars</kbd>设置为我们的令牌集:</p>
+
+<pre>chars &lt;- text %&gt;% unique %&gt;% sort</pre>
+
+<p>我们现在初始化一个空数据框，并定义一个函数来将标记化的向量输入转换为字符串:</p>
+
+<pre>records &lt;- data.frame()<br/>vec2str &lt;- function(history){<br/> history &lt;- toString(history)<br/> history &lt;- str_replace_all(history,",","")<br/> history &lt;- str_replace_all(history," ","")<br/> history &lt;- str_replace_all(history,"\n"," ")<br/> history<br/>}</pre>
+
+<p>现在，我们需要遍历历史并存储在记录数据框中:</p>
+
+<pre>idxs &lt;- seq(1, length(text) - max_length - 1, by=3)<br/>for(i in idxs){<br/> history &lt;- text[i:(i+max_length-1)]<br/> next_char &lt;- text[i+max_length]<br/> history &lt;- vec2str(history)<br/> records &lt;- rbind(data.frame(history=history, next_char=next_char), records)<br/> tot_rows &lt;- length(idxs)<br/>}</pre>
+
+<p>最后，我们计算条件概率:</p>
+
+<div><img class="fm-editor-equation" src="img/7bbc3825-e4ab-4f62-b916-b07f980fd03e.png" style="width:3.83em;height:1.42em;"/></div>
+
+<p>之前介绍过。使用<kbd>dplyr</kbd>包可以非常容易地做到这一点，如下所示:</p>
+
+<pre>library(dplyr)<br/>tot_histories &lt;- records %&gt;% <br/>                  group_by(history) %&gt;% <br/>                  summarize(total_h=n())<br/>tot_histories_char &lt;- records %&gt;% <br/>                       group_by(history, next_char) %&gt;% <br/>                       summarize(total_h_c=n())<br/>probas &lt;- left_join(tot_histories, tot_histories_char)<br/>probas$prob &lt;- probas$total_h_c/probas$total_h</pre>
+
+<p>现在，我们准备开始生成文本！我们定义了一个文本生成函数，它将根据历史记录对下一个字符进行采样:</p>
+
+<pre>generate_next &lt;- function(h){<br/>  sub_df &lt;- probas%&gt;%filter(history==h)<br/>  if(nrow(sub_df)&gt;0){<br/>    prob_vector &lt;- sub_df %&gt;% select(prob)%&gt;%as.matrix %&gt;%c()<br/>    char_vector &lt;- sub_df %&gt;% select(next_char)%&gt;%as.matrix %&gt;%c()<br/>    char_vector &lt;- as.vector(char_vector)<br/>    sample(char_vector,size=1,prob=prob_vector)<br/>  }<br/>}</pre>
+
+<p>前面的函数帮助我们从估计的分布中抽取字符样本。</p>
+
+<p>使用下面的代码，我们可以生成不同长度的单词，使它更有趣:</p>
+
+<pre>n_iter &lt;- 100<br/>for(iter in 1:n_iter){<br/>  <br/>  # Generate random initialization<br/>  generated &lt;- " "<br/>  start_index &lt;- sample(1:(length(text) - maxlen), size = 1)<br/>  h &lt;- text[start_index:(start_index + maxlen - 1)]<br/>  h &lt;- vec2str(h)<br/>  <br/>  random_len &lt;- sample(5:10,1)<br/>  <br/>  for(i in 1:random_len){<br/>    c &lt;- generate_next(h)<br/>    h &lt;- paste0(h,c) <br/>    generated &lt;- str_c(generated,c)<br/>    h &lt;- substr(h,i,i+maxlen)<br/>    <br/>  }<br/>  cat(generated)<br/>  cat("\n")<br/>}</pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Generating new text from old</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">从旧文本生成新文本</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>让我们将简单的马尔可夫链模型基准与LSTM网络进行比较。您可以使用我们在本章前面使用的实现。我们将展示如何使用Keras API来完成这项任务，就像我们在前一章所做的那样。</p>
+
+<p>我们将用一个贴近作者内心的例子来说明这一点，这个例子用西班牙语生成名字。</p>
+
+<p>首先，我们应该加载所需的库:</p>
+
+<pre>library(keras)<br/>library(readr)<br/>library(stringr)<br/>library(purrr)<br/>library(tokenizers)</pre>
+
+<p>然后，根据我们将要估计的概率定义一个抽样函数:</p>
+
+<pre>sample_mod &lt;- function(preds, temperature = 0.8){<br/> preds &lt;- log(preds)/temperature<br/> exp_preds &lt;- exp(preds)<br/> preds &lt;- exp_preds/sum(exp(preds))<br/> rmultinom(1, 1, preds) %&gt;% <br/> as.integer() %&gt;%<br/> which.max()<br/>}</pre>
+
+<p>严格地说，我们不估计概率，而是0到1之间的分数，我们可以这样理解。关键是，这个分数将帮助我们生成文本，并且分数与真实概率具有相同的顺序。更高的分数等同于更高的概率。</p>
+
+<p>现在，我们读取文件并做一些解析。这与之前非常相似:</p>
+
+<pre>orig &lt;- read_lines("./data/Spanish.txt") <br/>text &lt;- orig %&gt;%<br/>     str_to_lower() %&gt;%<br/>     str_c(collapse = "\n") %&gt;%<br/>     tokenize_characters(strip_non_alphanum = FALSE, simplify = TRUE)</pre>
+
+<p>我们定义词汇，也就是我们文本中的标记集合:</p>
+
+<pre>chars &lt;- text %&gt;% <br/>     str_c(collapse="\n")%&gt;%<br/>     tokenize_characters(simplify=TRUE) %&gt;% <br/>     unique %&gt;% sort<br/>chars<br/> [1] "a" "á" "à" "b" "c" "d" "e" "é" "f" "g" "h" "i" "í" "j" "l" "m" "n" "ñ" "o" "ó" "p" "q" "r" "s" "t" "u"<br/>[27] "ú" "v" "x" "y" "z"</pre>
+
+<p>我们保留重读元音，因为它们是语言的一部分。接下来，我们设置窗口大小，并将文本剪切成该大小的重叠序列:</p>
+
+<pre>max_length &lt;- 5<br/>dataset &lt;- map(<br/> seq(1, length(text) - max_length - 1, by = 3), <br/> ~list(name = text[.x:(.x + max_length - 1)], next_char = text[.x + max_length])<br/>)<br/>dataset &lt;- transpose(dataset)</pre>
+
+<p>我们使用一键矢量化将数据编码为神经网络的数字输入，我们将使用<kbd>keras</kbd>库构建神经网络:</p>
+
+<pre><strong># One-hot vectorization</strong><br/>X &lt;- array(0, dim = c(length(dataset$name), max_length, length(chars)))<br/>y &lt;- array(0, dim = c(length(dataset$name), length(chars)))</pre>
+
+<p>最后，我们设置了训练集:</p>
+
+<pre>for(i in 1:length(dataset$name)){<br/>     X[i,,] &lt;- sapply(chars, function(x){<br/>     as.integer(x == dataset$name[[i]])<br/>     })<br/> y[i,] &lt;- as.integer(chars == dataset$next_char[[i]])<br/>}</pre>
+
+<p>然后，我们定义网络的架构:</p>
+
+<pre>model &lt;- keras_model_sequential()<br/>model %&gt;%<br/> layer_lstm(128, input_shape = c(max_length, length(chars))) %&gt;%<br/> layer_dense(length(chars)) %&gt;%<br/> layer_dropout(0.1)%&gt;%<br/> layer_activation("softmax")</pre>
+
+<p>我们需要一个<em> softmax </em>在最后激活，因为我们希望将最终分数解释为概率；因此，将它们设置在0和1之间会很有用。</p>
+
+<p>我们现在调用优化器并编译我们的模型:</p>
+
+<pre>optimizer &lt;- optimizer_rmsprop(lr = 0.01)<br/>model %&gt;% compile(<br/> loss = "categorical_crossentropy", <br/> optimizer = optimizer<br/>)</pre>
+
+<p>我们必须指定一个采样函数，它是<em> softmax: </em>的一个版本</p>
+
+<pre>sample_mod &lt;- function(preds, temperature = 0.8){<br/> preds &lt;- log(preds)/temperature<br/> exp_preds &lt;- exp(preds)<br/> preds &lt;- exp_preds/sum(exp(preds))<br/> rmultinom(1, 1, preds) %&gt;% <br/> as.integer() %&gt;%<br/> which.max()<br/>}</pre>
+
+<p>最后，我们训练我们的模型:</p>
+
+<pre>history &lt;- model %&gt;% fit(<br/> X, y,<br/> batch_size = 128,<br/> epochs = 20<br/>)<br/>plot(history)</pre>
+
+<p>如果一切顺利，历史图将向我们展示如下所示的学习曲线。这表明我们的模型训练正确:</p>
+
+<div><img src="img/5a5141da-619b-45c1-aa68-4762664f6201.png" style="width:23.17em;height:19.42em;"/></div>
+
+<p>在Keras培训我们的模型</p>
+
+<p>也许我们可以增加纪元的数量？这是你可以尝试的练习！</p>
+
+<p>现在是时候生成一些样本了:</p>
+
+<pre>start_idx &lt;- sample(1:(length(text) - max_length), size = 1)<br/>name &lt;- text[start_idx:(start_idx + max_length - 1)]<br/>generated &lt;- ""<br/>for(i in 1:10){<br/> x &lt;- sapply(chars, function(x){<br/> as.integer(x == name)<br/> })<br/> dim(x) &lt;- c(1, dim(x))<br/> preds &lt;- predict(model, x)<br/> next_idx &lt;- sample_mod(preds, 0.3)<br/> next_char &lt;- chars[next_idx]<br/> <br/> generated &lt;- str_c(generated, next_char, collapse = "")<br/> name &lt;- c(name[-1], next_char)<br/> cat(generated)<br/> cat("\n\n")<br/>}</pre>
+
+<p>通过对前面代码的简单修改，您可以生成不同长度的名称。为此，我们需要用随机采样的长度替换前面的固定长度，在下面的代码片段中标记为<kbd>random_len</kbd>:</p>
+
+<pre>n_iter &lt;- 100<br/>for(iter in 1:n_iter){<br/>  start_idx &lt;- sample(1:(length(text) - max_length), size = 1)<br/>  name &lt;- text[start_idx:(start_idx + max_length - 1)]<br/>  generated &lt;- " "<br/>  <br/>  random_len &lt;- sample(5:10,1)<br/>  <br/>  for(i in 1:random_len){<br/>    <br/>    x &lt;- sapply(chars, function(x){<br/>      as.integer(x == name)<br/>    })<br/>    dim(x) &lt;- c(1, dim(x))<br/>    <br/>    preds &lt;- predict(model, x)<br/>    next_idx &lt;- sample_mod(preds, 0.1)<br/>    next_char &lt;- chars[next_idx]<br/>    <br/>    generated &lt;- str_c(generated, next_char)<br/>    name &lt;- c(name[-1], next_char)<br/>    # cat(generated)<br/>    # cat("\n\n")<br/>  }<br/>  cat(generated)<br/>}</pre>
+
+<p>生成的示例(在您的计算机中可能有所不同)包括:</p>
+
+<p><kbd>Asarara, Laralaso</kbd></p>
+
+<p>听起来很像西班牙人的姓。</p>
+
+<p>当然，您可以将前面的模型应用于任何其他文本，可能包括像HTML或LaTeX这样的文本。</p>
+
+<p>这里的微妙之处在于我们使用了字符级预测。你可以尝试让文本适应单词级预测，让它像智能手机的自动完成功能一样工作。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Exercises</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">练习</h1>
+
+                
+
+            
+
+            
+
+                
+
+<ul>
+
+<li>试试LSTM的例子，让<kbd>Alice in Wonderland</kbd>使用马克·坎特罗威茨(Mark Kantrowitz)编译的数据集生成婴儿名字，可从<a href="https://www.cs.cmu.edu/Groups/AI/areas/nlp/corpora/names/0.html">https://www . cs . CMU . edu/Groups/AI/areas/NLP/corpora/names/0 . html</a>获得。</li>
+
+<li>音乐生成也是一个顺序预测问题，我们提到过。你可以看看在<a href="http://abc.sourceforge.net/NMD/">http://abc.sourceforge.net/NMD/</a>用ABC符号编写的诺丁汉音乐数据库的版本，来教计算机写音乐，使用类似的递归神经网络。</li>
+
+<li>从零开始重构我们的递归神经网络的代码(R6实现)，以便它在<kbd>bptt</kbd>函数中使用<kbd>forward_step</kbd>函数。</li>
+
+<li>在我们的递归神经网络实现中，我们忽略了偏差项。这将如何影响性能，如果有的话？尝试修改代码以包含偏见条款。</li>
+
+<li>使用交叉熵方法修改网络代码以使用自然进化策略:<a href="https://blog.openai.com/evolution-strategies/">https://blog.openai.com/evolution-strategies/</a>。<a href="https://blog.openai.com/evolution-strategies/"> <br/> </a></li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:6e9b3920-1b5c-448c-b620-b3dbb86cf683" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">摘要</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在这一章中，我们介绍了不同的递归神经网络体系结构，并指出了它们的一些局限性和能力。通过引入一个朴素的马尔可夫模型，我们比较了引入这种复杂结构的效率。当应用于文本生成问题时，我们看到这些不同的架构在预测质量上有显著的提高。对于训练网络，我们引入了不同的方法。经典的反向传播算法和其他用于解决黑盒优化问题的无梯度方法。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

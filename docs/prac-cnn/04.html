@@ -1,0 +1,385 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Popular CNN Model Architectures</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">流行的CNN模型架构</h1>
+                
+            
+            
+                
+<p>在本章中，将介绍ImageNet图像数据库，还将介绍以下流行的CNN模型的架构:</p>
+<ul>
+<li>LeNet</li>
+<li>AlexNet</li>
+<li>VGG</li>
+<li>谷歌网</li>
+<li>雷斯内特</li>
+</ul>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Introduction to ImageNet</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">ImageNet简介</h1>
+                
+            
+            
+                
+<p class="mce-root">ImageNet是一个数据库，包含大约22，000个类别中超过1，500万张手工标记的高分辨率图像。这个数据库的组织就像WordNet的层次结构，其中每个概念也被称为一个<strong>同义词集</strong>(也就是说，<strong>同义词集</strong>)。每个synset都是ImageNet层次结构中的一个节点。每个节点有500多张图片。</p>
+<p class="mce-root"><strong> ImageNet大规模视觉识别挑战赛</strong> ( <strong> ILSVRC </strong>)成立于2010年，旨在改进大规模物体检测和图像分类的最新技术:</p>
+<div><img src="img/20756743-ac07-44cb-a804-05763571d81d.png"/></div>
+<p>在对ImageNet进行概述之后，我们现在来看看各种CNN模型架构。</p>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>LeNet</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">LeNet</h1>
+                
+            
+            
+                
+<p>2010年，来自ImageNet(被称为<strong> ILSVRC 2010 </strong>)的挑战是由Yann Lecun构建的CNN架构LeNet 5。该网络将32×32的图像作为输入，该图像进入卷积层(<strong> C1 </strong>)，然后进入子采样层(<strong> S2 </strong>)。如今，子采样层被池层所取代。然后，还有另一个卷积层的序列(<strong> C3 </strong>)，接着是汇集(即子采样)层(<strong> S4 </strong>)。最后，有三个完全连接的层，包括最后的<strong>输出</strong>层。这个网络用于邮局的邮政编码识别。从那以后，每年都有各种CNN架构在这个竞赛的帮助下推出:</p>
+<div><img src="img/cb2b54bf-cb43-4e1f-897c-862f85f06423.png"/></div>
+<p>LeNet 5–CNN架构，摘自Yann le Cun 1998年的文章</p>
+<p>因此，我们可以总结出以下几点:</p>
+<ul>
+<li>该网络的输入是一幅灰度为32 x 32的图像</li>
+<li>实施的体系结构是CONV层，然后是池和全连接层</li>
+<li>CONV滤波器为5 x 5，以1的步长应用</li>
+</ul>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>AlexNet architecture</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">AlexNet架构</h1>
+                
+            
+            
+                
+<p>CNN架构的首次突破出现在2012年。这个获奖的CNN架构叫做<strong> AlexNet </strong>。它是由多伦多大学的Alex Krizhevsky和他的教授Jeffry Hinton开发的。</p>
+<p>在第一次运行中，在该网络中使用了一个ReLU激活函数和一个0.5的压降来对抗过拟合。正如我们在下图中看到的，在架构中使用了一个标准化层，但在实践中不再使用，因为它使用了大量的数据扩充。AlexNet由于其相对简单的结构和较小的深度，即使有更精确的网络可用，今天仍在使用。它广泛应用于计算机视觉:</p>
+<div><img height="207" src="img/dd1ba84c-d1ae-4f6f-87b6-0e641600eab4.png" width="530"/></div>
+<p>AlexNet在ImageNet数据库上使用两个独立的GPU进行训练，可能是由于当时GPU间连接的处理限制，如下图所示:</p>
+<div><img height="252" src="img/1100c791-9be1-4e7b-8039-3172ad50606d.png" width="529"/></div>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Traffic sign classifiers using AlexNet</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">基于AlexNet的交通标志分类器</h1>
+                
+            
+            
+                
+<p>在这个例子中，我们将使用迁移学习进行特征提取，并使用德国交通标志数据集来开发分类器。这里使用的是由<strong> </strong>迈克尔·盖尔卓伊和达维·弗罗萨德实现的AlexNet，AlexNet权重来自伯克利视觉和学习中心。完整的代码和数据集可以从这里下载。</p>
+<p>AlexNet期望227 x 227 x 3像素的图像，而交通标志图像是32 x 32 x 3像素。为了将交通标志图像输入AlexNet，我们需要将图像调整到AlexNet期望的尺寸，即227 x 227 x 3:</p>
+<pre>original_image = tf.placeholder(tf.float32, (None, 32, 32, 3))
+resized_image = tf.image.resize_images(original_imag, (227, 227))</pre>
+<p>我们可以借助TensorFlow的<kbd>tf.image.resize_images</kbd>方法来做到这一点。这里的另一个问题是AlexNet是在ImageNet数据集上训练的，该数据集有1000类图像。所以，我们将用一个43个神经元的分类层来代替这一层。为此，计算最后一个完全连接层的输出大小；由于这是一个完全连接的图层，也是一个2D形状，因此最后一个元素将是输出的大小。<kbd>fc7.get_shape().as_list()[-1]</kbd>确实管用；将此与交通标志数据集的类的数量结合起来，得到最终完全连接的图层的形状:<kbd>shape = (fc7.get_shape().as_list()[-1], 43)</kbd>。代码的其余部分只是在TensorFlow中定义全连接层的标准方式。最后，用<kbd>softmax</kbd>计算概率:</p>
+<pre>#Refer AlexNet implementation code, returns last fully connected layer
+fc7 = AlexNet(resized, feature_extract=True)
+shape = (fc7.get_shape().as_list()[-1], 43)
+fc8_weight = tf.Variable(tf.truncated_normal(shape, stddev=1e-2))
+fc8_b = tf.Variable(tf.zeros(43))
+logits = tf.nn.xw_plus_b(fc7, fc8_weight, fc8_b)
+probs = tf.nn.softmax(logits)</pre>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>VGGNet architecture</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">VGGNet架构</h1>
+                
+            
+            
+                
+<p>2014年ImageNet挑战赛的亚军是来自牛津大学视觉几何组的VGGNet。这个卷积神经网络是一个简单而优雅的架构，错误率为7.3%。它有两个版本:VGG16和VGG19。</p>
+<p>VGG16是16层神经网络，不算max pooling层和softmax层。因此，它被称为VGG16。VGG19由19层组成。在Keras中有一个预先训练好的模型可用于Theano和TensorFlow后端。</p>
+<p>这里关键的设计考虑是深度。网络深度的增加是通过增加更多的卷积层来实现的，这是由于所有层中的3×3卷积滤波器。此型号的默认图像输入尺寸为224 x 224 x 3。图像通过卷积层的堆栈，步长为1个像素，填充为1。它在整个网络中使用3 x 3卷积。最大池是在一个2 x 2像素窗口上完成的，步长为2，然后是另一个卷积层堆栈，后面是三个完全连接的层。前两个全连接层各有4096个神经元，第三个全连接层用1000个神经元负责分类。最后一层是softmax层。与AlexNet大得多的11 x 11卷积窗口相比，VGG16使用小得多的3 x 3卷积窗口。所有隐藏层都是用ReLU激活函数构建的。架构看起来是这样的:</p>
+<div><img height="375" src="img/0a1c03f6-5c37-4e49-9b3d-ef56e005b84d.png" width="389"/></div>
+<p>VGG16网络架构</p>
+<p>由于小的3×3卷积滤波器，增加了VGGNet的深度。该网络中的参数数量约为1.4亿，大部分来自第一个全连接层。在现代架构中，VGGNet的全连接层被替换为<strong>全局平均池</strong> ( <strong>间隙</strong>)层，以便最大限度地减少参数的数量。</p>
+<p class="mce-root">另一个观察结果是过滤器的数量随着图像尺寸的减小而增加。</p>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>VGG16 image classification code example</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">VGG16图像分类代码示例</h1>
+                
+            
+            
+                
+<p>Keras应用模块具有预训练的神经网络模型，以及在ImageNet上训练的预训练权重。这些模型可直接用于预测、特征提取和微调:</p>
+<pre>#import VGG16 network model and other necessary libraries <br/><br/>from keras.applications.vgg16 import VGG16<br/>from keras.preprocessing import image<br/>from keras.applications.vgg16 import preprocess_input<br/>import numpy as np<br/><br/>#Instantiate VGG16 and returns a vgg16 model instance <br/>vgg16_model = VGG16(weights='imagenet', include_top=False) <br/>#include_top: whether to include the 3 fully-connected layers at the top of the network.<br/>#This has to be True for classification and False for feature extraction. Returns a model instance<br/>#weights:'imagenet' means model is pre-training on ImageNet data.<br/>model = VGG16(weights='imagenet', include_top=True)<br/>model.summary()<br/><br/>#image file name to classify<br/>image_path = 'jumping_dolphin.jpg'<br/>#load the input image with keras helper utilities and resize the image. <br/>#Default input size for this model is 224x224 pixels.<br/>img = image.load_img(image_path, target_size=(224, 224))<br/>#convert PIL (Python Image Library??) image to numpy array<br/>x = image.img_to_array(img)<br/>print (x.shape)<br/><br/>#image is now represented by a NumPy array of shape (224, 224, 3),<br/># but we need to expand the dimensions to be (1, 224, 224, 3) so we can<br/># pass it through the network -- we'll also preprocess the image by<br/># subtracting the mean RGB pixel intensity from the ImageNet dataset<br/>#Finally, we can load our Keras network and classify the image:<br/><br/>x = np.expand_dims(x, axis=0)<br/>print (x.shape)<br/><br/>preprocessed_image = preprocess_input(x)<br/><br/>preds = model.predict(preprocessed_image)<br/>print('Prediction:', decode_predictions(preds, top=2)[0])</pre>
+<p>第一次执行前面的脚本时，Keras会自动下载架构权重并缓存到磁盘的<kbd>~/.keras/models</kbd>目录中。后续运行会更快。</p>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>GoogLeNet architecture</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">谷歌网络架构</h1>
+                
+            
+            
+                
+<p>2014年，ILSVRC，谷歌发布了自己的网络，名为<strong> GoogLeNet </strong>。它的性能比VGGNet好一点；GoogLeNet的表现是6.7%，相比之下VGGNet的表现是7.3%。GoogLeNet主要吸引人的特点是，由于引入了一个叫做<strong> inception module </strong>的新概念，运行速度非常快，从而将参数数量减少到只有500万个；这比AlexNet少12倍。它具有更低的内存使用和更低的功耗。</p>
+<p class="mce-root">它有22层，所以它是一个非常深的网络。添加更多的层会增加参数的数量，并且网络很可能会过拟合。将会有更多的计算，因为过滤器的线性增加导致计算的二次增加。因此，设计者使用先启模块和GAP。网络末端的全连接层被替换为间隙层，因为全连接层通常容易过度拟合。GAP没有要学习或优化的参数。</p>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Architecture insights</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">架构洞察</h1>
+                
+            
+            
+                
+<p>GoogLeNet的设计者没有像以前的架构那样选择特定的过滤器大小，而是在同一个补丁上应用了大小为1 x 1、3 x 3和5 x 5的所有三个过滤器，最大值为3 x 3，并连接成一个输出向量。</p>
+<p>1×1卷积的使用减少了因昂贵的3×3和5×5卷积而增加的计算量。在昂贵的3×3和5×5卷积之前，使用具有ReLU激活功能的1×1卷积。</p>
+<p>在GoogLeNet中，初始模块是一个接一个堆叠在一起的。这种堆叠允许我们修改每个模块，而不影响后面的层。例如，您可以增加或减少任何层的宽度:</p>
+<div><img height="239" src="img/2636db13-c7fb-49c9-b20d-544287eacf55.png" width="472"/></div>
+<p>谷歌网络架构</p>
+<p class="mce-root">深层网络还担心反向传播过程中的<strong>消失梯度</strong>问题。这可以通过向中间层添加辅助分类器来避免。此外，在培训期间，中间损失以0.3的贴现因子添加到总损失中。</p>
+<p>因为完全连接的层容易过度拟合，所以用间隙层代替。平均池不排除使用dropout，这是一种克服深度神经网络中过度拟合的正则化方法。GoogLeNet在60之后添加了一个线性层，一个间隙层，以帮助其他人使用迁移学习技术刷出自己的分类器。</p>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Inception module</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">初始模块</h1>
+                
+            
+            
+                
+<p>下图是一个inception模块的示例:</p>
+<div><img height="198" src="img/ac511227-54cd-4a2a-a9ef-077ec291ec0f.png" width="344"/></div>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>ResNet architecture</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">ResNet架构</h1>
+                
+            
+            
+                
+<p>在一定深度之后，向前馈神经网络增加额外的层会导致更高的训练误差和更高的验证误差。添加层时，性能只会增加到一定深度，然后会迅速下降。在<strong> ResNet </strong> ( <strong>残差网络</strong>)论文中，作者认为这种欠拟合不太可能是因为消失梯度问题，因为即使使用批量归一化技术也会发生这种情况。因此，他们增加了一个新的概念，叫做<strong>剩余块</strong>。ResNet团队添加了可以跳过层的连接:</p>
+<p>ResNet使用标准的convNet，并添加了一次跳过几个卷积层的连接。每个旁路给出一个剩余块。</p>
+<div><img height="369" src="img/c7c96246-7f86-4e6c-89d0-22a25e655493.png" width="190"/></div>
+<p>残余块</p>
+<p>2015年ImageNet ILSVRC比赛，获胜者是来自微软的ResNet，错误率为3.57%。ResNet是一种VGG，在某种意义上，相同的结构不断重复，使网络更深。与VGGNet不同，它有不同的深度变化，如34、50、101和152层。与AlexNet 8、VGGNet的19层和GoogLeNet的22层相比，它有多达152层。ResNet体系结构是剩余块的堆栈。主要思想是通过向神经网络添加连接来跳过层。每个残差块具有3×3个卷积层。在最后一个conv层之后，添加一个间隙层。只有一个全连通层来分类1000个类。它有不同的深度变化，例如ImageNet数据集的34、50、101或152层。对于更深的网络，比如说超过50层，它使用<strong>瓶颈</strong>特性概念来提高效率。在这个网络中不使用辍学。</p>
+<p>需要了解的其他网络架构包括:</p>
+<ul>
+<li>网络中的网络</li>
+<li>超越ResNet</li>
+<li>无残差超深度神经网络FractalNet</li>
+</ul>
+
+
+            
+
+            
+        
+    </body>
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+    <head>
+        <title>Summary</title>
+        
+        <meta charset="utf-8"/>
+<meta content="urn:uuid:b11f9755-9a88-4359-8ec0-f5132866b134" name="Adept.expected.resource"/>
+    </head>
+
+    <body>
+        
+
+                            
+                    <h1 class="header-title">摘要</h1>
+                
+            
+            
+                
+<p>在这一章中，我们学习了不同的CNN架构。这些模型是预先训练的现有模型，并且在网络架构上有所不同。这些网络中的每一个都旨在解决特定于其架构的问题。所以，这里我们描述了他们的建筑差异。</p>
+<p>我们也了解了我们自己的CNN架构，如前一章所定义的，与这些先进的架构有何不同。</p>
+<p>在下一章，我们将学习如何将这些预先训练好的模型用于迁移学习。</p>
+
+
+            
+
+            
+        
+    </body>
+
+</html></body></html>

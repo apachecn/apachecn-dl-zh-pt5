@@ -1,0 +1,187 @@
+<html><head/><body>
+
+
+
+
+<style type="text/css">body{margin:1em;background-color:transparent!important;}#sbo-rt-content *{text-indent:0pt!important;}#sbo-rt-content .bq{margin-right:1em!important;}#sbo-rt-content *{word-wrap:break-word!important;word-break:break-word!important;}#sbo-rt-content table,#sbo-rt-content pre{overflow-x:unset!important;overflow:unset!important;overflow-y:unset!important;white-space:pre-wrap!important;}</style>
+<div><div><h1 id="_idParaDest-16"><a id="_idTextAnchor015"/> <em class="italic">第一章</em>:深度学习生命周期和MLOps挑战</h1>
+			<p>在过去的几年里，<a id="_idIndexMarker000"/>在解决实际商业、工业和科学问题的<strong class="bold">深度学习</strong> ( <strong class="bold"> DL </strong>)方面取得了巨大的成功，特别是对于诸如<strong class="bold">自然语言处理</strong> ( <strong class="bold"> NLP </strong>)、图像、视频、语音识别和会话理解等<a id="_idIndexMarker001"/>任务。虽然这些领域的研究已经取得了巨大的进步，但是将这些DL模型从离线实验带入生产并不断改进模型以提供可持续的价值仍然是一个挑战。例如，VentureBeat最近的一篇文章(<a href="https://venturebeat.com/2019/07/19/why-do-87-of-data-science-projects-never-make-it-into-production/">https://VentureBeat . com/2019/07/19/why-do-87-of-data-science-projects-never-make-it-into-production/</a>)发现，87%的数据科学项目从未投入生产。虽然如此低的生产率可能有商业原因，但一个主要的促成因素是缺乏实验管理和成熟的模型生产和反馈平台造成的困难。</p>
+			<p>本章将通过学习在DL模型开发的整个生命周期中常用的概念、步骤和组件，帮助我们理解挑战并弥合这些差距。此外，我们将了解一个被称为<strong class="bold">机器学习操作</strong> ( <strong class="bold"> MLOps </strong>)的新兴领域的挑战，该领域旨在标准化和自动化ML <a id="_idIndexMarker002"/>生命周期开发、部署和操作。对这些挑战有一个坚实的理解将激励我们使用MLflow(一个开源的ML全生命周期平台)学习本书剩余部分中介绍的技能。采用MLOps最佳实践的商业价值是多方面的；它们包括模型衍生产品功能的更快上市时间、更低的运营成本、敏捷的A/B测试以及最终改善客户体验的战略决策。到本章结束时，我们将了解MLflow在MLOps的四个支柱(即数据、模型、代码和可解释性)中扮演的关键角色，实现我们的第一个工作DL模型，并清楚地了解DL中的数据、模型、代码和可解释性所面临的挑战。</p>
+			<p>在本章中，我们将讨论以下主要话题:</p>
+			<ul>
+				<li>了解DL生命周期和MLOps挑战</li>
+				<li>了解DL数据挑战</li>
+				<li>了解DL模型挑战</li>
+				<li>了解DL代码挑战</li>
+				<li>理解DL可解释性挑战</li>
+			</ul>
+			<h1 id="_idParaDest-17"><a id="_idTextAnchor016"/>技术要求</h1>
+			<p>本书的所有代码示例都可以在以下GitHub URL找到:<a href="https://github.com/PacktPublishing/Practical-Deep-Learning-at-Scale-with-MLFlow">https://GitHub . com/packt publishing/Practical-Deep-Learning-at-Scale-with-ml flow</a>。</p>
+			<p>您需要在您的开发环境中安装Miniconda(<a href="https://docs.conda.io/en/latest/miniconda.html">https://docs.conda.io/en/latest/miniconda.html</a>)。在这一章中，我们将逐步完成PyTorch <code>lightning-flash</code>库(<a href="https://github.com/PyTorchLightning/lightning-flash">https://github.com/PyTorchLightning/lightning-flash</a>)的安装过程，该库可用于在<em class="italic">实现一个基本的DL情感分类器</em>部分中构建我们的第一个DL模型。或者，你可以在<a href="https://community.cloud.databricks.com/login.html">https://community.cloud.databricks.com/login.html</a>注册一个免费的Databricks社区版账户，使用GPU集群和笔记本来进行本书中描述的模型开发。</p>
+			<p>此外，如果你是微软Windows用户，我们建议你安装wsl 2(<a href="https://www.windowscentral.com/how-install-wsl2-windows-10">https://www.windowscentral.com/how-install-wsl2-windows-10</a>)，这样你就有一个Linux环境来运行本书中的命令行。</p>
+			<h1 id="_idParaDest-18"><a id="_idTextAnchor017"/>了解DL生命周期和MLOps挑战</h1>
+			<p>如今，在生产中部署的最成功的DL模型主要遵循以下两个步骤:</p>
+			<ol>
+				<li><strong class="bold">自监督学习</strong>:这个<a id="_idIndexMarker003"/>是指在一个不需要标注数据的数据丰富的领域中对模型进行预训练。这一步产生了<a id="_idIndexMarker004"/>一个预训练模型，也称为<strong class="bold">基础模型</strong>，例如，用于NLP的伯特、GPT-3和用于计算机视觉的VGG-网。</li>
+				<li><strong class="bold">迁移学习</strong>:这个<a id="_idIndexMarker005"/>是指在文本情感分类等特定的预测任务中，对预先训练好的模型进行微调，这就需要有标签的训练数据。</li>
+			</ol>
+			<p>DL模型在生产中的一个突破性和成功的例子是<em class="italic">买家情绪分析</em>模型，该模型建立在BERT的基础上，用于对销售参与电子邮件进行分类，提供对买家情绪和信号的关键细粒度洞察，而不仅仅是简单的活动指标，如回复率、点击率和打开率(<a href="https://www.prnewswire.com/news-releases/outreach-unveils-groundbreaking-ai-powered-buyer-sentiment-analysis-transforming-sales-engagement-301188622.html">https://www . prnewswire . com/news-releases/outreach-unveils-grounding-ai-powered-Buyer-entry-Analysis-transformation-sales-engagement-301188622 . html</a>)。关于这种工作方式有不同的变体，但在本书中，我们将主要关注开发和部署DL模型的<a id="_idIndexMarker006"/><strong class="bold">迁移学习</strong>范例，因为它举例说明了实际的DL生命周期。</p>
+			<p>让我们通过一个<a id="_idIndexMarker007"/>例子来理解一个典型的核心DL开发范例。例如，2018年底发布的流行的BERT模型(可以在<a href="https://huggingface.co/bert-base-uncased">https://huggingface.co/bert-base-uncased</a>找到BERT模型的基本版本)最初是在来自BookCorpus和整个英文维基百科的11，000多本书籍的原始文本(没有人类标记)上进行预训练的。然后，通过使用标记的电影评论数据(<a href="https://huggingface.co/datasets/imdb">https://huggingface.co/datasets/imdb</a>)，在不同的应用领域(如电影评论分类)中，将这种预训练的语言模型微调到许多下游NLP任务，如文本分类和情感分析。请注意，有时可能需要在微调之前使用未标记的数据在应用领域内进一步预训练基础模型(例如BERT ),以提高最终模型的精度性能。这个核心DL开发范例在<em class="italic">图1.1 </em>中进行了说明:</p>
+			<div><div><img src="img/B18120_01_001.jpg" alt="Figure 1.1 – A typical core DL development paradigm&#13;&#10;" width="1216" height="441"/>
+				</div>
+			</div>
+			<p class="figure-caption">图1.1–典型的核心DL开发范例</p>
+			<p>请注意<a id="_idIndexMarker008"/>虽然<em class="italic">图1.1 </em>代表了一种常见的开发范式，但对于特定的应用场景，并非所有这些步骤都是必要的。例如，您可能只需要使用一个公开可用的预训练DL模型和您标记的特定于应用程序的数据进行微调。因此，您不需要自己进行预训练或使用未标记的数据进行进一步的预训练，因为其他人或组织已经为您完成了预训练步骤。</p>
+			<p class="callout-heading">经典ML上的DL</p>
+			<p class="callout">与传统的ML <a id="_idIndexMarker009"/>模型开发不同，在传统的ML模型开发中，通常需要一个特征工程步骤来提取原始数据并将其转换为特征，以训练决策树或逻辑回归等ML模型，DL可以自动学习这些特征，这对于文本、图像、视频、音频和演讲等非结构化数据的建模尤其有吸引力。由于这个特点，DL<a id="_idIndexMarker010"/>也被称为<em class="italic">表征学习</em>。除此之外，<a id="_idIndexMarker011"/>DL通常是数据和计算密集型的，需要<strong class="bold">图形处理单元</strong>(<strong class="bold">GPU</strong>)、<strong class="bold">张量处理单元</strong> ( <strong class="bold"> TPU </strong>)或其他<a id="_idIndexMarker012"/>类型的计算硬件加速器进行大规模训练和推理。与传统的ML模型相比，DL模型的可解释性也更难实现，尽管最近的进展已经使这成为可能。</p>
+			<h2 id="_idParaDest-19"><a id="_idTextAnchor018"/>实现一个基本的DL情感分类器</h2>
+			<p>要设置开发一个基本的DL情感分类器，你需要在你的本地环境中创建一个虚拟环境。让我们假设<a id="_idIndexMarker014"/>您有<code>dl_model</code>并安装PyTorch <code>lightning-flash</code>包，这样就可以构建模型了:</p>
+			<pre>conda create -n dl_model python==3.8.10
+conda activate dl_model
+pip install lightning-flash[all]</pre>
+			<p>根据本地计算机的内存，上述命令可能需要大约10分钟才能完成。您可以通过运行以下命令来验证安装是否成功:</p>
+			<pre>conda list | grep lightning</pre>
+			<p>如果您看到类似以下内容的输出，则您的安装是成功的:</p>
+			<pre>lightning-bolts     0.3.4                    pypi_0    pypi
+lightning-flash     0.5.0                    pypi_0    pypi
+pytorch-lightning   1.4.4                    pypi_0    pypi</pre>
+			<p>现在您已经准备好构建您的第一个DL模型了！</p>
+			<p>要开始构建<a id="_idIndexMarker015"/> DL模型，请完成以下步骤:</p>
+			<ol>
+				<li value="1">导入必要的<code>torch</code>和<code>flash</code>库，从<code>flash</code>子包<pre>import torch import flash from flash.core.data.utils import download_data from flash.text import TextClassificationData, TextClassifier</pre>中导入<code>download_data</code>、<code>TextClassificationData</code>和<code>TextClassifier</code></li>
+				<li>为了获得用于微调的数据集，使用<code>download_data</code>下载<code>imdb.zip</code>文件，该文件是来自<code>train.csv</code>的公共领域二元情感分类(正/负)数据集<a id="_idIndexMarker016"/></li><li><code>valid.csv</code></li><li><code>test.csv</code></li>
+			</ol>
+			<p>每个<a id="_idIndexMarker018"/>文件包含两列:<code>review</code>和<code>sentiment</code>。然后我们使用<code>TextClassificationData.from_csv</code>来声明一个<code>datamodule</code>变量，将“评论”分配给<code>input_fields</code>，将“情绪”分配给<code>target_fields</code>。另外，它分别将<code>train.csv</code>文件分配给<code>train_file</code>，将<code>valid.csv</code>文件分配给<code>val_file</code>，将<code>test.csv</code>文件分配给<code>datamodule</code>的<code>test_file</code>属性:</p>
+			<pre>download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "./data/")
+datamodule = TextClassificationData.from_csv(
+    input_fields="review",
+    target_fields="sentiment",
+    train_file="data/imdb/train.csv",
+    val_file="data/imdb/valid.csv",
+    test_file="data/imdb/test.csv"
+)</pre>
+			<ol>
+				<li value="3">一旦我们有了数据，我们现在可以使用基础模型进行微调。首先，我们通过调用分配给<code>prajjwal1/bert-tiny</code>的主干<code>TextClassifier</code>来声明<code>classifier_model</code>(这是一个小得多的类似伯特的预训练模型<a id="_idIndexMarker019"/>，位于拥抱脸模型库中:<a href="https://huggingface.co/prajjwal1/bert-tiny">https://huggingface.co/prajjwal1/bert-tiny</a>)。这意味着我们的模型将基于<code>bert-tiny</code>模型。</li>
+				<li>下一步是通过定义我们想要运行多少个纪元以及我们想要使用多少GPU来运行它们来设置训练器。这里，<code>torch.cuda.device_count()</code>将返回<em class="italic"> 0 </em>(无GPU)或<em class="italic"> 1 </em>到<em class="italic"> N </em>，其中<em class="italic"> N </em>是<a id="_idIndexMarker021"/>您在运行环境中可以拥有的最大GPU数量。现在我们准备调用<code>trainer.finetune</code>来为IMDb数据集训练一个二元情感分类器:<pre>classifier_model = TextClassifier(backbone="prajjwal1/bert-tiny", num_classes=datamodule.num_classes) trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count()) trainer.<code>max_epochs=1</code> if you simply want to get a basic version of the sentiment classifier quickly.</pre></li>
+				<li>一旦微调步骤完成，我们将通过运行<code>trainer.test()</code> : <pre>trainer.test()</pre>来测试模型的准确性</li>
+			</ol>
+			<p>测试的输出应该类似于下面的屏幕截图，这表明最终的模型精度大约为52%:</p>
+			<div><div><img src="img/B18120_01_002.jpg" alt="Figure 1.2 – The test results of our first DL model&#13;&#10;" width="637" height="160"/>
+				</div>
+			</div>
+			<p class="figure-caption">图1.2–我们第一个DL模型的测试结果</p>
+			<p>上图中显示的<a id="_idIndexMarker022"/>测试结果<a id="_idIndexMarker023"/>表明我们有一个模型的基本版本，因为我们只对三个时期的基础模型进行了微调，并且没有使用任何高级技术，如超参数调整或更好的微调策略。然而，这是一个巨大的成就，因为您现在已经掌握了核心DL模型范例如何工作的工作知识！我们将在本书后面的章节中探索更高级的模型训练技术。</p>
+			<h2 id="_idParaDest-20"><a id="_idTextAnchor019"/>了解DL的全生命周期发展</h2>
+			<p>现在，你应该已经准备好了你的第一个<a id="_idIndexMarker024"/> DL模型，并且应该为此感到骄傲。现在，让我们一起探索完整的DL生命周期，以充分理解其概念、组件和挑战。</p>
+			<p>您可能已经收集到核心DL开发范例围绕着三个关键工件:<em class="italic">数据</em>、<em class="italic">模型</em>，以及<em class="italic">代码</em>。除此之外，<em class="italic">可解释性</em>是许多关键任务应用场景中需要的另一个主要工件，比如医疗诊断、金融行业和刑事司法决策。因为DL通常被认为是一个黑盒，所以在交付生产之前和之后，为DL提供可解释性越来越成为一个关键需求。</p>
+			<p>注意<em class="italic">图1.1 </em>仍然被认为是离线实验，如果我们仍然试图找出在类似实验室的环境中使用数据集的模型。即使在这样的离线实验环境中，事情也会很快变得复杂。此外，我们希望了解和跟踪我们已经进行或尚未进行的实验，以便我们不会浪费时间重复相同的实验，不管我们使用了什么参数和数据集，也不管我们对特定模型有什么样的指标。一旦我们有了一个对用例及客户场景足够好的模型，复杂性就会增加，因为我们需要一种方法在生产中持续部署和更新模型，监控模型和数据漂移，然后在必要时重新训练模型。当需要大规模的培训、部署、监控和解释时，这种复杂性会进一步增加。</p>
+			<p>让我们看看DL生命周期<a id="_idIndexMarker026"/>是什么样子的(参见<em class="italic">图1.3 </em>)。有五个阶段:</p>
+			<ol>
+				<li value="1">数据收集、清理和注释/标签。</li>
+				<li>模型开发(也称为离线实验)。<em class="italic">图1.1 </em>中的核心DL开发范例被认为是<em class="italic">模型开发</em>阶段的一部分，它本身可以是一个迭代过程。</li>
+				<li>模型部署和服务于生产。</li>
+				<li>模型验证和A/B测试(也称为在线实验；这通常是在生产环境中)。</li>
+				<li>生产过程中的监控和反馈数据收集。</li>
+			</ol>
+			<p><em class="italic">图1.3 </em>提供了一个图表，表明这是一个DL模型的持续开发周期:</p>
+			<div><div><img src="img/B18120_01_003.jpg" alt="Figure 1.3 – The full DL development life cycle &#13;&#10;" width="1141" height="1099"/>
+				</div>
+			</div>
+			<p class="figure-caption">图1.3–完整的DL开发生命周期</p>
+			<p>除此之外，我们希望<a id="_idIndexMarker027"/>指出这五个阶段的主干，如图<em class="italic">图1.3 </em>所示，本质上围绕着四个工件:数据、模型、代码和可解释性。在接下来的小节中，我们将研究生命周期中与这四个工件相关的挑战。然而，首先，让我们来探索和了解MLOps，它是一个不断发展的平台概念和框架，支持ML的全生命周期。这将有助于我们在宏观背景下理解这些挑战。</p>
+			<h2 id="_idParaDest-21"><a id="_idTextAnchor020"/>了解MLOps挑战</h2>
+			<p>MLOps与DevOps有一些<a id="_idIndexMarker028"/>联系，在devo PS中，一组技术栈和标准操作程序用于软件开发和部署，并与IT运营相结合。与传统的软件开发不同，ML尤其是DL代表了一个新时代的软件开发范式<a id="_idIndexMarker029"/>，称为<strong class="bold">软件2.0</strong>(<a href="https://karpathy.medium.com/software-2-0-a64152b37c35">https://karpathy.medium.com/software-2-0-a64152b37c35</a>)。软件2.0的关键区别在于，软件的行为不仅仅取决于很好理解的编程语言代码(这是软件1.0的特点)，还取决于神经网络中学习到的权重，这些权重很难写成代码。换句话说，存在代码、数据和模型的不可分割的集成，必须一起管理。因此，MLOps正在开发中，并且仍在不断发展，以适应这种新的软件2.0模式。在本书中，MLOps被定义为由三个基础层和四个支柱组成的运营自动化平台。它们列举如下:</p>
+			<ul>
+				<li>以下是三个基础层:<ul><li>基础设施<a id="_idIndexMarker030"/>管理和自动化</li><li>应用生命周期管理<a id="_idIndexMarker031"/>和<strong class="bold">持续集成和持续部署</strong> ( <strong class="bold"> CI/CD </strong>)</li><li>服务系统可观测性</li></ul></li>
+				<li>以下是四个<a id="_idIndexMarker032"/>支柱:<ul><li>数据可观察性和管理</li><li>模型可观察性和生命周期管理</li><li>可解释性和<strong class="bold">人工智能</strong> ( <strong class="bold"> AI </strong>)可观察性</li><li>代码可再现性和可观察性</li></ul></li>
+			</ul>
+			<p>此外，我们将解释MLflow在这些MLOps层和支柱中的作用，以便我们对MLflow如何构建完整的MLOps层有一个清晰的了解:</p>
+			<ul>
+				<li><strong class="bold">基础设施管理和自动化</strong>:这包括但不限于用于<a id="_idIndexMarker033"/>自动化容器编排<a id="_idIndexMarker034"/>的<em class="italic"> Kubernetes </em>(也称为k8s)和<em class="italic"> Terraform </em>(通常用于管理数百个云服务和访问控制)。这些<a id="_idIndexMarker035"/>工具适用于管理将模型部署为服务端点的ML和DL应用程序。这些基础设施层不是本书的重点；相反，我们将关注如何使用MLflow提供的功能来部署经过训练的DL模型。</li>
+				<li><strong class="bold">应用生命周期管理和CI/CD </strong>:这包括但不限于<em class="italic"> Docker </em>虚拟化容器，容器生命周期管理工具，如<a id="_idIndexMarker036"/> Kubernetes，以及<em class="italic"> CircleCI </em>或<em class="italic">Concourse</em>for<strong class="bold">CI</strong>和<strong class="bold"> CD </strong>。通常，CI <a id="_idIndexMarker037"/>意味着<a id="_idIndexMarker038"/>每当GitHub存储库中有代码或模型变更时，就会触发一系列自动测试，以确保不会引入重大变更。一旦这些测试通过，新的变更将作为新包的一部分自动发布。这将触发一个新的部署过程(CD)来将新的包部署到生产环境中(通常，这将包括作为安全门的人工批准)。请注意，这些工具不是ML应用程序所独有的，而是已经适应于ML和DL应用程序，尤其是当我们需要GPU和分布式集群来训练和测试DL模型时。在本书中，我们不会关注这些工具，但会在需要时提到集成点或示例。</li>
+				<li><strong class="bold">服务系统可观察性</strong>:主要用于监控硬件/集群/CPU/内存/存储、操作系统、服务可用性、延迟和吞吐量。这包括工具<a id="_idIndexMarker039"/>如<em class="italic"> Grafana </em>、<em class="italic"> Datadog </em>和<a id="_idIndexMarker040"/>等。同样，这些并不是ML和DL应用程序所独有的，也不是本书的重点。</li>
+				<li><strong class="bold">数据可观察性和管理</strong>:传统上，这在DevOps领域并不充分，但在MLOps中变得非常重要，因为数据在ML/DL模型的整个生命周期中至关重要。这包括<em class="italic">数据质量监控</em>、<em class="italic">离群点检测</em>、<em class="italic">数据漂移</em>和<em class="italic">概念漂移检测</em>、<em class="italic">偏差检测</em>、<em class="italic">安全</em>和<em class="italic">兼容数据共享</em>、<em class="italic">数据来源跟踪</em>和<em class="italic">版本控制</em>等等。这个领域中适合ML和DL应用的工具栈还在不断涌现。少数几个<a id="_idIndexMarker042"/>的例子包括<strong class="bold">数据夹</strong>(<a href="https://www.datafold.com/">https://www.datafold.com/</a>)和<strong class="bold">数据带</strong>(<a href="https://databand.ai/open-source/">https://databand.ai/open-source/</a>)。数据管理的最新发展是一个统一的lakehouse架构和实现，称为<strong class="bold">Delta Lake</strong>(<a href="http://delta.io">http://Delta . io</a>),其中<a id="_idIndexMarker043"/>可用于ML数据管理。MLflow具有与Delta Lake的本地集成点，我们将在本书中讨论该集成。</li>
+				<li><strong class="bold">模型可观察性和生命周期管理</strong>:这是ML/DL模型所特有的，最近由于MLflow的兴起，它才变得广泛可用。这包括模型训练、测试、版本控制、注册、部署、序列化、模型漂移监控等工具。我们将了解MLflow在这一领域提供的令人兴奋的<a id="_idIndexMarker044"/>功能。请注意，一旦我们将CI/CD工具与MLflow培训/监控、用户反馈循环和人工注释相结合，我们就可以<a id="_idIndexMarker045"/>实现<strong class="bold">连续培训</strong>、<strong class="bold">连续测试</strong>和<strong class="bold">连续标记</strong>。MLflow <a id="_idIndexMarker046"/>提供了基本的功能，使得MLOps中的进一步自动化成为可能，尽管这种完全的自动化将不是本书的重点。感兴趣的读者可以在本章末尾找到相关的参考资料来进一步探索这一领域。</li>
+				<li><strong class="bold">可解释性和人工智能可观察性</strong>:这是ML/DL模型所特有的，对于DL模型尤其重要，因为传统上，DL模型被视为黑盒。理解为什么模型提供某些预测对于社会重要的应用是至关重要的。例如，在医疗、金融、司法和许多人在回路决策支持应用中，如民用和军用应急响应，对可解释性的需求越来越高。MLflow提供了与一个流行的可解释框架——SHAP——的本地集成，我们将在本书中介绍。</li>
+				<li><strong class="bold">代码可再现性和可观察性</strong>:这并不完全是ML/DL应用程序所独有的。然而，DL模型面临一些特殊的挑战，因为DL代码框架的数量是多样的，并且重现模型的需求不完全取决于代码本身(我们还需要数据和执行环境，如GPU集群)。除此之外，型号开发和生产也普遍使用笔记本。如何在模型运行的同时管理笔记本电脑非常重要。通常，GitHub用于管理代码库；然而，我们需要以一种可在本地(比如在本地笔记本电脑上)或远程(比如在Databricks的GPU集群中)重现的方式来构建ML项目代码。MLflow提供了这种能力，允许已经编写过的DL项目在任何地方运行，无论是在离线实验环境中还是在线生产<a id="_idIndexMarker048"/>环境中。我们将在本书中介绍MLflow的MLproject功能。</li>
+			</ul>
+			<p>总之，MLflow在MLOps中起着关键和基础的作用。它填补了DevOps传统上没有涵盖的空白，因此是本书的重点。下图(<em class="italic">图1.4 </em>)显示了MLflow在仍在发展的MLOps世界中的核心角色:</p>
+			<div><div><img src="img/B18120_01_004.jpg" alt="Figure 1.4 – The three layers and four pillars of MLOps and MLflow's roles&#13;&#10;" width="1439" height="839"/>
+				</div>
+			</div>
+			<p class="figure-caption">图1.4–ml ops和MLflow角色的三个层次和四个支柱</p>
+			<p>虽然最下面的两层和最上面的一层在许多软件开发和部署过程中是常见的，但是中间的四个支柱要么完全是ML/DL应用程序独有的，要么部分是ML/DL应用程序独有的。MLflow在MLOps的所有四大支柱中发挥着关键作用。这本书将帮助您自信地应用MLflow来解决这四个支柱的问题，同时也让您能够根据您的场景需求，进一步与图1.4 所示的MLOps层中的其他工具集成，实现完全自动化。</p>
+			<h1 id="_idParaDest-22"><a id="_idTextAnchor021"/>了解DL数据挑战</h1>
+			<p>在本节中，我们将讨论DL生命周期每个阶段的<a id="_idIndexMarker049"/>数据挑战，如图<em class="italic">图1.3 </em>所示。本质上，DL是一个以数据为中心的人工智能，不像符号人工智能那样可以在没有大量数据的情况下使用人类知识。数据仓库中的数据在整个生命周期的所有阶段都面临着挑战:</p>
+			<ul>
+				<li><strong class="bold">数据收集/清理/注释</strong>:DL最初的成功之一始于<strong class="bold">ImageNet</strong>(<a href="https://www.image-net.org/">https://www.image-net.org/</a>)，在这里数百万张图片被收集<a id="_idIndexMarker050"/>并根据WordNet数据库<a id="_idIndexMarker051"/>(<a href="https://wordnet.princeton.edu/">https://wordnet.princeton.edu/</a>)中的英文名词进行注释。这导致了计算机视觉的预训练DL模型的成功开发，如<a id="_idIndexMarker052"/> VGG网(<a href="https://pytorch.org/hub/pytorch_vision_vgg/">https://pytorch.org/hub/pytorch_vision_vgg/</a>)，它可以执行最先进的图像分类，并广泛用于工业和商业应用。这种大规模数据收集和标注的主要挑战是未知的偏差，这种偏差在这个过程中很难测量(<a href="https://venturebeat.com/2020/11/03/researchers-show-that-computer-vision-algorithms-pretrained-on-imagenet-exhibit-multiple-distressing-biases/">https://venturebeat . com/2020/11/03/researchers-show-that-computer-vision-algorithms-pretrained-on-imagenet-exhibit-multiple-dering-bias/</a>)。另一个例子是销售互动平台<strong class="bold">外联</strong>(【https://www.outreach.io/】T21)，在这里我们<a id="_idIndexMarker053"/>可以对潜在买家的情绪进行分类。例如，我们可以从收集100个付费组织的电子邮件开始，来训练一个DL模型。接下来，我们将需要从更多的组织收集电子邮件信息，这可能是出于准确性要求，也可能是因为语言覆盖范围扩大(例如从仅英语到其他语言，如德语和法语)。数据收集和注释的这些多次迭代将生成相当多的数据集。倾向于用硬编码的版本号来命名<a id="_idIndexMarker054"/>数据集的版本，作为数据集文件名的一部分，例如:<pre><strong class="bold">MyCoolAnnotatedData-v1.0.csv</strong> <strong class="bold">MyCoolAnnotatedData-v2.0.csv</strong> <strong class="bold">MyCoolAnnotatedData-v3.0.csv</strong> <strong class="bold">MyCoolAnnotatedData-v4.0.csv</strong></pre></li>
+			</ul>
+			<p>这似乎是可行的，直到任何一个vX.0数据集中需要一些改变，因为需要纠正注释错误或删除客户流失的电子邮件。此外，如果我们需要将几个数据集组合在一起，或者执行一些数据清理和转换来训练一个新的DL模型，会发生什么？如果我们需要实现数据增强来人工生成一些数据集呢？显然，简单地更改文件名既不可伸缩也不可持续。</p>
+			<ul>
+				<li><strong class="bold">模型开发</strong>:我们需要了解，我们用于训练/预训练DL模型的数据中的偏差将在应用模型时反映在预测中。虽然我们在本书中不关注消除数据偏差，但是在训练和服务DL模型时，我们必须将数据版本化和数据起源作为一级工件来实现，以便我们可以跟踪所有的模型实验。当为我们的用例微调一个预训练的模型时，正如我们之前所做的，我们还需要跟踪我们所使用的微调数据集的版本。在前面的例子中，我们使用了伯特模型的一个变体来微调IMDb评论数据。虽然在我们的第一个例子中，我们并不关心数据的版本或来源，但这对于实际的应用程序是很重要的。总之，DL <a id="_idIndexMarker055"/>模型需要使用可伸缩的方法链接到数据集的特定版本。我们将在本书中提供这个主题的解决方案。</li>
+				<li><strong class="bold">生产中的模型部署和服务</strong>:这是为了部署到生产环境中以服务在线流量。DL模型服务延迟特别重要，在此阶段收集非常有趣。这可能允许您调整用于推理的硬件环境。</li>
+				<li><strong class="bold">模型验证和A/B测试</strong>:我们现阶段收集的数据多为在线实验环境下的用户行为度量(<a href="https://www.slideshare.net/pavel/ab-testing-ai-global-artificial-intelligence-conference-2019">https://www . slide share . net/Pavel/ab-testing-ai-global-artificial-intelligence-conference-2019</a>)。还需要描述在线数据流量的特征，以便了解离线实验和在线实验之间的模型输入是否存在统计差异。只有当我们通过了A/B测试，并验证了该模型在用户行为指标方面确实比以前的版本更好时，我们才能为所有用户推出产品。</li>
+				<li><strong class="bold">监控和反馈循环</strong>:在此阶段，注意需要持续收集数据，以检测数据漂移和概念漂移。例如，在前面讨论的买家情绪分类示例中，如果买家开始使用在训练数据中没有遇到的术语<a id="_idIndexMarker056"/>，则模型的性能可能会受到影响。</li>
+			</ul>
+			<p>总之，数据跟踪和可观察性是DL生命周期所有阶段的主要挑战。</p>
+			<h1 id="_idParaDest-23"><a id="_idTextAnchor022"/>了解DL模式的挑战</h1>
+			<p>在这一部分，我们将<a id="_idIndexMarker057"/>讨论DL模型的挑战。让我们看看DL生命周期每个阶段的挑战，如图1.3 中的<em class="italic">所示:</em></p>
+			<ul>
+				<li><strong class="bold">数据收集/清理/注释</strong>:虽然已经提到了数据挑战，但是将数据链接到感兴趣的模型的挑战仍然存在。MLflow与Delta Lake进行了本机集成，因此任何经过训练的模型都可以追溯到Delta Lake中的特定版本。</li>
+				<li><code>pickle</code>。<em class="italic"/>(<a href="https://github.com/cloudpipe/cloudpickle">https://github.com/cloudpipe/cloudpickle</a>)通常用于序列化用Python写的模型。然而，torch script(<a href="https://pytorch.org/docs/stable/jit.html">https://pytorch.org/docs/stable/jit.html</a>)现在<a id="_idIndexMarker059"/>对PyTorch模型有很高的性能。此外，开放神经网络交换或ONNX(<a href="https://onnx.ai/">https://onnx.ai/</a>)试图<a id="_idIndexMarker060"/>提供更多与框架无关的DL序列化。最后，我们需要记录序列化的模型并注册模型，以便我们可以跟踪模型版本。MLflow是首批克服这些挑战的开源工具之一。</li>
+				<li><strong class="bold">产品中的模型部署和服务</strong>:一个可以绑定到模型注册中心的易于使用的模型部署工具是一个挑战。MLflow可以用来缓解这种情况，允许您为生产部署加载模型，并进行完整的来源跟踪。</li>
+				<li><strong class="bold">模型验证和A/B测试</strong>:在在线验证和实验过程中，需要验证模型性能和收集用户行为指标。这是为了让我们可以轻松地回滚或重新部署模型的特定版本。模型注册对于大规模在线模型生产验证和实验至关重要。</li>
+				<li><strong class="bold">监控和反馈循环</strong>:模型随时间漂移和退化是一个真正的挑战。需要持续监控生产中模型性能的可见性。反馈数据可用于决定模型是否需要重新训练。</li>
+			</ul>
+			<p>总之，DL模型在整个生命周期中面临的挑战是独特的。同样值得指出的是，一个可以辅助模型开发和在线产品开发的通用框架非常重要，因为我们不希望仅仅因为执行环境不同就使用不同的工具。MLflow提供了这种统一的框架来弥合这种差距。</p>
+			<h1 id="_idParaDest-24"><a id="_idTextAnchor023"/>了解DL代码挑战</h1>
+			<p>在这一部分，我们将<a id="_idIndexMarker062"/>讨论DL代码挑战。让我们看看这些代码挑战是如何在<em class="italic">图1.3 </em>中描述的每个阶段中表现出来的。在本节中，在DL开发的上下文中，代码指的是用某些编程语言(如Python)编写的用于数据处理和实现的源代码，而模型指的是序列化格式的模型逻辑和架构(例如，pickle、TorchScript或ONNX):</p>
+			<ul>
+				<li><strong class="bold">数据收集/清理/注释</strong>:虽然数据是这个阶段的核心部分，但是执行查询、<strong class="bold">提取/转换/加载</strong> ( <strong class="bold"> ETL </strong>)和<a id="_idIndexMarker063"/>数据清理和扩充的代码至关重要。我们不能将模型的开发与为模型提供数据的数据管道分离开来。因此，实现ETL的数据管道需要被视为离线实验和在线生产中的集成步骤之一。一个常见的错误是，我们在离线实验中使用不同的数据ETL和清理管道，然后在在线生产中实现不同的数据ETL/清理管道，这可能会导致不同的模型行为。我们需要将数据管道版本化和序列化为整个模型管道的一部分。MLflow提供了几种方法来实现这样的多步流水线。</li>
+				<li><strong class="bold">模型开发</strong>:离线实验时，除了不同版本的数据管道代码，我们还可能有不同版本的笔记本，或者使用不同版本的DL库代码。笔记本电脑的使用在ML/DL生命周期中尤为独特。每次运行都需要跟踪哪个笔记本/模型管道/数据管道产生了哪个模型结果。MLflow通过自动代码版本跟踪和依赖来实现这一点。此外，不同运行环境中的代码可复制性是DL模型所特有的，因为DL模型通常需要GPU或TPU等硬件加速器。在CPU或GPU环境中本地或远程运行的灵活性非常重要。MLflow提供了一种组织ML项目的轻量级方法，这样代码只需编写一次就可以在任何地方运行。</li>
+				<li><strong class="bold">模型部署和服务于生产</strong>:当模型服务于生产流量时，任何错误都需要追溯到模型和代码。因此，跟踪代码来源至关重要。对于一个特定版本的模型，跟踪所有的依赖代码库版本也是非常重要的。</li>
+				<li><strong class="bold">模型验证和A/B测试</strong>:在线实验可以使用使用不同数据源的多个版本的模型。调试任何实验不仅需要知道使用了哪个模型，还需要知道用哪个代码来产生那个模型。</li>
+				<li><strong class="bold">监控和反馈循环</strong>:就代码挑战而言，这一阶段与前一阶段相似，我们需要知道模型退化是由于代码错误还是模型和数据漂移。监控管道需要<a id="_idIndexMarker064"/>收集数据和模型性能的所有指标。</li>
+			</ul>
+			<p>总之，DL代码挑战尤其独特，因为DL框架仍在发展中(例如，<strong class="bold"> TensorFlow </strong>，<strong class="bold"> PyTorch </strong>，<strong class="bold"> Keras </strong>，<strong class="bold"> Hugging Face </strong>，以及<strong class="bold"> SparkNLP </strong>)。MLflow提供了一个轻量级框架来克服许多常见的挑战，并且可以无缝地与许多DL框架接口。</p>
+			<h1 id="_idParaDest-25"><a id="_idTextAnchor024"/>了解DL可解释性挑战</h1>
+			<p>在本节中，我们将讨论<a id="_idIndexMarker065"/>图1.3 中描述的每个阶段的<a id="_idIndexMarker065"/> DL可解释性挑战。将可解释性视为在整个模型生命周期中定义、测试、调试、验证和监控模型的不可或缺的必要机制变得越来越重要。尽早嵌入可解释性将使后续的模型验证和操作更加容易。此外，为了保持对ML/DL模型的持续信任，在ML/DL模型投入生产后能够对其进行解释和调试是至关重要的:</p>
+			<ul>
+				<li><strong class="bold">数据收集/清理/注释</strong>:正如我们所收集的，可解释性对于模型预测至关重要。任何模型的可信度或偏差的根本原因都可以追溯到用于训练模型的数据。数据的可解释性仍然是一个新兴领域，但却至关重要。那么，在数据收集/清理/注释阶段，什么可能出错并成为挑战呢？例如，假设我们有一个ML/DL模型，它的预测结果是关于贷款申请人是否会还贷。如果收集的数据在年龄和贷款偿还结果之间有一定的相关性，这将导致模型使用年龄作为预测值。然而，基于一个人年龄的贷款决定是违反法律的，即使模型运行良好也是不允许的。因此，在数据收集过程中，抽样策略可能不足以代表某些亚人群，如不同年龄组的不同贷款申请人。</li>
+			</ul>
+			<p>子群体可能有许多缺失字段，然后在数据清理过程中被丢弃。这可能导致在数据清理过程后代表性不足。人类注释可能有利于特权群体和其他可能的无意识偏见。一个被称为<strong class="bold">不同影响</strong>的指标可以<a id="_idIndexMarker066"/>揭示数据中隐藏的偏见，该指标<a id="_idIndexMarker067"/>比较了两个群体中获得积极结果的个人比例:一个非特权群体和一个特权群体。如果非特权群体(例如，年龄为&gt; 60岁的人)获得的积极结果(例如，贷款批准)少于特权群体(年龄为&lt; 60岁的人)的80%,则这是基于当前通用行业标准(五分之四规则)的不同影响违规。像<strong class="bold"> Dataiku </strong>这样的工具可以帮助自动化不同的影响和亚人群分析，以找到可能因为用于模型训练的数据而受到不公平或不同待遇的人群。</p>
+			<ul>
+				<li><strong class="bold">模型开发</strong>:离线实验期间的模型可解释性非常重要，不仅有助于理解为什么一个模型以某种方式运行，而且有助于选择模型，以决定如果我们需要将它投入生产时使用哪个模型。准确性可能不是选择获奖模型的唯一标准。还有几个DL可解释工具，比如SHAP(请参考<em class="italic">图1.5 </em>)。MLflow <a id="_idIndexMarker069"/>与SHAP的集成提供了实现DL可解释性的方法:</li>
+			</ul>
+			<div><div><img src="img/B18120_01_005.jpg" alt="Figure 1.5 – NLP text SHAP Variable Importance Plot when using a DL model&#13;&#10;" width="1467" height="915"/>
+				</div>
+			</div>
+			<p class="figure-caption">图1.5–使用DL模型时的NLP文本SHAP变量重要性图</p>
+			<p><em class="italic">图1.5 </em>显示，这个NLP模型的预测结果的头号特征是单词<code>impressive</code>，其次是<code>rent</code>。从本质上讲，这打破了DL模型的黑箱，给了DL模型在生产中的使用更多的信心。</p>
+			<ul>
+				<li><strong class="bold">模型部署和服务于生产</strong>:在生产阶段，如果模型预测的可解释性能够很容易地提供给用户，那么<a id="_idIndexMarker070"/>不仅模型的可用性(用户友好性)将会提高，而且我们可以收集更好的反馈数据，因为用户更有动力给出更有意义的反馈。一个好的可解释性解决方案应该为任何预测结果提供点级别的决策。这意味着我们应该能够回答为什么一个特定的人的贷款被拒绝，以及这种拒绝与相似或不同年龄组的其他人相比如何。因此，挑战在于将可解释性作为发布模型新版本的门控部署标准之一。然而，与准确性度量不同，很难用分数或阈值来衡量可解释性，尽管可以应用和自动化某些基于案例的推理。例如，如果我们有某些拒绝的测试案例，不管模型的版本如何，我们都期望相同或相似的解释，那么我们可以使用它作为门控发布标准。</li>
+				<li><strong class="bold">模型验证和A/B测试</strong>:在在线实验和正在进行的生产模型验证过程中，我们需要可解释性来理解模型是否已经应用于正确的数据，或者预测是否可信。通常，ML/DL模型编码复杂的非线性关系。在此阶段，通常需要了解模型如何影响用户行为的指标(例如，购物网站上较高的转化率)。影响敏感度分析可以提供关于某个用户特征(例如用户的收入)对结果有正面影响还是负面影响的见解。如果在这个阶段，由于某种原因，我们发现较高的收入导致了负的贷款批准率或较低的转换率，那么这应该被自动标记。然而，在模型验证和A/B测试过程中的自动化灵敏度分析仍然没有得到广泛应用，并且仍然是一个具有挑战性的问题。一些供应商，如TruEra，为这一领域提供了潜在的解决方案。</li>
+				<li><strong class="bold">监控和反馈循环</strong>:虽然模型性能指标和数据特征在这里很重要，但可解释性可以激励用户提供有价值的反馈和用户行为指标，以确定模型退化的驱动因素和原因(如果有的话)。正如我们所知，ML/DL模型容易过度拟合，并且不能很好地概括超出它们的训练数据。在模型生产监控期间，一个重要的可解释性解决方案是测量特性重要性如何在不同的数据分割中转移(例如，前COVID与后COVID)。这可以帮助数据科学家确定<a id="_idIndexMarker071"/>模型性能的下降是由于数据变化(如统计分布变化)还是变量之间的关系变化(如概念变化)。TruEra最近提供的一个例子(<a href="https://truera.com/machine-learning-explainability-is-just-the-beginning/">https://TruEra . com/machine-learning-explability-is-just-the-beginning/</a>)说明了贷款模型由于COVID周期前后人们年收入和贷款目的的变化而改变其预测行为。<strong class="bold">特征重要性转移</strong>的这种可解释性<a id="_idIndexMarker072"/>极大地有助于在模型生产监控阶段识别模型行为变化的根本原因。</li>
+			</ul>
+			<p>总之，DL可解释性是一个主要的挑战，仍然需要持续的研究。然而，MLflow与SHAP的集成现在为实际的DL应用提供了一个现成的工具，我们将在本书后面的高级章节中介绍。</p>
+			<h1 id="_idParaDest-26"><a id="_idTextAnchor025"/>总结</h1>
+			<p>在这一开篇章节中，我们通过使用PyTorch <code>lightning-flash</code>为文本情感分类模型执行pretrain plus微调核心DL开发范例，实现了我们的第一个DL模型。我们了解了DL生命周期的五个阶段。我们定义了MLOps的概念以及三个基础层和四个ML/DL支柱，其中MLflow在所有四个支柱(数据、模型、代码和可解释性)中起着关键作用。最后，我们描述了DL数据、模型、代码和可解释性方面的挑战。</p>
+			<p>有了在本章中获得的知识和第一个DL模型经验，我们现在准备在接下来的章节中学习并在我们的DL模型中实现MLflow。在下一章中，我们将从启用MLflow自动记录的DL模型的实现开始。</p>
+			<h1 id="_idParaDest-27"><a id="_idTextAnchor026"/>延伸阅读</h1>
+			<p>为了加深您的知识，请参考以下资源和文档:</p>
+			<ul>
+				<li><em class="italic">关于基金会模式的机会与风险</em>(斯坦福大学)<a href="https://arxiv.org/abs/2108.07258">https://arxiv.org/abs/2108.07258</a></li>
+				<li><em class="italic"> MLOps:没有听起来那么无聊</em>:<a href="https://itnext.io/mlops-not-as-boring-as-it-sounds-eaebe73e3533">https://it next . io/MLOps-not-as-as-Boring-as-it-Sounds-eaebe 73 e 3533</a></li>
+				<li><em class="italic">人工智能驾驶软件2.0…最少人工干预</em>:<a href="https://www.datasciencecentral.com/profiles/blogs/ai-is-driving-software-2-0-with-minimal-human-intervention">https://www . datascience central . com/profiles/blogs/AI-is-Driving-Software-2-0-with-Minimal-Human-Intervention</a></li>
+				<li><em class="italic"> MLOps:机器学习中的连续交付和自动化管道</em>(谷歌):<a href="https://cloud.google.com/architecture/mlops-continuous-delivery-and-automation-pipelines-in-machine-learning">https://cloud . Google . com/architecture/MLOps-机器学习中的连续交付和自动化管道</a></li>
+				<li><em class="italic">深度学习开发周期</em>(sales force):<a href="https://metamind.readme.io/docs/deep-learning-dev-cycle">https://metamind.readme.io/docs/deep-learning-dev-cycle</a></li>
+				<li><em class="italic">MLOps——企业AI拼图中缺失的一块</em>:<a href="https://www.forbes.com/sites/janakirammsv/2021/01/05/mlopsthe-missing-piece-in-the-enterprise-ai-puzzle/?sh=3d5c89dd24ad">https://www . Forbes . com/sites/janakiramsv/2021/01/05/MLOps The-Missing-Piece-In-The-Enterprise-AI-Puzzle/？sh=3d5c89dd24ad </a></li>
+				<li><em class="italic"> MLOps:它是什么，为什么重要，以及如何实施【https://neptune.ai/blog/mlops】T21:<a href="https://neptune.ai/blog/mlops">T23】</a></em></li>
+				<li><em class="italic">可解释的深度学习:外行人的实地指南</em>:<a href="https://arxiv.org/abs/2004.14545">https://arxiv.org/abs/2004.14545</a></li>
+				<li><em class="italic">机器学习可解释性只是开始</em>:<a href="https://truera.com/machine-learning-explainability-is-just-the-beginning/">https://truera . com/Machine-learning-explability-is-just-the-beginning/</a></li>
+				<li><em class="italic">AI Fairness-differential-Impact-Remover解释</em>:<a href="https://towardsdatascience.com/ai-fairness-explanation-of-disparate-impact-remover-ce0da59451f1">https://towards data science . com/AI-Fairness-explain-differential-Impact-Remover-ce0da 59451 f1</a></li>
+				<li><em class="italic">数据集数据表</em>:<a href="https://arxiv.org/pdf/1803.09010.pdf">https://arxiv.org/pdf/1803.09010.pdf</a></li>
+			</ul>
+		</div>
+	</div>
+</body></html>

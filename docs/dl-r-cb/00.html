@@ -1,0 +1,474 @@
+<html><head/><body>
+
+
+    
+        <title>Preface</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">前言</h1>
+                
+            
+            
+                
+<p class="mce-root">深度学习近年来迈出了巨大的一步，发展包括生成式对抗网络(GANs)、变分自动编码器和深度强化学习。这本书作为R 3.x中的参考指南，将帮助您实现深度学习技术。</p>
+<p class="mce-root">这本书向您介绍了各种深度学习技术，您可以使用R 3.x在您的应用程序中实现这些技术。一套独特的配方将帮助您解决回归、二项式分类和多项式分类问题，并详细探索超参数优化。您还将学习实现<strong>卷积神经网络</strong>(<strong>CNN</strong>)、<strong>递归神经网络</strong> ( <strong> RNNs </strong>)、<strong>长短期记忆</strong> ( <strong> LSTM </strong>)网络、序列到序列模型、GANs和强化学习的方法。您将了解涉及利用GPU的大型数据集的高性能计算，以及R中的并行计算功能，并且您还将熟悉MXNet等库，该库旨在实现高效的GPU计算和最先进的深度学习。您还将学习如何解决NLP中常见和不太常见的问题，如对象检测和动作识别，并且您将在深度学习应用中利用预先训练的模型。</p>
+<p class="mce-root">到本书结束时，你将对深度学习和不同的深度学习包有一个逻辑理解，并将能够为你的问题建立最合适的解决方案。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Who this book is for</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">这本书是给谁的</h1>
+                
+            
+            
+                
+<p>这本书是为数据科学家，机器学习实践者，深度学习研究人员和人工智能爱好者准备的，他们希望使用基于配方的方法学习深度学习领域的关键任务。您将在研究工作或项目中面临的常见和不太常见的挑战中实现深度学习技术和算法。对机器学习的深刻理解和R的工作知识是必须的。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>What this book covers</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">这本书涵盖的内容</h1>
+                
+            
+            
+                
+<p><a href="396cd163-a43b-40d8-9785-69353e862acb.xhtml">第一章</a>，<em>了解神经网络和深度神经网络</em>，将向我们展示如何建立深度学习环境来训练模型。然后向读者介绍神经网络，从神经网络如何工作，什么是隐藏层，什么是反向传播，什么是激活函数开始。本章使用<kbd>keras</kbd>库来演示配方。</p>
+<p><a href="94804b8b-6082-4e90-8581-68ccd8f6d749.xhtml">第2章</a>，<em>使用卷积神经网络</em>，将向我们展示CNN，并解释它们如何用于训练基于图像识别和自然语言处理的任务的模型。本章还涵盖了与CNN一起使用的各种超参数和优化器。</p>
+<p><a href="77a5a641-3bb3-4872-832a-aa3f7d1ad47e.xhtml">第3章</a>，<em>递归神经网络的作用</em>，将向我们展示现实生活中的实施实例RNNs的基本原理。我们还将介绍LSTM和门控循环单元(GRUs)，这是RNNs的扩展，并详细介绍LSTM超参数。除此之外，读者将学习如何使用Keras建立一个双向RNN模型。</p>
+<p><a href="dad9e357-3469-42c3-8c6a-9aea8258d8c1.xhtml">第4章</a>，<em>用Keras </em>实现自动编码器，将介绍使用<kbd>keras</kbd>库作为后端的各种类型的自动编码器的实现。读者还将了解自动编码器的各种应用，如维数减少和图像着色。</p>
+<p><a href="b4dbdd03-06e0-48b9-8e81-13deed6dba4a.xhtml">第五章</a>，<em>深度生成模型</em>，将向我们展示深度神经网络的另一种方法<strong>生成对抗网络</strong> ( <strong> GANs </strong>)。我们将演示如何训练由两个点蚀网络组成的GAN模型——一个发生器和一个鉴别器。本章还介绍了变分自动编码器的实际实现，并将它们与GANs进行了比较。</p>
+<p><a href="4b705720-1c0e-44dc-8a67-0e63410dc645.xhtml">第6章</a>，<em>使用大规模深度学习处理大数据</em>，包含利用GPU进行大数据集高性能计算的案例研究。读者还将了解R和库中的并行计算功能，如MXNet，它是为高效的GPU计算和最先进的深度学习而设计的。</p>
+<p><a href="9d72b73e-77e4-48c7-8ca5-f07041176a18.xhtml"/> <a href="9d72b73e-77e4-48c7-8ca5-f07041176a18.xhtml">第7章</a>，<em>为NLP处理文本和音频</em>，包含涉及序列数据的各种主题的案例研究，包括自然语言处理(NLP)和语音识别。读者将使用各种深度学习库实现端到端的深度学习算法。</p>
+<p><a href="04df44ae-d22c-486a-b8ae-d6806f479a72.xhtml">第8章</a>，<em>计算机视觉的深度学习</em>，将提供关于物体检测和人脸识别的端到端案例研究。</p>
+<p><a href="c214f8d8-a089-41a5-8814-70ab18448646.xhtml">第9章</a>、<em>实施强化学习</em>，将一步一步地向我们介绍强化学习的概念。读者将了解各种方法，如马尔可夫决策过程、Q学习和经验重放，并使用示例在R中实现这些方法。读者还将使用R包(如<kbd>MDPtoolbox</kbd>和<kbd>Reinforcementlearning</kbd>)实现一个端到端的强化学习示例。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>To get the most out of this book</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">从这本书中获得最大收益</h1>
+                
+            
+            
+                
+<p class="mce-root">对机器学习有很好的理解，对R有很强的认识，是这本书所必需的。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Download the example code files</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">下载示例代码文件</h1>
+                
+            
+            
+                
+<p>你可以从你在www.packt.com<a href="http://www.packt.com" target="_blank">的账户下载本书的示例代码文件。如果你在别处购买了这本书，你可以访问www.packtpub.com/support的</a><a href="https://www.packtpub.com/support" target="_blank"/>并注册，让文件直接通过电子邮件发送给你。</p>
+<p>您可以按照以下步骤下载代码文件:</p>
+<ol>
+<li>在<a href="http://www.packt.com" target="_blank">www.packt.com</a>登录或注册。</li>
+<li>选择支持选项卡。</li>
+<li>点击代码下载。</li>
+<li>在搜索框中输入图书名称，然后按照屏幕指示进行操作。</li>
+</ol>
+<p>下载文件后，请确保使用最新版本的解压缩或解压文件夹:</p>
+<ul>
+<li>WinRAR/7-Zip for Windows</li>
+<li>适用于Mac的Zipeg/iZip/UnRarX</li>
+<li>用于Linux的7-Zip/PeaZip</li>
+</ul>
+<p>该书的代码包也托管在GitHub的https://GitHub . com/packt publishing/Deep-Learning-with-R-Cookbook上。如果代码有更新，它将在现有的GitHub库中更新。</p>
+<p>我们在https://github.com/PacktPublishing/<strong><a href="https://github.com/PacktPublishing/" target="_blank"/></strong>也有丰富的书籍和视频目录中的其他代码包。看看他们！</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Download the color images</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">下载彩色图像</h1>
+                
+            
+            
+                
+<p>我们还提供了一个PDF文件，其中有本书中使用的截图/图表的彩色图像。可以在这里下载:<a href="http://www.packtpub.com/sites/default/files/downloads/9781789805673_ColorImages.pdf">http://www . packtpub . com/sites/default/files/downloads/9781789805673 _ color images . pdf</a><a href="http://www.packtpub.com/sites/default/files/downloads/9781789805673%20_ColorImages.pdf">。</a></p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Conventions used</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">使用的惯例</h1>
+                
+            
+            
+                
+<p>本书通篇使用了许多文本约定。</p>
+<p><kbd>CodeInText</kbd>:表示文本中的码字、数据库表名、文件夹名、文件名、文件扩展名、路径名、伪URL、用户输入和Twitter句柄。下面是一个例子:“在步骤1中，我们使用<kbd>dataset_fashion_mnist()</kbd>函数导入时尚MNIST数据，并检查其训练和测试分区的维度。”</p>
+<p>代码块设置如下:</p>
+<pre>fashion &lt;- dataset_fashion_mnist()<br/>x_train &lt;- fashion$train$x<br/>y_train &lt;- fashion$train$y<br/>x_test &lt;- fashion$test$x<br/>y_test &lt;- fashion$test$y</pre>
+<p><strong>粗体</strong>:表示新术语、重要单词或您在屏幕上看到的单词。例如，菜单或对话框中的单词出现在文本中，如下所示。下面是一个例子:“从开始菜单转到Anaconda Navigator。”</p>
+<p>警告或重要提示如下所示。</p>
+<p>提示和技巧是这样出现的。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Sections</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">部分</h1>
+                
+            
+            
+                
+<p>在这本书里，你会发现几个经常出现的标题(<em>准备好</em>，<em>怎么做...</em>，<em>工作原理...</em>，<em>还有更多...</em>和<em>参见</em>。</p>
+<p>要给出如何完成配方的明确说明，请使用以下章节:</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Getting ready</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">做好准备</h1>
+                
+            
+            
+                
+<p>本节将告诉您制作方法的内容，并介绍如何设置制作方法所需的任何软件或任何初步设置。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How to do it…</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">怎么做…</h1>
+                
+            
+            
+                
+<p>本节包含遵循配方所需的步骤。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>How it works…</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">它是如何工作的…</h1>
+                
+            
+            
+                
+<p>这一部分通常包括对前一部分发生的事情的详细解释。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>There's more…</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">还有更多…</h1>
+                
+            
+            
+                
+<p>这一部分包含了关于配方的附加信息，以使你对配方有更多的了解。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>See also</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">请参见</h1>
+                
+            
+            
+                
+<p>这个部分提供了一些有用的链接，可以链接到食谱的其他有用信息。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Get in touch</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">取得联系</h1>
+                
+            
+            
+                
+<p>我们随时欢迎读者的反馈。</p>
+<p class="mce-root"><strong>总体反馈</strong>:如果您对这本书的任何方面有疑问，请在邮件主题中提及书名，并在<kbd>customercare@packtpub.com</kbd>发送电子邮件给我们。</p>
+<p><strong>勘误表</strong>:虽然我们已经尽一切努力确保内容的准确性，但错误还是会发生。如果你在这本书里发现了一个错误，请告诉我们，我们将不胜感激。请访问<a href="https://www.packtpub.com/support/errata" target="_blank">www.packtpub.com/support/errata</a>，选择您的图书，点击勘误表提交表格链接，并输入详细信息。</p>
+<p class="mce-root"/>
+<p class="mce-root"/>
+<p><strong>盗版</strong>:如果您在互联网上遇到我们作品的任何形式的非法拷贝，如果您能提供我们的地址或网站名称，我们将不胜感激。请通过<kbd>copyright@packt.com</kbd>联系我们，并提供材料链接。</p>
+<p class="mce-root"><strong>如果你有兴趣成为一名作家</strong>:如果有一个你擅长的主题，并且你有兴趣写书或投稿，请访问<a href="http://authors.packtpub.com/" target="_blank">authors.packtpub.com</a>。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Reviews</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">复习</h1>
+                
+            
+            
+                
+<p>请留下评论。一旦你阅读并使用了这本书，为什么不在你购买它的网站上留下评论呢？潜在的读者可以看到并使用您不带偏见的意见来做出购买决定，我们Packt可以了解您对我们产品的看法，我们的作者可以看到您对他们的书的反馈。谢谢大家！</p>
+<p>有关Packt的更多信息，请访问<a href="http://www.packt.com/" target="_blank">packt.com</a>。<a href="https://www.packtpub.com/" target="_blank"/></p>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>

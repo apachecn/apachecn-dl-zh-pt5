@@ -1,0 +1,366 @@
+<html><head/><body>
+<html>
+  <head>
+    <title>Chapter 5. Analyzing Sentiment with a Bidirectional LSTM</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div/><div><div><div><div><h1 class="title" id="calibre_pb_0">第五章。用双向LSTM分析情感</h1></div></div></div><p class="calibre8">为了更好地理解前两章中介绍的常用递归神经网络和单词嵌入，这一章更实用一些。</p><p class="calibre8">这也是向读者介绍深度学习的一个新应用的机会，情感<a id="id226" class="calibre1"/>分析，这是<strong class="calibre2">自然语言处理</strong> ( <strong class="calibre2"> NLP </strong>)的另一个领域。这是一个多对一的方案，一个可变长度的单词序列必须被分配给一个类。可以类似地使用这种方案的一个NLP问题是语言检测(英语、法语、德语、意大利语等等)。</p><p class="calibre8">前一章演示了如何从头开始构建递归神经网络，而本章则展示了如何使用预构建的模块来帮助实现和训练模型。由于这个例子，读者应该能够决定什么时候在他们的项目中使用Keras。</p><p class="calibre8">本章阐述了以下几点:</p><div><ul class="itemizedlist"><li class="listitem">递归神经网络和单词嵌入概述</li><li class="listitem">情感分析</li><li class="listitem">喀拉斯图书馆</li><li class="listitem">双向递归网络</li></ul></div><p class="calibre8">自动情感分析是识别文本中表达的观点的问题。它通常包括将文本分类成类别，例如<em class="calibre12">正面</em>、<em class="calibre12">负面</em>和<em class="calibre12">中性</em>。观点是几乎所有人类活动的核心，也是我们行为的关键影响因素。</p><p class="calibre8">最近，神经网络和深度学习方法已经被用于构建情感分析系统。这种系统具有自动学习一组特征的能力，以克服手工方法的缺点。</p><p class="calibre8"><strong class="calibre2">递归神经网络</strong> ( <strong class="calibre2"> RNN </strong>)已经在文献中被证明是一种非常有用的技术，用于表示顺序输入，例如文本。递归<a id="id227" class="calibre1"/>神经网络的一个特殊扩展，称为<strong class="calibre2">双向递归神经网络</strong> ( <strong class="calibre2"> BRNN </strong>)可以捕捉文本中前后<a id="id228" class="calibre1"/>的上下文信息。</p><p class="calibre8">在这一章<a id="id229" class="calibre1"/>中，我们将给出一个例子，展示使用<strong class="calibre2">长短期记忆</strong> ( <strong class="calibre2"> LSTM </strong>)架构的双向递归神经网络如何用于处理情感分析的问题。我们的目标是实现一个模型，在该模型中，给定一个文本输入(即一个单词序列)，该模型试图预测它是积极的、消极的还是中性的。</p></div></body></html>
+
+
+<html>
+  <head>
+    <title>Chapter 5. Analyzing Sentiment with a Bidirectional LSTM</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h1 class="title" id="calibre_pb_1"><a id="ch05lvl1sec52" class="calibre1"/>安装和配置Keras</h1></div></div></div><p class="calibre8">Keras是一种高级神经网络API，用Python编写，能够运行在TensorFlow或Theano之上。它的开发是为了使实施<a id="id231" class="calibre1"/>深度学习模型对于研发来说尽可能的快速和简单。您可以使用conda轻松安装Keras，如下所示:</p><div><pre class="programlisting">
+<strong class="calibre2">conda</strong> install keras</pre></div><p class="calibre8">编写Python代码时，导入Keras会告诉您使用了哪个后端:</p><div><pre class="programlisting">&gt;&gt;&gt; import keras
+<em class="calibre12">Using Theano backend.</em>
+<em class="calibre12">Using cuDNN version 5110 on context None</em>
+<em class="calibre12">Preallocating 10867/11439 Mb (0.950000) on cuda0</em>
+<em class="calibre12">Mapped name None to device cuda0: Tesla K80 (0000:83:00.0)</em>
+<em class="calibre12">Mapped name dev0 to device cuda0: Tesla K80 (0000:83:00.0)</em>
+<em class="calibre12">Using cuDNN version 5110 on context dev1</em>
+<em class="calibre12">Preallocating 10867/11439 Mb (0.950000) on cuda1</em>
+<em class="calibre12">Mapped name dev1 to device cuda1: Tesla K80 (0000:84:00.0)</em>
+</pre></div><p class="calibre8">如果您安装了Tensorflow，它可能不会使用。要指定使用哪个后端，请编写一个Keras配置文件，<code class="email">~/.keras/keras.json:</code></p><div><pre class="programlisting">{
+    "epsilon": 1e-07,
+    "floatx": "float32",
+    "image_data_format": "channels_last",
+    "backend": "theano"
+}</pre></div><p class="calibre8">也可以用环境变量直接指定Theano后端:</p><div><pre class="programlisting">KERAS_BACKEND=theano <strong class="calibre2">python</strong>
+</pre></div><p class="calibre8">注意<a id="id232" class="calibre1"/>使用的设备是我们在<code class="email">~/.theanorc </code>文件中为ano指定的设备。也可以用no环境变量来修改这些变量:</p><div><pre class="programlisting">KERAS_BACKEND=theano THEANO_FLAGS=device=cuda,floatX=float32,mode=FAST_RUN <strong class="calibre2">python</strong>
+</pre></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Chapter 5. Analyzing Sentiment with a Bidirectional LSTM</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><div><h2 class="title1" id="calibre_pb_2"><a id="ch05lvl2sec17" class="calibre1"/>使用Keras编程</h2></div></div></div><p class="calibre8">Keras提供了一套数据预处理和建模的方法。</p><p class="calibre8">层和模型是张量和返回张量上的可调用函数。在Keras中，层/模块和模型之间没有区别:模型可以是更大模型的一部分，并由多个层组成。这种子模型表现为具有输入/输出的模块。</p><p class="calibre8">让我们创建一个具有两个线性层、一个ReLU非线性层和一个softmax输出的网络:</p><div><pre class="programlisting">
+<strong class="calibre2">from</strong> keras.layers <strong class="calibre2">import</strong> Input, Dense
+<strong class="calibre2">from</strong> keras.models <strong class="calibre2">import</strong> Model
+
+inputs = Input(<strong class="calibre2">shape</strong>=(784,))
+
+x = Dense(64, <strong class="calibre2">activation</strong>='relu')(inputs)
+predictions = Dense(10, <strong class="calibre2">activation</strong>='softmax')(x)
+model = Model(<strong class="calibre2">inputs</strong>=inputs, <strong class="calibre2">outputs</strong>=predictions)</pre></div><p class="calibre8"><code class="email">model</code>模块包含获取一个或多个输入/输出的输入和输出形状的方法，并列出我们模块的子模块:</p><div><pre class="programlisting">&gt;&gt;&gt; model.input_shape
+<em class="calibre12">(None, 784)</em>
+
+&gt;&gt;&gt; model.get_input_shape_at(0)
+<em class="calibre12">(None, 784)</em>
+
+&gt;&gt;&gt; model.output_shape
+<em class="calibre12">(None, 10)</em>
+
+&gt;&gt;&gt; model.get_output_shape_at(0)
+<em class="calibre12">(None, 10)</em>
+
+&gt;&gt;&gt; model.name
+<em class="calibre12">'sequential_1'</em>
+
+&gt;&gt;&gt; model.input
+<em class="calibre12">/dense_3_input</em>
+
+&gt;&gt;&gt; model.output
+<em class="calibre12">Softmax.0</em>
+
+&gt;&gt;&gt; model.get_output_at(0)
+<em class="calibre12">Softmax.0</em>
+
+&gt;&gt;&gt; model.layers
+<em class="calibre12">[&lt;keras.layers.core.Dense object at 0x7f0abf7d6a90&gt;, &lt;keras.layers.core.Dense object at 0x7f0abf74af90&gt;]</em>
+</pre></div><p class="calibre8">为了<a id="id235" class="calibre1"/>避免指定每一层的输入，Keras提出了一种使用<code class="email">Sequential</code>模块编写模型的函数方式，以构建一个新的模块或模型组合。</p><p class="calibre8">模型的以下定义建立了与前面所示完全相同的模型，用<code class="email">input_dim</code>指定块的输入尺寸，否则将是未知的并产生错误:</p><div><pre class="programlisting">from keras.models import Sequential
+from keras.layers import Dense, Activation
+
+model = Sequential()
+model.add(Dense(<strong class="calibre2">units</strong>=64,<strong class="calibre2"> input_dim</strong>=784, <strong class="calibre2">activation</strong>='relu'))
+model.add(Dense(<strong class="calibre2">units</strong>=10, <strong class="calibre2">activation</strong>='softmax'))</pre></div><p class="calibre8"><code class="email">model</code>被认为是一个模块或层，可以是更大模型的一部分:</p><div><pre class="programlisting">model2 = Sequential()
+model2.add(model)
+model2.add(Dense(<strong class="calibre2">units</strong>=10,<strong class="calibre2"> activation</strong>='softmax'))</pre></div><p class="calibre8">然后可以编译每个模块/模型/层，并用数据进行训练:</p><div><pre class="programlisting">model.compile(<strong class="calibre2">optimizer</strong>='rmsprop',
+              <strong class="calibre2">loss</strong>='categorical_crossentropy',
+              <strong class="calibre2">metrics</strong>=['accuracy'])
+model.fit(data, labels)</pre></div><p class="calibre8">让我们看看Keras的实践。</p></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Chapter 5. Analyzing Sentiment with a Bidirectional LSTM</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><div><h2 class="title1" id="calibre_pb_3"><a id="ch05lvl2sec18" class="calibre1"/> SemEval 2013数据集</h2></div></div></div><p class="calibre8">让我们从准备数据开始。在本章中，我们将使用SemEval 2013竞赛中展示的Twitter情感分类(消息级)监督任务中使用的标准数据集。它包含3662条tweet作为训练集，575条tweet作为开发集，1572条tweet作为测试集。这个数据集中的每个样本都由tweet ID、极性(正极、负极或中性)和tweet组成。</p><p class="calibre8">让我们下载<a id="id237" class="calibre1"/>数据集:</p><div><pre class="programlisting">
+<strong class="calibre2">wget</strong> http://alt.qcri.org/semeval2014/task9/data/uploads/semeval2013_task2_train.zip
+<strong class="calibre2">wget</strong> http://alt.qcri.org/semeval2014/task9/data/uploads/semeval2013_task2_dev.zip
+<strong class="calibre2">wget</strong> http://alt.qcri.org/semeval2014/task9/data/uploads/semeval2013_task2_test_fixed.zip
+<strong class="calibre2">unzip</strong> semeval2013_task2_train.zip
+<strong class="calibre2">unzip</strong> semeval2013_task2_dev.zip
+<strong class="calibre2">unzip</strong> semeval2013_task2_test_fixed.zip</pre></div><p class="calibre8"><strong class="calibre2"> A </strong>是指子任务A，是消息级的情感分类<em class="calibre12">我们本章的研究目的</em>，其中<strong class="calibre2"> B </strong>是指子任务B术语级的情感分析。</p><p class="calibre8">目录不包含标签，只有推文。<code class="email">full</code>包含多一级分类，<em class="calibre12">主观</em>或<em class="calibre12">客观</em>。我们感兴趣的是<code class="email">gold</code>或<code class="email">cleansed</code>目录。</p><p class="calibre8">让我们使用脚本来转换它们:</p><div><pre class="programlisting">
+<strong class="calibre2">pip </strong>install bs4
+<strong class="calibre2">python</strong> download_tweets.py train/cleansed/twitter-train-cleansed-A.tsv &gt; sem_eval2103.train
+<strong class="calibre2">python</strong> download_tweets.py dev/gold/twitter-dev-gold-A.tsv &gt; sem_eval2103.dev
+<strong class="calibre2">python</strong> download_tweets.py SemEval2013_task2_test_fixed/gold/twitter-test-gold-A.tsv &gt; sem_eval2103.test</pre></div></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Preprocessing text data</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch05lvl1sec53" class="calibre1"/>预处理文本数据</h1></div></div></div><p class="calibre8">众所周知，在Twitter上频繁使用URL、用户提及和标签是很常见的。因此，首先我们需要对tweets进行如下预处理。</p><p class="calibre8">确保所有标记都使用空格分隔。每条推文都是小写的。</p><p class="calibre8">URL、用户提及和标签分别被替换为<code class="email">&lt;url&gt;</code>、<code class="email">&lt;user&gt;</code>和<code class="email">&lt;hashtag&gt;</code>标记。这个步骤是使用<code class="email">process</code>函数完成的，它将一条tweet作为输入，使用NLTK <code class="email">TweetTokenizer</code>对其进行标记，对其进行预处理，并返回tweet中的单词集(标记):</p><div><pre class="programlisting">
+<strong class="calibre2">import</strong> re
+<strong class="calibre2">from</strong> nltk.tokenize <strong class="calibre2">import</strong> TweetTokenizer
+
+<strong class="calibre2">def</strong> process(tweet):
+  tknz = TweetTokenizer()
+  tokens = tknz.tokenize(tweet)
+  tweet = " ".join(tokens)
+  tweet = tweet.lower()
+  tweet = re.sub(r'http[s]?://(?:[a-z]|[0-9]|[$-_@.&amp;amp;+]|[!*\(\),]|(?:%[0-9a-f][0-9a-f]))+', '&lt;url&gt;', tweet) # URLs
+  tweet = re.sub(r'(?:@[\w_]+)', '&lt;user&gt;', tweet)  # user-mentions
+  tweet = re.sub(r'(?:\#+[\w_]+[\w\'_\-]*[\w_]+)', '&lt;hashtag&gt;', tweet)  # hashtags
+  tweet = re.sub(r'(?:(?:\d+,?)+(?:\.?\d+)?)', '&lt;number&gt;', tweet)  # numbers
+  <strong class="calibre2">return</strong> tweet.split(" ")</pre></div><p class="calibre8">以<a id="id239" class="calibre1"/>为例，如果我们有tweet <code class="email">RT @mhj: just an example! :D http://example.com #NLP</code>，函数过程如下:</p><div><pre class="programlisting">tweet = 'RT @mhj: just an example! :D http://example.com #NLP'
+<strong class="calibre2">print</strong>(process(tweet))</pre></div><p class="calibre8">返回</p><div><pre class="programlisting">[u'rt', u'\&lt;user\&gt;', u':', u'just', u'an', u'example', u'!', u':d', u'\&lt;url\&gt;', u'\&lt;hashtag\&gt;']</pre></div><p class="calibre8">以下函数用于读取数据集并返回元组列表，其中每个元组表示(tweet，class)的一个样本，class是{0，1或2}中定义极性的整数:</p><div><pre class="programlisting">
+<strong class="calibre2">def </strong>read_data(file_name):
+  tweets = []
+  labels = []
+  polarity2idx = {'positive': 0, 'negative': 1, 'neutral': 2}
+  <strong class="calibre2">with</strong> open(file_name) <strong class="calibre2">as</strong> fin:
+    <strong class="calibre2">for</strong> line <strong class="calibre2">in</strong> fin:
+      _, _, _, _, polarity, tweet = line.strip().split("\t")
+      tweet = process(tweet)
+      cls = polarity2idx[polarity]
+      tweets.append(tweet)
+      labels.append(cls)
+  <strong class="calibre2">return</strong> tweets, labels
+
+train_file = 'sem_eval2103.train'
+dev_file = 'sem_eval2103.dev'
+
+train_tweets, y_train = read_data(train_file)
+dev_tweets, y_dev = read_data(dev_file)</pre></div><p class="calibre8">现在，我们可以构建词汇表，这是一个将每个单词映射到固定索引的字典。下面的函数接收一组数据作为输入，并返回tweets的词汇和最大长度:</p><div><pre class="programlisting">
+<strong class="calibre2">def</strong> get_vocabulary(data):
+  max_len = 0
+  index = 0
+  word2idx = {'&lt;unknown&gt;': index}
+ <strong class="calibre2"> for</strong> tweet <strong class="calibre2">in</strong> data:
+    max_len = max(max_len, len(tweet))
+    <strong class="calibre2">for </strong>word <strong class="calibre2">in</strong> tweet:
+      <strong class="calibre2">if</strong> word <strong class="calibre2">not in</strong> word2idx:
+        index += 1
+        word2idx[word] = index
+  <strong class="calibre2">return</strong> word2idx, max_len
+
+word2idx, max_len = get_vocabulary(train_tweets)
+vocab_size = len(word2idx)</pre></div><p class="calibre8">我们还<a id="id240" class="calibre1"/>需要一个函数来将每条或每组推文<a id="id241" class="calibre1"/>转移到基于词汇的索引中，如果单词存在，或者用未知令牌(索引0)替换<strong class="calibre2">不在词汇中的</strong> ( <strong class="calibre2"> OOV </strong>)单词，如下所示:</p><div><pre class="programlisting">
+<strong class="calibre2">def</strong> transfer(data, word2idx):
+  transfer_data = []
+  <strong class="calibre2">for</strong> tweet <strong class="calibre2">in</strong> data:
+    tweet2vec = []
+    <strong class="calibre2">for</strong> word <strong class="calibre2">in</strong> tweet:
+      <strong class="calibre2">if</strong> word <strong class="calibre2">in</strong> word2idx:
+        tweet2vec.append(word2idx[word])
+      <strong class="calibre2">else:</strong>
+        tweet2vec.append(0)
+    transfer_data.append(tweet2vec)
+  <strong class="calibre2">return</strong> transfer_data
+
+X_train = transfer(train_tweets, word2idx)
+X_dev  = transfer(dev_tweets, word2idx)</pre></div><p class="calibre8">我们可以节省一些内存:</p><div><pre class="programlisting">
+<strong class="calibre2">del</strong> train_tweets, dev_tweets</pre></div><p class="calibre8">Keras提供了一个辅助方法来填充序列，以确保它们都具有相同的长度，以便一批序列可以由一个张量表示，并在CPU或GPU上对张量使用优化的操作。</p><p class="calibre8">默认情况下，该方法在开头填充，这有助于我们获得更好的分类结果:</p><div><img src="img/00085.jpeg" alt="Preprocessing text data" class="calibre9"/></div><p class="calibre10"> </p><div><pre class="programlisting">
+<strong class="calibre2">from</strong> keras.preprocessing.sequence <strong class="calibre2">import</strong> pad_sequences
+X_train = pad_sequences(X_train, <strong class="calibre2">maxlen</strong>=max_len, <strong class="calibre2">truncating</strong>='post')
+X_dev = pad_sequences(X_dev, <strong class="calibre2">maxlen</strong>=max_len, <strong class="calibre2">truncating</strong>='post')</pre></div><p class="calibre8">最后，Keras <a id="id242" class="calibre1"/>提供了一种方法，通过添加一个维度将类转换成它们的独热编码表示:</p><div><img src="img/00086.jpeg" alt="Preprocessing text data" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">用Keras <code class="email">to_categorical</code>方法:</p><div><pre class="programlisting">
+<strong class="calibre2">from</strong> keras.utils.np_utils <strong class="calibre2">import</strong> to_categorical
+y_train = to_categorical(y_train)
+y_dev = to_categorical(y_dev)</pre></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Designing the architecture for the model</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div/><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch05lvl1sec54" class="calibre1"/>设计模型的架构</h1></div></div></div><p class="calibre8">本例中模型的主要<a id="id243" class="calibre1"/>模块如下:</p><div><ul class="itemizedlist"><li class="listitem">首先，输入句子的单词被映射到实数向量。这一步称为单词的矢量表示或单词嵌入(更多细节参见<a class="calibre1" title="Chapter 3. Encoding Word into Vector" href="part0040_split_000.html#164MG1-ccdadb29edc54339afcb9bdf9350ba6b">第三章</a>，<em class="calibre12">将单词编码成矢量</em>)。</li><li class="listitem">然后，这个向量序列由一个使用双LSTM编码器的固定长度和实值向量表示。这个向量总结了输入句子<a id="id244" class="calibre1"/>，并包含基于单词向量的语义、句法和/或情感信息。</li><li class="listitem">最后，这个向量通过一个softmax分类器，将句子分类为阳性、阴性或中性。</li></ul></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Designing the architecture for the model</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_1"><a id="ch05lvl2sec19" class="calibre1"/>词语的向量表示法</h2></div></div></div><p class="calibre8">单词嵌入<a id="id245" class="calibre1"/>是一种将单词表示为实数向量的分布式语义方法。这种表示具有有用的聚类特性，因为语义和句法相关的单词由相似的向量表示(参见<a class="calibre1" title="Chapter 3. Encoding Word into Vector" href="part0040_split_000.html#164MG1-ccdadb29edc54339afcb9bdf9350ba6b">第3章</a>、<em class="calibre12">将单词编码成向量</em>)。</p><p class="calibre8">这一步的主要目的是将每个单词映射到一个连续的、低维的实值向量中，该向量稍后可以用作任何模型的输入。所有的单词向量被堆叠成矩阵<img src="img/00087.jpeg" alt="Vector representations of words" class="calibre23"/>；这里，<em class="calibre12"> N </em>是词汇量，d是向量维数。这个矩阵被称为嵌入层或查找表层。嵌入矩阵可以使用预训练模型初始化，例如<strong class="calibre2"> Word2vec </strong>或<strong class="calibre2"> Glove </strong>。</p><p class="calibre8">在Keras中，我们可以简单地将嵌入层定义如下:</p><div><pre class="programlisting">
+<strong class="calibre2">from</strong> keras.layers <strong class="calibre2">import</strong> Embedding
+d = 100
+emb_layer = Embedding(vocab_size + 1, <strong class="calibre2">output_dim</strong>=d, <strong class="calibre2">input_length</strong>=max_len)</pre></div><p class="calibre8">第一个参数代表词汇大小，<code class="email">output_dim</code>是向量维数，<code class="email">input_length</code>是输入序列的长度。</p><p class="calibre8">让我们将这一层作为输入层添加到模型中，并将模型声明为顺序模型:</p><div><pre class="programlisting">
+<strong class="calibre2">from</strong> keras.models <strong class="calibre2">import </strong>Sequential
+model = Sequential()
+model.add(emb_layer)</pre></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Designing the architecture for the model</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_2"><a id="ch05lvl2sec20" class="calibre1"/>使用双LSTM的句子表征</h2></div></div></div><p class="calibre8">递归<a id="id246" class="calibre1"/>神经网络具有表示句子等序列的能力。然而，在实践中，由于消失/爆炸梯度，学习香草RNN的长期依赖性是困难的。如前一章所述，<strong class="calibre2">长短期记忆</strong> ( <strong class="calibre2"> LSTM </strong>)网络被设计成具有更持久的记忆(即状态)，专门用于保存<a id="id247" class="calibre1"/>和传输长期信息，这使得它们对于捕捉<a id="id248" class="calibre1"/>序列元素之间的长期依赖关系非常有用。</p><p class="calibre8">LSTM单位是本章所用模型的基本组成部分。</p><p class="calibre8">Keras提出了一种方法<code class="email">TimeDistributed</code>，在多个时间步中克隆任何模型，并使其递归。但是对于常用的循环单元(如LSTM ), Keras中已经存在一个模块:</p><div><pre class="programlisting">
+<strong class="calibre2">from</strong> keras.layers <strong class="calibre2">import </strong>LSTM
+rnn_size = 64
+lstm = LSTM(rnn_size, <strong class="calibre2">input_shape</strong>=(max_len, d))</pre></div><p class="calibre8">以下内容完全相同:</p><div><pre class="programlisting">lstm = LSTM(rnn_size, <strong class="calibre2">input_dim</strong>=d, <strong class="calibre2">input_length</strong>=max_len)</pre></div><p class="calibre8">对于随后的层，我们不需要指定输入大小(这是因为LSTM层在嵌入层之后)，因此我们可以简单地如下定义<code class="email">lstm</code>单元:</p><div><pre class="programlisting">lstm = LSTM(rnn_size)</pre></div><p class="calibre8">最后但同样重要的是，在这个模型中，我们希望使用双向LSTM。它已被证明能产生更好的结果，在给定先前单词的情况下捕捉当前单词的含义，以及出现在以下单词之后的单词:</p><div><img src="img/00088.jpeg" alt="Sentence representation using bi-LSTM" class="calibre9"/></div><p class="calibre10"> </p><p class="calibre8">为了让这个单元双向处理输入，我们可以简单地使用双向，一个RNNs的双向包装器:</p><div><pre class="programlisting">
+<strong class="calibre2">from</strong> keras.layers <strong class="calibre2">import </strong>Bidirectional
+bi_lstm = Bidirectional(lstm)
+model.add(bi_lstm)</pre></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Designing the architecture for the model</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre">
+<div><div><div><div><div><h2 class="title1" id="calibre_pb_3"><a id="ch05lvl2sec21" class="calibre1"/>用softmax分类器输出概率</h2></div></div></div><p class="calibre8">最后，我们<a id="id249" class="calibre1"/>可以将从<code class="email">bi_lstm</code>获得的向量传递给softmax分类器，如下所示:</p><div><pre class="programlisting">
+<strong class="calibre2">from</strong> keras.layers<strong class="calibre2"> import</strong> Dense, Activation
+
+nb_classes = 3
+fc = Dense(nb_classes)
+classifier = Activation('softmax')
+model.add(fc)
+model.add(classifier)</pre></div><p class="calibre8">现在，让我们打印模型的摘要:</p><div><pre class="programlisting">print(model.summary())
+Which will end with the results:
+Using Theano backend:
+__________________________________________________________________________________________
+Layer (type)                      Output Shape        Param #         Connected to                     
+=========================================================================================
+embedding_1 (Embedding)           (None, 30, 100)     10000100    embedding_input_1[0][0]          
+_________________________________________________________________________________________
+bidirectional_1 (Bidirectional)   (None, 128)            84480          embedding_1[0][0]                
+__________________________________________________________________________________________
+dense_1 (Dense)                   (None, 3)                387      bidirectional_1[0][0]            
+__________________________________________________________________________________________
+activation_1 (Activation)         (None, 3)                  0              dense_1[0][0]                    
+=========================================================================================
+Total params: 10,084,967
+Trainable params: 10,084,967
+Non-trainable params: 0
+__________________________________________________________________________________________</pre></div></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Compiling and training the model</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch05lvl1sec55" class="calibre1"/>编译和训练模型</h1></div></div></div><p class="calibre8">既然已经定义了模型，就可以开始编译了。为了在Keras中编译模型，我们需要确定优化器、损失函数和可选的评估指标。正如我们之前提到的，问题是<a id="id251" class="calibre1"/>预测推文是正面的、负面的还是中性的。这个问题被称为多类别分类问题。因此，本例中使用的损失(或目标)函数是<code class="email">categorical_crossentropy</code>。我们将使用<code class="email">rmsprop</code>优化器和准确性评估指标。</p><p class="calibre8">在Keras中，您可以找到最先进的优化器、目标和评估指标。使用编译功能在Keras中编译模型非常容易:</p><div><pre class="programlisting">model.compile(<strong class="calibre2">optimizer</strong>='rmsprop',
+          <strong class="calibre2">loss</strong>='categorical_crossentropy',
+          <strong class="calibre2">metrics</strong>=['accuracy'])</pre></div><p class="calibre8">我们已经<a id="id253" class="calibre1"/>定义了模型并编译了它，现在它已经准备好接受训练了。我们可以通过调用拟合函数，根据定义的数据训练或拟合模型。</p><p class="calibre8">训练过程通过数据集运行一定数量的迭代，称为历元，可以使用<code class="email">epochs</code>参数指定。我们还可以使用<code class="email">batch_size</code>参数设置在每一步提供给模型的实例数量。在这种情况下，我们将使用少量的<code class="email">epochs</code> = <code class="email">30</code>，并使用小批量的<code class="email">10</code>。我们还可以在训练期间评估模型，方法是使用<code class="email">validation_data</code>参数显式地输入开发集，或者使用<code class="email">validation_split</code>参数从训练集中选择一个子集。在这种情况下，我们将使用我们之前定义的开发集:</p><div><pre class="programlisting">model.fit(<strong class="calibre2">x</strong>=X_train, <strong class="calibre2">y</strong>=y_train, <strong class="calibre2">batch_size</strong>=10, <strong class="calibre2">epochs</strong>=30, <strong class="calibre2">validation_data</strong>=[X_dev, y_dev])</pre></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Evaluating the model</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch05lvl1sec56" class="calibre1"/>评估模型</h1></div></div></div><p class="calibre8">我们已经在训练测试中训练了模型，现在我们可以在测试集上评估网络的性能。这可以使用<code class="email">evaluation()</code>功能来完成。此函数返回测试模式下模型的损失值和度量值:</p><div><pre class="programlisting">test_file = 'sem_eval2103.test'
+test_tweets, y_test = read_data(test_file)
+
+X_test  = transfer(test_tweets, word2idx)
+
+<strong class="calibre2">del </strong>test_twee 
+
+X_test = pad_sequences(X_test, <strong class="calibre2">maxlen</strong>=max_len, <strong class="calibre2">truncating</strong>='post')
+
+y_test = to_categorical(y_test)
+
+test_loss, test_acc = model.evaluate(X_test, y_test)
+
+<strong class="calibre2">print</strong>("Testing loss: {:.5}; Testing Accuracy: {:.2%}" .format(test_loss, test_acc))</pre></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Saving and loading the model</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch05lvl1sec57" class="calibre1"/>保存并加载模型</h1></div></div></div><p class="calibre8">要保存<a id="id255" class="calibre1"/>Keras模型的权重，只需调用<code class="email">save</code>函数，模型就会被序列化为<code class="email">.hdf5</code>格式:</p><div><pre class="programlisting">model.save('bi_lstm_sentiment.h5')</pre></div><p class="calibre8">要加载<a id="id256" class="calibre1"/>模型，使用Keras提供的<code class="email">load_model</code>函数，如下所示:</p><div><pre class="programlisting">
+<strong class="calibre2">from</strong> keras.models <strong class="calibre2">import</strong> load_model
+loaded_model = load_model('bi_lstm_sentiment.h5')</pre></div><p class="calibre8">现在可以对其进行评估，不需要进行编译。例如，在相同的测试集上，我们必须获得相同的结果:</p><div><pre class="programlisting">test_loss, test_acc = loaded_model.evaluate(X_test, y_test)
+<strong class="calibre2">print</strong>("Testing loss: {:.5}; Testing Accuracy: {:.2%}" .format(test_loss, test_acc))</pre></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Running the example</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch05lvl1sec58" class="calibre1"/>运行示例</h1></div></div></div><p class="calibre8">为了运行<a id="id257" class="calibre1"/>模型，我们可以执行下面的命令行:</p><div><pre class="programlisting">
+<strong class="calibre2">python</strong> bilstm.py</pre></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Further reading</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch05lvl1sec59" class="calibre1"/>延伸阅读</h1></div></div></div><p class="calibre8">请参考以下文章:</p><div><ul class="itemizedlist"><li class="listitem"><em class="calibre12">塞姆瓦尔推特中的情绪分析</em>https://www.cs.york.ac.uk/semeval-2013/task2.html T21</li><li class="listitem"><em class="calibre12">人格洞察与IBM沃森演示</em><a class="calibre1" href="https://personality-insights-livedemo.mybluemix.net/">https://personality-insights-livedemo.mybluemix.net/</a></li><li class="listitem"><em class="calibre12">音调分析仪</em>T29】https://tone-analyzer-demo.mybluemix.net/</li><li class="listitem"><em class="calibre12">凯拉斯</em>T33】https://keras.io/</li><li class="listitem">深度语音:扩展端到端语音识别，Awni Hannun，Carl Case，Jared Casper，Bryan Catanzaro，Greg Diamos，Erich Elsen，Ryan Prenger，Sanjeev Satheesh，Shubho Sengupta，Adam Coates，Andrew Y. Ng，2014</li><li class="listitem">深度递归神经网络语音识别，Alex Graves，Abdel-Rahman Mohamed，Geoffrey Hinton，2013</li><li class="listitem">深度演讲2:英语和普通话的端到端语音识别，Dario Amodei、Rishita Anubhai、Eric Battenberg、Carl Case、Jared Casper、Bryan Catanzaro、陈敬东、Mike Chrzanowski、Adam Coates、Greg Diamos、Erich Elsen、Jesse Engel、Linxi Fan、Christopher Fougner、Tony Han、Awni Hannun、Billy Jun、Patrick LeGresley、Libby Lin、Narang、、Sherjil Ozair、Ryan Prenger、Jonathan Raiman、Sanjeev Satheesh</li></ul></div></div></body></html>
+
+
+<html>
+  <head>
+    <title>Summary</title>
+    <meta name="generator" content="DocBook XSL Stylesheets V1.75.2"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  
+
+</head>
+  <body id="page" class="calibre"><div><div><div><div><h1 class="title" id="calibre_pb_0"><a id="ch05lvl1sec60" class="calibre1"/>总结</h1></div></div></div><p class="calibre8">本章回顾了前几章中介绍的基本概念，同时介绍了一个新的应用程序——情感分析和一个高级库——Keras，以简化使用Theano引擎开发模型的过程。</p><p class="calibre8">这些基本概念包括循环网络、单词嵌入、批量序列填充和一级热编码。提出了双向递归以改进结果。</p><p class="calibre8">在下一章中，我们将看到如何使用另一个库Lasagne将递归应用于图像，它比Keras更轻量级，可以让您更顺利地将库模块与自己的代码混合。</p></div></body></html>
+</body></html>

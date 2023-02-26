@@ -1,0 +1,2481 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Learning Text Representations</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">学习文本表示</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>神经网络只需要数字输入。因此，当我们有文本数据时，我们将它们转换成数字或向量表示，并将其提供给网络。有多种方法可以将输入文本转换成数字形式。比较流行的一些方法有<strong>词频-逆文档频</strong> ( <strong> tf-idf </strong>)、<strong>包词(BOW) </strong>等等。然而，这些方法不能捕捉单词的语义。这意味着这些方法不会理解单词的意思。</p>
+
+<p>在这一章中，我们将学习一种叫做<strong> word2vec </strong>的算法，它将文本输入转换成一个有意义的向量。他们学习给定输入文本中每个单词的语义向量表示。我们将从了解word2vec模型和两种不同类型的word2vec模型开始，这两种模型称为<strong>连续词袋</strong> ( <strong> CBOW </strong>)和跳格模型。接下来，我们将学习如何使用gensim库构建word2vec模型，以及如何在tensorboard中可视化高维单词嵌入。</p>
+
+<p>接下来，我们将学习用于学习文档表示的<strong> doc2vec </strong>模型。我们会了解doc2vec中两种不同的方法叫做<strong>段向量- </strong> <strong>分布式内存</strong> <strong>模型</strong> ( <strong> PV-DM </strong>)和<strong>段向量- </strong> <strong>分布式包字</strong> ( <strong> PV-DBOW </strong>)。我们还将看到如何使用doc2vec执行文档分类。在本章的最后，我们将学习用于学习句子表达的跳过思维算法和快速思维算法。</p>
+
+<p class="mce-root"/>
+
+<p>在本章中，我们将了解以下主题:</p>
+
+<ul>
+
+<li>word2vec模型</li>
+
+<li>使用gensim构建word2vec模型</li>
+
+<li>TensorBoard中单词嵌入的可视化</li>
+
+<li>Doc2vec模型</li>
+
+<li>使用doc2vec查找相似的文档</li>
+
+<li>跳过思想</li>
+
+<li>思维敏捷</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Understanding the word2vec model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">了解word2vec模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>Word2vec是最流行和广泛使用的生成单词嵌入的模型之一。但是什么是单词嵌入呢？单词嵌入是单词在向量空间中的向量表示。word2vec模型生成的嵌入捕获单词的语法和语义含义。对单词进行有意义的矢量表示有助于神经网络更好地理解单词。</p>
+
+<p>例如，让我们来看下面这篇课文:阿奇过去住在纽约，后来他搬到了圣克拉拉。他喜欢苹果和草莓。</p>
+
+<p>Word2vec模型为前面文本中的每个单词生成向量表示。如果我们在嵌入空间中投影和可视化向量，我们可以看到所有相似的单词是如何紧密地绘制在一起的。如下图所示，单词<em>苹果</em>和<em>草莓</em>绘制在一起，单词<em>纽约州</em>和<em>圣克拉拉</em>绘制在一起。它们被绘制在一起是因为word2vec模型了解到<em>苹果</em>和<em>草莓</em>是相似的实体，即水果，而<em>纽约</em>和<em>圣克拉拉</em>是相似的实体，即<em>城市</em>，因此它们的向量(嵌入)彼此相似，这就是它们之间的距离较小的原因:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-1401 image-border" src="img/30025401-9037-42e2-a7c7-09ebeeb6caa0.png" style="width:33.42em;height:24.08em;"/></p>
+
+<p>因此，使用word2vec模型，我们可以学习单词的有意义的向量表示，这有助于神经网络理解单词是关于什么的。对一个单词有一个好的表示在各种任务中都是有用的。由于我们的网络可以理解单词的上下文和句法含义，这将扩展到各种用例，如文本摘要、情感分析、文本生成等。</p>
+
+<p>好吧。但是word2vec模型是如何学习单词嵌入的呢？有两种学习单词嵌入的word2vec模型:</p>
+
+<ol>
+
+<li>CBOW模型</li>
+
+<li>跳格模型</li>
+
+</ol>
+
+<p>我们将深入细节，了解这些模型是如何学习单词的矢量表示的。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Understanding the CBOW model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">了解CBOW模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>假设我们有一个神经网络，它有一个输入层、一个隐藏层和一个输出层。网络的目标是根据一个词周围的词来预测这个词。我们试图预测的单词被称为<strong>目标单词</strong>，围绕目标单词的单词被称为<strong>上下文单词</strong>。</p>
+
+<p class="mce-root"/>
+
+<p>我们用多少上下文单词来预测目标单词？我们使用大小为<img class="fm-editor-equation" src="img/565e5e2c-349b-4dec-8198-86027ebd3b89.png" style="width:0.92em;height:1.00em;"/>的窗口来选择上下文单词。如果窗口大小是2，那么我们使用目标单词之前的两个单词和之后的两个单词作为上下文单词。</p>
+
+<p>我们来考虑一下句子，<em xmlns:epub="http://www.idpf.org/2007/ops">太阳从东方升起</em>以<em xmlns:epub="http://www.idpf.org/2007/ops">升起</em>这个词为目标词。如果我们将窗口大小设置为2，那么我们将前面的两个词<em xmlns:epub="http://www.idpf.org/2007/ops">、</em>和<em xmlns:epub="http://www.idpf.org/2007/ops">、</em>、中的<em xmlns:epub="http://www.idpf.org/2007/ops">和目标词<em xmlns:epub="http://www.idpf.org/2007/ops">上升到</em>之后的两个词<em xmlns:epub="http://www.idpf.org/2007/ops">、</em>作为上下文词，如下图所示:</em></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-1942 image-border" src="img/d67de55c-90c2-4457-a746-c9427430741e.png" style="width:21.58em;height:9.17em;"/></p>
+
+<p>因此，网络的输入是上下文单词，输出是目标单词。我们如何将这些输入馈入网络？神经网络只接受数字输入，所以我们不能将原始的上下文单词直接作为网络的输入。因此，我们使用one-hot编码技术将给定句子中的所有单词转换成数字形式，如下图所示:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-1052 image-border" src="img/50b341fe-78f6-4142-8858-caec284b7d07.png" style="width:11.25em;height:8.33em;"/></p>
+
+<p>下图显示了CBOW模型的体系结构。如您所见，我们将上下文单词、、、孙、in、T22和T24作为输入输入到网络中，它预测目标单词将上升为输出:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-1776 image-border" src="img/38a8ac22-8330-4477-9692-b04fe3326bf6.png" style="width:38.17em;height:29.00em;"/></p>
+
+<p>在初始迭代中，网络不能正确预测目标单词。但是经过一系列的迭代，它学会了使用梯度下降来预测正确的目标单词。使用梯度下降，我们更新网络的权重，并找到可以预测正确目标词的最佳权重。</p>
+
+<p>由于我们有一个输入层、一个隐藏层和一个输出层，如上图所示，我们将有两个权重:</p>
+
+<ul>
+
+<li>输入层到隐藏层的权重，<img class="fm-editor-equation" src="img/662d04d5-e524-4deb-b62d-88965f3729d1.png" style="width:1.08em;height:0.92em;"/></li>
+
+<li>隐藏层到输出层的权重，<img class="fm-editor-equation" src="img/dfbb80c7-0625-43b1-9d59-c3f84e0fa17e.png" style="width:1.67em;height:1.17em;"/></li>
+
+</ul>
+
+<p>在训练过程中，网络将试图找到这两组权重的最佳值，以便它可以预测正确的目标单词。</p>
+
+<p>原来，输入到隐藏层<img class="fm-editor-equation" src="img/662d04d5-e524-4deb-b62d-88965f3729d1.png" style="width:1.25em;height:1.08em;"/>之间的最佳权重形成了单词的向量表示。它们基本上构成了单词的语义。因此，在训练之后，我们简单地移除输出层，取输入层和隐藏层之间的权重，并将它们分配给相应的单词。</p>
+
+<p class="mce-root"/>
+
+<p>训练之后，如果我们看一下<img class="fm-editor-equation" src="img/662d04d5-e524-4deb-b62d-88965f3729d1.png" style="width:1.17em;height:1.00em;"/>矩阵，它代表了每个单词的嵌入。所以，<em>孙</em>的嵌入为[0.0，0.3，0.3，0.6，0.1 ]:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-1054 image-border" src="img/2ae49ea5-39d7-46be-bbfd-b06845fb7491.png" style="width:20.17em;height:11.83em;"/></p>
+
+<p>因此，CBOW模型学习用给定的上下文单词来预测目标单词。它学习使用梯度下降来预测正确的目标单词。在训练过程中，它通过梯度下降来更新网络的权重，并找到可以预测正确目标词的最佳权重。输入层和隐藏层之间的最佳权重形成了单词的矢量表示。因此，在训练之后，我们简单地取输入层和隐藏层之间的权重，并将它们作为向量分配给相应的单词。</p>
+
+<p>现在我们已经对CBOW模型有了直观的理解，我们将进入细节并从数学上学习如何精确地计算单词嵌入。</p>
+
+<p>我们了解到，输入层和隐藏层之间的权重基本上构成了单词的矢量表示。但是CBOW模型到底是如何预测目标词的呢？它如何使用反向传播来学习最佳权重？让我们在下一节看看这个。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>CBOW with a single context word</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">只有一个上下文单词的CBOW</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们了解到，在CBOW模型中，我们试图预测给定上下文单词的目标单词，因此它将一些<img class="fm-editor-equation" src="img/1be066cd-9ae6-4c55-8ea4-bc2e5f280d8e.png" style="width:0.83em;height:0.92em;"/>数量的上下文单词作为输入，并返回一个目标单词作为输出。在只有一个上下文词的CBOW模型中，我们将只有一个上下文词，即<img class="fm-editor-equation" src="img/f767c138-9bb5-4bc2-b598-8c19caab3d5b.png" style="width:2.75em;height:0.92em;"/>。因此，网络只接受一个上下文单词作为输入，并返回一个目标单词作为输出。</p>
+
+<p>在继续之前，首先让我们熟悉一下符号。我们语料库中所有的独特词汇被称为<strong xmlns:epub="http://www.idpf.org/2007/ops">词汇</strong>。考虑到我们在<em xmlns:epub="http://www.idpf.org/2007/ops">理解CBOW模型</em>部分看到的例子，我们在句子中有五个独特的词——<em xmlns:epub="http://www.idpf.org/2007/ops">the</em>、<em xmlns:epub="http://www.idpf.org/2007/ops">孙</em>、<em xmlns:epub="http://www.idpf.org/2007/ops"> rises </em>、中的<em xmlns:epub="http://www.idpf.org/2007/ops">和<em xmlns:epub="http://www.idpf.org/2007/ops"> east </em>。这五个词是我们的词汇。</em></p>
+
+<p>设<img class="fm-editor-equation" src="img/28e68adf-0cf3-41d7-b313-250b1a777f93.png" style="width:0.83em;height:0.92em;"/>表示词汇量的大小(即字数)<img class="fm-editor-equation" src="img/5395fd7f-8249-4750-afec-9c901d8a7f3c.png" style="width:1.00em;height:0.92em;"/>表示隐含层神经元的数量。我们了解到我们有一个输入层、一个隐藏层和一个输出层:</p>
+
+<ul>
+
+<li>输入层由<img class="fm-editor-equation" src="img/10bb5dbd-fdf0-4699-8297-d12490cf3480.png" style="width:11.58em;height:1.08em;"/>表示。当我们说<img class="fm-editor-equation" src="img/70f5dd90-b264-4e2a-9132-1df2e29c5974.png" style="width:1.25em;height:0.92em;"/>时，代表的是词汇表中的<img class="fm-editor-equation" src="img/24d01c97-ea8f-4a0c-8a4c-a1c95e5543fe.png" style="width:1.33em;height:1.08em;"/>输入词。</li>
+
+<li>隐藏层用<img class="fm-editor-equation" src="img/d4db72ad-4b63-4e36-95bd-4bed53452038.png" style="width:9.58em;height:0.92em;"/>表示。当我们说<img class="fm-editor-equation" src="img/55fb0590-0038-4c33-a828-f1e509469be6.png" style="width:1.00em;height:1.17em;"/>时，它代表隐藏层中的<img class="fm-editor-equation" src="img/0c4beba7-b212-4130-b23c-5891a33120e2.png" style="width:1.58em;height:1.50em;"/>神经元。</li>
+
+<li>输出层用<img class="fm-editor-equation" src="img/bf19185d-47ce-48e8-a5b9-8abe0d83f9be.png" style="width:11.08em;height:1.17em;"/>表示。当我们说<img class="fm-editor-equation" src="img/1707ff27-1948-48c5-9986-3760050ca4d2.png" style="width:1.00em;height:1.00em;"/>时，它代表词汇表中的<img class="fm-editor-equation" src="img/c7991abb-c811-4e4f-b9d0-d150baeb0300.png" style="width:1.33em;height:1.50em;"/>输出单词。</li>
+
+</ul>
+
+<p>输入到隐层权重<img class="fm-editor-equation" src="img/16c17c70-d122-4dd9-8efc-180583d17de6.png" style="width:1.08em;height:0.92em;"/>的维度是<img class="fm-editor-equation" src="img/93436413-de5f-4eed-be42-4804aa6e9c51.png" style="width:2.83em;height:0.83em;"/>(也就是我们的词汇量的<em>大小x隐层神经元的数量</em>)隐藏到输出层权重的维度<img class="fm-editor-equation" src="img/053566fc-39df-4ac1-be14-0504c8e951f0.png" style="width:1.17em;height:0.83em;"/>是<img class="fm-editor-equation" src="img/0938958c-85c1-4482-8438-b0c890b67e05.png" style="width:2.58em;height:0.75em;"/>(也就是隐层神经元的<em>数量x词汇量的</em>)。矩阵元素的表示如下:</p>
+
+<ul>
+
+<li><img class="fm-editor-equation" src="img/88598b9c-17d3-48e2-bf20-f4d173924600.png" style="width:1.75em;height:1.08em;"/>表示输入层节点<img class="fm-editor-equation" src="img/4312bbef-3b4c-4994-8b2d-383de32644dc.png" style="width:1.50em;height:1.08em;"/>和隐藏层节点<img class="fm-editor-equation" src="img/cd0d6d00-0870-44d0-8273-d6d21b5bc57a.png" style="width:1.08em;height:1.25em;"/>之间矩阵中的一个元素</li>
+
+<li><img class="fm-editor-equation" src="img/625fd42e-d7ca-4a5c-9878-aec1f414b10b.png" style="width:1.50em;height:1.08em;"/>表示隐藏层的节点<img class="fm-editor-equation" src="img/95948634-5121-4bb3-ac04-87b3ce8a417b.png" style="width:1.00em;height:1.08em;"/>和输出层的节点<img class="fm-editor-equation" src="img/efe5da3d-88d4-4aef-9e6e-cd8787aa0008.png" style="width:1.08em;height:1.08em;"/>之间的矩阵中的元素</li>
+
+</ul>
+
+<p>下图将有助于我们清楚地理解符号:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-1056 image-border" src="img/8deba7bd-3467-46a7-bcff-38e287a52b68.png" style="width:33.00em;height:21.25em;"/></p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mceNonEditable"/>
+
+<p class="mceNonEditable"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Forward propagation</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">正向传播</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>为了预测给定上下文单词的目标单词，我们需要执行前向传播。</p>
+
+<p>首先，我们将输入<img class="fm-editor-equation" src="img/b59575fa-9574-4b08-847f-c60923c09f48.png" style="width:0.75em;height:0.75em;"/>乘以隐藏层权重的输入<img class="fm-editor-equation" src="img/42869efe-315b-4bb8-acd5-cfba8e46acb6.png" style="width:0.83em;height:0.75em;"/>:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/b08663e6-7e08-4cc9-a0c6-77ce38474012.png" style="width:4.17em;height:1.00em;"/></p>
+
+<p>我们知道每个输入字都是一位热编码的，所以当我们将<img class="fm-editor-equation" src="img/ddf8720e-6c3e-4ade-9245-d78a0e6714bd.png" style="width:0.83em;height:0.83em;"/>乘以<img class="fm-editor-equation" src="img/fd23003b-f971-47e3-8bfb-4cab40fff647.png" style="width:0.92em;height:0.75em;"/>时，我们基本上获得了<img class="fm-editor-equation" src="img/6bf8629c-5577-4e5e-a744-09a8328af6c0.png" style="width:1.17em;height:1.00em;"/>到<img class="fm-editor-equation" src="img/d27e266c-0b00-4cf2-94aa-31dd74ffd685.png" style="width:0.67em;height:1.00em;"/>的<img class="fm-editor-equation" src="img/b1d3087b-3f76-4ff0-ad4a-1b1b76a3e242.png" style="width:1.33em;height:1.08em;"/>行。所以，我们可以直接写为:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/772add17-ac4f-4bbe-a9fb-ca263fa739eb.png" style="width:4.83em;height:1.42em;"/></p>
+
+<p><img class="fm-editor-equation" src="img/0f435fb3-2560-4c5d-9863-7b4647a5a058.png" style="width:3.08em;height:1.67em;"/>基本上暗示了输入单词的矢量表示。让我们用<img class="fm-editor-equation" src="img/4831b672-87ba-497d-8b52-5e80d9098041.png" style="width:1.67em;height:1.17em;"/>来表示输入单词<img class="fm-editor-equation" src="img/1e51dde8-5816-498b-8e09-bd5038617a9d.png" style="width:1.50em;height:0.92em;"/>的向量表示。因此，前面的等式可以写成如下形式:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/14c7bb66-a44c-40c8-b990-51b6b8bc7fc4.png" style="width:43.25em;height:1.25em;"/></p>
+
+<p>现在我们在隐藏层<img class="fm-editor-equation" src="img/4acc897c-0c04-4a77-8527-6e382bdb80f8.png" style="width:0.67em;height:1.00em;"/>，我们有另一组权重，隐藏输出层权重<img class="fm-editor-equation" src="img/fe6b3a36-a507-41df-9cc2-a6aeffa627d4.png" style="width:1.08em;height:0.75em;"/>。我们知道我们的词汇表中有<img class="fm-editor-equation" src="img/64f5782d-47fe-4555-96c5-d5b489ad2acf.png" style="width:0.75em;height:0.92em;"/>个单词，我们需要计算词汇表中每个单词成为目标单词的概率。</p>
+
+<p>让<img class="fm-editor-equation" src="img/b2ebffb6-d301-46a8-bfa5-4fcf004cfc00.png" style="width:1.25em;height:1.08em;"/>表示我们的词汇表中的<img class="fm-editor-equation" src="img/4b807e72-e345-453e-a78c-bf14b788ddc2.png" style="width:1.17em;height:1.25em;"/>单词作为目标单词的分数。分数<img src="img/86f338d1-6f8e-4058-9df1-30d71bbeb2c4.png" style="width:0.92em;height:0.75em;"/>通过将隐藏层的值<img class="fm-editor-equation" src="img/73775ba1-d2ca-49fe-9681-7d397a7e97a0.png" style="width:0.75em;height:1.08em;"/>和隐藏到输出层的权重<img class="fm-editor-equation" src="img/bea30eb3-8cc3-46aa-9be7-ca17659e4f14.png" style="width:1.25em;height:0.83em;"/>相乘来计算。由于我们正在计算单词<img class="fm-editor-equation" src="img/2c437c53-80d9-4115-9efa-4f47205e37ba.png" style="width:0.50em;height:1.17em;"/>的分数，我们将隐藏层<img class="fm-editor-equation" src="img/73775ba1-d2ca-49fe-9681-7d397a7e97a0.png" style="width:0.58em;height:0.83em;"/>乘以矩阵的<img class="fm-editor-equation" src="img/4b807e72-e345-453e-a78c-bf14b788ddc2.png" style="width:1.25em;height:1.33em;"/>列<img class="fm-editor-equation" src="img/e0101955-901b-4d4a-9027-a00033476af1.png" style="width:1.58em;height:1.25em;"/>:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/2454457a-0a5e-4451-90ad-2b1909c822ab.png" style="width:5.67em;height:1.58em;"/></p>
+
+<p>权重矩阵<img class="fm-editor-equation" src="img/e0101955-901b-4d4a-9027-a00033476af1.png" style="width:1.75em;height:1.42em;"/>的<img class="fm-editor-equation" src="img/4b807e72-e345-453e-a78c-bf14b788ddc2.png" style="width:1.25em;height:1.33em;"/>列基本上表示单词<img class="fm-editor-equation" src="img/2c437c53-80d9-4115-9efa-4f47205e37ba.png" style="width:0.42em;height:1.00em;"/>的向量表示。让我们用<img class="fm-editor-equation" src="img/efe6a642-947a-410e-994a-d298b5ab1e70.png" style="width:1.58em;height:1.42em;"/>来表示<img class="fm-editor-equation" src="img/9ef9f1db-e40c-410e-ab64-dc8166e5406b.png" style="width:1.25em;height:1.42em;"/>单词的矢量表示。因此，前面的等式可以写成如下形式:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/f5984dac-97c6-4384-ab34-eed4b8989cb5.png" style="width:42.42em;height:1.75em;"/></p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p>将方程<em> (1) </em>代入方程<em> (2) </em>，我们可以写出如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/8454782c-a236-49f6-a8be-29b282f72385.png" style="width:6.33em;height:1.67em;"/></p>
+
+<p>你能推断出前面的等式想要表达什么吗？我们基本上是在计算输入上下文单词表示<img class="fm-editor-equation" src="img/b1fc0aac-ccdb-40d1-a876-afe56832946b.png" style="width:1.58em;height:1.17em;"/>和我们的词汇表<img class="fm-editor-equation" src="img/efe6a642-947a-410e-994a-d298b5ab1e70.png" style="width:1.92em;height:1.75em;"/>中的<img class="fm-editor-equation" src="img/7c4ef403-fb01-45cb-ad55-474e50a656be.png" style="width:1.08em;height:1.17em;"/>单词表示之间的点积。</p>
+
+<p>计算任意两个向量之间的点积有助于我们理解它们有多相似。因此，计算<img class="fm-editor-equation" src="img/54377cf3-2f02-4baa-a8a3-b7c4c818d703.png" style="width:1.75em;height:1.33em;"/>和<img class="fm-editor-equation" src="img/efe6a642-947a-410e-994a-d298b5ab1e70.png" style="width:2.00em;height:1.83em;"/>之间的点积可以告诉我们词汇表中的<img class="fm-editor-equation" src="img/4de293ce-4181-4416-9548-7d2d3cfced60.png" style="width:1.08em;height:1.17em;"/>单词与输入的上下文单词有多相似。因此，当词汇表中的<img class="fm-editor-equation" src="img/4de293ce-4181-4416-9548-7d2d3cfced60.png" style="width:1.25em;height:1.33em;"/>单词<img class="fm-editor-equation" src="img/e1af9677-c6f2-466f-bb02-6dcbce530271.png" style="width:1.25em;height:1.08em;"/>的得分高时，则意味着单词<img class="fm-editor-equation" src="img/b7ea99e1-97ed-411e-8593-1eff0dea4578.png" style="width:0.42em;height:1.00em;"/>与给定的输入单词相似，并且它是目标单词。类似地，当词汇表<img class="fm-editor-equation" src="img/a00856ab-ad98-4502-8f0a-49340d60e79d.png" style="width:1.17em;height:1.00em;"/>中的<img class="fm-editor-equation" src="img/4de293ce-4181-4416-9548-7d2d3cfced60.png" style="width:1.25em;height:1.33em;"/>单词的分数低时，则意味着单词<img class="fm-editor-equation" src="img/7d1306a6-05a2-4227-addf-8ed05aec706d.png" style="width:0.42em;height:1.00em;"/>与给定的输入单词不相似，并且它不是目标单词。</p>
+
+<p>因此，<img class="fm-editor-equation" src="img/f1bd5535-dded-486c-b909-b4c06128042d.png" style="width:1.17em;height:1.00em;"/>基本上给出了作为目标单词的单词<img class="fm-editor-equation" src="img/facc6cb1-db9d-4ecf-a60e-28a4fd152571.png" style="width:0.42em;height:1.00em;"/>的分数。但是我们没有将<img class="fm-editor-equation" src="img/f1bd5535-dded-486c-b909-b4c06128042d.png" style="width:1.17em;height:1.00em;"/>作为原始分数，而是将它们转换成概率。我们知道softmax函数压缩0到1之间的值，所以我们可以使用softmax函数将<img class="fm-editor-equation" src="img/f1bd5535-dded-486c-b909-b4c06128042d.png" style="width:1.25em;height:1.08em;"/>转换成概率。</p>
+
+<p>我们可以将输出编写如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/55d7d9f4-6b63-48e6-8891-d6c3ac30236e.png" style="width:62.33em;height:5.50em;"/></p>
+
+<p>这里，<img class="fm-editor-equation" src="img/c571759f-1422-406d-9713-80ca2e80320e.png" style="width:1.00em;height:1.00em;"/>告诉我们在给定输入上下文单词的情况下，单词<img class="fm-editor-equation" src="img/bb81e391-269b-4e9d-b719-c6a562784121.png" style="width:0.42em;height:1.00em;"/>相对于目标单词的概率。我们计算词汇表中所有单词的概率，并选择概率最高的单词作为目标单词。</p>
+
+<p>好的，我们的目标函数是什么？也就是说，我们如何计算损失？</p>
+
+<p>我们的目标是找到正确的目标词。设<img class="fm-editor-equation" src="img/ee7a65a2-78a3-48fb-8473-375153d20017.png" style="width:0.92em;height:1.17em;"/>表示正确目标词的概率。所以，我们需要最大化这个概率:</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/3e04e42c-0178-48ac-a12a-611cf58a1ba6.png" style="width:4.33em;height:1.50em;"/></p>
+
+<p class="mce-root CDPAlignLeft CDPAlign">我们不是最大化原始概率，而是最大化对数概率:</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/62e56fe1-4a68-4389-aa0a-597fbf1e35ae.png" style="width:6.75em;height:1.33em;"/></p>
+
+<p class="mce-root">但是为什么我们要最大化对数概率而不是原始概率呢？因为机器在表示分数的浮点方面有局限性，当我们乘以许多概率时，它会导致一个无限小的值。因此，为了避免这种情况，我们使用对数概率，这将确保数值的稳定性。</p>
+
+<p class="mce-root">现在我们有了一个最大化目标，我们需要将其转换为最小化目标，这样我们就可以应用我们最喜欢的梯度下降算法来最小化目标函数。怎样才能把我们的最大化目标变成最小化目标？我们可以通过简单地加上负号来实现。所以我们的目标函数变成如下:</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/802c0bdc-a33b-4eab-9a82-36152c243dd9.png" style="width:7.58em;height:1.25em;"/></p>
+
+<p class="mce-root">损失函数可由下式给出:</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/ccf589ba-6418-4f6b-94bd-610879c30b62.png" style="width:42.08em;height:1.33em;"/></p>
+
+<p>将方程<em> (3) </em>代入方程<em> (4) </em>，我们得到如下结果:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/f75fdf2f-9b33-4340-979b-a69612d2568d.png" style="width:10.67em;height:3.08em;"/></p>
+
+<p class="mce-root">根据对数商法则，<em> log(a/b) = log(a) - log(b) </em>，我们可以将前面的等式改写如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/24907d6f-88c6-4b8d-a094-0f962c167621.png" style="width:17.33em;height:3.58em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/602521e1-4cca-47e3-b589-217278f67647.png" style="width:17.75em;height:4.00em;"/></p>
+
+<p class="mce-root"/>
+
+<p class="mce-root">我们知道<em> log </em>和<em> exp </em>相互抵消，所以我们可以在第一项中取消<em> log </em>和<em> exp </em>，我们最终的损失函数变成如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/15049d3f-2a48-497c-bbf4-e9c1d6b877d0.png" style="width:14.17em;height:4.50em;"/></p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Backward propagation</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">反向传播</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们使用梯度下降算法最小化损失函数。因此，我们反向传播网络，计算损失函数相对于权重的梯度，并更新权重。我们有两组权重，输入到隐藏层权重<img class="fm-editor-equation" src="img/a97130e6-b8ec-4bf8-b44c-cfb431e50af0.png" style="width:1.00em;height:0.83em;"/>和隐藏到输出层权重<img class="fm-editor-equation" src="img/25402288-f99a-46b3-9409-5fc1ad0130a9.png" style="width:1.33em;height:0.92em;"/>。我们计算关于这两个权重的损失梯度，并根据权重更新规则更新它们:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/1b6c6b97-6b29-4494-aaee-2d46ad552afa.png" style="width:7.00em;height:2.17em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/6fda6f1d-81a1-4361-9f7c-55da60e9de05.png" style="width:7.92em;height:2.17em;"/></p>
+
+<p>为了更好地理解反向传播，让我们回忆一下正向传播中涉及的步骤:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/8b5acbdb-48e1-41dd-baf2-c5a65157a656.png" style="width:4.50em;height:1.08em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/b8e6fb04-ba14-4311-9213-efe537f7d5f0.png" style="width:5.33em;height:1.50em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/5a7d022d-3be1-404c-a4dc-9bb4c72ad987.png" style="width:9.83em;height:2.83em;"/></p>
+
+<p>首先，我们计算相对于隐藏到输出层<img class="fm-editor-equation" src="img/e6a825b7-8282-4168-bbc8-df61ede3413b.png" style="width:1.33em;height:0.92em;"/>的损失梯度。我们不能直接从<img class="fm-editor-equation" src="img/6ccca083-758a-4ec5-ae2b-e48ea51a46f7.png" style="width:0.67em;height:0.83em;"/>计算<img class="fm-editor-equation" src="img/a3bce5bb-b087-427e-8922-d0a1959ed411.png" style="width:0.75em;height:0.92em;"/>相对于<img class="fm-editor-equation" src="img/e6a825b7-8282-4168-bbc8-df61ede3413b.png" style="width:1.25em;height:0.83em;"/>的损失梯度，因为损失函数<img class="fm-editor-equation" src="img/a3bce5bb-b087-427e-8922-d0a1959ed411.png" style="width:0.75em;height:0.92em;"/>中没有<img class="fm-editor-equation" src="img/e6a825b7-8282-4168-bbc8-df61ede3413b.png" style="width:1.17em;height:0.83em;"/>项，所以我们应用链式法则如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/8cb9185c-2894-40bd-96fc-9c8b4ad92600.png" style="width:8.25em;height:2.67em;"/></p>
+
+<p class="mce-root"/>
+
+<p>请参考向前传播的方程式来理解导数是如何计算的。</p>
+
+<p>第一项的导数如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/64182944-a208-4c28-957a-246af8a54e18.png" style="width:40.00em;height:2.58em;"/></p>
+
+<p>这里，<img class="fm-editor-equation" src="img/29f4b902-e2cd-4949-88e6-40e4e4755cb2.png" style="width:0.92em;height:0.92em;"/>是误差项，是实际字和预测字之差。</p>
+
+<p>现在，我们将计算第二项的导数。</p>
+
+<p>既然我们知道<img class="fm-editor-equation" src="img/b8e6fb04-ba14-4311-9213-efe537f7d5f0.png" style="width:4.67em;height:1.33em;"/>:</p>
+
+<p class="CDPAlignCenter CDPAlign"><strong> <img class="fm-editor-equation" src="img/65ed56d8-8fd2-421f-a888-85926a972ec6.png" style="width:3.58em;height:2.25em;"/> </strong></p>
+
+<p>因此，相对于<img class="fm-editor-equation" src="img/e6a825b7-8282-4168-bbc8-df61ede3413b.png" style="width:1.83em;height:1.25em;"/> 的<strong xmlns:epub="http://www.idpf.org/2007/ops">损耗梯度<img class="fm-editor-equation" src="img/a3bce5bb-b087-427e-8922-d0a1959ed411.png" style="width:0.92em;height:1.17em;"/>为:</strong></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/d556d3b2-2bbb-4fba-bfe7-79c8115d3b2b.png" style="width:6.33em;height:3.25em;"/></p>
+
+<p>现在，我们计算相对于隐藏层权重<img class="fm-editor-equation" src="img/1e7596aa-79a8-4cbc-a91a-64a0e80bf9b0.png" style="width:1.08em;height:0.92em;"/>的输入的梯度。我们不能直接从<img class="fm-editor-equation" src="img/43ecfc92-17e8-4610-b1bf-54550923efcc.png" style="width:0.75em;height:0.92em;"/>计算导数，因为<img class="fm-editor-equation" src="img/43ecfc92-17e8-4610-b1bf-54550923efcc.png" style="width:0.75em;height:0.92em;"/>中没有<img class="fm-editor-equation" src="img/f3a8d544-9c42-4f28-93e3-a3be04ec4cea.png" style="width:1.17em;height:1.00em;"/>项，所以我们应用链式法则如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/0e103418-91ce-41e4-84bb-481386f8170f.png" style="width:7.83em;height:2.17em;"/></p>
+
+<p>为了计算上式中第一项的导数，我们再次应用链式法则，因为我们不能直接从<img class="fm-editor-equation" src="img/bc927050-b111-4bb2-a438-bd78614fcd8d.png" style="width:0.83em;height:1.08em;"/>计算<img class="fm-editor-equation" src="img/3814d69c-7064-4f02-82b2-75db5faba6cd.png" style="width:0.67em;height:0.83em;"/>相对于<img class="fm-editor-equation" src="img/9785cb31-f498-41ff-919a-40eb62a0853f.png" style="width:1.00em;height:1.17em;"/>的导数:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/df7ae6d8-1595-46b2-86c4-ae9315cb4965.png" style="width:9.67em;height:3.50em;"/></p>
+
+<p class="mce-root"/>
+
+<p>从方程<em> (5) </em>，我们可以写出:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/fc911a96-65f1-4cba-8891-3906670cf422.png" style="width:7.67em;height:3.17em;"/></p>
+
+<p>因为我们知道<img class="fm-editor-equation" src="img/b8e6fb04-ba14-4311-9213-efe537f7d5f0.png" style="width:4.75em;height:1.33em;"/>:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/f1b8ba1a-1ea5-4d87-a495-220e5c316ccd.png" style="width:7.42em;height:3.17em;"/></p>
+
+<p>除了求和，我们可以写:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/a700b684-1d54-49b2-9058-1bafb30d9f98.png" style="width:4.42em;height:2.00em;"/></p>
+
+<p><img class="fm-editor-equation" src="img/be3580f6-a59d-49c0-8ce0-becdb699e0b8.png" style="width:1.92em;height:0.92em;"/>表示词汇表中所有单词的输出向量之和，用它们的预测误差加权。</p>
+
+<p>现在让我们计算第二项的导数。</p>
+
+<p>从我们认识开始，<img class="fm-editor-equation" src="img/8b5acbdb-48e1-41dd-baf2-c5a65157a656.png" style="width:3.17em;height:0.75em;"/>:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/ad2b53dd-8193-4b02-9366-77fb060d676b.png" style="width:3.92em;height:2.00em;"/></p>
+
+<p>因此，损耗梯度<img class="fm-editor-equation" src="img/a3bce5bb-b087-427e-8922-d0a1959ed411.png" style="width:0.75em;height:0.92em;"/>相对于<img class="fm-editor-equation" src="img/1e7596aa-79a8-4cbc-a91a-64a0e80bf9b0.png" style="width:1.08em;height:0.92em;"/> 的<strong xmlns:epub="http://www.idpf.org/2007/ops">给出为:</strong></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/f33f4252-bd4e-4c03-bca5-6b760b09221f.png" style="width:6.83em;height:2.50em;"/></p>
+
+<p>因此，我们的权重更新等式变成如下:</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/8ec5dabb-8b62-406f-8345-41e3407e8e15.png" style="width:7.92em;height:1.00em;"/></p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/8a80e3b8-52a7-438c-9a8d-d277a7cefc07.png" style="width:7.58em;height:1.17em;"/></p>
+
+<p class="mce-root">我们使用前面的等式更新网络的权重，并在训练期间获得最佳权重。隐藏层权重的最佳输入<img class="fm-editor-equation" src="img/2bd9fff6-c950-4bba-afa7-2fcb03f4c13e.png" style="width:1.08em;height:0.92em;"/>，成为我们词汇表中单词的向量表示。</p>
+
+<p><kbd>Single_context_CBOW</kbd>的Python代码如下:</p>
+
+<pre class="mce-root"> def Single_context_CBOW(x, label, W1, W2, loss):<br/><br/>    #forward propagation<br/>    h = np.dot(W1.T, x)<br/>    u = np.dot(W2.T, h)<br/>    y_pred = softmax(u)<br/><br/>    #error<br/>    e = -label + y_pred<br/><br/>    #backward propagation<br/>    dW2 = np.outer(h, e)<br/>    dW1 = np.outer(x, np.dot(W2.T, e))<br/><br/>    #update weights<br/>    W1 = W1 - lr * dW1<br/>    W2 = W2 - lr * dW2<br/><br/>    #loss function<br/>    loss += -float(u[label == 1]) + np.log(np.sum(np.exp(u)))<br/><br/>    return W1, W2, loss</pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>CBOW with multiple context words</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">具有多个上下文单词的CBOW</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在我们已经了解了CBOW模型如何使用单个单词作为上下文，我们将了解当您使用多个单词作为上下文单词时它将如何工作。以多个输入单词作为上下文的CBOW的架构如下图所示:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-1981 image-border" src="img/d8067832-9cf4-4d07-951b-6ad2f0720d48.png" style="width:34.00em;height:31.50em;"/></p>
+
+<p>作为上下文的多个单词和作为上下文的单个单词之间没有太大区别。不同之处在于，对于作为输入的多个上下文单词，我们取所有输入上下文单词的平均值。也就是说，作为第一步，我们向前传播网络，并通过将输入<img xmlns:epub="http://www.idpf.org/2007/ops" class="fm-editor-equation" src="img/239da2e3-155c-48ba-bb32-71d50b821224.png" style="width:0.83em;height:0.83em;"/>与权重<img xmlns:epub="http://www.idpf.org/2007/ops" class="fm-editor-equation" src="img/52646ca3-7984-4386-b57e-0dd3c053db60.png" style="width:0.75em;height:0.67em;"/>相乘来计算<img xmlns:epub="http://www.idpf.org/2007/ops" class="fm-editor-equation" src="img/ba4894e5-f69c-48e4-ad6b-7deb10ff2e41.png" style="width:0.75em;height:1.08em;"/>的值，正如我们在使用单个上下文单词的<em xmlns:epub="http://www.idpf.org/2007/ops"> CBOW一节中看到的:</em></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/ff073da4-ac16-4bd6-9137-26007776bf56.png" style="width:3.83em;height:0.92em;"/></p>
+
+<p>但是，在这里，由于我们有多个上下文单词，我们将有多个输入(即<img class="fm-editor-equation" src="img/7f74c8cb-6fd0-4033-b097-374c7277c5e3.png" style="width:7.17em;height:1.17em;"/>)，其中<img class="fm-editor-equation" src="img/b17c0fb1-83ff-4a04-8e14-3ff7cc39688f.png" style="width:0.67em;height:0.75em;"/>是上下文单词的数量，我们简单地取它们的平均值并乘以权重矩阵，如下所示:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/21dee3f2-48b0-48ad-a685-3cf220a5cea8.png" style="width:11.08em;height:2.00em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/79ec7be5-7da6-485f-9a99-5d69c0ebd372.png" style="width:14.67em;height:2.00em;"/></p>
+
+<p>类似于我们在<em> CBOW和单个上下文单词</em>章节中所学的，<img class="fm-editor-equation" src="img/37ec8731-2be1-4f09-8eef-07cf1731d4f2.png" style="width:1.92em;height:0.75em;"/>代表输入上下文单词<img class="fm-editor-equation" src="img/b6235131-45be-42ad-be4b-854cc46b4aa1.png" style="width:1.58em;height:0.92em;"/>的向量表示。<img class="fm-editor-equation" src="img/591d1ae7-16d0-468c-84b9-db6ce8a5a1cd.png" style="width:2.75em;height:1.08em;"/>代表输入单词<img class="fm-editor-equation" src="img/5f24fc7e-9191-4105-add5-0fc640497cbe.png" style="width:1.58em;height:0.92em;"/>的矢量表示，以此类推。</p>
+
+<p>我们用<img class="fm-editor-equation" src="img/09ff6572-5c5b-41a9-8116-494b59b704e8.png" style="width:1.58em;height:1.08em;"/>表示输入上下文单词<img class="fm-editor-equation" src="img/b6235131-45be-42ad-be4b-854cc46b4aa1.png" style="width:1.42em;height:0.83em;"/>，用<img class="fm-editor-equation" src="img/bfe95f24-ad89-44b6-bd71-d5d4145a9541.png" style="width:1.25em;height:0.83em;"/>表示输入上下文单词<img class="fm-editor-equation" src="img/5f24fc7e-9191-4105-add5-0fc640497cbe.png" style="width:1.17em;height:0.67em;"/>，以此类推。因此，我们可以将前面的等式改写为:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/84b27cb4-4d63-4717-a014-15aa30a2cff9.png" style="width:42.00em;height:2.25em;"/></p>
+
+<p>这里，<img class="fm-editor-equation" src="img/ee8ad712-1053-455a-a687-887767c82a94.png" style="width:0.83em;height:0.92em;"/>代表上下文字数。</p>
+
+<p>计算<img class="fm-editor-equation" src="img/a19f3259-021d-4713-be65-ffb8cfeb8f8a.png" style="width:1.25em;height:1.08em;"/>的值与我们在上一节看到的相同:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/cae8ddb8-09da-423d-b76c-7dcaf67e9e15.png" style="width:46.50em;height:1.92em;"/></p>
+
+<p>这里，<img class="fm-editor-equation" src="img/f2c71772-b8c8-4e08-85a5-81cd43f8e129.png" style="width:1.58em;height:1.42em;"/>表示词汇表中<img class="fm-editor-equation" src="img/debbebe9-f140-4728-99d9-8c20d4e21070.png" style="width:1.33em;height:1.42em;"/>单词的向量表示。</p>
+
+<p>将方程<em> (6) </em>代入方程<em>【7】</em>，我们写出如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/26f9683b-8929-4579-be93-0e9b4e3d1b99.png" style="width:14.42em;height:2.25em;"/></p>
+
+<p>前面的等式给出了词汇表中的<img class="fm-editor-equation" src="img/debbebe9-f140-4728-99d9-8c20d4e21070.png" style="width:1.42em;height:1.58em;"/>单词和给定输入上下文单词的平均表示之间的相似性。</p>
+
+<p>损失函数与我们在单个单词上下文中看到的相同，它被给出为:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/b9a1c6a1-2d8e-49ad-a12a-4e6ac59c4e14.png" style="width:11.92em;height:3.42em;"/></p>
+
+<p>现在，反向传播有一个小的不同。我们知道，在反向传播中，我们计算梯度并根据权重更新规则更新我们的权重。回想一下，在上一节中，我们是这样更新权重的:</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/b12d13c2-602e-474c-b900-3691b46e703c.png" style="width:7.83em;height:1.00em;"/></p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/35ac212c-b0b5-4a0e-98e4-320b0e9e2e90.png" style="width:7.58em;height:1.17em;"/></p>
+
+<p class="mce-root"/>
+
+<p class="mce-root">因为在这里，我们有多个上下文单词作为输入，所以在计算<img class="fm-editor-equation" src="img/ca797f1c-a327-4135-b840-9a76c4a8e94d.png" style="width:0.92em;height:0.75em;"/>时，我们取上下文单词的平均值:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/15493e8e-84c3-43f6-84e0-e8d06230a8a4.png" style="width:14.50em;height:2.08em;"/></p>
+
+<p>计算<img class="fm-editor-equation" src="img/c64c8923-7b7f-428f-960e-96b2caa8f052.png" style="width:1.33em;height:0.92em;"/>与我们在上一节看到的一样:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/7b604533-b018-41f3-ab17-968e367fc5fa.png" style="width:7.58em;height:1.17em;"/></p>
+
+<p>因此，简而言之，在多单词上下文中，我们只需取多个上下文输入单词的平均值，并像在CBOW的单个单词上下文中一样构建模型。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Understanding skip-gram model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">理解跳格模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在，让我们看看word2vec模型的另一个有趣的类型，称为skip-gram。Skip-gram正好是CBOW模型的反向。也就是说，在跳格模型中，我们试图在给定目标单词作为输入的情况下预测上下文单词。如下图所示，我们可以注意到，当<em>上升</em>时我们有了目标单词，我们需要预测上下文单词<em> the、</em>中的sun和<em> the </em>:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-1944 image-border" src="img/870ba64d-fdef-49ca-890c-1accb0b47366.png" style="width:19.08em;height:8.25em;"/></p>
+
+<p>类似于CBOW模型，我们使用窗口大小来确定我们需要预测多少上下文单词。跳跃图模型的体系结构如下图所示。</p>
+
+<p>我们可以看到，它将单个目标单词作为输入，并尝试预测多个上下文单词:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-1812 image-border" src="img/af0c565a-b398-4b1b-bb7a-0a2e5fb818e9.png" style="width:36.25em;height:27.25em;"/></p>
+
+<p>在跳格模型中，我们试图根据目标词来预测上下文词。所以，它将一个目标单词作为输入，返回<img class="fm-editor-equation" src="img/91936d04-a92a-47b2-808c-3e1389753372.png" style="width:0.92em;height:1.00em;"/>上下文单词作为输出，如上图所示。因此，在训练skip-gram模型来预测上下文单词之后，我们对隐藏层<img class="fm-editor-equation" src="img/5f024499-4591-477e-9667-e24e23d802fd.png" style="width:1.25em;height:1.08em;"/>的输入之间的权重变成了单词的向量表示，就像我们在CBOW模型中看到的那样。</p>
+
+<p>现在我们对跳格模型有了一个基本的了解，让我们深入细节，了解它们是如何工作的。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Forward propagation in skip-gram</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">跳格向前传播</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>首先，我们将了解向前传播在跳格模型中是如何工作的。让我们使用CBOW模型中使用的相同符号。跳跃图模型的体系结构如下图所示。如您所见，我们只输入一个目标单词<img class="fm-editor-equation" src="img/60664943-7c5b-41c9-b69c-38d707ad0e14.png" style="width:0.92em;height:0.92em;"/>，它返回<img class="fm-editor-equation" src="img/7073a847-9879-4511-a235-aab29edb2b44.png" style="width:0.67em;height:0.75em;"/>上下文单词作为输出<img class="fm-editor-equation" src="img/1abce1f4-baae-4202-9e58-c3b08e0c7698.png" style="width:0.83em;height:0.92em;"/>:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-1982 image-border" src="img/552225d9-108c-46a4-9b72-dc8895415c23.png" style="width:33.00em;height:44.67em;"/></p>
+
+<p class="mce-root">类似于我们在CBOW中看到的，在<em>正向传播</em>部分，首先我们将输入<img class="fm-editor-equation" src="img/e1fd5da0-c909-4186-b9dd-53dee6356719.png" style="width:0.83em;height:0.83em;"/>乘以隐藏层权重的输入<img class="fm-editor-equation" src="img/8e685519-eb49-4b24-9f91-b9ddacc3eae8.png" style="width:0.92em;height:0.75em;"/>:</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/abe3c86e-c276-456d-ae31-f1760fa3416e.png" style="width:4.17em;height:1.00em;"/></p>
+
+<p class="mce-root"/>
+
+<p>我们可以直接将前面的等式改写为:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/7439c251-2328-4c30-8ef3-efa342622a35.png" style="width:3.92em;height:1.00em;"/></p>
+
+<p>这里，<img class="fm-editor-equation" src="img/a79e9b8a-f7f9-497b-b60a-ff4f80021260.png" style="width:1.83em;height:1.25em;"/>意味着输入单词<img class="fm-editor-equation" src="img/3c25d777-af88-49fa-a1ba-4de48ad5b12f.png" style="width:1.25em;height:0.75em;"/>的矢量表示。</p>
+
+<p>接下来，我们计算<img class="fm-editor-equation" src="img/31bc65cb-80f7-453a-81cf-8248e0c8db91.png" style="width:1.25em;height:1.08em;"/>，这意味着我们的词汇表中的单词<img class="fm-editor-equation" src="img/fdb95f62-9fad-4e54-bdec-1a085f9cc023.png" style="width:1.08em;height:1.25em;"/>和输入的目标单词之间的相似性得分。类似于我们在CBOW模型中看到的，<img class="fm-editor-equation" src="img/31bc65cb-80f7-453a-81cf-8248e0c8db91.png" style="width:1.33em;height:1.17em;"/>可以给出为:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/60fdc55d-bbab-4355-8cc6-b1d6abfbf7dc.png" style="width:5.00em;height:1.42em;"/></p>
+
+<p>我们可以直接将上面的等式改写为:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/c57122ec-3d10-48a7-bd65-abb5f5aa4519.png" style="width:6.25em;height:1.92em;"/></p>
+
+<p>这里，<img class="fm-editor-equation" src="img/1ccd2510-7ece-4313-b6dd-dbd119cd2dc2.png" style="width:1.67em;height:1.50em;"/>暗示了单词<img class="fm-editor-equation" src="img/040097ca-cb43-4dab-94ef-290e17b125d0.png" style="width:0.42em;height:1.00em;"/>的向量表示。</p>
+
+<p>但是，与CBOW模型不同，我们只预测了一个目标单词，这里我们预测了<img class="fm-editor-equation" src="img/1a0af03f-a854-4368-9990-43aeec26fd66.png" style="width:0.92em;height:1.08em;"/>个上下文单词。因此，我们可以将上面的等式改写为:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/f5131630-008b-437d-b8e4-b808d21baebc.png" style="width:15.92em;height:1.75em;"/></p>
+
+<p>因此，<img class="fm-editor-equation" src="img/e6ff7f32-90bd-453e-8df9-76411762aa7b.png" style="width:1.83em;height:1.08em;"/>意味着词汇表中的<img class="fm-editor-equation" src="img/6f3eacb9-617d-48be-997b-9222c5697c97.png" style="width:1.33em;height:1.42em;"/>单词的分数是上下文单词<img class="fm-editor-equation" src="img/e61144a0-5581-48d9-a1b0-8fd115c5f4d1.png" style="width:0.67em;height:0.92em;"/>。那就是:</p>
+
+<ul>
+
+<li><img class="fm-editor-equation" src="img/0cea83ee-9d5b-47ef-b2ef-bf952c60401d.png" style="width:1.92em;height:1.08em;"/>意味着单词<img class="fm-editor-equation" src="img/b28be818-fb99-49f2-9932-dd39f8c7a8b8.png" style="width:0.42em;height:1.00em;"/>的分数是第一个上下文单词</li>
+
+<li><img class="fm-editor-equation" src="img/8edb41b3-3b2f-4c0a-9ec3-1def443cfd5c.png" style="width:1.58em;height:0.92em;"/>暗示单词<img class="fm-editor-equation" src="img/23dade3d-bf24-4335-976a-08795e347b89.png" style="width:0.42em;height:1.00em;"/>的分数是第二上下文单词</li>
+
+<li><img class="fm-editor-equation" src="img/2dbc1d19-b16b-43a5-923b-9a8695fbbdda.png" style="width:2.08em;height:1.17em;"/>暗示单词<img class="fm-editor-equation" src="img/2049eb6f-1418-41db-a43f-0dc3ea3cb896.png" style="width:0.58em;height:1.42em;"/>的分数是第三个上下文单词</li>
+
+</ul>
+
+<p>由于我们想将分数转换成概率，我们应用softmax函数并计算<img class="fm-editor-equation" src="img/b9e66e5e-c83e-452d-9ff2-8244fa6d4b3e.png" style="width:1.33em;height:0.83em;"/>:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/830ca969-b68f-4f5c-942d-4c7d2ab8eba4.png" style="width:47.33em;height:4.17em;"/></p>
+
+<p>这里，<img class="fm-editor-equation" src="img/b9e66e5e-c83e-452d-9ff2-8244fa6d4b3e.png" style="width:1.92em;height:1.17em;"/>意味着词汇表中的<img class="fm-editor-equation" src="img/6f3eacb9-617d-48be-997b-9222c5697c97.png" style="width:1.42em;height:1.58em;"/>单词成为上下文单词<img class="fm-editor-equation" src="img/8df6187b-ea84-4630-b2bb-99f3513ec3a1.png" style="width:0.58em;height:0.83em;"/>的概率。</p>
+
+<p>现在，让我们看看如何计算损失函数。让<img class="fm-editor-equation" src="img/85f31ebd-9b63-4b6a-a2bd-074745b99561.png" style="width:1.33em;height:1.17em;"/>表示正确上下文单词的概率。所以，我们需要最大化这个概率:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/c6abc546-b4ee-4b41-abea-1d9e0e3ae7ef.png" style="width:4.33em;height:1.33em;"/></p>
+
+<p>不是最大化原始概率，而是最大化对数概率:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/749e5fbc-9416-46bb-8e62-aa1836828d68.png" style="width:6.75em;height:1.50em;"/></p>
+
+<p>类似于我们在CBOW模型中看到的，我们通过添加负号将其转化为最小化目标函数:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/97c83a18-fdcb-408d-87f0-dcd3a45889d0.png" style="width:8.00em;height:1.50em;"/></p>
+
+<p>将等式<em> (8) </em>代入前面的等式，我们可以写出如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/f437214e-7a5f-4717-82ae-a94798058816.png" style="width:10.00em;height:2.75em;"/></p>
+
+<p>因为我们有<img class="fm-editor-equation" src="img/2e76d1e7-1b07-4196-8292-82464decc20f.png" style="width:0.92em;height:1.08em;"/>上下文单词，我们取概率的乘积和为:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/cbe9479d-e864-4e77-a76b-a0161b23dadc.png" style="width:12.33em;height:3.25em;"/></p>
+
+<p>因此，根据对数规则，我们可以改写上述方程，我们的最终损失函数变成:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/a98abd9e-b5bc-4c3f-80ca-ec8b73504bc4.png" style="width:17.08em;height:4.17em;"/></p>
+
+<p>看看CBOW和skip-gram模型的损失函数。你会注意到CBOW损失函数和skip-gram损失函数之间的唯一区别是添加了上下文单词<img class="fm-editor-equation" src="img/1ac9a6b6-fc2e-4a8d-b43d-0f5fd7016ceb.png" style="width:0.58em;height:0.67em;"/>。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Backward propagation</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">反向传播</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们使用梯度下降算法最小化损失函数。因此，我们反向传播网络，计算损失函数相对于权重的梯度，并根据权重更新规则更新权重。</p>
+
+<p>首先，我们计算相对于隐藏到输出层的损失梯度<img class="fm-editor-equation" src="img/5575ad1c-031f-4b3d-943d-9fe1ff092277.png" style="width:1.25em;height:0.83em;"/>。我们不能直接从<img class="fm-editor-equation" src="img/bc366eee-0a8a-4feb-8986-4d7ee848fd5b.png" style="width:0.58em;height:0.75em;"/>计算损失相对于<img class="fm-editor-equation" src="img/5575ad1c-031f-4b3d-943d-9fe1ff092277.png" style="width:1.33em;height:0.92em;"/>的导数，因为其中没有<img class="fm-editor-equation" src="img/5575ad1c-031f-4b3d-943d-9fe1ff092277.png" style="width:1.33em;height:0.92em;"/>项，所以我们应用如下所示的链式法则。这与我们在CBOW模型中看到的基本相同，只是这里我们总结了所有上下文单词:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/152f51e3-e4c6-455e-a9a5-5db71a134958.png" style="width:9.50em;height:2.75em;"/></p>
+
+<p>首先，让我们计算第一项:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/217ea4cc-4208-4abc-858a-ec9639c90c62.png" style="width:4.83em;height:2.67em;"/></p>
+
+<p>我们知道<img class="fm-editor-equation" src="img/78f049e9-aa2c-4b6e-be4e-e6d530469692.png" style="width:1.67em;height:1.08em;"/>是误差项，是实际单词和预测单词的差。为了符号简单，我们可以将所有上下文单词的总和写成:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/806b7879-6d72-42c7-9ae4-90bf16dcd0a9.png" style="width:5.50em;height:2.83em;"/></p>
+
+<p>所以，我们可以说:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/4512aed6-0806-43f4-bd04-1bd927e25737.png" style="width:4.75em;height:2.50em;"/></p>
+
+<p>现在，让我们计算第二项。既然我们知道<img class="fm-editor-equation" src="img/04ffe61d-f457-440f-b2ee-065d0de515f4.png" style="width:4.75em;height:1.33em;"/>，我们可以写:</p>
+
+<p class="CDPAlignCenter CDPAlign"><strong> <img class="fm-editor-equation" src="img/146d13a2-d5ea-4031-b930-5da86abe06cf.png" style="width:3.42em;height:2.17em;"/> </strong></p>
+
+<p>因此，相对于<img class="fm-editor-equation" src="img/864f4d04-3109-43ff-ba54-2309fe6318d5.png" style="width:1.25em;height:0.83em;"/> 的<strong xmlns:epub="http://www.idpf.org/2007/ops">损耗梯度<img class="fm-editor-equation" src="img/50d48bac-c87c-4686-b1c0-b7c9ee29dc1e.png" style="width:0.67em;height:0.83em;"/>给出如下:</strong></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/3f716372-88a2-4c88-91e8-3d423577e498.png" style="width:5.08em;height:2.33em;"/></p>
+
+<p class="mce-root"/>
+
+<p>现在，我们计算相对于隐藏层权重<img class="fm-editor-equation" src="img/abb5c13a-1b06-4ce6-9535-8069ca7bad9f.png" style="width:1.00em;height:0.83em;"/>输入的损失梯度。这很简单，与我们在CBOW模型中看到的完全相同:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/26ac31ee-0c19-4154-8bc7-2dab5be38e1a.png" style="width:8.75em;height:2.42em;"/></p>
+
+<p>因此，相对于<img class="fm-editor-equation" src="img/abb5c13a-1b06-4ce6-9535-8069ca7bad9f.png" style="width:0.83em;height:0.67em;"/> 的<strong xmlns:epub="http://www.idpf.org/2007/ops">损耗梯度<img class="fm-editor-equation" src="img/50d48bac-c87c-4686-b1c0-b7c9ee29dc1e.png" style="width:0.75em;height:0.92em;"/>为:</strong></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/73a7b000-52d0-44d6-ae90-2ba997439cb3.png" style="width:5.75em;height:2.08em;"/></p>
+
+<p>在计算梯度之后，我们将我们的权重<em> W </em>和<em>W’</em>更新为:</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/77a93b00-0f6a-485b-9213-2f053d348185.png" style="width:6.50em;height:0.92em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/a1a480ec-be9c-4f1f-a546-9ae95f156091.png" style="width:7.25em;height:0.92em;"/></p>
+
+<p class="mce-root">因此，在训练网络时，我们使用前面的等式更新网络的权重，并获得最佳权重。输入到隐藏层之间的最佳权重，<img class="fm-editor-equation" src="img/8006cddb-a1a5-414d-bf56-cb77755ba238.png" style="width:1.17em;height:1.00em;"/>成为我们词汇表中单词的向量表示。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Various training strategies</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">各种培训策略</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">现在，我们将看看不同的训练策略，它们可以优化和提高我们的word2vec模型的效率。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Hierarchical softmax</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">分级softmax</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在CBOW和skip-gram模型中，我们使用softmax函数来计算单词出现的概率。但是使用softmax函数计算概率在计算上是昂贵的。比方说，我们正在建立一个CBOW模型；我们将词汇表中的<img class="fm-editor-equation" src="img/ba9c9d7a-046a-46c2-ad93-3c770306ac88.png" style="width:1.17em;height:1.25em;"/>单词作为目标单词的概率计算如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/9679ecaa-45cf-4bce-8b85-21ed6c323ba1.png" style="width:8.42em;height:3.00em;"/></p>
+
+<p class="mce-root"/>
+
+<p>如果你看看前面的等式，我们基本上是用词汇表中所有单词<img class="fm-editor-equation" src="img/31854ccf-fede-424d-818f-305ac15843bd.png" style="width:1.08em;height:1.42em;"/>的指数来驱动<img class="fm-editor-equation" src="img/3551b1d9-5ce6-4433-92ef-5a593c9e6068.png" style="width:1.17em;height:1.00em;"/>的指数。我们的复杂度是<img class="fm-editor-equation" src="img/87cf4f3a-baf5-491e-b80b-e45540ec7feb.png" style="width:1.58em;height:0.75em;"/>，其中<img class="fm-editor-equation" src="img/d7d624f5-bf6a-4a35-ae3e-059a99240350.png" style="width:0.67em;height:0.75em;"/>是词汇量。当我们用包含数百万个单词的词汇表来训练word2vec模型时，它的计算开销肯定会很大。因此，为了解决这个问题，我们不使用softmax函数，而是使用分层的softmax函数。</p>
+
+<p>分层的softmax函数使用霍夫曼二叉查找树，并将复杂度显著降低到<img class="fm-editor-equation" src="img/638cfce0-635f-44e9-be0a-1e0d5d99f46e.png" style="width:4.33em;height:1.00em;"/>。如下图所示，在分层softmax中，我们将输出图层替换为二叉查找树:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-1404 image-border" src="img/ff41b350-161f-4d98-86c1-52519381e659.png" style="width:32.50em;height:25.50em;"/></p>
+
+<p>树中的每个叶节点代表词汇表中的一个单词，所有中间节点代表其子节点的相对概率。</p>
+
+<p>给定一个上下文单词，我们如何计算目标单词的概率？我们简单地通过决定左转还是右转来遍历树。如下图所示，在给定某个上下文单词<img class="fm-editor-equation" src="img/839fbeee-e568-440f-be47-d080e80da01e.png" style="width:0.50em;height:0.67em;"/>的情况下，单词<em>飞到</em>成为目标单词的概率被计算为沿着路径的概率的乘积:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/6af5744d-76c7-4328-9ecd-fd0fe9b5395f.png" style="width:16.83em;height:1.25em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/5b801e9f-5594-41b0-b3ea-791da2013858.png" style="width:12.42em;height:1.17em;"/></p>
+
+<p>目标词的概率如下所示:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-1062 image-border" src="img/dc53fb4a-6996-483f-be03-86885b53298e.png" style="width:15.67em;height:11.83em;"/></p>
+
+<p>但是我们如何计算这些概率呢？每个节点<img class="fm-editor-equation" src="img/f85382f5-7066-4de6-bfa9-a1248991e99a.png" style="width:0.67em;height:0.67em;"/>都有一个关联的嵌入(比如说，<img class="fm-editor-equation" src="img/87b82004-c9a2-40d0-9a94-3c7bd6541269.png" style="width:1.08em;height:1.08em;"/>)。为了计算节点的概率，我们将节点的嵌入值<img class="fm-editor-equation" src="img/87b82004-c9a2-40d0-9a94-3c7bd6541269.png" style="width:1.25em;height:1.25em;"/>与隐藏层值<img class="fm-editor-equation" src="img/80974a3f-5565-4985-81de-08a900f927c7.png" style="width:0.67em;height:1.00em;"/>相乘，并应用sigmoid函数。例如，给定上下文单词<img class="fm-editor-equation" src="img/4d992bd5-1e88-477b-a9fd-31bc407d6b3c.png" style="width:0.58em;height:0.83em;"/>，节点<img class="fm-editor-equation" src="img/cc7a19fa-e393-4c69-9b3d-6b9a485cd2ef.png" style="width:0.75em;height:0.75em;"/>取得权利的概率计算如下:</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/022eb4f4-f05f-488b-8ad5-092cac240c54.png" style="width:11.08em;height:1.25em;"/></p>
+
+<p class="mce-root">一旦我们计算了右转的概率，我们就可以通过简单地从1中减去右转的概率来计算左转的概率。</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/d3390104-af49-424d-9cab-9a2f84176099.png" style="width:13.50em;height:1.17em;"/></p>
+
+<p>如果我们将所有叶节点的概率相加，那么它等于1，意味着我们的树已经被规范化，为了找到一个单词的概率，我们只需要评估<img class="fm-editor-equation" src="img/ed24f8a7-44e8-4e19-b7a5-97c4566cdd0c.png" style="width:2.00em;height:1.25em;"/>个节点。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Negative sampling</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">负采样</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>假设我们正在构建一个CBOW模型，我们有一个句子<em xmlns:epub="http://www.idpf.org/2007/ops">鸟儿在天空飞翔。</em>设语境词为<em xmlns:epub="http://www.idpf.org/2007/ops">鸟</em>，<em xmlns:epub="http://www.idpf.org/2007/ops">为</em>，中的<em xmlns:epub="http://www.idpf.org/2007/ops">，<em xmlns:epub="http://www.idpf.org/2007/ops">中的</em>和目标词为<em xmlns:epub="http://www.idpf.org/2007/ops">飞翔。</em></em></p>
+
+<p>每当网络预测到不正确的目标单词时，我们都需要更新网络的权重。所以，除了单词<em>飞</em>，如果一个不同的单词被预测为目标单词，那么我们更新网络。</p>
+
+<p>但这只是一小部分词汇。考虑一下我们的词汇表中有数百万个单词的情况。在这种情况下，我们需要执行多次权重更新，直到网络预测到正确的目标词。这既费时又不是一个有效的方法。因此，我们没有这样做，而是将正确的目标单词标记为正面类别，并从词汇表中抽取一些单词，将其标记为负面类别。</p>
+
+<p>我们在这里所做的基本上是将我们的多项式类问题转换为二元分类问题(即，模型不是试图预测目标词，而是对给定词是否是目标词进行分类)。</p>
+
+<p>该单词被选为负样本的概率被给出为:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/eceda56e-380e-4bb8-8910-b96d059c4269.png" style="width:15.92em;height:3.33em;"/></p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Subsampling frequent words</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">二次抽样常用词</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在我们的语料库中，会有某些词出现的频率非常高，比如<em>中的</em>、<em>就是</em>等等，也有某些词出现的频率很低。为了在这两者之间保持平衡，我们使用了二次采样技术。所以，我们以概率<img class="fm-editor-equation" src="img/d0c8b060-74f7-4551-b98b-be70f5cf0e9f.png" style="width:0.58em;height:0.83em;"/>去除出现频率超过某个阈值的词，可以表示为:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="fm-editor-equation" src="img/58b3bab2-32ac-4361-98c7-003ca670032e.png" style="width:8.33em;height:2.83em;"/></p>
+
+<p>这里，<img class="fm-editor-equation" src="img/e0a0cb07-0547-4e52-a1ab-f0364c8ee42b.png" style="width:0.42em;height:0.92em;"/>是阈值，<img class="fm-editor-equation" src="img/3720374d-c131-4e69-9d11-5bf517a05b92.png" style="width:1.92em;height:0.92em;"/>是单词<img class="fm-editor-equation" src="img/f66887f6-2312-434a-8866-adfc1965a158.png" style="width:0.50em;height:1.25em;"/>的频率。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Building the word2vec model using gensim</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">使用gensim构建word2vec模型</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在我们已经了解了word2vec模型的工作原理，让我们看看如何使用<kbd>gensim</kbd>库构建word2vec模型。Gensim是广泛用于构建向量空间模型的流行科学软件包之一。可以通过<kbd>pip</kbd>安装。所以，我们可以在终端中输入下面的命令来安装<kbd>gensim</kbd>库:</p>
+
+<pre>pip install -U gensim</pre>
+
+<p class="mce-root">现在我们已经安装了gensim，我们将看到如何使用它来构建word2vec模型。你可以从GitHub的<a href="http://bit.ly/2Xjndj4">http://bit.ly/2Xjndj4</a>下载本节使用的数据集以及完整的代码和一步一步的解释。</p>
+
+<p>首先，我们将导入必要的库:</p>
+
+<p>加载数据集</p>
+
+<pre class="mce-root">import warnings<br/>warnings.filterwarnings(action='ignore')<br/><br/>#data processing<br/>import pandas as pd<br/>import re<br/>from nltk.corpus import stopwords<br/>stopWords = stopwords.words('english')<br/><br/>#modelling<br/>from gensim.models import Word2Vec<br/>from gensim.models import Phrases<br/>from gensim.models.phrases import Phraser</pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Loading the dataset</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">加载数据集:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>让我们看看我们从数据中得到了什么:</p>
+
+<pre class="mce-root">data = pd.read_csv('data/text.csv',header=None)</pre>
+
+<p class="mce-root">上述代码生成以下输出:</p>
+
+<pre class="mce-root">data.head()</pre>
+
+<p><img src="img/120fcfd9-82fd-49ed-b5ec-ebcd744496be.png" style="width:28.42em;height:12.17em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign">预处理和准备数据集</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Preprocessing and preparing the dataset</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">定义预处理数据集的函数:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>通过运行以下代码，我们可以看到预处理文本的样子:</p>
+
+<pre>def pre_process(text):<br/>    <br/>    # convert to lowercase<br/>    text = str(text).lower()<br/>    <br/>    # remove all special characters and keep only alpha numeric characters and spaces<br/>    text = re.sub(r'[^A-Za-z0-9\s.]',r'',text)<br/>    <br/>    #remove new lines<br/>    text = re.sub(r'\n',r' ',text)<br/>    <br/>    # remove stop words<br/>    text = " ".join([word for word in text.split() if word not in stopWords])<br/>    <br/>    return text</pre>
+
+<p>我们得到的输出为:</p>
+
+<pre>pre_process(data[0][50])</pre>
+
+<p>预处理整个数据集:</p>
+
+<pre>'agree fancy. everything needed. breakfast pool hot tub nice shuttle airport later checkout time. noise issue tough sleep through. awhile forget noisy door nearby noisy guests. complained management later email credit compd us amount requested would return.'</pre>
+
+<p>genism库需要列表形式的输入:</p>
+
+<pre>data[0] = data[0].map(lambda x: pre_process(x))</pre>
+
+<p class="mce-root"><kbd><em>text = [ [word1, word2, word3], [word1, word2, word3] ]</em></kbd></p>
+
+<p class="mce-root">我们知道数据中的每一行都包含一组句子。所以，我们用<kbd>'.'</kbd>把它们分开，并把它们转换成一个列表:</p>
+
+<p>上述代码生成以下输出:</p>
+
+<pre class="mce-root">data[0][1].split('.')[:5]</pre>
+
+<p>The preceding code generates the following output:</p>
+
+<pre class="mce-root">['stayed crown plaza april april ',
+
+ ' staff friendly attentive',
+
+ ' elevators tiny ',
+
+ ' food restaurant delicious priced little high side',
+
+ ' course washington dc']</pre>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mceNonEditable">因此，如图所示，现在，我们有一个列表中的数据。但是我们需要将它们转换成列表的列表。所以，现在我们再用一个空格<kbd>' '</kbd>把它分开。也就是说，首先，我们用<kbd>'.'</kbd>分割数据，然后我们用<kbd>' '</kbd>分割它们，这样我们就可以在一个列表列表中得到我们的数据:</p>
+
+<p>您可以看到，我们以列表的形式输入内容:</p>
+
+<pre>corpus = []<br/>for line in data[0][1].split('.'):<br/>    words = [x for x in line.split()]<br/>    corpus.append(words)</pre>
+
+<p class="mce-root">将数据集中的整个文本转换为列表列表:</p>
+
+<pre class="mce-root">corpus[:2]<br/><br/>[['stayed', 'crown', 'plaza', 'april', 'april'], ['staff', 'friendly', 'attentive']]</pre>
+
+<p class="mce-root">如图所示，我们成功地将数据集中的整个文本转换为一个列表列表:</p>
+
+<pre class="mce-root">data = data[0].map(lambda x: x.split('.'))<br/><br/>corpus = []<br/>for i in (range(len(data))):<br/>    for line in data[i]:<br/>        words = [x for x in line.split()]<br/>        corpus.append(words)<br/><br/><br/>print corpus[:2]</pre>
+
+<p class="mce-root">现在，我们的问题是，我们的语料库只包含一元词，当我们输入一个二元词时，它不会给出结果，例如，<em> san francisco </em>。</p>
+
+<pre class="mce-root">[['room', 'kind', 'clean', 'strong', 'smell', 'dogs'],<br/><br/> ['generally', 'average', 'ok', 'overnight', 'stay', 'youre', 'fussy']]</pre>
+
+<p class="mce-root">所以我们使用gensim的<kbd>Phrases</kbd>函数，它收集所有一起出现的单词，并在它们之间添加一个下划线。所以，现在<em>旧金山</em>变成了<em>旧金山</em>。</p>
+
+<p class="mce-root">So we use gensim's <kbd>Phrases</kbd> functions, which collects all the words that occur together and adds an underscore between them. So, now <em>san francisco</em> becomes <em>san_francisco</em>.</p>
+
+<p class="mce-root">我们将<kbd>min_count</kbd>参数设置为<kbd>25</kbd>，这意味着我们忽略所有出现在<kbd>min_count</kbd>后面的单词和二元模型:</p>
+
+<p class="mce-root">如你所见，现在，在我们的语料库中，一个下划线被添加到了二元模型中:</p>
+
+<pre class="mce-root">phrases = Phrases(sentences=corpus,min_count=25,threshold=50)<br/>bigram = Phraser(phrases)<br/><br/>for index,sentence in enumerate(corpus):<br/>    corpus[index] = bigram[sentence]</pre>
+
+<p class="mce-root">我们从语料库中再检查一个值，看看如何为二元模型添加下划线:</p>
+
+<pre class="mce-root">corpus[111]<br/><br/>[u'connected', u'rivercenter', u'mall', u'downtown', u'san_antonio']</pre>
+
+<div><p>构建模型</p>
+
+</div>
+
+<pre class="mce-root">corpus[9]<br/><br/>[u'course', u'washington_dc']</pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Building the model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">现在让我们建立我们的模型。让我们定义我们的模型需要的一些重要的超参数:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root"><kbd>size</kbd>参数表示向量的大小，也就是我们向量的维数，来表示一个单词。大小可以根据我们的数据大小来选择。如果我们的数据非常小，那么我们可以将大小设置为一个小值，但是如果我们有一个非常大的数据集，那么我们可以将大小设置为<kbd>300</kbd>。在我们的例子中，我们将大小设置为<kbd>100</kbd>。</p>
+
+<ul>
+
+<li class="mce-root"><kbd>window_size</kbd>参数表示目标单词与其相邻单词之间应该考虑的距离。超过目标单词的窗口大小的单词将不被考虑用于学习。通常，小窗口尺寸是优选的。</li>
+
+<li class="mce-root"><kbd>min_count</kbd>参数代表单词的最小频率。如果特定单词的出现次数少于一个<kbd>min_count</kbd>，那么我们可以简单地忽略这个单词。</li>
+
+<li class="mce-root"><kbd>workers</kbd>参数指定了我们训练模型所需的工作线程的数量。</li>
+
+<li class="mce-root">设置<kbd>sg=1</kbd>意味着我们使用skip-gram模型进行训练，但是如果它被设置为<kbd>sg=0</kbd>，则意味着我们使用CBOW模型进行训练。</li>
+
+<li class="mce-root">Setting <kbd>sg=1</kbd> implies that we use the skip-gram model for training, but if it is set to <kbd>sg=0</kbd>, then it implies that we use CBOW model for training.</li>
+
+</ul>
+
+<p class="mce-root">使用以下代码定义所有超参数:</p>
+
+<p>让我们使用gensim的<kbd>Word2Vec</kbd>函数来训练模型:</p>
+
+<pre class="mce-root">size = 100<br/>window_size = 2<br/>epochs = 100<br/>min_count = 2<br/>workers = 4<br/>sg = 1</pre>
+
+<p class="mce-root">一旦我们成功地训练了模型，我们就拯救它们。保存和加载模型非常简单；我们可以简单地分别使用<kbd>save</kbd>和<kbd>load</kbd>函数:</p>
+
+<pre class="mce-root">model = Word2Vec(corpus, sg=1,window=window_size,size=size, min_count=min_count,workers=workers,iter=epochs)</pre>
+
+<p class="mce-root">我们还可以通过使用以下代码<kbd>load</kbd>已经保存的<kbd>Word2Vec</kbd>模型:</p>
+
+<pre class="mce-root">model.save('model/word2vec.model')</pre>
+
+<p class="mce-root">评估嵌入</p>
+
+<pre class="mce-root">model = Word2Vec.load('model/word2vec.model')</pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Evaluating the embeddings</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">现在让我们评估一下我们的模型学到了什么，以及我们的模型对文本语义的理解程度。<kbd>genism</kbd>库提供了<kbd>most_similar</kbd>函数，它给出了与给定单词相关的前几个相似单词。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">正如您在下面的代码中看到的，给定<kbd>san_diego</kbd>作为输入，我们得到所有其他最相似的相关城市名称:</p>
+
+<p class="mce-root">As you can see in the following code, given <kbd>san_diego</kbd> as an input, we are getting all the other related city names that are most similar:</p>
+
+<pre class="mce-root">model.most_similar('san_diego')<br/><br/>[(u'san_antonio', 0.8147615790367126),
+
+ (u'indianapolis', 0.7657858729362488),
+
+ (u'austin', 0.7620342969894409),
+
+ (u'memphis', 0.7541092038154602),
+
+ (u'phoenix', 0.7481759786605835),
+
+ (u'seattle', 0.7471771240234375),
+
+ (u'dallas', 0.7407466769218445),
+
+ (u'san_francisco', 0.7373261451721191),
+
+ (u'la', 0.7354192137718201),
+
+ (u'boston', 0.7213659286499023)]</pre>
+
+<p class="mce-root">我们还可以对向量进行算术运算，以检查向量的精确度，如下所示:</p>
+
+<p class="mce-root">我们还可以在给定的单词集中找到不匹配的单词；例如，在下面名为<kbd>text</kbd>的列表中，除了单词<kbd>holiday</kbd>，其他都是城市名。因为Word2Vec已经理解了这种差异，所以它返回与列表中其他单词不匹配的单词<kbd>holiday</kbd>,如下所示:</p>
+
+<pre class="mce-root">model.most_similar(positive=['woman', 'king'], negative=['man'], topn=1)<br/><br/>[(u'queen', 0.7255150675773621)]</pre>
+
+<p class="mce-root">TensorBoard中单词嵌入的可视化</p>
+
+<pre class="mce-root">text = ['los_angeles','indianapolis', 'holiday', 'san_antonio','new_york']<br/><br/>model.doesnt_match(text)<br/><br/>'holiday'</pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Visualizing word embeddings in TensorBoard</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">在上一节中，我们学习了如何使用gensim构建word2vec模型来生成单词嵌入。现在，我们将看到如何使用TensorBoard可视化这些嵌入。可视化单词嵌入有助于我们理解投影空间，也有助于我们容易地验证嵌入。TensorBoard为我们提供了一个名为<strong>嵌入投影仪</strong>的内置可视化工具，用于交互式可视化和分析高维数据，如我们的单词嵌入。我们将学习如何使用TensorBoard的投影仪一步一步地可视化单词嵌入。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>导入所需的库:</p>
+
+<p>Import the required libraries:</p>
+
+<pre>import warnings
+
+warnings.filterwarnings(action='ignore')<br/><br/>import tensorflow as tf <br/>from tensorflow.contrib.tensorboard.plugins import projector tf.logging.set_verbosity(tf.logging.ERROR)<br/><br/>import numpy as np<br/>import gensim <br/>import os</pre>
+
+<p class="mce-root"/>
+
+<p class="mce-root">加载保存的模型:</p>
+
+<p class="mce-root">加载模型后，我们将把模型中的字数保存到<kbd>max_size</kbd>变量中:</p>
+
+<pre>file_name = "model/word2vec.model"<br/>model = gensim.models.keyedvectors.KeyedVectors.load(file_name)</pre>
+
+<p>我们知道单词向量的维数会是<img class="fm-editor-equation" src="img/660327a5-a215-420a-a69c-d7f9dc635989.png" style="width:3.42em;height:1.00em;"/>。因此，我们初始化一个名为<kbd>w2v</kbd>的矩阵，将形状作为我们的<kbd>max_size</kbd>，这是词汇表的大小，也是模型的第一层大小，这是隐藏层中神经元的数量:</p>
+
+<pre>max_size = len(model.wv.vocab)-1</pre>
+
+<p>现在，我们创建一个名为<kbd>metadata.tsv</kbd>的新文件，其中保存了模型中的所有单词，并将每个单词的嵌入存储在<kbd>w2v</kbd>矩阵中:</p>
+
+<pre>w2v = np.zeros((max_size,model.layer1_size))</pre>
+
+<p>接下来，我们初始化TensorFlow会话:</p>
+
+<pre>if not os.path.exists('projections'):<br/>    os.makedirs('projections')<br/>    <br/>with open("projections/metadata.tsv", 'w+') as file_metadata:<br/>    <br/>    for i, word in enumerate(model.wv.index2word[:max_size]):<br/>        <br/>        #store the embeddings of the word<br/>        w2v[i] = model.wv[word]<br/>        <br/>        #write the word to a file <br/>        file_metadata.write(word + '\n')</pre>
+
+<p>初始化名为<kbd>embedding</kbd>的TensorFlow变量，它保存单词embeddings:</p>
+
+<pre>sess = tf.InteractiveSession()</pre>
+
+<p>初始化所有变量:</p>
+
+<pre>with tf.device("/cpu:0"):
+
+    embedding = tf.Variable(w2v, trainable=False, name='embedding')</pre>
+
+<p>为<kbd>saver</kbd>类创建一个对象，它实际上用于保存和恢复检查点的变量:</p>
+
+<pre>tf.global_variables_initializer().run()</pre>
+
+<p>Create an object to the <kbd>saver</kbd> class, which is actually used for saving and restoring variables to and from our checkpoints:</p>
+
+<pre>saver = tf.train.Saver()</pre>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p class="mceNonEditable"/>
+
+<p class="mceNonEditable">使用<kbd>FileWriter</kbd>，我们可以将摘要和事件保存到我们的事件文件中:</p>
+
+<p>现在，我们初始化投影仪并添加<kbd>embeddings</kbd>:</p>
+
+<pre>writer = tf.summary.FileWriter('projections', sess.graph)</pre>
+
+<p>接下来，我们将我们的<kbd>tensor_name</kbd>指定为<kbd>embedding</kbd>，将<kbd>metadata_path</kbd>指定为<kbd>metadata.tsv</kbd>文件，这里我们有这样的话:</p>
+
+<pre>config = projector.ProjectorConfig()
+
+embed = config.embeddings.add()</pre>
+
+<p>最后，保存模型:</p>
+
+<pre>embed.tensor_name = 'embedding'<br/>embed.metadata_path = 'metadata.tsv'</pre>
+
+<p>现在，打开终端，输入以下命令打开<kbd>tensorboard</kbd>:</p>
+
+<pre>projector.visualize_embeddings(writer, config)<br/><br/>saver.save(sess, 'projections/model.ckpt', global_step=max_size)</pre>
+
+<p>打开TensorBoard后，转到投影仪选项卡。我们可以看到输出，如下图所示。正如您所注意到的，当我们键入单词<kbd>delighted</kbd>时，我们可以看到所有相关的单词，例如<kbd>pleasant</kbd>、<kbd>surprise</kbd>以及更多类似的单词，与此相邻:</p>
+
+<pre><strong>tensorboard --logdir=projections --port=8000</strong></pre>
+
+<p class="mce-root"><img src="img/48201f67-190b-45b6-bcbb-f5141142d804.png"/></p>
+
+<p class="CDPAlignCenter CDPAlign">Doc2vec</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Doc2vec</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">到目前为止，我们已经看到了如何为单词生成嵌入。但是我们如何为文档生成嵌入呢？一种简单的方法是为文档中的每个单词计算一个单词向量，并取其平均值。Mikilow和Le引入了一种新的方法来生成文档的嵌入，而不是仅仅取单词嵌入的平均值。他们引入了两种新方法，称为PV-DM和PV-DBOW。这两种方法都只是添加了一个新的向量，称为<strong>段落id </strong>。让我们看看这两种方法到底是如何工作的。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>段落向量——分布式内存模型</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Paragraph Vector – Distributed Memory model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">PV-DM类似于CBOW模型，其中我们试图预测给定上下文单词的目标单词。在PV-DM中，除了单词向量，我们还引入了一个向量，叫做段落向量。顾名思义，段落向量学习整个段落的向量表示，它捕捉段落的主题。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>如下图所示，每个段落映射到一个唯一的向量，每个单词也映射到一个唯一的向量。因此，为了预测目标单词，我们通过连接或平均来组合单词向量和段落向量:</p>
+
+<p><img class="alignnone size-full wp-image-714 image-border" src="img/46304231-6efb-4064-a6b3-309982ffa2a8.png" style="width:42.67em;height:18.25em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign">但是说了这么多，段落向量对预测目标单词有什么用呢？拥有段落向量到底有什么用？我们知道，我们试图根据上下文来预测目标单词。上下文单词具有固定的长度，并且它们在一个滑动窗口内从一个段落中被采样。</p>
+
+<p>除了上下文单词，我们还利用段落向量来预测目标单词。因为段落向量包含关于段落主题的信息，所以它们包含上下文单词不包含的意思。也就是说，上下文单词仅包含关于特定单词的信息，而段落向量包含关于整个段落的信息。因此，我们可以将段落向量视为一个新单词，它与上下文单词一起用于预测目标单词。</p>
+
+<p>段落向量对于从同一段落中采样的所有上下文单词是相同的，并且不跨段落共享。假设我们有三个段落，<em> p1 </em>，<em> p2 </em>，和<em> p3 </em>。如果上下文是从段落<em> p1 </em>中采样的，则<em> p1 </em>向量用于预测目标单词。如果从段落<em> p2、</em>中采样上下文，则使用<em> p2 </em>向量。因此，段落向量不会跨段落共享。然而，单词向量在所有段落中是共享的。也就是说，单词<em> sun </em>的向量在所有段落中都是相同的。我们称我们的模型为段落向量的分布式记忆模型，因为我们的段落向量充当了保存当前上下文单词中缺失的信息的存储器。</p>
+
+<p>因此，使用随机梯度下降来学习段落向量和单词向量。在每次迭代中，我们从随机段落中抽取上下文单词，尝试预测目标单词，计算误差，并更新参数。在训练之后，段落向量捕获段落(文档)的嵌入。</p>
+
+<p class="mce-root">段落向量——分布式单词包模型</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Paragraph Vector – Distributed Bag of Words model</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">PV-DBOW类似于skip-gram模型，在该模型中，我们尝试基于目标单词来预测上下文单词:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p><img class="alignnone size-full wp-image-715 image-border" src="img/8e0ff5d7-de13-4d77-ba4c-0f997acb9883.png" style="width:22.58em;height:12.67em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="alignnone size-full wp-image-715 image-border" src="img/8e0ff5d7-de13-4d77-ba4c-0f997acb9883.png" style="width:22.58em;height:12.67em;"/></p>
+
+<p class="mce-root">与以前的方法不同，这里我们不试图预测接下来的单词。相反，我们使用段落向量对文档中的单词进行分类。但是它们是如何工作的呢？我们训练模型来理解这个单词是否属于一个段落。我们对一些单词集进行采样，然后将其输入分类器，分类器会告诉我们这些单词是否属于某个特定的段落，这样我们就可以学习段落向量。</p>
+
+<p>使用doc2vec查找相似的文档</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Finding similar documents using doc2vec</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">现在，我们将看到如何使用doc2vec执行文档分类。在本节中，我们将使用20个<kbd xmlns:epub="http://www.idpf.org/2007/ops">news_dataset</kbd>。它由超过20个不同新闻类别的20，000个文档组成。我们将只使用四个类别:<kbd xmlns:epub="http://www.idpf.org/2007/ops">Electronics</kbd>、<kbd xmlns:epub="http://www.idpf.org/2007/ops">Politics</kbd>、<kbd xmlns:epub="http://www.idpf.org/2007/ops">Science</kbd>和<kbd xmlns:epub="http://www.idpf.org/2007/ops">Sports</kbd>。因此，我们在这四个类别下各有1，000个文档。我们用前缀<kbd xmlns:epub="http://www.idpf.org/2007/ops">category_</kbd>重命名文档。例如，所有科学文档都被重命名为<kbd xmlns:epub="http://www.idpf.org/2007/ops">Science_1</kbd>、<kbd xmlns:epub="http://www.idpf.org/2007/ops">Science_2</kbd>等等。重命名后，我们将所有文档合并到一个文件夹中。合并后的数据和完整的代码可以在http://bit.ly/2KgBWYv<a xmlns:epub="http://www.idpf.org/2007/ops" href="http://bit.ly/2KgBWYv">的GitHub上的Jupyter笔记本上找到。</a></h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在，我们训练我们的doc2vec模型来分类并找到这些文档之间的相似之处。</p>
+
+<p>首先，我们导入所有必需的库:</p>
+
+<p>First, we import all the necessary libraries:</p>
+
+<pre class="mce-root">import warnings<br/>warnings.filterwarnings('ignore')<br/><br/>import os<br/>import gensim<br/>from gensim.models.doc2vec import TaggedDocument<br/><br/>from nltk import RegexpTokenizer<br/>from nltk.corpus import stopwords<br/><br/>tokenizer = RegexpTokenizer(r'\w+')<br/>stopWords = set(stopwords.words('english'))</pre>
+
+<p class="mce-root"/>
+
+<p class="mce-root">现在，我们加载所有的文档，并将文件名保存在<kbd>docLabels</kbd>列表中，将文档内容保存在一个名为<kbd>data</kbd>的列表中:</p>
+
+<p>您可以在<kbd>docLabels</kbd>列表中看到我们所有文档的名称:</p>
+
+<pre>docLabels = []<br/>docLabels = [f for f in os.listdir('data/news_dataset') if f.endswith('.txt')]<br/><br/>data = []<br/>for doc in docLabels:<br/>      data.append(open('data/news_dataset/'+doc).read()) </pre>
+
+<p>定义一个名为<kbd>DocIterator</kbd>的类，它充当遍历所有文档的迭代器:</p>
+
+<pre class="mce-root">docLabels[:5]<br/><br/>['Electronics_827.txt',
+
+ 'Electronics_848.txt',
+
+ 'Science829.txt',
+
+ 'Politics_38.txt',
+
+ 'Politics_688.txt']</pre>
+
+<p class="mce-root">为<kbd>DocIterator</kbd>类创建一个名为<kbd>it</kbd>的对象:</p>
+
+<pre>class DocIterator(object):<br/>    def __init__(self, doc_list, labels_list):<br/>        self.labels_list = labels_list<br/>        self.doc_list = doc_list<br/><br/>    def __iter__(self):<br/>        for idx, doc in enumerate(self.doc_list):<br/>            yield TaggedDocument(words=doc.split(), tags=                        [self.labels_list[idx]])</pre>
+
+<p>现在，让我们建立模型。让我们首先定义模型的一些重要超参数:</p>
+
+<pre class="mce-root">it = DocIterator(data, docLabels)</pre>
+
+<p class="mce-root"><kbd>size</kbd>参数代表我们的嵌入大小。</p>
+
+<ul>
+
+<li class="mce-root"><kbd>alpha</kbd>参数代表我们的学习率。</li>
+
+<li class="mce-root"><kbd>min_alpha</kbd>参数意味着我们的学习率<kbd>alpha</kbd>将在训练期间衰减到<kbd>min_alpha</kbd>。</li>
+
+<li class="mce-root">设置<kbd>dm=1</kbd>意味着我们使用分布式内存(PV-DM)模型，如果我们设置<kbd>dm=0</kbd>，则意味着我们使用分布式单词包(PV-DBOW)模型进行训练。</li>
+
+<li class="mce-root"><kbd>min_count</kbd>参数表示单词的最小频率。如果特定单词的出现次数少于一个<kbd>min_count</kbd>，那么我们可以简单地忽略这个单词。</li>
+
+<li class="mce-root">这些超参数定义如下:</li>
+
+</ul>
+
+<p>现在让我们使用<kbd>gensim.models.Doc2ec()</kbd>类来定义模型:</p>
+
+<pre class="mce-root">size = 100<br/>alpha = 0.025<br/>min_alpha = 0.025<br/>dm = 1<br/>min_count = 1</pre>
+
+<p>训练模型:</p>
+
+<pre class="mce-root">model = gensim.models.Doc2Vec(size=size, min_count=min_count, alpha=alpha, min_alpha=min_alpha, dm=dm)<br/>model.build_vocab(it)</pre>
+
+<p class="mce-root">训练后，我们可以使用<kbd>save</kbd>功能保存模型:</p>
+
+<pre>for epoch in range(100):<br/>    model.train(it,total_examples=120)<br/>    model.alpha -= 0.002<br/>    model.min_alpha = model.alpha</pre>
+
+<p class="mce-root">我们可以加载保存的模型，使用<kbd>load</kbd>功能:</p>
+
+<pre class="mce-root">model.save('model/doc2vec.model')</pre>
+
+<p class="mce-root">现在，让我们来评估我们模型的性能。下面的代码显示，当我们将<kbd>Sports_1.txt</kbd>文档作为输入时，它将输入所有具有相应分数的相关文档:</p>
+
+<pre class="mce-root">d2v_model = gensim.models.doc2vec.Doc2Vec.load('model/doc2vec.model')</pre>
+
+<p class="mce-root">理解跳过思想算法</p>
+
+<pre class="mce-root">d2v_model.docvecs.most_similar('Sports_1.txt')<br/><br/>[('Sports_957.txt', 0.719024658203125),
+
+ ('Sports_694.txt', 0.6904895305633545),
+
+ ('Sports_836.txt', 0.6636477708816528),
+
+ ('Sports_869.txt', 0.657712459564209),
+
+ ('Sports_123.txt', 0.6526877880096436),
+
+ ('Sports_4.txt', 0.6499642729759216),
+
+ ('Sports_749.txt', 0.6472041606903076),
+
+ ('Sports_369.txt', 0.6408025026321411),
+
+ ('Sports_167.txt', 0.6392412781715393),
+
+ ('Sports_104.txt', 0.6284008026123047)]</pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Understanding skip-thoughts algorithm</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">Skip-thoughts是一种流行的无监督学习算法，用于学习句子嵌入。我们可以把跳跃式思维看作是跳跃式语法模型的类比。我们了解到，在skip-gram模型中，我们试图预测给定目标词的上下文词，而在skip-thoughts模型中，我们试图预测给定目标句的上下文句。换句话说，我们可以说skip-gram用于学习单词级向量，skip-thoughts用于学习句子级向量。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>跳过思想的算法非常简单。它由编码器-解码器架构组成。编码器的作用是将句子映射到向量，解码器的作用是生成周围的句子，即给定输入句子的前一个和下一个句子。如下图所示，跳过思想向量由一个编码器和两个解码器组成，称为上一个解码器和下一个解码器:</p>
+
+<p><img class="alignnone size-full wp-image-1945 image-border" src="img/a3a66dd3-7fd4-4146-96b1-bfa996767b07.png" style="width:34.92em;height:7.58em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign">接下来讨论编码器和解码器的工作方式:</p>
+
+<p><strong>编码器</strong>:编码器按顺序取出句子中的单词，并生成嵌入。假设我们有一个句子列表。<img class="fm-editor-equation" src="img/9ff4d7cc-8397-4f89-97c7-3c5d7abdb882.png" style="width:9.25em;height:1.17em;"/>。<img class="fm-editor-equation" src="img/6fc4dd51-a29f-4f7b-aab1-7186033226df.png" style="width:1.17em;height:1.33em;"/>表示句子中的<img class="fm-editor-equation" src="img/bef8d295-0f98-49f4-a410-1ddb325c8dcb.png" style="width:1.08em;height:1.00em;"/>词<img class="fm-editor-equation" src="img/519ba00b-ad85-4229-86f4-5f445cbcb6d0.png" style="width:1.08em;height:1.00em;"/>和<img class="fm-editor-equation" src="img/007bc484-5995-4611-95b4-ce2cdfef0737.png" style="width:0.83em;height:1.33em;"/>表示其词嵌入。因此，编码器的隐藏状态被解释为句子表示。</p>
+
+<ul>
+
+<li class="mce-root CDPAlignLeft CDPAlign"><strong>解码器</strong>:有两个解码器，叫做上一个解码器和下一个解码器。顾名思义，上一个解码器用来生成上一句，下一个解码器用来生成下一句。假设我们有一个句子<img class="fm-editor-equation" src="img/827fbe9b-c496-4d53-8496-661a034c727c.png" style="width:1.08em;height:1.00em;"/>，它的嵌入是<img class="fm-editor-equation" src="img/1eace04e-e015-42b2-8cfc-642b9c74520c.png" style="width:0.92em;height:0.83em;"/>。两个解码器都将嵌入内容<img class="fm-editor-equation" src="img/04276d5d-1738-4c0a-9641-2258494dc849.png" style="width:1.08em;height:1.00em;"/>作为输入，前一个解码器试图生成前一个句子<img class="fm-editor-equation" src="img/b1ce0037-7f17-4bb4-b2d1-26262cfd1ba7.png" style="width:1.58em;height:0.75em;"/>，下一个解码器试图生成下一个句子<img class="fm-editor-equation" src="img/e7786bd8-d584-4f33-ae2c-413d6cf2ecb6.png" style="width:2.17em;height:1.00em;"/>。</li>
+
+<li class="mce-root">因此，我们通过最小化前一个和下一个解码器的重构误差来训练我们的模型。因为当解码器重建/生成正确的上一个和下一个句子时，这意味着我们有一个嵌入了<img class="fm-editor-equation" src="img/04276d5d-1738-4c0a-9641-2258494dc849.png" style="width:1.08em;height:1.00em;"/>的有意义的句子。我们将重构误差发送给编码器，以便编码器可以优化嵌入并将更好的表示发送给解码器。一旦我们训练了我们的模型，我们使用我们的编码器为一个新的句子生成嵌入。</li>
+
+</ul>
+
+<p class="mce-root">句子嵌入的快速思考</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Quick-thoughts for sentence embeddings</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">quick-thinks是另一种学习句子嵌入的有趣算法。在skip-thoughts中，我们看到了如何使用编码器-解码器架构来学习句子嵌入。在快速思考中，我们试图了解给定的句子是否与候选句子相关。因此，我们不使用解码器，而是使用分类器来学习给定的输入句子是否与候选句子相关。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>假设<img class="fm-editor-equation" src="img/ee090958-7d89-4951-9f6d-e0c289474fdc.png" style="width:0.75em;height:0.92em;"/>是输入句子，<img class="fm-editor-equation" src="img/b0630a0b-7910-4ef4-920f-f3e4bd309750.png" style="width:2.17em;height:1.00em;"/>是包含与给定输入句子<img class="fm-editor-equation" src="img/ee090958-7d89-4951-9f6d-e0c289474fdc.png" style="width:0.75em;height:0.92em;"/>相关的有效上下文句子和无效上下文句子的候选句子集合。设<strong> <img class="fm-editor-equation" src="img/c23cd410-c1de-405f-97a3-7ea8fc7f9202.png" style="width:1.83em;height:0.67em;"/> </strong>为<img class="fm-editor-equation" src="img/b0630a0b-7910-4ef4-920f-f3e4bd309750.png" style="width:2.33em;height:1.08em;"/>中的任意候选句子。</p>
+
+<p>我们使用两个编码函数，<img class="fm-editor-equation" src="img/5ef11cca-cb04-4487-8662-f8e0b37bffcf.png" style="width:0.58em;height:1.17em;"/>和<img class="fm-editor-equation" src="img/ccb8587f-cc34-49bb-97fd-a0b718b60350.png" style="width:0.58em;height:1.00em;"/>。这两个函数<img class="fm-editor-equation" src="img/2d8df112-c7bf-4a59-aa08-d8d871e8451b.png" style="width:0.42em;height:0.83em;"/>和<img class="fm-editor-equation" src="img/7b85920f-f7e4-434c-bd5e-e42bb0cb8022.png" style="width:0.42em;height:0.75em;"/>的作用是学习嵌入，即分别学习给定句子<img class="fm-editor-equation" src="img/155d14d5-772b-4d94-8817-d0ab1c63d1d6.png" style="width:0.75em;height:0.92em;"/>和候选句子<img class="fm-editor-equation" src="img/c23cd410-c1de-405f-97a3-7ea8fc7f9202.png" style="width:2.50em;height:0.92em;"/>的向量表示。</p>
+
+<p>一旦这两个函数生成了嵌入，我们就使用一个分类器<img class="fm-editor-equation" src="img/620965c2-10d4-44d1-bb08-856aa2a00aa3.png" style="width:0.67em;height:0.92em;"/>，它返回每个候选句子与给定输入句子相关的概率。</p>
+
+<p>如下图所示，第二个候选句子<img class="fm-editor-equation" src="img/414b1656-46a2-4012-925a-ba38a5b3680d.png" style="width:3.25em;height:1.00em;"/>的概率很高，因为它与给定的输入句子<img class="fm-editor-equation" src="img/4b7f2269-0f75-43d1-ae97-1ff5953cd9cd.png" style="width:0.50em;height:0.58em;"/>相关:</p>
+
+<p><img class="alignnone size-full wp-image-1064 image-border" src="img/e1111caf-a7dd-49d0-8727-6d5bf29d2906.png" style="width:40.17em;height:17.25em;"/></p>
+
+<p class="CDPAlignCenter CDPAlign">因此，<img class="fm-editor-equation" src="img/a184fd5a-6449-49b3-a30f-c492a7750c80.png" style="width:2.92em;height:1.08em;"/>是正确句子，即<img class="fm-editor-equation" src="img/a184fd5a-6449-49b3-a30f-c492a7750c80.png" style="width:2.25em;height:0.83em;"/>与给定输入句子<img class="fm-editor-equation" src="img/ee090958-7d89-4951-9f6d-e0c289474fdc.png" style="width:0.75em;height:0.92em;"/>相关的概率计算如下:</p>
+
+<p><img class="fm-editor-equation" src="img/2c9a1c15-b8bc-46cf-892d-d508edf27ee3.png" style="width:19.08em;height:2.58em;"/></p>
+
+<p class="mce-root CDPAlignCenter CDPAlign">这里，<img class="fm-editor-equation" src="img/620965c2-10d4-44d1-bb08-856aa2a00aa3.png" style="width:0.67em;height:0.92em;"/>是个量词。</p>
+
+<p class="mce-root">我们的分类器的目标是识别与给定输入句子<img class="fm-editor-equation" src="img/ee090958-7d89-4951-9f6d-e0c289474fdc.png" style="width:0.75em;height:0.92em;"/>相关的有效上下文句子。因此，我们的成本函数是最大化为给定的输入句子<img class="fm-editor-equation" src="img/280b50e3-3e78-4898-98b4-408efed0901d.png" style="width:0.58em;height:0.75em;"/>找到正确上下文句子的概率。如果它对句子进行了正确的分类，那么这意味着我们的编码器学习了句子的更好的表达。</p>
+
+<p class="mce-root">摘要</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">我们从理解单词嵌入开始这一章，我们看了两种不同类型的Word2Vec模型，称为CBOW，其中我们试图预测给定上下文单词的目标单词，以及skip-gram，其中我们试图预测给定目标单词的上下文单词。</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>We started off the chapter by understanding word embeddings and we looked at two different types of Word2Vec model, called CBOW, where we try to predict the target word given the context word, and skip-gram, where we try to predict the context word given the target word.</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root">然后，我们学习了Word2Vec中的各种训练策略。我们查看了分层softmax，其中我们用霍夫曼二叉树替换了网络的输出层，并将复杂度降低到了<img class="fm-editor-equation" src="img/9508f84c-0cd7-4394-a7f5-cd3f9879ccf9.png" style="width:4.67em;height:1.08em;"/>。我们还学习了负抽样和二次抽样常用词方法。然后，我们了解了如何使用gensim库构建Word2Vec模型，以及如何投影高维单词嵌入以在TensorBoard中可视化它们。接下来，我们研究了doc2vec模型如何与两种类型的doc2vec模型(PV-DM和PV-DBOW)一起工作。接下来，我们学习了跳过思维模型，通过预测给定句子的前一个和下一个句子来学习句子的嵌入，我们还在本章结尾探索了快速思维模型。</p>
+
+<p>在下一章，我们将学习生成模型以及如何使用生成模型生成图像。</p>
+
+<p>问题</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Questions</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">让我们通过回答以下问题来评估我们新获得的知识:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>skip-gram和CBOW模型之间有什么区别？</p>
+
+<ol>
+
+<li>CBOW模型的损失函数是什么？</li>
+
+<li>负抽样的必要性是什么？</li>
+
+<li>定义PV-DM。</li>
+
+<li>编码器和解码器在跳跃思维向量中的作用是什么？</li>
+
+<li>什么是快速思维矢量？</li>
+
+<li>进一步阅读</li>
+
+</ol>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Further reading</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:398be676-029b-4423-ae83-eae14f2a5a79" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">浏览以下链接，深入了解文本的学习表征:</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p><em>单词和短语的分布式表示及其组合性</em>，托马斯·米科洛夫等人著<a href="https://papers.nips.cc/paper/5021-distributed-representations-of-words-and-phrases-and-their-compositionality.pdf">https://papers . nips . cc/paper/5021-单词和短语的分布式表示及其组合性. pdf </a></p>
+
+<ul>
+
+<li><em>句子和文件的分布式表示</em>，作者郭勒和托马斯·米科洛夫，<a href="https://cs.stanford.edu/~quocle/paragraph_vector.pdf">https://cs.stanford.edu/~quocle/paragraph_vector.pdf</a></li>
+
+<li><em>跳过思维向量</em>，瑞安·基罗斯等人著<a href="https://arxiv.org/pdf/1506.06726.pdf">https://arxiv.org/pdf/1506.06726.pdf</a></li>
+
+<li><em>学习句子表述的有效框架</em>，作者拉詹努根·洛格斯瓦兰和洪拉克·李，<a href="https://arxiv.org/pdf/1803.02893.pdf">https://arxiv.org/pdf/1803.02893.pdf</a></li>
+
+<li><em>An Efficient Framework for Learning Sentence Representations</em>, by Lajanugen Logeswaran and Honglak Lee, <a href="https://arxiv.org/pdf/1803.02893.pdf">https://arxiv.org/pdf/1803.02893.pdf</a></li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

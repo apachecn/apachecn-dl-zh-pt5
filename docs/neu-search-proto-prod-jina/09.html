@@ -1,0 +1,1539 @@
+<html><head/><body>
+
+
+
+
+
+
+
+
+
+<title>Chapter 6: Building Practical Examples with Jina</title>
+
+
+
+
+
+
+
+<div><div><h1 class="chapter-number" id="_idParaDest-81"><a id="_idTextAnchor085"/> 6</h1>
+
+<h1 id="_idParaDest-82"><a id="_idTextAnchor086"/>纪娜建筑实例</h1>
+
+<p>在这一章中，我们将使用纪娜的神经搜索框架构建简单的现实世界应用程序。基于我们在前几章学到的概念，我们现在来看看如何使用纪娜来创建有价值的应用程序。</p>
+
+<p>我们将了解纪娜框架的实际方面，以及如何利用它们快速构建和部署复杂的搜索解决方案。我们将带您浏览基于纪娜构建的三个不同应用程序的代码库，并了解您在上一章中学习的不同组件如何协同工作来创建一个搜索应用程序。</p>
+
+<p>我们将在本章中讲述以下三个例子，它们将带你开始纪娜的建筑之旅:</p>
+
+<ul>
+
+<li>问答聊天机器人</li>
+
+<li>时尚图片搜索</li>
+
+<li>多模态搜索</li>
+
+</ul>
+
+<p>在这一章中，我们的目标是让你通过构建实际的例子来理解纪娜的神经搜索框架的潜力。这是一个伟大的踏脚石，冒险进入神经搜索的世界，建立最先进的搜索解决方案。</p>
+
+<h1 id="_idParaDest-83"><a id="_idTextAnchor087"/>技术要求</h1>
+
+<p>按照本章讨论的应用程序代码，克隆位于<a href="">https://github.com/jina-ai/jina/tree/master/jina/helloworld</a>的GitHub存储库。</p>
+
+<h1 id="_idParaDest-84"><a id="_idTextAnchor088"/>问答聊天机器人入门</h1>
+
+<p><strong class="bold"> Q/A聊天机器人</strong>是一个<a id="_idIndexMarker376"/>预建的例子，随纪娜安装而来。要直接体验纪娜的强大功能并快速入门，您可以直接从命令行运行Q/A chatbot示例，甚至不用进入代码。Q/A聊天机器人使用Kaggle的公共Covid Q/A数据集(<a href="">https://www.kaggle.com/datasets/xhlulu/covidqa</a>)，其中包含418个Q/A对(<a href="">https://www.kaggle.com/xhlulu/covidqa</a>)。</p>
+
+<p>按照以下说明设置开发环境并运行问答聊天机器人示例:</p>
+
+<ol>
+
+<li><a id="_idIndexMarker377"/>第一步是从<a id="_idIndexMarker378"/>安装纪娜库<strong class="bold"> Python包索引</strong> ( <strong class="bold"> PyPI </strong>)以及所需的依赖项:<pre><strong class="bold">pip install "jina[demo]"</strong></pre></li>
+
+<li>之后，只需输入以下命令启动您的应用程序:<pre><strong class="bold">jina hello chatbot</strong></pre></li>
+
+</ol>
+
+<p>键入这个命令后，您将在您的<strong class="bold">命令行界面</strong> ( <strong class="bold"> CLI </strong>)上看到<a id="_idIndexMarker379"/>下面的文本:</p>
+
+<div><div><img alt="Figure 6.1 – Q/A chatbot command line &#10;&#10;" height="1001" src="img/Figure_6.01_B17488.jpg" width="1037"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图6.1-问答聊天机器人命令行</p>
+
+<p>如果您的屏幕<a id="_idIndexMarker381"/>在命令行上显示相同的文本，这意味着您已经成功启动了Q/A chatbot示例。现在，是时候打开<strong class="bold">用户界面</strong> ( <strong class="bold"> UI </strong>)玩聊天机器人了。</p>
+
+<p>默认情况下，一个简单的聊天界面<a id="_idIndexMarker382"/>会打开，允许你和问答聊天机器人聊天。如果页面没有自己打开，你可以通过<code>jina/helloworld/chatbot/static</code>打开<code>index.xhtml</code>。</p>
+
+<p>默认情况下或打开<code>index.xhtml</code>文件后，您会看到以下网页:</p>
+
+<div><div><img alt="Figure 6.2 – Q/A chatbot interface&#10;&#10;" height="845" src="img/Figure_6.02_B17488.jpg" width="510"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图6.2-问答聊天机器人界面</p>
+
+<p>您已经成功地<a id="_idIndexMarker383"/>启动了问答聊天应用程序；是时候玩玩它，找点乐子了。您可以向聊天机器人询问任何与Covid相关的事实、数据或问题，并体验其中的神奇之处！</p>
+
+<h2 id="_idParaDest-85"><a id="_idTextAnchor089"/>浏览代码</h2>
+
+<p>现在让我们来看看这个应用程序背后的逻辑，看看纪娜的框架是如何将所有的组件联系在一起，从而产生一个正常运行的问答聊天机器人应用程序的。</p>
+
+<p>为了查看代码并理解在安装纪娜后共同运行该应用程序的不同组件，请按照<code>jina/helloworld/chatbot</code>路径进入聊天机器人目录。这是包含聊天机器人示例代码的主目录:</p>
+
+<pre class="source-code">└── chatbot                    
+
+    ├── app.py
+
+    ├── my_executors.py         
+
+    ├── static/         </pre>
+
+<p>以下是您将在chatbot目录中看到的文件:</p>
+
+<ul>
+
+<li><code>app.py</code>:这是应用程序的主要入口点/大脑。</li>
+
+<li><code>my_executors.py</code>:该文件负责所有的后端处理。它包括应用程序背后的逻辑，在纪娜术语中我们称之为执行者T21。它托管多个执行器来转换、编码和索引数据。</li>
+
+<li><code>static</code>:这个文件夹存放了所有的前端代码，负责在网页浏览器上渲染聊天机器人界面，帮助你与聊天机器人应用程序进行交互。</li>
+
+</ul>
+
+<p>在接下来的小节中，我们将详细了解这些文件的功能。</p>
+
+<h3>app.py</h3>
+
+<p><code>app.py</code>文件<a id="_idIndexMarker386"/>是示例应用程序的入口点。一旦你<a id="_idIndexMarker387"/>输入了<code>jina hello chatbot</code>命令，控制就会转到这个文件。它是应用程序的主要入口点，执行应用程序UI和运行后端代码的所有主要任务。</p>
+
+<p><code>app.py</code>文件执行以下任务，以确保多个组件协同工作，产生所需的结果。</p>
+
+<p>它做的第一件事是使用下面的代码从<code>my_executors.py</code>文件导入所需的执行器:</p>
+
+<pre class="source-code">from my_executors import MyTransformer, MyIndexer</pre>
+
+<p>这两个执行器都是从纪娜的基类<code>Executor</code>派生的:</p>
+
+<ul>
+
+<li><code>MyTransformer</code>执行器负责数据的编码和转换。</li>
+
+<li><code>MyIndexer</code>执行器用于索引数据。</li>
+
+</ul>
+
+<p>我们将在讨论<code>my_executors.py</code>文件时详细了解这两个执行程序的功能。</p>
+
+<p><code>Flow</code>允许你以执行符的形式添加编码和索引，在聊天机器人的例子中，我们使用了下面的执行符。您可以使用以下代码创建一个流，并将这些执行器添加到其中:</p>
+
+<pre class="source-code">from jina import Flow
+
+flow = (
+
+    Flow(cors=True)
+
+    .add(uses=MyTransformer)
+
+    .add(uses=MyIndexer)
+
+    )</pre>
+
+<p>这是只有两个执行者的简单流程之一。对于有许多执行器的复杂流<a id="_idIndexMarker389"/>，纪娜提供了用不同的名字区分每个执行器的功能(例如，通过使用<code>name</code>参数，您可以给执行器取一些非常酷的名字)。然后，它允许您可视化流程，以了解您的数据如何流经不同的组件。让我们通过在现有代码中添加一行来可视化这个流程:</p>
+
+<pre class="source-code">from jina import Flow
+
+flow = (
+
+    Flow(cors=True)
+
+    .add(name='MyTransformer', uses=MyTransformer)
+
+    .add(name='MyIndexer', uses=MyIndexer) 
+
+    .plot('chatbot_flow.svg')
+
+    )</pre>
+
+<p>运行前面的<a id="_idIndexMarker390"/>代码将生成下面的<code>SVG</code>文件，该文件<a id="_idIndexMarker391"/>将聊天机器人流程可视化:</p>
+
+<div><div><img alt="Figure 6.3 – Chatbot flow&#10;&#10;" height="231" src="img/Figure_6.3_B17488.jpg" width="1650"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图6.3–聊天机器人流程</p>
+
+<p class="callout-heading">注意</p>
+
+<p class="callout">因为我们想从浏览器中调用我们的流，所以在流(<code>cors=True</code>)中启用跨源资源共享(<a href="">https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS</a>)是很重要的。</p>
+
+<p>一旦我们准备好了流程，就该开始研究<code>app.py</code>文件中的<code>hello_world</code>函数了，它将来自不同来源的所有内容汇集在一起，并为您打开一个查询端点(后端端点)来查询chatbot应用程序并与之交互:</p>
+
+<ol>
+
+<li value="1"><code>hello_world</code>函数首先创建一个<code>workspace</code>目录来存储索引数据，并确保所需的依赖项被导入。</li>
+
+</ol>
+
+<p class="callout-heading">注意</p>
+
+<p class="callout">为了运行这个例子，我们需要两个主要的依赖/Python库:<code>torch</code>和<code>transformers</code>。</p>
+
+<ol>
+
+<li value="2">在我们继续编写代码之前，使用以下命令安装依赖项:<ul><li><code>pip i<a id="_idTextAnchor090"/>nstall torch</code></li>
+
+<li><code>pip install transformers</code></li>
+
+</ul></li>
+
+</ol>
+
+<p>安装完这些依赖项后，是时候继续使用<code>hello_world</code>功能了。</p>
+
+<ol>
+
+<li value="3">下一步<a id="_idIndexMarker392"/>是从Kaggle下载数据。为此，我们将<a id="_idIndexMarker393"/>使用<code>download_data</code>函数，该函数基本上使用<code>urllib</code>库从给定的URL获取和保存数据。</li>
+
+</ol>
+
+<p><code>urllib</code>模块以<code>url</code>和<code>filename</code>为目标，下载数据。你可以参考下面的代码来看看我们是如何设定目标的:</p>
+
+<pre>targets = {
+        'covid-csv': {
+            'url': url_of_your_data,
+            'filename': file_name_to_be_fetched,
+        }
+    }</pre>
+
+<p>将目标变量传递给<code>download_data</code>函数将下载数据，并将其作为<code>.csv</code>文件保存在同一工作目录下的随机文件夹中。</p>
+
+<ol>
+
+<li value="4">现在我们有了索引数据所需的所有基本组件，我们将使用在上一步中下载的数据集，并使用我们之前创建的流对其进行索引。索引将遵循以下逻辑:<ul><li>它将使用<code>MyTransformer</code>执行器通过计算相应的嵌入来编码和转换数据。</li>
+
+<li>它将使用<code>MyIndexer</code>执行器通过<code>/index</code>端点索引数据，并打开<code>/search</code>端点查询并与聊天机器人交互。</li>
+
+</ul></li>
+
+</ol>
+
+<p>下面的<a id="_idIndexMarker394"/>是索引数据并创建<a id="_idIndexMarker395"/>一个搜索端点来与聊天机器人交互的代码:</p>
+
+<pre>with f:
+  f.index(
+    DocumentArray.from_csv(
+      targets['covid-csv']['filename'], 
+        field_resolver={'question': 'text'}
+    ),
+    show_progress=True,)
+  url_html_path = 'file://' + os.path.abspath(
+    os.path.join(os.path.dirname(
+       os.path.realpath(__file__)),'static/index.xhtml'
+    )
+  )
+  try:
+    webbrowser.open(url_html_path, new=2)
+  except:
+    pass
+  finally:
+    default_logger.info(
+      f'You should see a demo page opened in your 
+      browser,'f'if not, you may open {url_html_path} 
+      manually'
+    )
+  if not args.unblock_query_flow:
+    f.block()</pre>
+
+<p>在前面的代码中，我们<a id="_idIndexMarker396"/>使用上下文管理器<a id="_idIndexMarker397"/>打开流和数据集，并将数据以<code>'question': 'text'</code>对的形式发送到索引端点。对于这个例子，我们将使用web浏览器与chatbot进行交互，这需要使用<code>port_expose</code>参数通过HTTP协议在特定端口上配置和服务流，以便web浏览器可以向流发出请求。最后，我们将使用<code>f.block()</code>来为搜索查询保持流程开放，并防止它退出。</p>
+
+<h3>我的_执行者. py</h3>
+
+<p>聊天机器人示例的另一个关键<a id="_idIndexMarker398"/>组件是<code>my_executors.py</code>文件，它包含应用程序的逻辑元素，也称为<strong class="bold">执行器</strong>。它由两个不同的执行人组成，这一点我们将详细讨论。</p>
+
+<h4>MyTransformer执行器</h4>
+
+<p><code>MyTransformer</code>执行器<a id="_idIndexMarker401"/>执行以下任务:</p>
+
+<ol>
+
+<li value="1">它从<code>sentence-transformers</code>库中加载预先训练好的句子转换器模型。</li>
+
+<li>它接受用户参数并设置模型参数(如<code>model name</code> / <code>path</code>)和<code>pooling strategy</code>，获取对应于模型的标记器，并将<a id="_idIndexMarker402"/>设备设置为<code>cpu</code> / <code>gpu</code>，这取决于用户的偏好:<pre>class MyTransformer(Executor):   """Transformer executor class """   def __init__(     self,     pretrained_model_name_or_path: str =      'sentence-transformers/paraphrase-mpnet-base-v2',         pooling_strategy: str = 'mean',     layer_index: int = -1,     *args,     **kwargs,   ):   super().__init__(*args, **kwargs)   self.pretrained_model_name_or_path =      pretrained_model_name_or_path   self.pooling_strategy = pooling_strategy   self.layer_index = layer_index   self.tokenizer = AutoTokenizer.from_pretrained(     self.pretrained_model_name_or_path   )   self.model = AutoModel.from_pretrained(     pretrained_model_name_or_path,        output_hidden_states=True   )   self.model.to(torch.device('cpu'))</pre></li>
+
+<li>设置这些参数后，它计算文本数据的嵌入，并以嵌入映射的形式将文本数据/问题答案编码为键值对。</li>
+
+<li>通过<code>sentence-transformers</code>模型(默认为<code>paraphrase-mpnet-base-v2</code>)执行编码。我们批量获取文档的文本属性，然后计算嵌入，我们稍后将它设置为每个文档的嵌入属性。</li>
+
+<li><code>MyTransformer</code>执行器只公开一个端点<code>encode</code>，每当我们请求流时，无论是查询还是索引，都会调用这个端点。端点为索引或查询文档创建嵌入，因此搜索端点可以使用相似性得分来确定给定查询的最接近匹配。</li>
+
+</ol>
+
+<p>让我们来看看主聊天机器人应用程序中的<code>MyTransformer</code>执行器的<code>encode</code>函数的<a id="_idIndexMarker403"/>简化版:</p>
+
+<pre class="source-code">  @requests
+
+  def encode(self, docs: 'DocumentArray', *args, **kwargs):
+
+    with torch.inference_mode():
+
+      if not self.tokenizer.pad_token: 
+
+        self.tokenizer.add_special_tokens({'pad_token':
+
+           '[PAD]'}) 
+
+        self.model.resize_token_embeddings(len(
+
+          self.tokenizer.vocab))
+
+      input_tokens = self.tokenizer(
+
+                  docs[:, 'content'],
+
+                  padding='longest',
+
+                  truncation=True,
+
+                  return_tensors='pt',
+
+      )
+
+      input_tokens = {
+
+        k: v.to(torch.device('cpu')) for k, 
+
+          v in input_tokens.items()
+
+              }
+
+      outputs = self.model(**input_tokens)
+
+      hidden_states = outputs.hidden_states
+
+      docs.embeddings = self._compute_embedding(
+
+        hidden_states, input_tokens)</pre>
+
+<h4>MyIndexer执行器</h4>
+
+<p><code>MyIndexer</code>执行器<a id="_idIndexMarker404"/>执行以下任务:</p>
+
+<ol>
+
+<li value="1">它使用了一个文档存储库(在我们的例子中是SQLite ),其中包含了所有的<code>DocumentArray</code>文档。带有外部存储的<code>DocumentArray</code>的外观和感觉与常规的内存中的<code>DocumentArray</code>几乎相同，但它使过程更有效，并允许更快的检索。</li>
+
+<li>执行器公开了两个端点:<code>index</code>和<code>search</code>。<code>index</code>端点负责接收文档并对其进行索引，而<code>search</code>端点负责遍历索引的<code>DocumentArray</code>以找到用户查询的相关匹配。</li>
+
+<li><code>search</code>端点使用<code>match</code>方法(与<code>DocumentArray</code>相关联的内置方法)，该方法使用余弦相似度返回查询文档<a id="_idTextAnchor091"/>的最接近匹配。</li>
+
+</ol>
+
+<p>让我们来看看主聊天机器人应用程序中的<code>MyIndexer</code>执行器的简化版本代码:</p>
+
+<pre class="source-code">class MyIndexer(Executor):
+
+  """Simple indexer class """
+
+  def __init__(self, **kwargs):
+
+    super().__init__(**kwargs)
+
+    self.table_name = 'qabot_docs'
+
+    self._docs = DocumentArray(
+
+      storage='sqlite',
+
+      config={
+
+        'connection': os.path.join(
+
+         self.workspace, 'indexer.db'),
+
+        'table_name': self.table_name,
+
+      },
+
+    )
+
+  @requests(on='/index')
+
+  def index(self, docs: 'DocumentArray', **kwargs):
+
+    self._docs.extend(docs)
+
+  @requests(on='/search')
+
+  def search(self, docs: 'DocumentArray', **kwargs):
+
+    """Append best matches to each document in docs
+
+    :param docs: documents that are searched
+
+    :param parameters: dictionary of pairs 
+
+      (parameter,value)
+
+    :param kwargs: other keyword arguments
+
+    """
+
+    docs.match(
+
+      self._docs,
+
+      metric='cosine',
+
+      normalization=(1, 0),
+
+      limit=1,
+
+    )</pre>
+
+<p>这两个<a id="_idIndexMarker406"/>执行器是聊天机器人应用程序的组成部分，将它们结合起来可以让我们创建一个交互式的智能聊天机器人后端。要通过UI在web浏览器中与聊天机器人交互，您可以使用<code>static</code>文件夹中提供的HTML模板。默认情况下，运行该应用程序将打开一个带有chatbot UI的网页；如果没有，那么你可以从<code>static</code>文件夹中打开<code>index.xhtml</code>文件。</p>
+
+<p>在本节中，我们查看了新冠肺炎数据集的问答聊天机器人应用程序背后的代码。该应用程序是一种文本到文本的搜索引擎，使用纪娜的框架创建。根据您的使用情况，可以使用相同的逻辑来创建各种文本搜索应用程序。</p>
+
+<p>在下一节中，我们将探索如何扩展图像等非结构化数据类型的搜索功能，并看看纪娜的神经搜索如何使用时尚图像搜索示例轻松构建图像到图像的搜索引擎。</p>
+
+<h1 id="_idParaDest-86"><a id="_idTextAnchor092"/>了解时尚图片搜索</h1>
+
+<p><strong class="bold">时尚图片搜索</strong>是<a id="_idIndexMarker407"/>另一个纪娜安装自带的预建示例，你可以像Q/A聊天机器人示例一样直接从命令行运行，甚至不用进入代码。</p>
+
+<p>时尚图片搜索示例使用著名的<em class="italic">时尚-MNIST </em>数据集，该数据集是由60，000个训练示例和测试集中的10，000个示例组成的扎兰多的文章图片(<a href="">https://github.com/zalandoresearch/fashion-mnist</a>)。每个示例都是28x28灰度图像，与来自10个类别的标注相关联，就像原始MNIST数据集一样。</p>
+
+<p>每个训练<a id="_idIndexMarker408"/>和测试集示例被分配以下标签之一:</p>
+
+<table class="No-Table-Style _idGenTablePara-1" id="table001-4">
+
+<colgroup>
+
+<col/>
+
+<col/>
+
+</colgroup>
+
+<tbody>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">标签</strong></p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">描述</strong></p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>0</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>t恤/上衣</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>一</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>裤子</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>2</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>套衫</p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<table class="No-Table-Style _idGenTablePara-1" id="table002-2">
+
+<colgroup>
+
+<col/>
+
+<col/>
+
+</colgroup>
+
+<tbody>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">标签</strong></p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p><strong class="bold">描述</strong></p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>3</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>连衣裙</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>四</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>外套</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>5</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>凉鞋</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>6</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>衬衫</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>七</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>运动鞋</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>8</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>包</p>
+
+</td>
+
+</tr>
+
+<tr class="No-Table-Style">
+
+<td class="No-Table-Style">
+
+<p>9</p>
+
+</td>
+
+<td class="No-Table-Style">
+
+<p>踝靴</p>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">表6.1-时尚数据集标签和描述</p>
+
+<p>在前面的<a id="_idIndexMarker409"/>小节中，我们从PyPI安装了<code>jina[demo]</code>库，它处理了运行这个例子所需的所有依赖关系:</p>
+
+<ol>
+
+<li value="1">让我们转到命令行，运行时尚图片搜索示例:<pre><strong class="bold"> jina hello fashion</strong></pre></li>
+
+<li>键入此命令后，您将在CLI上看到以下文本:</li>
+
+</ol>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US"> </p>
+
+<div><div><img alt="Figure 6.4 – Fashion image search command line &#10;&#10;" height="526" src="img/Figure_6.04_B17488.jpg" width="906"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图6.4–时尚图片搜索命令行</p>
+
+<p>如果您的屏幕在命令行上显示相同的文本，这意味着您已经成功启动了时尚图片搜索示例，所以现在是时候打开UI并使用应用程序了。</p>
+
+<p>默认情况下，将打开一个简单的网页，其中包含来自测试集的随机图像样本作为查询，以及从训练数据中检索到的结果。在幕后，纪娜下载<em class="italic">时尚-MNIST </em>数据集，并通过索引流索引60，000幅训练图像。之后，它从测试集中随机抽取看不见的图像作为查询，并要求纪娜检索相关结果。</p>
+
+<p>如果页面没有自己打开，你可以打开位于<code>*/demo.xhtml</code>路径的<code>demo.xhtml</code>文件。默认情况下或者手动打开<a id="_idIndexMarker410"/>下载的<code>demo.xhtml</code>文件后，您会看到以下网页:</p>
+
+<div><div><img alt="Figure 6.5 – Fashion image search web interface &#10;&#10;" height="861" src="img/Figure_6.05_B17488.jpg" width="1346"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图6.5-时尚图片搜索网页界面</p>
+
+<p>在上图中，您可以看到纪娜在为从测试集中随机选择的图像查询找到相关搜索结果方面做得非常出色。</p>
+
+<h2 id="_idParaDest-87"><a id="_idTextAnchor093"/>浏览代码</h2>
+
+<p>现在让我们来看看这个应用程序背后的逻辑，看看纪娜的框架是如何将所有组件联系在一起，创建一个图片搜索应用程序的。</p>
+
+<p>安装纪娜后，按照<code>jina/helloworld/fashion</code>路径进入聊天机器人目录。这是包含时尚图片搜索示例代码的主目录:</p>
+
+<pre class="source-code">└── fashion
+
+    ├── app.py
+
+    ├── my_executors.py
+
+    ├── helper.py
+
+    ├── demo.xhtml</pre>
+
+<p>以下是您将在时尚目录中看到的文件:</p>
+
+<ul>
+
+<li><code>app.py</code>:类似于上一节讨论的应用。</li>
+
+<li><code>my_executors.py</code>:类似于上一节讨论的应用程序。</li>
+
+<li><code>helper.py</code>:这由补充逻辑功能组成，将逻辑代码块模块化并保存在一个单独的文件中。</li>
+
+<li><code>demo.xhtml</code>:这个托管了所有负责在网络浏览器上渲染聊天机器人界面的前端代码，帮助你与聊天机器人应用程序进行交互。</li>
+
+</ul>
+
+<h3>app.py</h3>
+
+<p><code>app.py</code>文件是<a id="_idIndexMarker412"/>示例应用程序的入口点；当你一输入<code>jina hello fashion</code>命令，控制就转到这个文件。这是应用程序的主要入口点，执行所有主要任务来启动应用程序的前端和后端。</p>
+
+<p><code>app.py</code>文件执行以下任务，以确保多个组件协同工作，生成所需的应用程序。</p>
+
+<p>它做的第一件事是使用下面的代码从<code>my_executors.py</code>文件导入所需的执行器:</p>
+
+<pre class="source-code">from my_executors import MyEncoder, MyIndexer</pre>
+
+<p>所有这些执行器都是从纪娜的基类<code>Executor</code>派生的:</p>
+
+<ul>
+
+<li><code>MyEncoder</code>负责数据的转换和编码。</li>
+
+<li><code>MyIndexer</code>用于索引数据；索引后，它托管一个用于查询数据的<code>/search</code>端点。</li>
+
+</ul>
+
+<p>当我们讨论<code>my_executors.py</code>文件时，我们将详细了解<a id="_idIndexMarker414"/>所有这些执行程序的功能。这个例子的流程由前面提到的执行者组成。</p>
+
+<p>您可以使用以下代码来创建和可视化流程:</p>
+
+<pre class="source-code">from jina import Flow
+
+flow = (
+
+    Flow()
+
+    .add(name='MyEncoder', uses=MyEncoder, replicas=2)
+
+    .add(name='MyIndexer', uses=MyIndexer)
+
+    .plot('fashion_image_flow.svg')
+
+    )</pre>
+
+<p>运行代码将生成以下流程图，该图显示了数据如何在应用程序的不同组件之间移动:</p>
+
+<div><div><img alt="Figure 6.6 – Fashion image search flow&#10;&#10;" height="478" src="img/Figure_6.6_B17488.jpg" width="1365"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图6.6-时尚图片搜索流程</p>
+
+<p>在前面的代码中，<code>replicas</code>参数被设置为<code>2</code>，以便<code>MyEncoder</code>执行器将输入数据流分成两个不同的执行器，从而实现更快的处理和编码。</p>
+
+<p>一旦我们准备好了<a id="_idIndexMarker416"/>流，就该开始研究<code>app.py</code>文件中的<code>hello_world</code>函数了，它将来自不同来源的所有内容汇集在一起。<code>hello_world</code>功能执行以下任务:</p>
+
+<ol>
+
+<li value="1">它在根文件夹中创建一个目录来存储索引数据。</li>
+
+<li>它创建一个<code>targets</code>字典，将数据的URL与保存数据的本地文件名关联起来。将训练数据保存在<code>index</code>和<code>index-label</code>文件下，将测试数据保存在<code>query</code>和<code>query-label</code>文件下:<pre>targets = {         'index-labels': {             'url': args.index_labels_url,             'filename': os.path.join(args.workdir,              'index-labels'),         },         'query-labels': {             'url': args.query_labels_url,             'filename': os.path.join(args.workdir,              'query-labels'),         },         'index': {             'url': args.index_data_url,             'filename': os.path.join(args.workdir,              'index-original'),      },         'query': {             'url': args.query_data_url,             'filename': os.path.join(args.workdir,               'query-original'),},     }</pre></li>
+
+<li>之后，它将<code>targets</code>变量传递给<code>download_data</code>函数，并下载<em class="italic">时尚-MNIST </em>数据集。<code>download_data</code>函数使用<code>urllib</code>包从给定的URL下载数据，并遍历字典来保存数据以及用于训练和测试集的标签。</li>
+
+<li>它创建了流并添加了<code>MyEncoder</code>和<code>MyIndexer</code>执行器。</li>
+
+<li>它使用上下文管理器打开流程，并通过为训练数据中的所有图像创建嵌入，使用索引流程来索引数据。</li>
+
+<li>然后，它包括基本事实(标签)以及查询图像，这允许我们评估模型的性能。</li>
+
+<li>在索引<a id="_idIndexMarker418"/>数据之后，它调用<code>search</code>函数，该函数随机地<a id="_idIndexMarker419"/>采样128个不可见的图像作为查询，并返回每个查询图像的前50个相似图像。</li>
+
+<li>最后，我们<a id="_idIndexMarker420"/>使用<code>write_html</code>函数使用<code>demo.xhtml</code>文件:<pre>with f:   f.index(index_generator(num_docs=targets['index']     ['data'].shape[0], target=targets),      show_progress=True,     )   groundtruths = get_groundtruths(targets)   evaluate_print_callback = partial(print_result,      groundtruths)   evaluate_print_callback.__name__ =      'evaluate_print_callback'   f.post(     '/search,     query_generator(num_docs=args.num_query,        target=targets),     shuffle=True,     on_done= evaluate_print_callback,     parameters={'top_k': args.top_k},     show_progress=True,     )   #write result to html   write_html(os.path.join(args.workdir, 'demo.xhtml'))</pre>在<a id="_idIndexMarker421"/>网络浏览器中渲染前端</li>
+
+</ol>
+
+<h3>my_exe <a id="_idTextAnchor095"/> cutors.py</h3>
+
+<p>时尚图片搜索<a id="_idIndexMarker423"/>示例的另一个<a id="_idIndexMarker422"/>关键组件是<code>my_executors.py</code>文件。它由三个不同的执行者组成，这些执行者在流程中协同工作，以创建端到端的应用程序体验。</p>
+
+<h4>明码遗嘱执行人</h4>
+
+<p><code>MyEncoder</code>执行器<a id="_idIndexMarker424"/>执行以下任务:</p>
+
+<ol>
+
+<li value="1">它用于索引和查询流程。它被输入从各自的生成器函数生成的索引和查询数据。它使用<strong class="bold">奇异值分解</strong> ( <strong class="bold"> SVD </strong>)对输入数据进行<a id="_idIndexMarker425"/>编码。</li>
+
+<li>在构造函数中，它创建一个形状的随机矩阵(<code>784,64</code>)并应用SVD得到<code>oth_mat</code>。</li>
+
+<li>在<code>encode</code>函数中，它从docs数组(纪娜的<code>DocumentArray</code>)中获取内容，将图像堆叠在一起，提取单通道内容，并对图像进行整形以准备获取嵌入内容。</li>
+
+<li>下一步，我们使用<code>content</code>矩阵和<code>oth_mat</code>(SVD的结果)来获得嵌入。</li>
+
+<li>然后，它将每个文档张量与各自的嵌入相关联，并将张量<a id="_idIndexMarker426"/>转换为用于标准化表示的<strong class="bold">统一资源标识符</strong> ( <strong class="bold"> URI </strong>)(一个长字符串，它是图像的等效表示)，然后它弹出张量。</li>
+
+<li>它对循环中的所有图像重复相同的过程，以编码整个数据集:<pre>class MyEncoder(Executor):   """   Encode data using SVD decomposition   """   def __init__(self, **kwargs):     super().__init__(**kwargs)     np.random.seed(1337)     # generate a random orthogonal matrix     H = np.random.rand(784, 64)     u, s, vh = np.linalg.svd(H, full_matrices=False)     self.oth_mat = u @ vh   @requests   def encode(self, docs: 'DocumentArray', **kwargs):     """Encode the data using an SVD decomposition     :param docs: input documents to update with an        embedding     :param kwargs: other keyword arguments     """     # reduce dimension to 50 by random orthogonal      # projection     content = np.stack(docs.get_attributes('content'))     content = content[:, :, :, 0].reshape(-1, 784)     embeds = (content / 255) @ self.oth_mat     for doc, embed, cont in zip(docs, embeds,        content):       doc.embedding = embed       doc.content = cont       doc.convert_image_tensor_to_uri()       doc.pop('tensor')</pre></li>
+
+</ol>
+
+<h4>MyIndexer执行器</h4>
+
+<p><code>MyIndexer</code>执行器<a id="_idIndexMarker427"/>执行以下任务:</p>
+
+<ol>
+
+<li value="1">它的构造函数创建一个<code>workspace</code>目录来存储索引数据。</li>
+
+<li>它拥有一个<code>index</code>端点，该端点接收文档作为输入，并将它们组织到<code>workspace</code>文件夹中。</li>
+
+<li>它还托管<code>search</code>端点，该端点给出给定查询的最佳匹配。它接受文档和<code>top-k</code>作为参数，并执行余弦相似性匹配，以找到<code>top-k</code>结果:<pre>class MyIndexer(Executor):   """   Executor with basic exact search using cosine    distance   """   def __init__(self, **kwargs):     super().__init__(**kwargs)     if os.path.exists(self.workspace + '/indexer'):       self._docs = DocumentArray.load(self.workspace +        '/indexer')     else:       self._docs = DocumentArray()     @requests(on='/index')   def index(self, docs: 'DocumentArray', **kwargs):     """Extend self._docs     :param docs: DocumentArray containing Documents     :param kwargs: other keyword arguments     """     self._docs.extend(docs)   @requests(on=['/search', '/eval'])   def search(self, docs: 'DocumentArray',     parameters: Dict, **kwargs):     """Append best matches to each document in docs     :param docs: documents that are searched     :param parameters: dictionary of pairs        (parameter,value)     :param kwargs: other keyword arguments     """     docs.match(       self._docs,       metric='cosine',       normalization=(1, 0),       limit=int(parameters['top_k']),     )   def close(self):     """     Stores the DocumentArray to disk     """     self._docs.save(self.workspace + '/inde<a id="_idTextAnchor097"/>xer')</pre></li>
+
+</ol>
+
+<h3>helper.py</h3>
+
+<p><code>helper.py</code>文件<a id="_idIndexMarker428"/>为<a id="_idIndexMarker429"/>提供帮助函数来支持<code>app.py</code>文件中的逻辑元素。它实现了一些关键函数，比如<code>index_generator</code>和<code>query_generator</code>，我们在<code>app.py</code>文件中使用这些函数来索引和查询数据。让我们浏览一下这两个函数，了解它们的作用。</p>
+
+<h4>索引生成器()</h4>
+
+<p>该函数使用以下步骤为训练数据生成<a id="_idIndexMarker430"/>索引标签:</p>
+
+<ol>
+
+<li value="1">这个生成器将遍历所有60，000个文档(图像),并单独处理每一个文档，使它们为索引做好准备。</li>
+
+<li>它从字典中获取28x28的图像，并反转它们，使它们适合在web浏览器上显示。</li>
+
+<li>它将黑白图像转换为RGB图像，然后将图像转换为纪娜的内部数据类型<code>Document</code>。</li>
+
+<li>然后，它将标签ID与文档相关联，并生成索引数据。</li>
+
+</ol>
+
+<p>以下是<code>index_generator()</code>功能的代码:</p>
+
+<pre>def index_generator(num_docs: int, target: dict):
+  """
+  Generate the index data.
+  :param num_docs: Number of documents to be indexed.
+  :param target: Dictionary which stores the data 
+    paths
+  :yields: index data
+  """
+  for internal_doc_id in range(num_docs):
+    # x_blackwhite.shape is (28,28)
+    x_blackwhite=
+      255-target['index']['data'][internal_doc_id]
+    # x_color.shape is (28,28,3)
+    x_color = np.stack((x_blackwhite,) * 3, axis=-1)
+    d = Document(content=x_color)
+    d.tags['id'] = internal_doc_id
+    yield d</pre>
+
+<h4>query_generator()</h4>
+
+<p>这类似于<a id="_idIndexMarker431"/>和<code>index_generator</code>函数，遵循相同的逻辑生成查询数据，只是做了一些修改。它从数据集中提取随机数量的文档(基于<code>num_docs</code>参数的值)来生成查询数据。以下是<code>query_generator()</code>功能的代码:</p>
+
+<pre class="source-code">def query_generator(num_docs: int, target: dict):
+
+  """
+
+  Generate the query data.
+
+  :param num_docs: Number of documents to be queried
+
+  :param target: Dictionary which stores the data paths
+
+  :yields: query data
+
+  """
+
+  for _ in range(num_docs):
+
+    num_data = len(target['query-labels']['data'])
+
+    idx = random.randint(0, num_data - 1)
+
+    # x_blackwhite.shape is (28,28)
+
+    x_blackwhite = 255 - target['query']['data'][idx]
+
+    # x_color.shape is (28,28,3)
+
+    x_color = np.stack((x_blackwhite,) * 3, axis=-1)
+
+    d = Document(
+
+        content=x_color,
+
+         tags={
+
+         'id': -1,
+
+         'query_label': float(target['query-labels'] 
+
+          ['data'][idx][0]),
+
+         },
+
+    )
+
+    yield d</pre>
+
+<h3>demo.xhtml</h3>
+
+<p>为了在web浏览器中查看<a id="_idIndexMarker432"/>查询结果，<a id="_idIndexMarker433"/>应用程序使用<code>demo.xhtml</code>文件来呈现前端。默认情况下，运行应用程序将打开一个带有查询图像和搜索结果的网页；如果没有，那么您可以打开<code>demo.xhtml</code>文件，该文件将在开始时生成的随机文件夹中可用。</p>
+
+<p>在本节中，我们看到了纪娜的框架如何通过利用最先进的深度学习模型，使构建图像数据类型的搜索应用程序变得非常高效。相同的功能将扩展到其他数据类型，如音频、视频，甚至3D网格，您将在第7章 、<em class="italic">探索纪娜的高级用例</em>中了解这些内容。</p>
+
+<p>接下来，我们将看看如何组合两种数据类型来创建多模态搜索，从而轻松提升您的产品或平台的搜索体验。我们将深入研究多模态搜索示例，该示例使用由<em class="italic">图像-标题</em>对组成的<em class="italic">人物-图像</em>数据集构建一个搜索应用程序，让您可以使用图像和文本进行查询。</p>
+
+<h1 id="_idParaDest-88"><a id="_idTextAnchor098"/>使用多模态搜索</h1>
+
+<p>多模态搜索<a id="_idIndexMarker434"/>是纪娜安装中的另一个预构建的例子，你可以直接从命令行运行它，甚至不用进入代码。</p>
+
+<p>这个例子使用了Kaggle的公共人物图像数据集(<a href="">https://www.kaggle.com/ahmadahmadzada/images2000</a>)，它由2000个图像-标题对组成。这里的数据类型是包含多种数据类型的多模式文档，例如同时包含文本和图像的PDF文档。纪娜让您可以同样轻松舒适地构建对多模态数据类型的搜索:</p>
+
+<ol>
+
+<li value="1">要从命令行运行此示例，您需要安装以下依赖项:<ul><li><strong class="bold"> pip安装变压器</strong></li>
+
+<li><strong class="bold">皮普安装焊枪</strong></li>
+
+<li><strong class="bold"> pip安装火炬视觉</strong></li>
+
+<li><strong class="bold"> pip安装" jina[demo]" </strong></li>
+
+</ul></li>
+
+<li>一旦安装了所有的依赖项，只需输入下面的命令来启动应用程序:<pre><strong class="bold">jina hello multimodal</strong></pre></li>
+
+<li>键入此<a id="_idIndexMarker435"/>命令后，您将在CLI上看到以下文本:</li>
+
+</ol>
+
+<div><div><img alt="Figure 6.7 – Multimodal search command line &#10;&#10;" height="698" src="img/Figure_6.07_B17488.jpg" width="972"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图6.7–多模式搜索命令行</p>
+
+<p>如果您的屏幕<a id="_idIndexMarker436"/>在命令行上显示相同的文本，这意味着您已经成功启动了纪娜多模态示例；现在，是时候打开UI，开始玩应用程序了。</p>
+
+<p>默认情况下，将打开一个带有查询和结果部分的UI，允许您使用文本和图像进行查询，并以相同的形式获得结果。如果页面没有自己打开，您可以通过转到<code>jina/helloworld/multimodal/static</code>来打开<code>index.xhtml</code>文件。</p>
+
+<p>默认情况下或打开<code>index.xhtml</code>文件后，您将看到以下<a id="_idIndexMarker437"/>网页:</p>
+
+<div><div><img alt="Figure 6.8 – Multimodal search interface&#10;&#10;" height="788" src="img/Figure_6.08_B17488.jpg" width="1639"/>
+
+</div>
+
+</div>
+
+<p class="IMG---Caption" lang="en-US" xml:lang="en-US">图6.8–多模式搜索界面</p>
+
+<p>您已经成功启动了多模式示例应用程序；现在是时候玩玩它，找点乐子了。</p>
+
+<h2 id="_idParaDest-89"><a id="_idTextAnchor099"/>浏览代码</h2>
+
+<p>现在让我们来看看应用程序背后的逻辑，看看纪娜的框架如何将所有组件联系在一起，以产生一个功能齐全的多模态搜索应用程序。</p>
+
+<p>一旦你安装了纪娜，按照<code>jina/helloworld/multimodal</code>路径进入聊天机器人目录。这是主目录，包含多模式搜索示例的代码:</p>
+
+<pre class="source-code">└── multimodal                    
+
+    ├── app.py
+
+    ├── my_executors.py
+
+    ├── flow_index.yml
+
+    ├── flow_search.yml
+
+    ├── static/        </pre>
+
+<p>以下是您将在多模式目录中看到的文件。我们将详细介绍它们的功能:</p>
+
+<ul>
+
+<li><code>app.py</code>:类似于之前的申请。</li>
+
+<li><code>my_executors.py</code>:类似于之前的应用。</li>
+
+<li>文件夹<code>static</code>:这里存放了所有负责在web浏览器上呈现UI的前端代码，帮助您与应用程序进行交互。</li>
+
+<li><code>flow_index.yml</code>:这包含了索引流的YAML代码，当我们第一次索引数据时运行。</li>
+
+<li><code>flow_search.yml</code>:这包含了搜索流的YAML代码，每次我们向应用程序发送查询时都会运行这个代码。</li>
+
+</ul>
+
+<p>这个<a id="_idIndexMarker439"/>应用程序使用MobileNet和MPNet模型来索引图像-标题对。索引过程在CPU上大约需要3分钟。然后，它会打开一个网页，您可以在其中查询多式联运单据。我们还准备了一段YouTube视频(<a href="">https://youtu.be/B_nH8GCmBfc</a>)来带你看这个演示。</p>
+
+<h3>app.py</h3>
+
+<p>当<a id="_idIndexMarker440"/>输入<code>jina hello multimodal</code>命令时，应用程序的控制权就转移到了<code>app.py</code>文件。<code>app.py</code>文件执行<a id="_idIndexMarker441"/>以下任务，以确保多模式搜索应用程序的所有组件相互协同工作，以产生所需的结果。</p>
+
+<p>它做的第一件事是导入所需的库。之后，控制转到<code>hello_world()</code>函数，它托管脚本的主要逻辑。<code>hello_world()</code>函数使用<code>mkdir</code>命令创建一个随机目录来存储工件，比如下载的数据。然后，它检查以确保安装并导入了所有必需的Python库。</p>
+
+<p class="callout-heading">注意</p>
+
+<p class="callout">为了运行这个例子，我们需要三个主要的依赖/Python库:<code>torch</code>、<code>transformers</code>和<code>torchvision</code>。</p>
+
+<p>以下是理解<code>app.py</code>文件功能的步骤:</p>
+
+<ol>
+
+<li value="1">请检查上述所有依赖项是否正确安装在您的Python环境中。</li>
+
+<li>在检查这些依赖项是否正确安装后，<code>hello_world()</code>函数调用<code>download_data()</code>函数从Kaggle获取并下载数据。<code>download_data()</code>函数使用<code>urllib</code>包从给定的URL获取和保存数据。<code>urllib</code>以URL和文件名为目标<a id="_idIndexMarker442"/>并下载数据。你可以参考下面的代码来看看<a id="_idIndexMarker443"/>我们是如何设置目标的:<pre>targets = {         'people-img: {             'url': url_of_the_data,             'filename': file_name_to_be_fetched,         }     }</pre></li>
+
+</ol>
+
+<p>将<code>targets</code>变量传递给<code>download_data()</code>函数将下载数据并保存在<code>hello_world</code>函数开始时创建的随机文件夹中。然后，它从YAML文件加载索引流，并将图像元数据传递给该流:</p>
+
+<pre># Indexing Flow
+f = Flow.load_config('flow-index.yml')
+with f, open(f'{args.workdir}/people-img/meta.csv', newline='') as fp:
+  f.index(inputs=DocumentArray.from_csv(fp), 
+    request_size=10, show_progress=True)
+  f.post(on='/dump', target_executor='textIndexer')
+  f.post(on='/dump', target_executor='imageIndexer')
+  f.post(on='/dump', 
+    target_executor='keyValueIndexer')</pre>
+
+<ol>
+
+<li value="3">类似地，它<a id="_idIndexMarker444"/>然后从YAML文件<a id="_idIndexMarker445"/>加载搜索流，并设置它从HTML前端获取输入查询:<pre># Search Flow f = Flow.load_config('flow-search.yml') # switch to HTTP gateway f.protocol = 'http' f.port_expose = args.port_expose url_html_path = 'file://' + os.path.abspath(             os.path.join(cur_dir,              'static/index.xhtml')) with f:   try:          webbrowser.open(url_html_path, new=2)   except:     pass  # intentional pass   finally:          default_logger.info(     f'You should see a demo page opened in your        browser,'f'if not, you may open {url_html_path}        manually'             )   if not args.unblock_query_flow:     f.block()</pre></li>
+
+</ol>
+
+<p>在前面的两个<a id="_idIndexMarker446"/>代码片段中，我们用一个<a id="_idIndexMarker447"/>上下文管理器打开流程。对于这个例子，我们将使用web浏览器与应用程序进行交互。它需要使用<code>port_expose</code>参数通过HTTP协议配置和服务特定端口上的流。最后，我们使用<code>f.block()</code>方法为搜索查询保持流程开放，并防止它退出。</p>
+
+<h3>我的_执行者. py</h3>
+
+<p>如果<code>app.py</code>是本例中的<a id="_idIndexMarker448"/>大脑，那么<code>my_executors.py</code>文件包含了执行器形式的神经元，为<a id="_idIndexMarker449"/>核心逻辑提供动力。</p>
+
+<p>多模态示例包含两种数据模态:图像和文本，它们分别存储在文档的属性<code>tags</code>和<code>uri</code>中。为了在索引时处理这两种形式的数据，我们需要使用以下执行器分别对它们进行预处理、编码和索引。</p>
+
+<h4>分段执行程序</h4>
+
+<p><code>Segmenter</code>执行器<a id="_idIndexMarker450"/>将文档作为输入，并将其分成两个块:图像块和文本块。文本块将包含纯文本数据，图像块(我们在代码中称之为<code>chunk_uri</code>)包含图像的URI。然后，我们将它们都添加到<a id="_idIndexMarker451"/>文档块中，并将它们进一步发送到预处理阶段，如下所示:</p>
+
+<pre class="source-code">class Segmenter(Executor):
+
+    @requests
+
+    def segment(self, docs: DocumentArray, **kwargs):
+
+        for doc in docs:
+
+            text = doc.tags['caption']
+
+            uri={os.environ["HW_WORKDIR"]}/
+
+              people-img/{doc.tags["image"]}'
+
+            chunk_text = Document(text=text, 
+
+              mime_type='text/plain')
+
+            chunk_uri = Document(uri=uri, 
+
+              mime_type='image/jpeg')
+
+            doc.chunks = [chunk_text, chunk_uri]
+
+            doc.uri = uri
+
+            doc.convert_uri_to_datauri()</pre>
+
+<h4>TextCrafter执行程序</h4>
+
+<p>对于文本块的预处理<a id="_idIndexMarker452"/>,我们使用<code>TextCrafter</code>执行器，它将文本块作为输入，并返回所有文档的扁平可遍历序列，如下所示:</p>
+
+<pre class="source-code">class TextCrafter(Executor):
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+    @requests()
+
+    def filter(self, docs: DocumentArray, **kwargs):
+
+        filtered_docs = DocumentArray(
+
+            d for d in docs.traverse_flat(['c']) if 
+
+              d.mime_type == 'text/plain'
+
+        )
+
+        return filtered_docs</pre>
+
+<h4>ImageCrafter执行程序</h4>
+
+<p>类似地，对于图像块的<a id="_idIndexMarker453"/>预处理，我们使用<code>ImageCrafter</code>执行器，它将图像块作为输入，并返回所有文档的一个扁平的可遍历序列:</p>
+
+<pre class="source-code">class ImageCrafter(Executor):
+
+    @requests(on=['/index', '/search'])
+
+    def craft(self, docs: DocumentArray, **kwargs):
+
+        filtered_docs = DocumentArray(
+
+            d for d in docs.traverse_flat(['c']) if 
+
+              d.mime_type == 'image/jpeg'
+
+        )
+
+        target_size = 224
+
+        for doc in filtered_docs:
+
+            doc.convert_uri_to_image_blob()
+
+           doc.set_image_blob_shape(shape=(target_size, 
+
+             target_size))
+
+            doc.set_image_blob_channel_axis(-1, 0)
+
+        return filtered_docs</pre>
+
+<h4>TextEncoder执行器</h4>
+
+<p>在<a id="_idIndexMarker454"/>预处理步骤之后，文本块的预处理数据作为输入进入<code>TextEncoder</code>执行器，并产生文本嵌入作为输出。我们使用<code>DocVectorIndexer</code>执行器将结果以嵌入的形式持久化。让我们从其构造函数的代码开始，看看<code>TextEncoder</code>的功能:</p>
+
+<pre class="source-code">class TextEncoder(Executor):
+
+  """Transformer executor class"""
+
+  def __init__(
+
+        self,
+
+        pretrained_model_name_or_path: str=
+
+        'sentence-transformers/paraphrase-mpnet-base-v2',
+
+        pooling_strategy: str = 'mean',
+
+        layer_index: int = -1,
+
+        *args,
+
+        **kwargs,
+
+  ):
+
+        super().__init__(*args, **kwargs)
+
+        self.pretrained_model_name_or_path = 
+
+          pretrained_model_name_or_path
+
+        self.pooling_strategy = pooling_strategy
+
+        self.layer_index = layer_index
+
+        self.tokenizer = AutoTokenizer.from_pretrained(
+
+            self.pretrained_model_name_or_path
+
+        )
+
+        self.model = AutoModel.from_pretrained(
+
+            self.pretrained_model_name_or_path, 
+
+            output_hidden_states=True
+
+        )
+
+        self.model.to(torch.device('cpu'))</pre>
+
+<p>为了计算<a id="_idIndexMarker455"/>嵌入，它使用预训练的<code>sentence-transformers/paraphrase-mpnet-base-v2</code>模型和<code>'mean'</code>池策略。让我们看看<code>compute_embedding()</code>函数的代码:</p>
+
+<pre class="source-code">def _compute_embedding(self, hidden_states: 'torch.Tensor', input_tokens:   Dict):
+
+  fill_vals = {'cls': 0.0,'mean': 0.0,'max': -np.inf,'min': 
+
+    np.inf}
+
+      fill_val = torch.tensor(
+
+        fill_vals[self.pooling_strategy], 
+
+          device=torch.device('cpu')
+
+      )
+
+  layer = hidden_states[self.layer_index]
+
+      attn_mask = 
+
+        input_tokens['attention_mask']
+
+        .unsqueeze(-1).expand_as(layer)
+
+      layer = torch.where(attn_mask.bool(), layer,
+
+        fill_val)
+
+      embeddings = layer.sum(dim=1) / attn_mask.sum(dim=1)
+
+      return embeddings.cpu().numpy()</pre>
+
+<p>然后，它使用<code>encode()</code>函数将嵌入内容存储在文档的<code>doc.embeddings</code>属性中:</p>
+
+<pre class="source-code">@requests
+
+def encode(self, docs: 'DocumentArray', **kwargs):
+
+  with torch.inference_mode():
+
+        if not self.tokenizer.pad_token:
+
+              self.tokenizer.add_special_tokens({
+
+                'pad_token': '[PAD]'})
+
+      self.model.resize_token_embeddings(len(
+
+        self. tokenizer.vocab))
+
+    input_tokens = self.tokenizer(
+
+      docs.get_attributes('content'),
+
+      padding='longest',
+
+      truncation=True,
+
+      return_tensors='pt',
+
+            )
+
+            input_tokens = {
+
+      k: v.to(torch.device('cpu')) for k, v in 
+
+        input_tokens.items()
+
+            }
+
+            outputs = self.model(**input_tokens)
+
+            hidden_states = outputs.hidden_states
+
+            docs.embeddings = self._compute_embedding(
+
+              hidden_states, input_tokens)</pre>
+
+<h4>ImageEncoder执行器</h4>
+
+<p>类似地，图像块的<a id="_idIndexMarker456"/>预处理数据进入<code>ImageEncoder</code>执行器作为输入，并产生嵌入作为输出。我们使用<code>DocVectorIndexer</code>执行器以嵌入的形式持久化结果。让我们通过浏览代码来看看<code>ImageEncoder</code>的功能:</p>
+
+<pre class="source-code">class ImageEncoder(Executor):
+
+  def __init__(
+
+        self,
+
+    model_name: str = 'mobilenet_v2',
+
+    pool_strategy: str = 'mean',
+
+    channel_axis: int = -1, *args, **kwargs,
+
+  ):
+
+    super().__init__(*args, **kwargs)
+
+    self.channel_axis = channel_axis
+
+    self.model_name = model_name
+
+    self.pool_strategy = pool_strategy
+
+    self.pool_fn = getattr(np, self.pool_strategy)
+
+        model = getattr(models, 
+
+          self.model_name)(pretrained=True)
+
+    self.model = model.features.eval()
+
+    self.model.to(torch.device('cpu'))    </pre>
+
+<p>它使用预训练的<code>mobilenet -v2</code>模型来生成嵌入。为了预处理图像，它使用<code>'mean'</code>池策略来计算图像中所有像素的平均值，以计算嵌入:</p>
+
+<pre class="source-code">def _get_features(self, content):
+
+  return self.model(content)
+
+def _get_pooling(self, feature_map: 'np.ndarray') -&gt; 'np.ndarray':
+
+  if feature_map.ndim == 2 or self.pool_strategy is None:
+
+    return feature_map
+
+  return self.pool_fn(feature_map, axis=(2, 3))
+
+@requests
+
+def encode(self, docs: DocumentArray, **kwargs):
+
+  with torch.inference_mode():
+
+    _input = torch.from_numpy(docs.blobs.astype('float32'))
+
+            _features = self._get_features(_input).detach()
+
+            _features = _features.numpy()
+
+            _features = self._get_pooling(_features)
+
+            docs.embeddings = _features</pre>
+
+<p>在<a id="_idIndexMarker457"/>末尾，<code>encode</code>函数将嵌入内容存储在文档的<code>doc.embeddings</code>属性中。</p>
+
+<h4>DocVectorIndexer执行器</h4>
+
+<p>现在，让我们来看一下<a id="_idIndexMarker458"/>执行器，它保存了来自<code>TextEncoder</code>和<code>ImageEncoder</code>的编码来索引它们。这里，我们有两种不同形式的数据(文本和图像)，所以我们需要将索引结果分别存储在两个不同的文件中。<code>DocVectorIndexer</code>执行程序会处理这些。它将索引文本嵌入存储到<code>text.json</code>文件中，将图像嵌入存储到<code>image.json</code>文件中，我们将在<code>flow_index.yml</code>文件中将其用作<code>index_file_name</code>。让我们来看看<code>DocVectorIndexer</code>的代码，以详细了解它的功能:</p>
+
+<pre class="source-code">class DocVectorIndexer(Executor):
+
+  def __init__(self, index_file_name: str, **kwargs):
+
+        super().__init__(**kwargs)
+
+    self._index_file_name = index_file_name
+
+    if os.path.exists(self.workspace + 
+
+      f'/{index_file_name}'):
+
+      self._docs = DocumentArray.load(
+
+        self.workspace + f'/{index_file_name}')
+
+    else:
+
+      self._docs = DocumentArray()
+
+  @requests(on='/index')
+
+  def index(self, docs: 'DocumentArray', **kwargs):
+
+    self._docs.extend(docs)
+
+  @requests(on='/search')
+
+  def search(self, docs: 'DocumentArray', parameters: Dict, 
+
+    **kwargs):
+
+    docs.match(
+
+      self._docs,
+
+      metric='cosine',
+
+              normalization=(1, 0),
+
+              limit=int(parameters['top_k']),
+
+    ) 
+
+  @requests(on='/dump')
+
+  def dump(self, **kwargs):
+
+    self._docs.save(self.workspace + 
+
+      f'/{self._index_file_name}')
+
+  def close(self):
+
+    """
+
+    Stores the DocumentArray to disk
+
+    """
+
+    self.dump()
+
+    super().close()</pre>
+
+<p>它使用<code>DocumentArray</code>直接在磁盘上存储<a id="_idIndexMarker459"/>所有的文档，因为我们有大量的文档。它托管两个不同的端点来索引数据并打开<code>'search'</code>流。它使用余弦相似性分数来查找相关文档。</p>
+
+<h4>KeyValueIndexer执行器</h4>
+
+<p>除了<code>DocVectorIndexer</code>持久化嵌入，我们还创建了一个<code>KeyValueIndexer</code>执行器来帮助<a id="_idIndexMarker460"/>块(文本块和图像块)找到它们的父/根文档。让我们看一下代码来详细理解它的功能:</p>
+
+<pre class="source-code">class KeyValueIndexer(Executor):
+
+  def __init__(self, *args, **kwargs):
+
+    super().__init__(*args, **kwargs)
+
+    if os.path.exists(self.workspace + '/kv-idx'):
+
+      self._docs = DocumentArray.load(self.workspace + 
+
+            '/kv-idx')
+
+    else:
+
+      self._docs = DocumentArray()
+
+  @requests(on='/index')
+
+  def index(self, docs: DocumentArray, **kwargs):
+
+    self._docs.extend(docs)
+
+  @requests(on='/search')
+
+  def query(self, docs: DocumentArray, **kwargs):
+
+    for doc in docs:
+
+              for match in doc.matches:
+
+        extracted_doc = self._docs[match.parent_id]
+
+        extracted_doc.scores = match.scores
+
+        new_matches.append(extracted_doc)
+
+      doc.matches = new_matches
+
+  @requests(on='/dump')
+
+  def dump(self, **kwargs):
+
+    self._docs.save(self.workspace + 
+
+      f'/{self._index_file_name}')
+
+  
+
+  def close(self):
+
+    """
+
+    Stores the DocumentArray to disk
+
+    """
+
+    self.dump()
+
+    super().close()</pre>
+
+<p>它使用<code>DocumentArray</code>就像<code>DocVectorIndexer</code>一样将所有文件直接存储在<a id="_idIndexMarker461"/>磁盘上。</p>
+
+<p>它拥有两个不同的<a id="_idIndexMarker462"/>端点来索引数据和打开搜索流。在搜索逻辑中，给定一个文档，它遍历树来找到它的根/父文档。</p>
+
+<h4>最重要的遗嘱执行人</h4>
+
+<p>到最后，当两个<a id="_idIndexMarker463"/>块都找到它们的父块时，我们使用<code>WeightedRanker</code>执行器汇总分数以产生最终输出。</p>
+
+<p>让我们看一下代码来详细理解它的功能:</p>
+
+<ol>
+
+<li value="1">它打开一个搜索端点，将文本和图像块的结果结合起来，计算最终的相似性得分，我们将使用它来确定结果:<pre>class WeightedRanker(Executor):   @requests(on='/search')   def rank(     self, docs_matrix: List['DocumentArray'],      parameters: Dict, **kwargs   ) -&gt; 'DocumentArray':     """     :param docs_matrix: list of :class:`DocumentArray`        on multiple     requests to get bubbled up        matches.     :param parameters: the parameters passed into the        ranker, in     this case stores          :param kwargs: not used (kept to maintain            interface)     """     result_da = DocumentArray()       for d_mod1, d_mod2 in zip(*docs_matrix):               final_matches = {}  # type: Dict[str,                  Document]</pre></li>
+
+<li>您可以<a id="_idIndexMarker464"/>预先分配<code>weight</code>参数，以确定哪个模态(文本和图像之间)对计算最终相关性分数贡献更大。如果您将文本块的权重设置为<code>2</code>并将图像块的权重设置为<code>1</code>，那么文本块将为最终相关性贡献更高的分数。</li>
+
+<li>通过对两种模态的余弦相似性*权重求和，然后按降序对它们进行排序，计算出最终的相似性得分:<pre>  for m in d_mod1.matches:     relevance_score = m.scores['cosine'].value *        d_mod1.weight     m.scores['relevance'].value = relevance_score     final_matches[m.parent_id] = Document(       m, copy=True)   for m in d_mod2.matches:     if m.parent_id in final_matches:       final_matches[m.parent_id].scores[         'relevance'       ].value = final_matches[m.parent_id].scores['relevance']       .value + (         m.scores['cosine'].value * d_mod2.weight       )     else:       m.scores['relevance'].value = (         m.scores['cosine'].value * d_mod2.weight       )           final_matches[m.parent_id] = Document(m,              copy=True)   da = DocumentArray(list(final_matches.values()))   da.sorted(da, key=lambda ma:      ma.scores['relevance'].value, reverse=True)   d = Document(matches=da[: int(parameters['top_k'])])   result_da.append(d) return result_da</pre></li>
+
+</ol>
+
+<p>我们已经看了执行者如何一起工作来产生结果。现在让我们看看这些执行者是如何在索引和搜索流中被安排和利用的。</p>
+
+<h3>flow _索引. yml</h3>
+
+<p>正如您已经知道的，纪娜提供了两种创建和处理流程的方法。第一种是使用原生Python，第二种是使用YAML文件创建一个流，并在主<code>app.py</code>文件中调用它。现在，我们将看看如何通过利用我们在上一节中讨论的单个执行器组件来创建<code>flow_index.yml</code>文件。</p>
+
+<p><code>flow_index.yml</code>文件使用我们在<code>my_executors.py</code>文件中定义的不同的执行器，并安排它们产生索引流。让我们通过YAML电码来详细了解它:</p>
+
+<ol>
+
+<li value="1">它从<code>Segmenter</code>执行器开始，执行器将文档分割成文本和图像块:<pre>jtype: Flow version: '1' executors:   - name: segment     uses:       jtype: Segmenter       metas:         workspace: ${{ ENV.HW_WORKDIR }}         py_modules:           - ${{ ENV.PY_MODULE }}</pre></li>
+
+<li>之后，我们<a id="_idIndexMarker467"/>有两个不同的管道，一个用于<a id="_idIndexMarker468"/>文本，另一个用于图像。文本管道使用<code>TextCrafter</code>执行器预处理数据，使用<code>TextEncoder</code>执行器编码数据，然后使用<code>DocVectorIndexer</code> : <pre>  - name: craftText     uses:       jtype: TextCrafter       metas:         py_modules:           - ${{ ENV.PY_MODULE }}   - name: encodeText     uses:       jtype: TextEncoder       metas:         py_modules:           - ${{ ENV.PY_MODULE }}   - name: textIndexer     uses:       jtype: DocVectorIndexer       with:         index_file_name: "text.json"       metas:         workspace: ${{ ENV.HW_WORKDIR }}         py_modules:           - ${{ ENV.PY_MODULE }}</pre>索引数据</li>
+
+<li>图像<a id="_idIndexMarker469"/>管道使用<a id="_idIndexMarker470"/>T4执行器对数据进行预处理，使用<code>ImageEncoder</code>执行器对数据进行编码，然后使用<code>DocVectorIndexer</code> : <pre>  - name: craftImage     uses:       jtype: ImageCrafter       metas:         workspace: ${{ ENV.HW_WORKDIR }}         py_modules:           - ${{ ENV.PY_MODULE }}     needs: segment   - name: encodeImage     uses:       jtype: ImageEncoder       metas:         py_modules:           - ${{ ENV.PY_MODULE }}   - name: imageIndexer     uses:       jtype: DocVectorIndexer       with:         index_file_name: "image.json"       metas:         workspace: ${{ ENV.HW_WORKDIR }}         py_modules:           - ${{ ENV.PY_MODULE }}</pre>对数据进行索引</li>
+
+<li>在<a id="_idIndexMarker471"/>将文本和图像分别索引到<a id="_idIndexMarker472"/>的<code>text.json</code>和<code>image.json</code>文件后，我们用<code>KeyValueIndexer</code>连接两个索引器，将它们链接在一起:<pre>  - name: keyValueIndexer     uses:       jtype: KeyValueIndexer       metas:         workspace: ${{ ENV.HW_WORKDIR }}         py_modules:           - ${{ ENV.PY_MODULE }}     needs: segment   - name: joinAll     needs: [textIndexer, imageIndexer,        keyValueIndexer]</pre></li>
+
+</ol>
+
+<h3>flow_search.yml</h3>
+
+<p>类似于<code>flow_index.yml</code>文件，我们也有一个<code>flow_search.yml</code>文件，它为多模态示例<a id="_idIndexMarker474"/>应用程序定义了<a id="_idIndexMarker473"/>搜索/查询流。让我们来看看YAML代码，详细了解它的功能:</p>
+
+<ol>
+
+<li value="1">它以文本和图像的形式获取输入，并使用执行器管道对它们进行不同的处理。对于文本输入，它使用<code>TextCrafter</code>执行器对数据进行预处理，然后使用<code>TextEncoder</code>执行器对文本数据进行编码，最后使用<code>DocVectorIndexer</code> : <pre>jtype: Flow version: '1' with:   cors: True executors:   - name: craftText     uses:       jtype: TextCrafter       metas:         py_modules:           - ${{ ENV.PY_MODULE }}   - name: encodeText     uses:       jtype: TextEncoder       metas:         py_modules:           - ${{ ENV.PY_MODULE }}   - name: textIndexer     uses:       jtype: DocVectorIndexer       with:         index_file_name: "text.json"       metas:         workspace: ${{ ENV.HW_WORKDIR }}         py_modules:           - ${{ ENV.PY_MODULE }}</pre>对其进行索引</li>
+
+<li>对于<a id="_idIndexMarker475"/>图像输入，使用<code>ImageCrafter</code>执行器<a id="_idIndexMarker476"/>对数据进行预处理，然后使用<code>ImageEncoder</code>执行器对图像数据进行编码，最后使用<code>DocVectorIndexer</code> : <pre>  - name: craftImage     uses:       jtype: ImageCrafter       metas:         workspace: ${{ ENV.HW_WORKDIR }}         py_modules:           - ${{ ENV.PY_MODULE }}     needs: gateway   - name: encodeImage     uses:       jtype: ImageEncoder       metas:         py_modules:           - ${{ ENV.PY_MODULE }}   - name: imageIndexer     uses:       jtype: DocVectorIndexer       with:         index_file_name: "image.json"       metas:         workspace: ${{ ENV.HW_WORKDIR }}         py_modules:           - ${{ ENV.PY_MODULE }}</pre>对其进行索引</li>
+
+<li>然后<a id="_idIndexMarker477"/>将<code>TextIndexer</code>和<code>ImageIndexer</code>的结果传递给<code>WeightedRanker</code>执行器，执行器计算<a id="_idIndexMarker478"/>最终相关性分数并产生输出:<pre>  - name: weightedRanker     uses:       jtype: WeightedRanker       metas:         workspace: ${{ ENV.HW_WORKDIR }}         py_modules:           - ${{ ENV.PY_MODULE }}     needs: [ textIndexer, imageIndexer ]   - name: keyvalueIndexer     uses:       jtype: KeyValueIndexer       metas:         workspace: ${{ ENV.HW_WORKDIR }}         py_modules:           - ${{ ENV.PY_MODULE }}     needs: weightedRanker</pre></li>
+
+</ol>
+
+<p>要通过UI与web <a id="_idIndexMarker480"/>浏览器中的<a id="_idIndexMarker479"/>多模态应用程序进行交互，您可以使用<code>static</code>文件夹中提供的<code>index.xhtml</code>文件。默认情况下，运行应用程序应该会打开HTML文件，但是如果没有打开，那么您可以从<code>static</code>文件夹中打开<code>index.xhtml</code>文件。</p>
+
+<h1 id="_idParaDest-90"><a id="_idTextAnchor100"/>总结</h1>
+
+<p>在这一章中，我们已经讲述了如何将我们在前面章节中学到的所有组件和概念放在一起。我们向您展示了使用纪娜为不同的数据类型构建基本搜索示例的过程，包括文本到文本搜索、图像到图像搜索和多模式搜索，多模式搜索将文本和图像结合在一起。我们在本章中学到的东西将作为第七章<em class="italic">的<a href="B17488_07.xhtml#_idTextAnchor101"> <em class="italic">的构建模块，探索纪娜</em>的高级用例，在那里你将学习使用纪娜构建高级示例。</a></em></p>
+
+<p>在下一章，我们将继续同样的旅程，看看如何使用我们目前所学的知识，用纪娜构建高级搜索应用程序。</p>
+
+</div>
+
+<div><div/>
+
+</div>
+
+</div>
+
+
+
+</body></html>

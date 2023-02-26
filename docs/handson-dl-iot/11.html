@@ -1,0 +1,1314 @@
+<html><head/><body><html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Predictive Maintenance for IoT</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">物联网预测性维护</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在<strong>物联网</strong> ( <strong>物联网</strong>)设备中，一次为一个事件生成流数据。基于DL的方法可以检查这些数据，以便实时诊断整个车队的问题，并且可以预测各个单元的未来健康状况，以便实现按需维护。这种策略被称为<strong>预测</strong>(或<strong>基于条件的</strong> ) <strong>维护</strong>。这种方法现在正成为物联网最有前途和最有利可图的工业应用之一。</p>
+
+<p>考虑到这些动机，在本章中，我们将研究如何使用<strong>涡扇发动机退化模拟</strong>数据集开发物联网预测性维护的DL解决方案。预测性维护背后的思想是确定各种类型的故障模式是否可以预测。此外，我们将讨论如何从支持物联网的设备中收集数据以进行预测性维护。简而言之，本章将涵盖以下主题:</p>
+
+<ul>
+
+<li>物联网预测性维护</li>
+
+<li>开发预测性维护应用程序</li>
+
+<li>准备数据</li>
+
+<li>训练ML基线</li>
+
+<li>培训LSTM模型</li>
+
+<li>评估模型</li>
+
+<li>常见问题</li>
+
+</ul>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Predictive maintenance for IoT</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">物联网预测性维护</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">随着实时数据捕获和流架构的进步，现在可以进行实时数据监控，组织可以实时了解各个组件和所有流程。监控仍然需要积极参与和快速响应，例如，油井传感器显示温度或流量增加，或者网络流量出现僵尸网络活动或内部威胁。</p>
+
+<p class="mce-root"/>
+
+<p>让我们考虑一个现实世界的例子，叫做工业工程中的<strong>设备故障</strong>，它总是被认为是一个代价高昂的问题。定期进行预防性维护一直是常规策略。因此，时间表往往是非常不冒险的，这通常是基于运营商的经验。这种人工干预有几个缺点。首先，它会增加维护成本。其次，这种设置不可能适应高度复杂或不断变化的工业场景。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Collecting IoT data in an industrial setting</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">在工业环境中收集物联网数据</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>根据RT Insights的数据，一个喷气发动机可能会花费1600万美元，在一次跨大西洋飞行中，它会消耗36000加仑的燃料。今天的航空燃油价格达到每次54，000美元左右，或每小时超过5，000美元。大多数喷气发动机是燃气涡轮发动机，其中热能通过喷嘴膨胀转换成动能，然后在旋转的转子中转换成旋转机械能。这样的引擎产生了海量的物联网数据。让我们试着理解ML的预测性维护如何帮助我们降低维护成本。</p>
+
+<p>第一步是收集代表不同操作条件下健康和故障操作的传感器数据，例如温度、流量和压力。在现实生活中，这些可能部署在不同的环境和位置(假设您在西伯利亚，工作温度为-20摄氏度，流体粘度高，另一个在中东国家，工作温度为45摄氏度，流体粘度高)。</p>
+
+<p>尽管两个引擎都应该正常工作，但由于不同的操作条件，其中一个引擎可能会更快出现故障。不幸的是，没有足够的数据，没有进一步的方法来调查失败的根本原因。一旦部署了这样的喷气涡轮发动机，就可以在以下设置中使用流技术来收集传感器数据:</p>
+
+<ul>
+
+<li>来自正常系统操作的真实传感器数据</li>
+
+<li>来自在故障条件下运行的系统的真实传感器数据</li>
+
+<li>来自系统故障的真实传感器数据(<em>运行至故障</em>数据)</li>
+
+</ul>
+
+<p class="mce-root"/>
+
+<p>然而，如果我们没有部署很多这样的引擎，我们将没有太多的数据，这些数据将代表健康和故障的条件和操作。有两种解决方法可以克服这种数据匮乏的问题:</p>
+
+<ul>
+
+<li>使用来自相似/相同引擎的历史数据，这可能类似于当前部署的引擎。</li>
+
+<li>第二，我们可以建立发动机的数学模型，并根据可用的传感器数据估计它们的参数。基于统计分布和操作条件，我们可以生成故障数据。</li>
+
+</ul>
+
+<p>如果我们选择第二个选项，在生成传感器数据后，我们可以将它们与真实的传感器数据相结合，为开发预测性维护模型生成大规模的传感器数据，如下图所示:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/f4910870-43c7-4ad2-86a0-fc496bcb2aa0.png" style="width:50.83em;height:34.58em;"/></p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>ML techniques for predictive maintenance</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">预测性维护的ML技术</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p><strong>深度学习</strong> ( <strong> DL </strong>)技术可以应用于处理海量的物联网数据，并且可以成为经典机器学习算法的一个有吸引力的新兴替代方案。其思想是，当设备被赋予传感器并联网时，会产生大量的传感器数据。在更复杂的工业环境中，来自传感器通道的数据噪声很大，会随时间波动，但有些数据似乎根本不会改变。对于每个工业环境来说，这或多或少都是正确的，因为物联网环境中产生的数据是一系列多元的传感器测量值，每个测量值都有自己的噪声量，其中包含许多缺失值或无信息值。</p>
+
+<p>预测性维护应用程序开发的一个关键步骤是从收集的传感器数据中识别<strong>条件指标</strong> ( <strong> CIs </strong>)和特征，随着系统退化，以可预测的方式检查CIs的行为变化。通常，配置项包含有助于区分正常和故障操作以及预测<strong>剩余使用寿命</strong> ( <strong> RUL </strong>)的功能。</p>
+
+<p>发动机或机器的RUL是发动机需要维修或更换前的预期寿命或剩余使用时间。因此，从传感器数据预测RUL是许多预测性维护应用的关键。在下图中，我们可以看到，随着涡轮发动机性能下降，频率数据中的峰值向左移动。因此，峰值频率可以作为状态指示器:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/39ae6a54-b44e-4921-92c5-96cb0a42c3f0.png" style="width:63.42em;height:15.50em;"/></p>
+
+<p>CIs可以帮助我们了解涡轮发动机的正常运行和故障运行。然而，他们并没有告诉我们哪些部分需要修复，或者离故障发生还有多长时间。我们要么在修复之前识别故障类型，要么在计划维护之前预测RUL。对于前一个选项，使用提取的CIs特征来训练ML或DL模型，并识别故障类型，如密封泄漏、入口堵塞或轴承磨损，如下图所示:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/cd8200d6-66a0-4393-b77d-bac7fb44f88b.png" style="width:73.25em;height:14.08em;"/></p>
+
+<p>对于后一种策略，我们也可以训练ML/DL模型来预测泵将继续在这两种状态(当前状况和故障)之间转换的趋势。DL模型可以捕捉CI特征之间的关系，涡轮发动机的退化路径将帮助我们预测距离下一次故障还有多长时间，或者我们应该何时安排维护，如下图所示:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/e543f232-57e9-49d5-9d28-cbc13f1dfcd0.png" style="width:74.58em;height:15.25em;"/></p>
+
+<p>最后，可以在工业环境中部署稳定的模型。下图总结了前面的步骤:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img class="aligncenter size-full wp-image-982 image-border" src="img/f413846e-0190-45cc-b5e9-346f65906fa6.png" style="width:44.17em;height:21.75em;"/></p>
+
+<p>不幸的是，由于缺乏用于预测故障类型的传感器数据，在下一节中，我们将看到一个使用ML和DL技术预测RUL的实践示例。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Example – PM for an aircraft gas turbine engine</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">示例–飞机燃气涡轮发动机的PM</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>为了给预测性维护一个真实的一瞥，我们将使用开源的<strong>涡扇发动机退化模拟</strong>数据集，该数据集由美国宇航局艾姆斯研究中心的<strong>卓越预测中心</strong>于2008年发布。数据集可以从<a href="https://ti.arc.nasa.gov/c/6/">https://ti.arc.nasa.gov/c/6/</a>下载。我们感谢以下研究的作者提供了这个数据集:</p>
+
+<p>涡扇发动机退化模拟数据集，A . sa xena和K . Goebel(2008)，NASA Ames预测数据存储库(<a href="https://ti.arc.nasa.gov/tech/dash/groups/pcoe/prognostic-data-repository/">https://ti . arc . NASA . gov/tech/dash/groups/pcoe/predictive-Data-Repository/</a>)，NASA Ames研究中心，加利福尼亚州莫菲特场。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Describing the dataset</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">描述数据集</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>该数据集包括来自一组模拟的飞机燃气涡轮发动机运行条件的传感器读数，作为多个多元时间序列。数据集由单独的训练集和测试集组成。测试集类似于训练集，除了每个引擎的测量在它失败之前被截断一些(未知的)时间。数据以ZIP压缩文本文件的形式提供，包含26列数字。每行代表在单个操作周期中获取的数据快照，每列代表不同的变量。这些列对应于以下属性:</p>
+
+<ul>
+
+<li class="mce-root">单位数</li>
+
+<li class="mce-root">时间，周期</li>
+
+<li class="mce-root">操作设置1</li>
+
+<li class="mce-root">操作设置2</li>
+
+<li class="mce-root">操作设置3</li>
+
+<li class="mce-root">传感器测量1</li>
+
+<li class="mce-root">传感器测量2</li>
+
+<li class="mce-root">传感器测量26</li>
+
+</ul>
+
+<p class="mce-root"/>
+
+<p>此外，数据集具有数据的真实RUL值的向量，该向量将用作训练模型的基础事实。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Exploratory analysis</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">探索性分析</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>为了了解发动机物理状态等方面的传感器读数(例如，部件温度、涡轮风扇转速等)，我们决定从第一个数据集中提取第一个单元，用于单台发动机上的所有传感器。为此，我们编写了一个脚本(参见<kbd>make_dataset.py</kbd>)从输入目录中获取所有数据文件。然后，它将一组原始数据文件解析为单个DataFrame对象，并返回所有文件的聚合表示，其中包含适当的列名:</p>
+
+<pre class="mce-root">data_sets = []<br/>    <strong>for</strong> data_file in glob(file_pattern):<br/>        <strong>if</strong> label_data:<br/>            # read in contents as a DataFrame<br/>            subset_df = pd.read_csv(data_file, header=None)<br/>            # need to create a unit_id column explicitly<br/>            unit_id = <strong>range</strong>(1, subset_df.shape[0] + 1)<br/>            subset_df.insert(0, 'unit_id', unit_id)<br/>        <strong>else</strong>:<br/>            # read in contents as a DataFrame<br/>            subset_df = pd.read_csv(data_file, sep=' ', header=None, usecols=range(26))<br/>        # extract the id of the dataset from the name and add as a column<br/>        dataset_id = basename(data_file).split("_")[1][:5]<br/>        subset_df.insert(0, 'dataset_id', dataset_id)<br/>        # add to list<br/>        data_sets.append(subset_df)<br/>    # combine dataframes<br/>    df = pd.concat(data_sets)<br/>    df.columns = columns<br/>    # return the result<br/><br/>    <strong>return</strong> df</pre>
+
+<p>要使用这个脚本，首先复制<kbd>data/raw/</kbd>目录中的所有文件，然后执行以下命令:</p>
+
+<pre><strong>$python3 make_dataset.py data/raw/ /data/processed/</strong></pre>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p>这个命令将分别为训练集、测试集和标签生成三个文件——<kbd>train.csv</kbd>、<kbd>test.csv</kbd>和<kbd>RUL.csv</kbd>。既然我们的数据集已经准备好进行探索性分析，我们现在可以将每个CSV文件作为pandas数据帧来读取:</p>
+
+<pre class="mce-root"># load the processed data in CSV format<br/>train_df = pd.read_csv('train.csv')<br/>test_df = pd.read_csv('test.csv')<br/>rul_df = pd.read_csv('RUL.csv')<br/><br/># for convenience, identify the sensor and operational setting columns<br/>sensor_columns = [col for col in train_df.columns if col.startswith("sensor")]<br/>setting_columns = [col for col in train_df.columns if col.startswith("setting")]</pre>
+
+<p>然后，从第一个数据集中提取第一个单元:</p>
+
+<pre>slice = train_df[(train_df.dataset_id == 'FD001') &amp; (train_df.unit_id == 1)]</pre>
+
+<p>然后，我们在一个7 * 3 = 21的绘图网格上绘制其传感器轨迹，以查看所有传感器通道。我们必须绘制与该位置对应的通道:</p>
+
+<pre>fig, axes = plt.subplots(7, 3, figsize=(15, 10), sharex=True)<br/><br/><strong>for</strong> index, ax <strong>in</strong> enumerate(axes.ravel()):<br/>    sensor_col = sensor_columns[index]<br/>    slice.plot(x='cycle', y=sensor_col, ax=ax, color='blue');<br/>    # label formatting<br/>    if index % 3 == 0:<br/>        ax.set_ylabel("Sensor reading", size=10);<br/>    else:<br/>        ax.set_ylabel("");<br/>    ax.set_xlabel("Time (cycle)");<br/>    ax.set_title(sensor_col.title(), size=14);<br/>    ax.legend_.remove();<br/><br/># plot formatting<br/>fig.suptitle("Sensor reading : unit 1, dataset 1", size=20, y=1.025)<br/>fig.tight_layout();</pre>
+
+<p class="mce-root"/>
+
+<p class="mce-root">如下图所示，来自传感器通道的数据噪声很大，并随时间波动，而其他数据似乎根本没有变化。每个传感器的生命周期在<em> x </em>轴上的起始值和终止值是不同的:<q> <br/> </q></p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/bb6ee94c-00be-4c6d-8df2-d6ca8e001d0b.png" style="width:54.83em;height:37.58em;"/></p>
+
+<p class="CDPAlignLeft CDPAlign">我们可以看到，每台发动机的寿命和故障模式都略有不同。接下来，我们可以针对来自训练集的10个引擎的随机样本，可视化来自所有传感器通道的数据与时间的关系:</p>
+
+<pre class="mce-root"># randomly select 10 units from dataset 1 to plot<br/>all_units = train_df[train_df['dataset_id'] == 'FD001']['unit_id'].unique()<br/>units_to_plot = np.random.choice(all_units, size=10, replace=False)<br/><br/># get the data for these units<br/>plot_data = train_df[(train_df['dataset_id'] == 'FD001') &amp;<br/>                     (train_df['unit_id'].isin(units_to_plot))].copy()<br/><br/># plot their sensor traces (overlaid)<br/>fig, axes = plt.subplots(7, 3, figsize=(15, 10), sharex=True)<br/><br/>for index, ax in enumerate(axes.ravel()):<br/>    sensor_col = sensor_columns[index]<br/><br/>    for unit_id, group in plot_data.groupby('unit_id'):<br/>        # plot the raw sensor trace<br/>        (group.plot(x='cycle', y=sensor_col, alpha=0.45, ax=ax, color='gray', legend=False));<br/>        # overlay the 10-cycle rolling mean sensor trace for visual clarity<br/>        (group.rolling(window=10, on='cycle')<br/>             .mean()<br/>             .plot(x='cycle', y=sensor_col, alpha=.75, ax=ax, color='black', legend=False));<br/>    <br/>    # label formatting<br/>    if index % 3 == 0:<br/>        ax.set_ylabel("Sensor Value", size=10);<br/>    else:<br/>        ax.set_ylabel("");<br/>    ax.set_title(sensor_col.title());<br/>    ax.set_xlabel("Time (Cycles)");<br/><br/># plot formatting<br/>fig.suptitle("All Sensor Traces: Dataset 1 (Random Sample of 10 Units)", size=20, y=1.025);<br/>fig.tight_layout();</pre>
+
+<p>前面的代码段显示了来自数据集1的传感器读数的10个单位的随机样本的下图:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/aadcd010-d6a2-44dd-9850-d26e05de78e2.png" style="width:61.08em;height:42.25em;"/></p>
+
+<p>从上图中，我们可以看出，一台发动机相对于时间的进展与其他发动机并不完全一致。例如，这种阻抗不允许我们将一个发动机的第五循环与另一个发动机的第五循环进行比较。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Inspecting failure modes</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">检查故障模式</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>由于已经知道训练集中的每个发动机何时会发生故障，我们可以在每个时间步计算故障前的<strong>时间</strong>值，其可以定义如下:</p>
+
+<p class="CDPAlignCenter CDPAlign"><em>故障前时间(TBF) =故障时发动机使用寿命(EEL) -总工作寿命(TOL) </em></p>
+
+<p>这个数字可以被认为是每个引擎的故障倒计时，它允许我们将不同引擎的数据调整到一个共同的目标:</p>
+
+<pre class="mce-root"># generate the lifetimes series<br/>lifetimes = train_df.groupby(['dataset_id', 'unit_id'])['cycle'].max()<br/><br/># apply the above function to the data we're plotting<br/>plot_data['ctf'] = plot_data.apply(lambda r: cycles_until_failure(r, lifetimes), axis=1)<br/><br/># plot the sensor traces (overlaid)<br/>fig, axes = plt.subplots(7, 3, figsize=(15, 10), sharex=True)<br/>for index, ax in enumerate(axes.ravel()):<br/>    sensor_col = sensor_columns[index]<br/>    # use the same subset of data as above<br/>    for unit_id, group in plot_data.groupby('unit_id'):<br/>        # plot the raw sensor trace, using ctf on the time axis<br/>        (group.plot(x='ctf', y=sensor_col, alpha=0.45, ax=ax, color='gray', legend=False));<br/><br/>        # overlay the 10-cycle rolling mean sensor trace for visual clarity<br/>        (group.rolling(window=10, on='ctf')<br/>             .mean()<br/>             .plot(x='ctf', y=sensor_col, alpha=.75, ax=ax, color='black', legend=False));<br/><br/>    # label formatting<br/>    if index % 3 == 0:<br/>        ax.set_ylabel("Sensor Value", size=10);<br/>    else:<br/>        ax.set_ylabel("");<br/>    ax.set_title(sensor_col.title());<br/>    ax.set_xlabel("Time Before Failure (Cycles)");<br/><br/>    # add a vertical red line to signal common time of failure<br/>    ax.axvline(x=0, color='r', linewidth=3);<br/><br/>    # extend the x-axis to compensate<br/>    ax.set_xlim([None, 10]);<br/>fig.suptitle("All Sensor Traces: Dataset 1 (Random Sample of 10 Units)", size=20, y=1.025);<br/>fig.tight_layout();</pre>
+
+<p class="mce-root"/>
+
+<p>下图显示了相同发动机中的传感器通道。唯一的区别是，前面的图表是针对故障前的时间绘制的，其中每个发动机在同一时刻结束(<em> t=0 </em>)。它还为我们提供了不同发动机的通用模式，表明一些传感器读数在故障发生前持续上升或下降，而其他传感器——例如传感器14——表现出不同的故障行为<q> : </q></p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/f855574e-b052-403b-9850-f700f005902c.png"/></p>
+
+<p>这种模式在许多预测性维护问题中非常常见:故障往往是不同过程的汇合，因此，现实世界中的事物很可能表现出多种故障模式。由于这种不可预测的数据模式，预测RUL非常具有挑战性。</p>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Prediction challenges</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">预测挑战</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>如下图所示，在观察发动机的传感器测量值和工作条件一段时间(图中为133个循环)后，面临的挑战是预测发动机在发生故障前将继续工作的时间(换句话说，RUL ):</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/a8291ed7-5473-4b7f-bd0a-29eb8e31a583.png" style="width:64.67em;height:9.75em;"/></p>
+
+<p>然而，对ML/DL模型做出不正确的预测基本上是低估了特定发动机的真实RUL。这可能会使涡轮发动机过早进行维护，而它本可以运行更长时间而不会出现任何问题。那么，如果我们的模型高估了真实的RUL，会发生什么呢？在这种情况下，我们可能会让一架性能下降的飞机继续飞行，并冒着灾难性引擎故障的风险。显然，这两种结果的成本是不同的。考虑到这些挑战，在下一节中，我们将重点关注使用基于DL的技术来预测RUL。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>DL for predicting RLU</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">预测RLU的DL</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">正如我们已经讨论过的，我们试图计算发动机需要维护的时间。这个数据集的特别之处在于，引擎一直运行到出现故障，为我们提供了每个引擎在每个时间点的精确RLU信息。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Calculating cut-off times</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">计算截止时间</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>让我们考虑一下<kbd>FD004</kbd>数据集，它包含多达249个引擎(<kbd>engine_no</kbd>)，这些引擎随着时间的推移被监控(<kbd>time_in_cycles</kbd>)。每个发动机在每个循环中都记录有<kbd>operational_settings</kbd>和<kbd>sensor_measurements</kbd>:</p>
+
+<pre>data_path <strong>=</strong> 'train_FD004.txt'<br/>data <strong>=</strong> utils.load_data(data_path)</pre>
+
+<p>为了训练预测RUL的模型，我们可以通过选择发动机寿命中的随机点并仅使用该点之前的数据来模拟真实预测。通过使用截止时间，我们可以轻松地创建具有该限制的特征:</p>
+
+<pre class="mce-root">def make_cutoff_times(data):<br/>    gb = data.groupby(['unit_id'])<br/>    labels = []<br/>    for engine_no_df in gb:<br/>        instances = engine_no_df[1].shape[0]<br/>        label = [instances - i - 1 for i in range(instances)]<br/>        labels += label<br/>    return new_labels(data, labels)</pre>
+
+<p>上述函数通过对<kbd>cutoff_time</kbd>和<kbd>label</kbd>进行采样来生成截止时间，其调用如下:</p>
+
+<pre>cutoff_times = utils.make_cutoff_times(data)<br/>cutoff_times.head()</pre>
+
+<p>前面几行代码仅显示了五个引擎的以下RUL和截止时间:<q> <br/> </q></p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/2e644b28-8122-42c1-be67-27fa8e49a973.png" style="width:19.75em;height:12.83em;"/></p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Deep feature synthesis</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">深度特征合成</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>然后，我们使用<strong>深度特征合成</strong> ( <strong> DFS </strong>)生成特征。为此，我们需要为数据建立一个实体集结构。我们可以通过规范化原始数据中的<kbd>engine_no</kbd>列来创建一个引擎实体:</p>
+
+<pre>def make_entityset(data):<br/>    es = ft.EntitySet('Dataset')<br/>    es.entity_from_dataframe(dataframe=data,<br/>                             entity_id='recordings',<br/>                             index='index',<br/>                             time_index='time')<br/>    es.normalize_entity(base_entity_id='recordings',<br/>                        new_entity_id='engines',<br/>                        index='engine_no')<br/>    es.normalize_entity(base_entity_id='recordings',<br/>                        new_entity_id='cycles',<br/>                        index='time_in_cycles')<br/>    return es<br/>es = make_entityset(data)</pre>
+
+<p>前面的代码块将生成实体集的以下统计信息:<br/></p>
+
+<pre class="mce-root"><strong>Entityset: Dataset</strong><br/><strong>   Entities:</strong><br/><strong>     recordings [Rows: 20631, Columns: 28]</strong><br/><strong>     engines [Rows: 100, Columns: 2]</strong><br/><strong>     cycles [Rows: 362, Columns: 2]</strong><br/><strong>   Relationships:</strong><br/><strong>     recordings.engine_no -&gt; engines.engine_no</strong><br/><strong>     recordings.time_in_cycles -&gt; cycles.time_in_cycles</strong></pre>
+
+<p><kbd>ft.dfs</kbd>函数接受一个实体集，并在实体间彻底堆栈原语，如<kbd>max</kbd>、<kbd>min</kbd>和<kbd>last</kbd>:</p>
+
+<pre class="mce-root">fm, features = ft.dfs(entityset=es,<br/>                      target_entity='engines',<br/>                      agg_primitives=['last', 'max', 'min'],<br/>                      trans_primitives=[],<br/>                      cutoff_time=cutoff_times,<br/>                      max_depth=3,<br/>                      verbose=True)<br/>fm.to_csv('FM.csv')</pre>
+
+<p class="mce-root"/>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>ML baselines</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">ML基线</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在我们已经生成了特征，我们可以开始训练第一个ML模型<kbd>RandomForestRegressor</kbd>。然后，我们将逐步转向使用DL使用<strong>长短期记忆</strong> ( <strong> LSTM </strong>)网络。<strong>随机森林</strong> ( <strong> RF </strong>)是一种集成技术，它建立几个决策树并将它们集成在一起，以获得更准确和稳定的预测。通常，较深的树表示更复杂的决策规则和更适合的模型。例如，下图显示了大学录取数据的决策树:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/4dfcb6f0-e778-4951-b1a7-df7b0f07c401.png" style="width:53.58em;height:52.17em;"/></p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<p>因此，树越深，决策规则越复杂，模型越适合。这是随机森林的直接后果。换句话说，基于独立陪审团多数票的最终预测总是比最好的陪审团更好、更可靠。下图显示了随机森林及其组装技术:</p>
+
+<div><img src="img/18820971-61e8-437d-bef1-7aab87e7e702.png" style="width:69.58em;height:31.92em;"/></div>
+
+<p>因此，让我们从准备单独的训练集和测试集开始:</p>
+
+<pre class="mce-root">fm = pd.read_csv('FM.csv', index_col='engine_no')<br/>X = fm.copy().fillna(0)<br/>y = X.pop('RUL')<br/>X_train, X_test, y_train, y_test = train_test_split(X, y)</pre>
+
+<p class="mce-root">然后，使用训练集，我们将检查以下基线:</p>
+
+<ul>
+
+<li>总是预测<kbd>y_train</kbd>的中值。</li>
+
+<li>总是预测RUL，就好像每个引擎在<kbd>X_train</kbd>都有中值寿命。</li>
+
+</ul>
+
+<p>我们将通过使用scikit-learn的<kbd>RandomForestRegressor</kbd>找到被称为<strong>平均绝对误差</strong> ( <strong> MAE </strong>)的误差绝对值的平均值来检查这些预测:</p>
+
+<pre>from sklearn.model_selection import train_test_split<br/>from sklearn.metrics import mean_absolute_error<br/><br/>yhat_median_predict = [np.median(y_train) for _ in y_test]<br/>print('Baseline by median label: MAE = {:.2f}'.format(<br/>    mean_absolute_error(yhat_median_predict, y_test)))<br/><br/># Collect sensor readings from the sensor in training set<br/>recordings_from_train = es['recordings'].df[es['recordings'].df['engine_no'].isin(y_train.index)]<br/>median_life = np.median(recordings_from_train.groupby(['engine_no']).apply(lambda df: df.shape[0]))<br/><br/># Collect sensor readings from the sensor in training set<br/>recordings_from_test = es['recordings'].df[es['recordings'].df['engine_no'].isin(y_test.index)]<br/>life_in_test = recordings_from_test.groupby(['engine_no']).apply(lambda df: df.shape[0])-y_test<br/><br/># Compute mean absolute error as the baseline by meadian of the RUL<br/>yhat_median_predict2 = (median_life - life_in_test).apply(lambda row: max(row, 0))<br/>print('Baseline by median life: MAE = {:.2f}'.format(<br/>    mean_absolute_error(yhat_median_predict2, y_test)))</pre>
+
+<p class="mce-root">前面的代码块应该产生以下显示基线<kbd>MAE</kbd>值的输出:</p>
+
+<pre class="mce-root"><strong>Baseline by median label: MAE = 66.72</strong><br/><strong>Baseline by median life: MAE = 59.96</strong></pre>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Making predictions</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">做预测</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>现在，我们可以使用我们创建的特征来使<kbd>RandomForestRegressor</kbd>符合我们的数据，看看我们是否可以在之前的分数上有所提高:</p>
+
+<pre>rf = RandomForestRegressor() # first we instantiate RandomForestRegressor from scikit-learn<br/>rf.fit(X_train, y_train) # train the regressor model with traing set<br/>   <br/>preds = rf.predict(X_test) # making predictin on unseen observation <br/>scores = mean_absolute_error(preds, y_test) # Computing MAE<br/><br/>print('Mean Abs Error: {:.2f}'.format(scores))<br/>high_imp_feats = utils.feature_importances(X, reg, feats=10) # Printing feature importance</pre>
+
+<p class="mce-root">前面的代码块应该生成以下输出，显示基线MAE值和有关引擎记录周期的统计信息:</p>
+
+<pre class="mce-root"><strong>Mean Abs Error: 31.04</strong><br/><strong> 1: LAST(recordings.cycles.LAST(recordings.sensor_measurement_4)) [0.395]</strong><br/><strong> 2: LAST(recordings.sensor_measurement_4) [0.192]</strong><br/><strong> 3: MAX(recordings.sensor_measurement_4) [0.064]</strong><br/><strong> 4: LAST(recordings.cycles.MIN(recordings.sensor_measurement_11)) [0.037]</strong><br/><strong> 5: LAST(recordings.cycles.MAX(recordings.sensor_measurement_12)) [0.029]</strong><br/><strong> 6: LAST(recordings.sensor_measurement_15) [0.020]</strong><br/><strong> 7: LAST(recordings.cycles.MAX(recordings.sensor_measurement_11)) [0.020]</strong><br/><strong> 8: LAST(recordings.cycles.LAST(recordings.sensor_measurement_15)) [0.018]</strong><br/><strong> 9: MAX(recordings.cycles.MAX(recordings.sensor_measurement_20)) [0.016]</strong><br/><strong> 10: LAST(recordings.time_in_cycles) [0.014]</strong></pre>
+
+<p class="mce-root">然后，我们必须准备特性和标签，这可以使用下面的代码来完成:</p>
+
+<pre>data2 = utils.load_data('test_FD001.txt')<br/>es2 = make_entityset(data2)<br/>fm2 = ft.calculate_feature_matrix(entityset=es2, features=features, verbose=True)<br/>fm2.head()</pre>
+
+<p class="mce-root">加载的数据应该具有来自249台发动机的41，214条记录，其中在三种操作设置下使用了21个传感器测量值。然后，我们必须使用加载的数据准备要素和标注，这可以使用以下代码来完成:</p>
+
+<pre>X = fm2.copy().fillna(0)<br/>y = pd.read_csv('RUL_FD004.txt', sep=' ', header=-1, names=['RUL'], index_col=False)<br/><br/>preds2 = rf.predict(X)<br/>print('Mean Abs Error: {:.2f}'.format(mean_absolute_error(preds2, y)))<br/><br/>yhat_median_predict = [np.median(y_train) for _ in preds2]<br/>print('Baseline by median label: MAE = {:.2f}'.format(<br/>    mean_absolute_error(yhat_median_predict, y)))<br/><br/>yhat_median_predict2 = (median_life - es2['recordings'].df.groupby(['engine_no']).apply(lambda df: df.shape[0])).apply(lambda row: max(row, 0))<br/><br/>print('Baseline by median life: MAE = {:.2f}'.format(<br/>    mean_absolute_error(yhat_median_predict2 y)))</pre>
+
+<p class="mce-root">前面的代码块应产生以下输出，显示预测的MAE和基线MEA值:</p>
+
+<pre class="mce-root"><strong>Mean Abs Error: 40.33</strong><br/><strong>Baseline by median label: Mean Abs Error = 52.08</strong><br/><strong>Baseline by median life: Mean Abs Error = 49.55</strong></pre>
+
+<p>如图所示，预测的MAE值低于两个基线MAE值。接下来，我们尝试使用LSTM网络进一步改进MAE。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Improving MAE with LSTM</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">用LSTM改进MAE</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">我们将使用基于Keras的LSTM网络来预测RUL。但是，为此，我们首先需要转换数据，以便LSTM模型可以使用三维格式的数据:</p>
+
+<pre class="mce-root">#Prepare data for Keras based LSTM model<br/><strong>def</strong> prepareData(X, y):<br/>    X_train, X_test, y_train, y_test = train_test_split(X, y)<br/>    X_train = X_train.as_matrix(columns=None)<br/>    X_test = X_test.as_matrix(columns=None)<br/>    y_train = y_train.as_matrix(columns=None)<br/>    y_test = y_test.as_matrix(columns=None)<br/>    y_train = y_train.reshape((y_train.shape[0], 1))<br/>    y_test = y_test.reshape((y_test.shape[0], 1))<br/>    X_train = np.reshape(X_train,(X_train.shape[0], 1, X_train.shape[1]))<br/>    X_test = np.reshape(X_test,(X_test.shape[0], 1, X_test.shape[1]))    <br/>    return X_train, X_test, y_train, y_test</pre>
+
+<p class="mce-root">既然我们有了适合LSTM模型的数据，我们就可以构建LSTM网络了。为此，我们有一个奇特的LSTM网络，它只有一个LSTM层，后面是一个密集层，然后我们应用一个下降层以实现更好的正则化。然后，我们有另一个密集层，然后使用线性激活函数将该密集层的输出投射到激活层，使其输出实值输出。然后我们使用名为<kbd>RMSProp</kbd>的SGD版本，它试图优化<strong>均方误差</strong> ( <strong> MSE </strong>):</p>
+
+<pre>#Create LSTM model<br/>from keras.models import Sequential<br/>from keras.layers.core import Dense, Activation<br/>from keras.layers.recurrent import LSTM<br/>from keras.layers import Dropout<br/>from keras.layers import GaussianNoise<br/><br/><strong>def</strong> createLSTMModel(X_train, hidden_neurons):<br/>    model = Sequential()<br/>    model.add(LSTM(hidden_neurons, input_shape=(X_train.shape[1], X_train.shape[2])))<br/>    model.add(Dense(hidden_neurons))<br/>    model.add(Dropout(0.7))<br/>    model.add(Dense(1))<br/>    model.add(Activation("linear"))<br/>    model.compile(loss="mean_squared_error", optimizer="rmsprop")<br/>    return model</pre>
+
+<p class="mce-root">然后，我们用训练集训练LSTM模型:</p>
+
+<pre>X_train, X_test, y_train, y_test = prepareData(X, y)<br/>hidden_neurons = 128<br/>model = createLSTMModel(X_train, hidden_neurons)<br/>history = model.fit(X_train, y_train, batch_size=32, nb_epoch=5000, validation_split=0.20)</pre>
+
+<p>前面的代码行应该会产生一些日志，这让我们知道训练和验证损失是否会随着迭代而减少:</p>
+
+<pre><strong>Train on 60 samples, validate on 15 samples</strong><br/><strong> Epoch 1/5000</strong><br/><strong> 60/60 [==============================] - ETA: 0s - loss: 7996.37 - 1s 11ms/step - loss: 7795.0232 - val_loss: 8052.6118</strong><br/><strong> Epoch 2/5000</strong><br/><strong> 60/60 [==============================] - ETA: 0s - loss: 6937.66 - 0s 301us/step - loss: 7466.3648 - val_loss: 7833.4321</strong><br/><strong> …</strong><br/><strong> 60/60 [==============================] - ETA: 0s - loss: 1754.92 - 0s 259us/step - loss: 1822.5668 - val_loss: 1420.7977</strong><br/><strong> Epoch 4976/5000</strong><br/><strong> 60/60 [==============================] - ETA: 0s - loss: 1862.04</strong></pre>
+
+<p class="mce-root">既然培训已经完成，我们可以绘制培训和验证损失:</p>
+
+<pre># plot history<br/>plt.plot(history.history['loss'], label='Training')<br/>plt.plot(history.history['val_loss'], label='Validation')<br/>plt.legend()<br/>plt.show()</pre>
+
+<p class="mce-root">前面的代码块应该会生成下图，在图中我们可以看到验证损失降到了训练损失以下:<q> <br/> </q></p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/ea2b8246-0002-4817-9bda-7e6507f9b7a0.png" style="width:28.58em;height:18.75em;"/></p>
+
+<p class="mce-root">模型可能会过度拟合训练数据。在训练期间测量和绘制MAE可能会对此有更多的了解。让我们看看测试集上的MAE:</p>
+
+<pre>predicted = model.predict(X_test)<br/>rmse = np.sqrt(((predicted - y_test) ** 2).mean(axis=0))<br/>print('Mean Abs Error: {:.2f}'.format(mean_absolute_error(predicted, y_test)))</pre>
+
+<p class="mce-root">我们应该得到38.32的MAE，这意味着MAE误差已经减少了一点(而RF给出的MAE为40.33)，然而，这仍然不能令人信服。如此高的MAE背后可能有几个原因。例如，我们没有足够的训练数据。其次，我们使用了一种低效的方法来生成实体集。对于第一个问题，我们可以使用所有数据集来训练模型。然而，我们也可以通过指定噪声阈值来使用其他正则化技术，例如高斯噪声层:</p>
+
+<pre><strong>def</strong> createLSTMModel(X_train, hidden_neurons):<br/>    model = Sequential()<br/>    model.add(LSTM(hidden_neurons, input_shape=(X_train.shape[1], X_train.shape[2])))<br/>    model.add(GaussianNoise(0.2))<br/>    model.add(Dense(hidden_neurons))<br/>    model.add(Dropout(0.7))<br/>    model.add(Dense(1))<br/>    model.add(GaussianNoise(0.5))<br/>    model.add(Activation("linear"))<br/>    model.compile(loss="mean_squared_error", optimizer="rmsprop")<br/>    return model    </pre>
+
+<p class="mce-root">高斯噪声图层可用作输入图层，直接向输入变量添加噪声。这是神经网络中作为正则化方法的噪声的传统使用，其规定可以在使用激活函数之前或之后添加噪声。在激活之前添加它可能更有意义，但是，这两个选项都是可能的。在我们的例子中，我们在LSTM层之后和密集层之前添加了一个下降0.2的高斯噪声层。</p>
+
+<p class="mce-root">然后，我们有另一个高斯噪声层，它在经过整流的线性激活函数之前将噪声添加到密集层的线性输出中。然后，用引入噪声的相同数据训练LSTM模型应该产生大约35.25的稍低的MAE值。我们甚至可以检查显示训练和验证损失的图:</p>
+
+<p class="mce-root CDPAlignCenter CDPAlign"><img src="img/bfbbf5d2-4100-4d57-b233-eac0fea3614e.png" style="width:29.42em;height:19.00em;"/></p>
+
+<p class="mce-root CDPAlignLeft CDPAlign">上图显示，训练损失和测试损失大致相同，这表明模型的正则化程度更高。因此，该模型在测试集上的表现也更好。然而，MAE仍然可以通过使用更好的质量特性来降低。让我们用一种更好的特征生成技术来探索这个问题。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Unsupervised deep feature synthesis</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">无监督深度特征合成</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>我们将看到实体集结构如何有助于提高预测准确性。我们将使用<kbd>tsfresh</kbd>库中的时序函数构建定制的原语。在此之前，我们将通过从每个引擎的寿命中随机选择一个来确定截止时间。我们将设定五组截止时间用于交叉验证:</p>
+
+<pre>from tqdm import tqdm<br/>splits = 10<br/>cutoff_time_list = []<br/>for i in tqdm(range(splits)):<br/>    cutoff_time_list.append(utils.make_cutoff_times(data))<br/>cutoff_time_list[0].head()</pre>
+
+<p>前面的代码块应该显示五个引擎的截止时间和RUL值，如下所示:<q> <br/> </q></p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/4a06a9b2-7315-49ae-9a54-cc2bb226f2b7.png" style="width:22.75em;height:14.00em;"/></p>
+
+<p>然后，我们将使用无监督的方式生成实体集。正如我们所看到的，操作设置<kbd>1</kbd> — <kbd>3</kbd>的值是连续的，但是它们在不同的引擎之间建立了一种隐含的关系。因此，如果两个发动机具有相似的操作设置，传感器测量给出相似的值。其思想是通过k-means将聚类技术应用于这些设置。然后，我们从具有相似值的集群中创建一个新实体:</p>
+
+<pre>from sklearn.cluster import KMeans<br/>nclusters = 50<br/>def make_entityset(data, nclusters, kmeans=None):<br/>    X = data[['operational_setting_1', 'operational_setting_2', 'operational_setting_3']]<br/>    if kmeans:<br/>        kmeans=kmeans<br/>    else:<br/>        kmeans = KMeans(n_clusters=nclusters).fit(X)<br/>    data['settings_clusters'] = kmeans.predict(X)<br/>        es = ft.EntitySet('Dataset')<br/>    es.entity_from_dataframe(dataframe=data,<br/>                             entity_id='recordings',<br/>                             index='index',<br/>                             time_index='time')<br/>    es.normalize_entity(base_entity_id='recordings', <br/>                        new_entity_id='engines',<br/>                        index='engine_no')<br/>    es.normalize_entity(base_entity_id='recordings', <br/>                        new_entity_id='settings_clusters',<br/>                        index='settings_clusters')<br/>    return es, kmeans<br/>es, kmeans = make_entityset(data, nclusters)</pre>
+
+<p>前面的代码段生成了一个实体集，其中显示了以下关系:</p>
+
+<pre><strong>Entityset: Dataset</strong><br/><strong>   Entities:</strong><br/><strong>     settings_clusters [Rows: 50, Columns: 2]</strong><br/><strong>     recordings [Rows: 61249, Columns: 29]</strong><br/><strong>     engines [Rows: 249, Columns: 2]</strong><br/><strong>   Relationships:</strong><br/><strong>     recordings.engine_no -&gt; engines.engine_no</strong><br/><strong>     recordings.settings_clusters -&gt; settings_clusters.settings_clusters</strong></pre>
+
+<p>除了改变我们的实体集结构，我们还将使用来自<kbd>tsfresh</kbd>包的复杂性时序原语。任何接受熊猫序列并输出浮点数的函数都可以使用<kbd>make_agg_primitive</kbd>函数转换成聚合原语，如下所示:</p>
+
+<pre><strong>from</strong> featuretools.primitives import make_agg_primitive<br/><strong>import</strong> featuretools.variable_types as vtypes<br/><strong>from</strong> tsfresh.feature_extraction.feature_calculators import (number_peaks, mean_abs_change, <br/>                                                            cid_ce, last_location_of_maximum, length)<br/>Complexity = make_agg_primitive(lambda x: cid_ce(x, False),<br/>                              input_types=[vtypes.Numeric],<br/>                              return_type=vtypes.Numeric,<br/>                              name="complexity")<br/>fm, features = ft.dfs(entityset=es, <br/>                      target_entity='engines',<br/>                      agg_primitives=['last', 'max', Complexity],<br/>                      trans_primitives=[],<br/>                      chunk_size=.26,<br/>                      cutoff_time=cutoff_time_list[0],<br/>                      max_depth=3,<br/>                      verbose=True)<br/>fm.to_csv('Advanced_FM.csv')<br/>fm.head()</pre>
+
+<p class="mce-root">使用这种方法，我们设法生成了另外12个特征(以前，我们有290个)。然后，我们用相同的特征集但不同的截止时间构建了另外四个特征矩阵。这使我们可以在将管道用于测试数据之前对其进行多次测试:</p>
+
+<pre class="mce-root">fm_list = [fm]<br/><strong>for</strong> i <strong>in</strong> tqdm(range(1, splits)):<br/>    fm = ft.calculate_feature_matrix(entityset=make_entityset(data, nclusters, kmeans=kmeans)[0], <br/>         features=features, chunk_size=.26, cutoff_time=cutoff_time_list[i])<br/>    fm_list.append(fm)</pre>
+
+<p class="mce-root">然后，使用递归特征消除，我们再次对RF回归器进行建模，以便模型仅挑选重要的特征，从而做出更好的预测:</p>
+
+<pre class="mce-root"><strong>from</strong> sklearn.ensemble import RandomForestRegressor<br/><strong>from</strong> sklearn.model_selection import train_test_split<br/><strong>from</strong> sklearn.metrics import mean_absolute_error<br/><strong>from</strong> sklearn.feature_selection import RFE<br/><br/><strong>def</strong> pipeline_for_test(fm_list, hyperparams={'n_estimators':100, 'max_feats':50, 'nfeats':50}, do_selection=False):<br/>    scores = []<br/>    regs = []<br/>    selectors = []<br/>    for fm in fm_list:<br/>        X = fm.copy().fillna(0)<br/>        y = X.pop('RUL')<br/>        reg = RandomForestRegressor(n_estimators=int(hyperparams['n_estimators']), <br/>              max_features=min(int(hyperparams['max_feats']), int(hyperparams['nfeats'])))<br/>        X_train, X_test, y_train, y_test = train_test_split(X, y)<br/><br/>        if do_selection:<br/>            reg2 = RandomForestRegressor(n_jobs=3)<br/>            selector=RFE(reg2,int(hyperparams['nfeats']),step=25)<br/>            selector.fit(X_train, y_train)<br/>            X_train = selector.transform(X_train)<br/>            X_test = selector.transform(X_test)<br/>            selectors.append(selector)<br/>        reg.fit(X_train, y_train)<br/>        regs.append(reg)<br/>        preds = reg.predict(X_test)<br/>        scores.append(mean_absolute_error(preds, y_test))<br/>    return scores, regs, selectors  <br/>  <br/>scores, regs, selectors = pipeline_for_test(fm_list)<br/>print([float('{:.1f}'.format(score)) for score in scores])<br/>print('Average MAE: {:.1f}, Std: {:.2f}\n'.format(np.mean(scores), np.std(scores)))<br/>most_imp_feats = utils.feature_importances(fm_list[0], regs[0])</pre>
+
+<p>前面的代码块应该产生以下输出，显示每次迭代中预测的MAE及其平均值。此外，它还显示了基线MAE值和有关发动机记录循环的统计数据:</p>
+
+<pre class="mce-root"><strong>[33.9, 34.5, 36.0, 32.1, 36.4, 30.1, 37.2, 34.7,38.6, 34.4]</strong><br/><strong> Average MAE: 33.1, Std: 4.63</strong><br/><strong> 1: MAX(recordings.settings_clusters.LAST(recordings.sensor_measurement_13)) [0.055]</strong><br/><strong> 2: MAX(recordings.sensor_measurement_13) [0.044]</strong><br/><strong> 3: MAX(recordings.sensor_measurement_4) [0.035]</strong><br/><strong> 4: MAX(recordings.settings_clusters.LAST(recordings.sensor_measurement_4)) [0.029]</strong><br/><strong> 5: MAX(recordings.sensor_measurement_11) [0.028]</strong></pre>
+
+<p class="mce-root">现在，让我们再次尝试使用LSTM，看看我们是否可以减少MAE误差:</p>
+
+<pre>X = fm.copy().fillna(0)<br/>y = X.pop('RUL')<br/>X_train, X_test, y_train, y_test = prepareData(X, y)<br/><br/>hidden_neurons = 128<br/>model = createLSTMModel(X_train, hidden_neurons)<br/><br/>history = model.fit(X_train, y_train, batch_size=32, nb_epoch=5000, validation_split=0.20)<br/># plot history<br/>plt.plot(history.history['loss'], label='Training')<br/>plt.plot(history.history['val_loss'], label='Validation')<br/>plt.legend()<br/>plt.show()</pre>
+
+<p>前面的代码行应生成下图，其中验证损失低于定型损失:</p>
+
+<p class="CDPAlignCenter CDPAlign"><img src="img/63d36ef1-c495-4102-b75f-98b71db81b04.png" style="width:29.50em;height:18.83em;"/></p>
+
+<p>最后，我们可以基于MAE来评估模型的性能:</p>
+
+<pre>predicted = model.predict(X_test)<br/>print('Mean Abs Error: {:.2f}'.format(mean_absolute_error(predicted, y_test)))</pre>
+
+<p>前面的代码块应该产生52.40的MAE，这比我们在上一节中经历的要低。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>FAQs</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">常见问题</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p class="mce-root">在这一部分，我们将涵盖一些<strong>常见问题</strong> ( <strong>常见问题</strong>)，这将帮助您扩展该应用程序:</p>
+
+<ol>
+
+<li class="mce-root"><strong>在类似的物联网设置中，能否使用其他深度架构进行预测？</strong></li>
+
+</ol>
+
+<p style="padding-left: 90px"><strong>回答</strong>:是的，使用其他深度架构可能是一个可行的选择。例如，通过结合CNN和LSTM层的预测能力来创建卷积-LSTM网络已经被证明在许多用例中是有效的，例如音频分类、<strong>自然语言处理</strong> ( <strong> NLP </strong>)和时间序列预测。</p>
+
+<p class="mce-root"/>
+
+<p class="mce-root"/>
+
+<ol start="2">
+
+<li class="mce-root"><strong>有时我们没有足够的物联网数据来灵活地训练模型。怎样才能增加训练数据量？</strong></li>
+
+</ol>
+
+<p class="mce-root" style="padding-left: 90px"><strong>回答</strong>:有很多方法可以做到这一点。例如，我们可以尝试通过组合所有引擎数据来生成训练集。为此，为培训、测试和RUL生成的CSV文件会很有帮助。另一个例子可能是尝试通过添加更多样本来扩展数据集。</p>
+
+<ol start="3">
+
+<li class="mce-root"><strong>我可以在工业环境中执行异常检测吗？</strong></li>
+
+</ol>
+
+<p class="mce-root" style="padding-left: 90px"><strong>回答</strong>:可以。事实上，这在诸如生产故障识别、实时时间序列异常检测、预测监控等工业设置中是非常常见的。</p>
+
+<ol start="4">
+
+<li><strong>在物联网环境中，我可以从哪里获取数据来执行其他分析？</strong></li>
+
+</ol>
+
+<p style="padding-left: 90px"><strong>答</strong>:来自<strong>预测数据仓库</strong>的从某个标称状态到故障状态的时间序列数据可用于预测算法的开发。请参见以下链接以了解有关数据集的更多信息:<a href="https://ti.arc.nasa.gov/tech/dash/groups/pcoe/prognostic-data-repository/">https://ti . arc . NASA . gov/tech/dash/groups/pcoe/predictive-data-repository/</a>。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html>
+<html xmlns:epub="http://www.idpf.org/2007/ops">
+
+    <head>
+
+        <title>Summary</title>
+
+        
+
+        <meta charset="utf-8"/>
+
+<meta content="urn:uuid:86d202d3-ea3e-40e5-8f75-0218d47a52e1" name="Adept.expected.resource"/>
+
+    </head>
+
+
+
+    <body>
+
+        
+
+
+
+                            
+
+                    <h1 class="header-title">摘要</h1>
+
+                
+
+            
+
+            
+
+                
+
+<p>在本章中，我们已经了解了如何使用物联网和涡扇发动机退化模拟数据集开发预测性维护的DL解决方案。我们首先讨论了数据集的探索性分析，然后使用一种最流行的基于树的集成技术(称为<strong> RF </strong>)对预测性维护进行建模，这种技术直接使用涡轮发动机的特性。然后，我们看到了如何使用LSTM网络来提高预测精度。LSTM网络确实有助于减少网络错误。然而，我们看到了如何添加高斯噪声层，以实现LSTM网络的泛化，以及辍学。</p>
+
+<p>了解物联网所有层(包括传感器/传感、网关和云层)中DL技术的潜力非常重要。因此，为支持物联网的医疗设备开发可扩展的高效解决方案也不例外。在下一章中，我们将展示一个用例，在DL生命周期的所有潜在阶段利用DL进行数据分析。</p>
+
+
+
+
+
+            
+
+
+
+            
+
+        
+
+    </body>
+
+
+
+</html></body></html>

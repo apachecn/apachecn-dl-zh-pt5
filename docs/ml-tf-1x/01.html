@@ -1,0 +1,358 @@
+<html><head/><body>
+
+
+    
+        <title>Getting Started with TensorFlow</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">TensorFlow入门</h1>
+                
+            
+            
+                
+<p>近年来，大型公共数据集、廉价GPU和开放思想的开发人员文化的激增彻底改变了机器学习的努力。训练数据是机器学习的生命线，近年来已经变得广泛可用且易于消费。计算能力使得小型企业甚至个人都可以获得所需的马力。对于数据科学家来说，当前的十年令人无比兴奋。</p>
+<p>行业中使用的一些顶级平台包括Caffe、Theano和Torch。虽然底层平台得到了积极开发和公开共享，但由于安装困难、配置不明显以及生产解决方案困难，其使用在很大程度上仅限于机器学习从业者。</p>
+<p>2015年末和2016年带来了更多的平台——谷歌的<strong> TensorFlow </strong>，微软的<strong> CNTK </strong>，三星的<strong> Veles </strong>，以及其他选项。谷歌的TensorFlow是最令人兴奋的，原因有几个。</p>
+<p>TensorFlow是所有平台中安装最简单的一个，将机器学习能力直接带入了业余爱好者和程序员新手的领域。同时，高性能特性，如——multiGPU支持，使该平台令经验丰富的数据科学家和工业应用兴奋不已。TensorFlow还提供了一个重新想象的流程和多个用户友好的实用程序，如<strong> TensorBoard、</strong>来管理机器学习工作。最后，该平台得到了世界上最大的机器学习巨头谷歌的大力支持和社区支持。所有这些都是在考虑令人信服的底层技术优势之前，我们将在后面深入探讨。</p>
+<p>在本章中，我们将讨论以下主题:</p>
+<ul>
+<li>macOS X</li>
+<li>微软视窗和Linux，核心软件和所有的依赖</li>
+<li>启用Windows安装的虚拟机设置</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Current use</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">当前使用</h1>
+                
+            
+            
+                
+<p>虽然TensorFlow上市才两年，但众多社区的努力已经成功移植到现有的机器学习项目上。一些例子包括手写识别、语言翻译、动物分类、医学图像分类和情感分析。机器学习对如此多行业和问题的广泛适用性总是引起人们的兴趣。有了TensorFlow，这些问题不仅可行，而且容易实现。事实上，我们将在本书的过程中处理和解决前面的每个问题！</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Installing TensorFlow</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">安装TensorFlow</h1>
+                
+            
+            
+                
+<p>TensorFlow方便地提供了多种安装类型，可在多种操作系统上运行。基本安装是CPU专用的，而更高级的安装通过将计算推到显卡上，甚至推到多个显卡上来释放强大的马力。我们建议首先从基本的CPU安装开始。更复杂的GPU和CUDA安装将在<a href="8022db02-d24f-4620-9da7-ae53df279306.xhtml">附录</a>、<em>高级安装</em>中讨论。</p>
+<p>即使只有基本的CPU安装，TensorFlow也提供多种选项，如下所示:</p>
+<ul>
+<li>一个基本的Python安装</li>
+<li>通过Virtualenv的独立Python安装</li>
+<li>通过Docker实现完全隔离的基于容器的安装</li>
+</ul>
+<p>我们推荐通过Virtualenv安装Python，但是我们的示例将使用一个基本的Python <kbd>pip</kbd>安装来帮助您关注我们任务的关键，即启动并运行TensorFlow。同样，更多高级安装类型将在<a href="8022db02-d24f-4620-9da7-ae53df279306.xhtml">附录</a>、<em>高级安装</em>中介绍。</p>
+<p>TensorFlow完全可以在Linux和macOS上使用Python 2.7和3.5。在Windows上，我们只能用Python 3.5.x或3.6.x的TensorFlow，在Windows上运行一个<strong> Linux <strong>虚拟机</strong> </strong> ( <strong> VM </strong>)也可以轻松使用。有了Ubuntu虚拟机，我们可以在Python 2.7中使用TensorFlow。但是，我们不能在虚拟机中使用有GPU支持的TensorFlow。从TensorFlow 1.2开始，TensorFlow在macOS上不提供GPU支持。因此，如果您想将macOS与支持GPU的TensorFlow一起使用，您将不得不从源代码进行编译，这超出了本章的范围。否则，您仍然可以使用TensorFlow 1.0或1.1，它们在macOS上提供了开箱即用的GPU支持。Linux和Windows用户可以在CPU和GPU支持下使用TensorFlow。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Ubuntu installation</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">Ubuntu安装</h1>
+                
+            
+            
+                
+<p>Ubuntu是使用Tensorflow的最佳Linux发行版之一。我们强烈建议您使用Ubuntu机器，尤其是如果您想使用GPU的话。我们将在Ubuntu终端上完成大部分工作。我们将通过以下命令开始安装<kbd>python-pip</kbd>和<kbd>python-dev</kbd>:</p>
+<pre><strong>sudo apt-get install python-pip python-dev</strong></pre>
+<p>成功的安装将如下所示:</p>
+<div><img height="198" width="695" class="image-border" src="img/db4bc29d-4e87-4c5d-abab-ed87c3505e48.png"/></div>
+<p>如果发现丢失的软件包，可以通过以下命令更正它们:</p>
+<pre><strong>sudo apt-get update --fix-missing</strong></pre>
+<p>然后，您可以继续安装<kbd>python</kbd>和<kbd>pip</kbd>。</p>
+<p>我们现在准备安装TensorFlow。我们将进行纯CPU安装，如果您希望进行支持高级GPU的安装，我们将在<a href="8022db02-d24f-4620-9da7-ae53df279306.xhtml">附录</a>、<em>高级安装</em>中介绍。</p>
+<p>通过以下命令启动CPU安装:</p>
+<pre><strong>sudo pip install tensorflow</strong></pre>
+<p>成功的安装将如下所示:</p>
+<div><img height="393" width="691" class="image-border" src="img/bd24e0dd-25e1-4dd0-b472-030c7c5d5f3d.png"/></div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>macOS installation</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">macOS安装</h1>
+                
+            
+            
+                
+<p>如果你使用Python，你可能已经有了Python包安装程序<kbd>pip</kbd>。但是，如果没有，您可以使用<kbd>easy_install pip</kbd>命令轻松安装它。您会注意到我们实际上执行了<kbd>sudo easy_install pip</kbd>——<kbd>sudo</kbd>前缀是必需的，因为安装需要管理权限。</p>
+<p>我们假设您已经有了基本的软件包安装程序<kbd>easy_install</kbd>；如果没有，可以从<a href="https://pypi.python.org/pypi/setuptools">https://pypi.python.org/pypi/setuptools</a>安装。将出现一个成功的安装，如下面的屏幕截图所示:</p>
+<div><img class="image-border" src="img/d2362e43-4e1a-42a2-8246-bd370d2d445f.png"/></div>
+<p>接下来，我们将安装<kbd>six</kbd>包:</p>
+<pre><strong>sudo easy_install --upgrade six</strong></pre>
+<p>将出现一个成功的安装，如下面的屏幕截图所示:</p>
+<div><img class="image-border" src="img/a8c378de-1be9-4858-ace5-71a561038ba7.png"/></div>
+<p>令人惊讶的是，这是TensorFlow仅有的两个先决条件，我们现在可以安装核心平台了。我们将使用前面提到的<kbd>pip</kbd>包安装程序，直接从Google的站点安装TensorFlow。撰写本书时的最新版本是1.3版，但是您应该将其更改为您希望使用的最新版本:</p>
+<pre><strong>sudo pip install tensorflow</strong></pre>
+<p><kbd>pip</kbd>安装程序将自动收集所有其他需要的依赖项。您将看到每个单独的下载和安装，直到软件完全安装。</p>
+<p>将出现一个成功的安装，如下面的屏幕截图所示:</p>
+<div><img class="image-border" src="img/69710979-f1e8-4015-9ce7-7d08dee5c44c.png"/></div>
+<p>就是这样！如果你能做到这一点，你就可以开始训练和运行你的第一个模型。跳到<a href="0197f632-3ce2-4032-9abd-83b3720c7127.xhtml">第二章</a>、<em>你的第一个分类器</em>，来训练你的第一个模型。</p>
+<p>希望完全隔离安装的macOS X用户可以使用虚拟机，如Windows安装中所述。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Windows installation</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">Windows安装</h1>
+                
+            
+            
+                
+<p>正如我们前面提到的，Python 2.7中的TensorFlow不能在Windows上自然运行。在本节中，我们将指导您在Python 3.5中安装TensorFlow，如果您想在Python 2.7中使用TensorFlow，则在Linux中设置一个VM。</p>
+<p>首先，我们需要从以下链接安装Python 3.5.x或3.6.x 64位:</p>
+<p><a href="https://www.python.org/downloads/release/python-352/">https://www.python.org/downloads/release/python-352/</a></p>
+<p><a href="https://www.python.org/downloads/release/python-362/">https://www.python.org/downloads/release/python-362/</a></p>
+<p>确保下载64位版本的Python，其中安装名称有<kbd>amd64</kbd>，比如<kbd>python-3.6.2-amd64.exe</kbd>。Python 3.6.2安装如下所示:</p>
+<div><img class="image-border" src="img/2d9ebd98-4fe7-4861-84fe-fc27549579e1.png"/></div>
+<p class="mce-root">我们将选择将Python 3.6添加到路径，然后单击立即安装。安装过程将通过以下屏幕完成:</p>
+<div><img height="404" width="656" class="image-border" src="img/75e49d65-73b0-4417-868a-dc59ff55a16d.png"/></div>
+<p>我们将单击禁用路径长度限制，然后单击关闭以完成Python安装。现在，让我们在Windows菜单下打开Windows PowerShell应用程序。我们将使用以下命令安装Tensorflow的纯CPU版本:</p>
+<pre><strong>pip3 install tensorflow</strong></pre>
+<div><img height="363" width="602" class="image-border" src="img/017fa23a-0a1e-4601-bb4d-1f4acf138356.png"/></div>
+<p>安装的结果将如下所示:</p>
+<div><img height="433" width="643" class="image-border" src="img/60f19c52-b0cf-4edc-8aff-d8dcf5466551.png"/></div>
+<p>恭喜，您现在可以在支持Python 3.5.x或3.6.x的Windows上使用TensorFlow了。在下一节中，我们将向您展示如何设置一个VM，以便在Python 2.7中使用TensorFlow。然而，如果你不需要Python 2.7，你可以跳到第二章<em>的<em>测试安装</em>部分，你的第一个分类器</em>。</p>
+<p>现在，我们将向您展示如何在Linux上设置一个VM，以便在Python 2.7上使用TensorFlow。我们推荐在<a href="https://www.virtualbox.org/wiki/Downloads">https://www.virtualbox.org/wiki/Downloads</a>可获得的免费VirtualBox系统。撰写本文时最新的稳定版本是v5.0.14，可从以下URL获得:</p>
+<p><a href="http://download.virtualbox.org/virtualbox/5.1.28/VirtualBox-5.1.28-117968-Win.exe">http://download . VirtualBox . org/VirtualBox/5 . 1 . 28/VirtualBox-5 . 1 . 28-117968-win . exe</a></p>
+<p>成功的安装将允许您运行Oracle VM VirtualBox Manager仪表板，如下所示:</p>
+<div><img style="text-align: center;color: black;font-size: 1em" height="419" width="596" class="image-border" src="img/e4d4ea0f-058b-448d-bd8c-724c13ae7a4d.png"/></div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Virtual machine setup</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">虚拟机设置</h1>
+                
+            
+            
+                
+<p>Linux有多种风格，但由于TensorFlow文档主要提到Ubuntu，我们将使用Ubuntu Linux。欢迎您使用任何风格的Linux，但是您应该意识到不同风格和每种风格的版本之间有细微的差别。大多数差异是良性的，但有些可能会影响TensorFlow的安装甚至使用。</p>
+<p>即使选择了Ubuntu，也有很多版本和配置；可以在<a href="http://cdimage.ubuntu.com/ubuntu-gnome/releases/14.04/release/">http://CD image . Ubuntu . com/Ubuntu-gnome/releases/14.04/release/</a>看到一些。</p>
+<p>我们将安装最流行的版本，即Ubuntu 14.04.4 LTS(确保下载适合您电脑的版本)。标记为x86的版本设计为在32位机器上运行，而那些标记为64位的版本设计为在64位机器上运行。大多数现代机器都是64位的，所以如果你不确定，就用后者。</p>
+<p>安装是通过一个ISO文件进行的，它实质上是一个相当于安装CD的文件。Ubuntu 14.04.4 LTS版的ISO是<kbd>ubuntu-gnome-14.04-desktop-amd64.iso</kbd>。</p>
+<p>一旦您下载了安装ISO，我们将设置一个虚拟机，并使用ISO文件在虚拟机上安装Ubuntu Linux。</p>
+<p>在Oracle VM VirtualBox Manager上设置虚拟机相对简单，但是要特别注意，因为默认选项对于TensorFlow是不够的。你会经历下面的七个屏幕，在最后，它会提示你安装文件，这是刚刚下载的。</p>
+<p>我们将首先设置操作系统的类型，并配置分配给虚拟机的<strong>随机存取存储器</strong> ( <strong> RAM </strong>):</p>
+<ol>
+<li>请注意，我们选择了64位安装，因为这是我们正在使用的映像；如果需要，您可以选择使用32位图像:</li>
+</ol>
+<div><img height="400" width="486" class="image-border" src="img/94dce146-b5d9-40ce-af8f-d3c8c17a301b.png"/></div>
+<ol start="2">
+<li>你分配多少内存取决于你的机器有多少内存。在下面的屏幕截图中，我们将把一半的RAM(8 GB)分配给虚拟机。请记住，这仅在我们运行VM时消耗，因此我们可以自由分配。我们至少可以分配4 GB: <div><img height="395" width="479" class="image-border" src="img/570f7df6-8e9b-4c14-b5ad-e1bc9f14d7ee.png"/> </div></li>
+<li>我们的虚拟机将需要一个硬盘。我们将创建一个<strong>虚拟硬盘</strong> ( <strong> VHD </strong>)，如下截图所示:<div><img height="410" width="382" class="image-border" src="img/4fd88bbb-ab5f-4bcb-a330-cc79fe3a59ee.png"/> </div></li>
+<li>然后，我们将为VM选择硬盘类型，即VDI (VirtualBox磁盘映像)，如下截图所示:<div><img height="432" width="407" class="image-border" src="img/b999b6b5-09ae-489d-adf5-10051ea87b31.png"/> </div></li>
+<li>接下来，我们将选择为VHD分配多少空间。理解这一点很重要，因为我们将很快处理非常大的数据集:<div><img height="457" width="431" class="image-border" src="img/fcfdb522-ad2a-4c9a-8c29-99af53fc6a59.png"/> </div></li>
+<li>我们将分配12 GB，因为TensorFlow和典型的TensorFlow应用程序有一系列依赖项，如<kbd>NumPy</kbd>、<kbd>SciPy</kbd>和<kbd>Pandas</kbd>。我们的练习还将下载大型数据集，用于训练:<div><img height="505" width="476" class="image-border" src="img/bec9b167-fe34-49a2-8068-0bf6289e13e3.png"/> </div></li>
+<li>设置虚拟机后，它将出现在左侧虚拟机列表中。选择它并点击开始。这相当于启动机器:</li>
+</ol>
+<div><img height="547" width="687" class="image-border" src="img/64a9755b-a29a-4698-8cc2-69b429043457.png"/></div>
+<ol start="8">
+<li>当机器第一次启动时，向它提供安装CD(在我们的例子中，是我们先前下载的Ubuntu ISO):</li>
+</ol>
+<div><img height="506" width="644" src="img/2da0597f-4405-4441-9224-273ea437eb67.png"/></div>
+<p>按照安装说明操作，你将拥有一个可以使用的完整的Ubuntu Linux安装！之后就可以按照本章开头的Ubuntu安装了。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Testing the installation</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">测试安装</h1>
+                
+            
+            
+                
+<p>在本节中，我们将使用TensorFlow来计算一个简单的数学运算。首先，在Linux/macOS或Windows中的Windows PowerShell上打开您的终端。</p>
+<p>现在，我们需要使用下面的命令运行<kbd>python</kbd>来使用TensorFlow:</p>
+<pre><strong>python</strong></pre>
+<p>在Python shell中输入以下程序:</p>
+<pre><strong>import tensorflow as tf</strong>
+<strong>a = tf.constant(1.0)</strong>
+<strong>b = tf.constant(2.0)</strong>
+<strong>c = a + b</strong>
+<strong>sess = tf.Session()</strong>
+<strong>print(sess.run(c))</strong></pre>
+<p>结果看起来像下面的屏幕，最后打印出<kbd>3.0</kbd>:</p>
+<div><img height="418" width="685" src="img/7e7a08fe-d7bb-4e4b-a9ee-5ab83a167fa5.png"/></div>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Summary</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">摘要</h1>
+                
+            
+            
+                
+<p>在本章中，我们介绍了TensorFlow在三种主要操作系统上的安装，因此所有读者都应该已经安装并运行了该平台。Windows用户面临着额外的挑战，因为Windows上的TensorFlow仅支持Python 3.5.x或Python 3.6.x 64位版本。然而，即使是Windows用户现在也应该已经启动并运行了。恭喜你，好戏开始了！</p>
+<p>您现在已经安装了TensorFlow。紧接着的下一步是用一个样本内置训练工作来测试安装。接下来，我们将从头开始编写我们的第一个分类器—手写识别器。</p>
+<p>在接下来的章节中，我们将回顾TensorFlow工具并在我们的项目中使用它们。我们还将回顾主要的深度学习概念，在项目环境中使用每个概念。你将有机会尝试多个行业的项目，从金融到医药到语言。</p>
+<p class="mce-root"/>
+<p class="mce-root"/>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>

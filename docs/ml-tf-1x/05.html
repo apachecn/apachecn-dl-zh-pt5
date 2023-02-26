@@ -1,0 +1,336 @@
+<html><head/><body>
+
+
+    
+        <title>Sequence to Sequence Models-Parlez-vous Français?</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">序列到序列模型-Parlez-vous Fran ais？</h1>
+                
+            
+            
+                
+<p>到目前为止，我们的大部分工作都与图像有关。使用图像是有帮助的，因为在如何快速简洁地取得进展方面，结果几乎是不可思议的。然而，机器学习的世界更广阔，接下来的几章将涵盖这些其他方面。我们将从序列到序列模型开始。结果同样不可思议，尽管设置有点复杂，训练数据集也大得多。</p>
+<p>在本章中，我们将重点关注以下几个方面:</p>
+<ul>
+<li>了解序列间模型的工作原理</li>
+<li>了解输入序列间模型所需的设置</li>
+<li>使用序列到序列模型编写英语到法语的翻译器</li>
+</ul>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>A quick preview</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">快速预览</h1>
+                
+            
+            
+                
+<p>是的，你没看错...我们将写一个英语到法语的翻译。机器学习之前的世界可能已经用一系列解析器和规则来处理如何将单词和短语翻译给其他人，但我们的方法将更加优雅、通用和快速。我们只是用例子，很多例子，来训练我们的翻译。</p>
+<p>这里的游戏将是找到一个有足够多的英语句子翻译成法语的数据集(实际上，它在任何语言中都可以工作)。翻译的文章和新闻文章将不会有所帮助，因为我们不一定能够将特定的句子从一种语言并排放到另一种语言中。因此，我们需要更有创造性。幸运的是，像联合国这样的组织经常需要这样做——他们需要逐行翻译，以满足其不同支持者的需求。对我们来说多方便啊！</p>
+<p>关于统计机器翻译的<em>研讨会</em>在2010年举行了一次会议，发布了一个很好的打包训练集，可以使用。全部细节可在http://www.statmt.org/wmt10/的<a href="http://www.statmt.org/wmt10/">获得。</a></p>
+<p>我们将仅使用法语的特定文件，如下所示:</p>
+<ul>
+<li><a href="http://www.statmt.org/wmt10/training-giga-fren.tar">http://www.statmt.org/wmt10/training-giga-fren.tar</a></li>
+<li><a href="http://www.statmt.org/wmt15/dev-v2.tgz">http://www.statmt.org/wmt15/dev-v2.tgz</a></li>
+</ul>
+<p>以下是源数据在英文一侧的外观摘录:</p>
+<ul>
+<li>食品，欧洲通胀下滑的地方</li>
+<li>食品价格飙升是欧元区通胀加速背后的主导力量</li>
+<li>总部位于卢森堡的欧盟统计局报告称，欧元区13国11月份的物价涨幅高于预期，10月份的年通胀率为2.6%，11月份为3.1%</li>
+<li>彭博说，官方预测只有3%</li>
+<li>与美国、英国和加拿大中央银行相反，欧洲中央银行没有降低利率，认为利率下降加上原材料价格上涨和失业率下降将引发通货膨胀螺旋</li>
+<li>欧洲央行希望将通货膨胀率控制在2%以下，或者接近2%</li>
+<li>根据一位分析家的说法，欧洲央行已经陷入了一个第22条军规，它需要降低通货膨胀率，以避免在游戏后期采取行动压低通货膨胀率</li>
+</ul>
+<p>这是法语的对等词:</p>
+<ul>
+<li>欧洲的通货膨胀，营养不良</li>
+<li>欧元区的通货膨胀率上升，主要是由于食品价格的快速上涨</li>
+<li>11月，在欧元区13个成员国中，一个非常重要的预测是，10月份的通货膨胀率为2.6%，10月份的通货膨胀率为3.1%，这是欧洲共同体统计局在卢森堡发布的数据</li>
+<li>《官方公报》第三版，彭博</li>
+<li>美洲中央银行、英国中央银行和加拿大中央银行、欧洲中央银行由于利息减少而受到直接限制，随着初级商品价格的上涨和通货膨胀的加剧，出现了螺旋式的通货膨胀</li>
+<li>巴西中央银行保持通货膨胀率的稳定，但两者之间的差距很大</li>
+<li>一位分析家说，这是一个“第22条军规”，即“它阻止了”通货膨胀，而不是干预经济增长</li>
+</ul>
+<p>如果可能的话，最好做一个快速的完整性检查，以确保文件实际上是对齐的。我们可以在两个文件的第7行看到<kbd>Catch 22</kbd>短语，这给了我们安慰。</p>
+<p>当然，7行对于统计方法来说是远远不够的。只有通过大量的数据，我们才能实现一个优雅的、通用的解决方案。我们将为训练集获得的大量数据将由20千兆字节的文本组成，逐行翻译，非常类似于前面的摘录。</p>
+<p>正如我们对图像所做的那样，我们将使用子集进行训练、验证和测试。我们还将定义一个损失函数，并尝试最小化该损失。让我们从数据开始吧。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Drinking from the firehose</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">从消防水管里喝水</h1>
+                
+            
+            
+                
+<p>正如你之前所做的，你应该从https://github.com/mlwithtf/MLwithTF/那里获得代码。</p>
+<p>我们将关注包含以下三个文件的<kbd>chapter_05</kbd>子文件夹:</p>
+<ul>
+<li><kbd>data_utils.py</kbd></li>
+<li><kbd>translate.py</kbd></li>
+<li><kbd>seq2seq_model.py</kbd></li>
+</ul>
+<p>第一个文件处理我们的数据，所以让我们从它开始。<kbd>prepare_wmt_dataset</kbd>函数处理这个问题。这与我们过去获取图像数据集的方式非常相似，只是现在我们获取的是两个数据子集:</p>
+<ul>
+<li><kbd>giga-fren.release2.fr.gz</kbd></li>
+<li><kbd>giga-fren.release2.en.gz</kbd></li>
+</ul>
+<p>当然，这是我们要重点关注的两种语言。我们即将构建的翻译器的美妙之处在于这种方法是完全通用的，所以我们可以轻松地创建一个翻译器，比如说，德语或西班牙语的翻译器。</p>
+<p>以下截图是代码的特定子集:</p>
+<div><img class=" image-border" src="img/6a0c104a-e823-49f9-94af-80994af1b221.png"/></div>
+<p>接下来，我们将逐行浏览前面的两个感兴趣的文件，并做两件事——创建词汇表和标记单个单词。这些都是通过<kbd>create_vocabulary</kbd>和<kbd>data_to_token_ids</kbd>函数完成的，我们稍后会讲到。现在，让我们观察如何在我们的大规模训练集以及小型开发集<kbd>newstest2013.fr</kbd>和<kbd>dev/newstest2013.en</kbd>上创建词汇表和标记化:</p>
+<div><img height="965" width="616" class=" image-border" src="img/0449ecaa-9e2d-41fa-bdcb-a9a1178d8e61.png"/></div>
+<p>我们之前使用下面的<kbd>create_vocabulary</kbd>函数创建了一个词汇表。我们将从一个空的词汇图<kbd>vocab = {}</kbd>开始，遍历数据文件的每一行，并使用一个基本的记号化器为每一行创建一个单词桶。(警告:不要与下面的ID函数中更重要的标记混淆。)</p>
+<p>如果我们遇到一个词汇中已经存在的单词，我们将按如下方式递增它:</p>
+<pre>    vocab[word] += 1 </pre>
+<p>否则，我们将初始化该单词的计数，如下所示:</p>
+<pre>    vocab[word] += 1 </pre>
+<p>我们将继续这样做，直到我们的训练数据集上的行用完为止。接下来，我们将使用<kbd>sorted(vocab</kbd>、<kbd>key=vocab.get</kbd>和<kbd>reverse=True)</kbd>按频率顺序对我们的词汇进行排序。</p>
+<p>这一点很重要，因为我们不会保留每一个单词，我们将只保留最常用的单词，其中k是我们定义的词汇量(我们已将其定义为40，000，但您可以选择不同的值，并查看结果如何受到影响):</p>
+<div><img height="386" width="642" class=" image-border" src="img/b8b6bf07-d504-41c8-a06a-f4b76beab673.png"/></div>
+<p>虽然使用句子和词汇是直观的，但在这一点上需要更加抽象——我们将暂时把我们所学的每个词汇翻译成一个简单的整数。我们将使用<kbd>sequence_to_token_ids</kbd>函数逐行执行此操作:</p>
+<div><img height="186" width="563" class=" image-border" src="img/c1a33035-42f6-4cab-8e14-f78af870c26f.png"/></div>
+<p>我们将使用<kbd>data_to_token_ids</kbd>函数将这种方法应用于整个数据文件，该函数读取我们的训练文件，逐行迭代，并运行<kbd>sequence_to_token_ids</kbd>函数，然后该函数使用我们的词汇表将每个句子中的单个单词翻译成整数:</p>
+<div><img height="237" width="536" class=" image-border" src="img/eb56f8d6-2c8a-4747-9554-dad5f6898326.png"/></div>
+<p>这给我们留下了什么？两个只有数字的数据集。我们刚刚暂时将英语到法语的问题转化为一个数字到数字的问题，有两个由数字映射到词汇的句子序列。</p>
+<p>如果我们从<kbd>["Brooklyn", "has", "lovely", "homes"]</kbd>开始并生成一个<kbd>{"Brooklyn": 1, "has": 3, "lovely": 8, "homes": 17"}</kbd>词汇，我们将以<kbd>[1, 3, 8, 17]</kbd>结束。</p>
+<p>输出是什么样的？以下是典型的文件下载:</p>
+<pre>    <strong>ubuntu@ubuntu-PC:~/github/mlwithtf/chapter_05$: python translate.py</strong>
+    <strong>Attempting to download http://www.statmt.org/wmt10/training-giga-  <br/>    fren.tar</strong>
+    <strong>File output path:   <br/>    /home/ubuntu/github/mlwithtf/datasets/WMT/training-giga-fren.tar</strong>
+    <strong>Expected size: 2595102720</strong>
+    <strong>File already downloaded completely!</strong>
+    <strong>Attempting to download http://www.statmt.org/wmt15/dev-v2.tgz</strong>
+    <strong>File output path: /home/ubuntu/github/mlwithtf/datasets/WMT/dev- <br/>    v2.tgz</strong>
+    <strong>Expected size: 21393583</strong>
+    <strong>File already downloaded completely!</strong>
+    <strong>/home/ubuntu/github/mlwithtf/datasets/WMT/training-giga-fren.tar <br/>    already extracted to  <br/>    /home/ubuntu/github/mlwithtf/datasets/WMT/train</strong>
+    <strong>Started extracting /home/ubuntu/github/mlwithtf/datasets/WMT/dev- <br/>    v2.tgz to /home/ubuntu/github/mlwithtf/datasets/WMT</strong>
+    <strong>Finished extracting /home/ubuntu/github/mlwithtf/datasets/WMT/dev-  <br/>    v2.tgz to /home/ubuntu/github/mlwithtf/datasets/WMT</strong>
+    <strong>Started extracting  <br/>    /home/ubuntu/github/mlwithtf/datasets/WMT/train/giga- <br/>    fren.release2.fixed.fr.gz to  <br/>    /home/ubuntu/github/mlwithtf/datasets/WMT/train/data/giga- <br/>    fren.release2.fixed.fr</strong>
+    <strong>Finished extracting  <br/>    /home/ubuntu/github/mlwithtf/datasets/WMT/train/giga-<br/>    fren.release2.fixed.fr.gz to <br/>    /home/ubuntu/github/mlwithtf/datasets/WMT/train/data/giga-  <br/>    fren.release2.fixed.fr</strong>
+    <strong>Started extracting  <br/>    /home/ubuntu/github/mlwithtf/datasets/WMT/train/giga-<br/>    fren.release2.fixed.en.gz to <br/>    /home/ubuntu/github/mlwithtf/datasets/WMT/train/data/giga- <br/>    fren.release2.fixed.en</strong>
+    <strong>Finished extracting  <br/>    /home/ubuntu/github/mlwithtf/datasets/WMT/train/giga-<br/>    fren.release2.fixed.en.gz to <br/>    /home/ubuntu/github/mlwithtf/datasets/WMT/train/data/giga- <br/>    fren.release2.fixed.en</strong>
+    <strong>Creating vocabulary  <br/></strong>    <strong>/home/ubuntu/github/mlwithtf/datasets/WMT/train/data/vocab40000.fr <br/>    from <br/>    data /home/ubuntu/github/mlwithtf/datasets/WMT/train/data/giga- <br/>    fren.release2.fixed.fr</strong>
+    <strong>  processing line 100000</strong>
+    <strong>  processing line 200000</strong>
+    <strong>  processing line 300000</strong>
+     <strong>...</strong>
+    <strong>  processing line 22300000</strong>
+    <strong>  processing line 22400000</strong>
+    <strong>  processing line 22500000</strong>
+     <strong>Tokenizing data in </strong>
+     <strong>/home/ubuntu/github/mlwithtf/datasets/WMT/train/data/giga-</strong>
+     <strong>fren.release2.fr</strong>
+    <strong>  tokenizing line 100000</strong>
+    <strong>  tokenizing line 200000</strong>
+    <strong>  tokenizing line 300000</strong>
+     <strong>...</strong>
+    <strong>  tokenizing line 22400000</strong>
+    <strong>  tokenizing line 22500000</strong>
+     <strong>Creating vocabulary </strong>
+     <strong>/home/ubuntu/github/mlwithtf/datasets/WMT/train/data/vocab</strong>
+     <strong>40000.en from data </strong>
+     <strong>/home/ubuntu/github/mlwithtf/datasets/WMT/train/data/giga-</strong>
+     <strong>fren.release2.en</strong>
+    <strong>  processing line 100000</strong>
+    <strong>  processing line 200000</strong>
+    <strong>  ...</strong></pre>
+<p>我不会重复数据集处理的英语部分，因为它完全相同。我们将逐行读取这个巨大的文件，创建一个词汇表，并逐行对这两个语言文件中的单词进行标记。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Training day</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">训练日</h1>
+                
+            
+            
+                
+<p>我们努力的关键是培训，这在我们之前遇到的第二个文件中显示出来— <kbd>translate.py</kbd>。当然，我们之前讨论的<kbd>prepare_wmt_dataset</kbd>函数是起点，因为它创建了我们的两个数据集，并将它们标记成清晰的数字。</p>
+<p>培训按如下方式开始:</p>
+<div><img height="297" width="615" class=" image-border" src="img/66bd8fe5-2f96-47ac-aba9-0056eb700c57.png"/></div>
+<p>准备好数据后，我们将像往常一样创建一个TensorFlow会话，并构建我们的模型。我们稍后将讨论模型；现在，让我们看看我们的准备和训练循环。</p>
+<p>稍后我们将定义一个开发集和一个训练集，但现在，我们将定义一个范围从0到1的浮点分数。这里没什么复杂的；真正的工作来自下面的训练循环。这与我们在前几章所做的非常不同，所以需要密切关注。</p>
+<p>我们的主要训练循环是寻求最小化我们的错误。有两个关键陈述。这是第一个:</p>
+<pre>    encoder_inputs, decoder_inputs, target_weights = <br/>     model.get_batch(train_set, bucket_id)</pre>
+<p>并且，第二个关键点如下:</p>
+<pre>    _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs, <br/>     target_weights, bucket_id, False)</pre>
+<p><kbd>get_batch</kbd>函数主要用于将两个序列转换成批量主向量和相关权重。然后在建模步骤中使用这些，返回我们的损失。</p>
+<p>我们不处理损失，我们将使用<kbd>perplexity</kbd>，它是<kbd>e</kbd>的损失的幂:</p>
+<div><img height="440" width="464" class=" image-border" src="img/41bc47dd-7cb9-4fb6-aa62-ce0db0ea3d45.png"/></div>
+<p>在每一个<em> X </em>步骤中，我们将使用<kbd>previous_losses.append(loss)</kbd>保存我们的进度，这很重要，因为我们将当前批次的损失与之前的损失进行比较。当损失开始上升时，我们将使用以下方法来降低我们的学习率:</p>
+<p><kbd>sess.run(model.learning_rate_decay_op)</kbd>，并评估我们的<kbd>dev_set</kbd>的损失，就像我们在前面章节中使用我们的验证集一样:</p>
+<div><img height="160" width="474" class=" image-border" src="img/03519901-49f4-4a9b-92c7-6f1d57294cff.png"/></div>
+<p>运行它时，我们将得到以下输出:</p>
+<pre>    <strong>put_count=2530 evicted_count=2000 eviction_rate=0.790514 and <br/>     unsatisfied allocation rate=0</strong>
+    <strong>global step 200 learning rate 0.5000 step-time 0.94 perplexity <br/>     1625.06</strong>
+    <strong>  eval: bucket 0 perplexity 700.69</strong>
+    <strong>  eval: bucket 1 perplexity 433.03</strong>
+    <strong>  eval: bucket 2 perplexity 401.39</strong>
+    <strong>  eval: bucket 3 perplexity 312.34</strong>
+    <strong>global step 400 learning rate 0.5000 step-time 0.91 perplexity   <br/>     384.01</strong>
+    <strong>  eval: bucket 0 perplexity 124.89</strong>
+    <strong>  eval: bucket 1 perplexity 176.36</strong>
+    <strong>  eval: bucket 2 perplexity 207.67</strong>
+    <strong>  eval: bucket 3 perplexity 239.19</strong>
+    <strong>global step 600 learning rate 0.5000 step-time 0.87 perplexity   <br/>     266.71</strong>
+    <strong>  eval: bucket 0 perplexity 75.80</strong>
+    <strong>  eval: bucket 1 perplexity 135.31</strong>
+    <strong>  eval: bucket 2 perplexity 167.71</strong>
+    <strong>  eval: bucket 3 perplexity 188.42</strong>
+    <strong>global step 800 learning rate 0.5000 step-time 0.92 perplexity  <br/>     235.76</strong>
+    <strong>  eval: bucket 0 perplexity 107.33</strong>
+    <strong>  eval: bucket 1 perplexity 159.91</strong>
+    <strong>  eval: bucket 2 perplexity 177.93</strong>
+    <strong>  eval: bucket 3 perplexity 263.84</strong>  </pre>
+<p>我们将看到每200步的输出。这是我们正在使用的十几个设置之一，我们在文件的顶部定义了这些设置:</p>
+<pre style="padding-left: 60px"> tf.app.flags.DEFINE_float("learning_rate"", 0.5, ""Learning  <br/>                             rate."") 
+ tf.app.flags.DEFINE_float("learning_rate_decay_factor"", 0.99, 
+                          "Learning rate decays by this much."") 
+ tf.app.flags.DEFINE_float("max_gradient_norm"", 5.0, 
+                          "Clip gradients to this norm."") 
+ tf.app.flags.DEFINE_integer("batch_size"", 64, 
+                            "Batch size to use during training."") 
+ tf.app.flags.DEFINE_integer("en_vocab_size"", 40000, ""Size ...."") 
+ tf.app.flags.DEFINE_integer("fr_vocab_size"", 40000, ""Size  <br/>                              of...."") 
+ tf.app.flags.DEFINE_integer("size"", 1024, ""Size of each  <br/>                              model..."") 
+ tf.app.flags.DEFINE_integer("num_layers"", 3, ""#layers in the <br/>                model."")tf.app.flags.DEFINE_string("train_dir"", <br/>  os.path.realpath(''../../datasets/WMT''), ""Training directory."") 
+ tf.app.flags.DEFINE_integer("max_train_data_size"", 0, 
+                            "Limit size of training data "") 
+ tf.app.flags.DEFINE_integer("steps_per_checkpoint"", 200, 
+                            "Training steps to do per <br/>                             checkpoint."")</pre>
+<p>在构造模型对象时，我们将使用这些设置中的大部分。也就是说，拼图的最后一块是模型本身，所以让我们来看看。我们将返回到项目中三个文件的第三个也是最后一个文件— <kbd>seq2seq_model.py</kbd>。</p>
+<p>还记得在创建TensorFlow会话后，我们如何在培训过程开始时创建模型吗？我们定义的大多数参数用于初始化以下模型:</p>
+<pre>    model = seq2seq_model.Seq2SeqModel( 
+      FLAGS.en_vocab_size, FLAGS.fr_vocab_size, _buckets, 
+      FLAGS.size, FLAGS.num_layers, FLAGS.max_gradient_norm, <br/>       FLAGS.batch_size, 
+      FLAGS.learning_rate, FLAGS.learning_rate_decay_factor, 
+      forward_only=forward_only) </pre>
+<p>然而，初始化是在<kbd>seq2seq_model.py</kbd>内部完成的，所以让我们跳到那里。</p>
+<p>你会发现这个模型非常庞大，这就是为什么我们不会一行一行的解释，而是一个一个的解释。</p>
+<p>第一部分是模型的初始化，由下面两个图演示:</p>
+<div><img height="528" width="409" class=" image-border" src="img/7e66ffcf-cafd-4922-b7b0-814aa7415731.png"/></div>
+<p>该模型从初始化开始，初始化需要的参数。我们将跳过这些参数的设置，因为我们已经熟悉了它们——我们在训练之前自己初始化了这些参数，只需将这些值传递到模型构造语句中，最后通过<kbd>self.xyz</kbd>赋值将它们传递到内部变量中。</p>
+<p>回想一下我们是如何传入每个模型层的大小(size=1024)和层数(3)的。这些在我们构建权重和偏差时非常重要(<kbd>proj_w</kbd>和<kbd>proj_b</kbd>)。权重是<em>A×B</em>，其中<em> A </em>是层大小，<em> B </em>是目标语言的词汇量。偏差只是根据目标词汇的大小传递的。</p>
+<p>最后，来自我们的<kbd>output_project</kbd>元组<kbd>output_projection = (w, b)</kbd>的权重和偏差，并使用转置的权重和偏差形成我们的<kbd>softmax_loss_function</kbd>，我们将反复使用它来衡量性能:</p>
+<div><img height="501" width="364" class=" image-border" src="img/cabd2352-cfe1-44fb-b859-e18a47c3196b.png"/></div>
+<p>下一部分是阶跃函数，如下图所示。前半部分只是错误检查，所以我们跳过它。最有趣的是使用随机梯度下降构建输出馈送:</p>
+<div><img height="475" width="432" class=" image-border" src="img/a210e471-a641-461c-b26f-c0c9030328ec.png"/></div>
+<p>模型的最后一部分是<kbd>get_batch</kbd>函数，如下图所示。我们将用行内注释来解释各个部分:</p>
+<div><img height="553" width="458" class=" image-border" src="img/e45db696-3d48-4455-b613-e36fb35ec921.png"/></div>
+<p>当我们运行这个时，我们可以得到一个完美的训练运行，如下所示:</p>
+<pre><strong>global step 200 learning rate 0.5000 step-time 0.94 perplexity <br/>  1625.06</strong>
+  <strong> eval: bucket 0 perplexity 700.69</strong>
+   <strong>eval: bucket 1 perplexity 433.03</strong>
+  <strong> eval: bucket 2 perplexity 401.39</strong>
+  <strong> eval: bucket 3 perplexity 312.34</strong>
+   <strong>...</strong></pre>
+<p>或者，在损失持续增加后，我们可以找到降低学习率的步骤。不管怎样，我们将继续在我们的<em>开发</em>设备上测试，直到我们的精确度提高。</p>
+
+
+            
+
+            
+        
+    
+
+
+
+
+
+
+    
+        <title>Summary</title>
+        
+        <meta charset="utf-8"/>
+    
+
+    
+        
+
+                            
+                    <h1 class="header-title">摘要</h1>
+                
+            
+            
+                
+<p>在这一章中，我们介绍了序列到序列网络，并使用一系列已知的逐句翻译作为训练集编写了一个语言翻译器。我们被介绍给RNNs作为我们工作的基础，当我们使用20 GB的训练数据集进行训练时，我们很可能跨越了大数据的门槛。</p>
+<p>接下来，我们将跳到表格数据，并对经济和金融数据进行预测。我们将使用我们之前工作的一部分，以便我们可以立即投入运行，也就是我们到目前为止编写的下载和准备训练数据的初始管道工作。然而，我们将重点关注一个时间序列问题，因此它将与我们迄今为止所做的图像和文本工作大不相同。</p>
+<p class="mce-root"/>
+<p class="mce-root"/>
+
+
+            
+
+            
+        
+    
+
+
+</body></html>
